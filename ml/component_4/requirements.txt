@@ -1,0 +1,10 @@
+torch
+torch_geometric
+osmnx
+geopandas
+rasterio
+statsmodels
+pandas
+numpy
+scikit-learn
+matplotlib
