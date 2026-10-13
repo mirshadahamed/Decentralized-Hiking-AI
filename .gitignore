@@ -7,6 +7,9 @@
 .atom/
 .build/
 .buildlog/
+.venv/
+CLAUDE.md
+.claude/
 .history
 .svn/
 .swiftpm/
