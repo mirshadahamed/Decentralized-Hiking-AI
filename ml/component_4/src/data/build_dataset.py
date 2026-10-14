@@ -10,14 +10,12 @@ import pandas as pd
 
 from src.config import PROCESSED, load_config
 from src.data.calendar_features import build_calendar
-from src.data.extension_trails import build_extension_trails
 from src.data.graph import build_graph
 from src.data.terrain import segment_terrain
 from src.data.weather import load_weather
 from src.sim.simulator import simulate
 from src.utils import set_seed
 
-POIS = ["entrance", "mini_worlds_end", "worlds_end", "bakers_falls"]
 STATIC_COLS = ["length_m", "grade_abs_mean", "slope_deg_mean", "twi_mean", "elev_mean",
                "tobler_fwd_min", "tobler_bwd_min"]
 
@@ -40,45 +38,51 @@ def hourly_covariates(index: pd.DatetimeIndex, cal: pd.DataFrame, weather: pd.Da
     return cov
 
 
-def static_features(seg: gpd.GeoDataFrame, walk) -> pd.DataFrame:
+def static_features(seg: gpd.GeoDataFrame, cfg) -> pd.DataFrame:
+    """Fixed per-segment inputs: terrain, which trail, which POI, position along its trail."""
     st = seg[STATIC_COLS].astype(float).copy()
-    for p in POIS:
+    for t in cfg["area"]["routes"]:
+        st[f"trail_{t}"] = (seg.trail == t).astype(float)
+    for p in cfg["area"]["pois"]:
         st[f"poi_{p}"] = (seg.poi == p).astype(float)
-    first = {}
-    for k, (s, _) in enumerate(walk):
-        first.setdefault(s, k)
-    st["walk_position"] = [first[s] / len(walk) for s in range(len(seg))]
+    st["walk_position"] = seg.walk_position.astype(float).values
     return st
 
 
 def main():
     cfg = load_config()
     set_seed(cfg["seed"])
-    seg, edge_index, walk = build_graph(cfg)
+    seg, edge_index, walks = build_graph(cfg)
     seg = segment_terrain(cfg)
-    build_extension_trails(cfg)      # map layer for the planned diversion extension
     weather = load_weather(cfg)
     cal = build_calendar(cfg)
     assert len(weather) == len(cal) * 24, "weather must cover whole days"
 
-    out = simulate(seg, walk, weather, cal, cfg["simulator"], seed=cfg["seed"])
+    out = simulate(seg, walks, weather, cal, cfg["simulator"], seed=cfg["seed"])
     cov = hourly_covariates(weather.index, cal, weather, cfg)
-    st = static_features(seg, walk)
+    st = static_features(seg, cfg)
 
     np.savez_compressed(
         PROCESSED / "dataset.npz",
         occ_obs=out["occ_obs"].astype(np.float32), occ_true=out["occ_true"].astype(np.float32),
         cov=cov.values.astype(np.float32), cov_names=np.array(cov.columns),
         static=st.values.astype(np.float32), static_names=np.array(st.columns),
-        edge_index=edge_index, times=weather.index.values.astype("datetime64[h]").astype(np.int64),
-        daily_visitors=out["daily_visitors"], median_loop_min=out["median_loop_min"])
+        edge_index=edge_index, edge_weight=np.load(PROCESSED / "edge_weight.npy"),
+        times=weather.index.values.astype("datetime64[h]").astype(np.int64),
+        daily_visitors=out["daily_visitors"], daily_visitors_by_trail=out["daily_visitors_by_trail"],
+        trails=np.array(out["trails"]), segment_trail=seg.trail.values.astype(str),
+        median_loop_min=out["median_loop_min"])
     cal.to_csv(PROCESSED / "calendar.csv")
 
+    by_trail = out["daily_visitors_by_trail"]
+    years = len(cal) / 365.25
     summary = {
         "segments": int(len(seg)), "edges_undirected": int(edge_index.shape[1] // 2),
+        "segments_by_trail": {t: int((seg.trail == t).sum()) for t in out["trails"]},
         "hours": int(len(weather)), "days": int(len(cal)),
         "visitors_total": int(out["daily_visitors"].sum()),
-        "visitors_per_year": float(out["daily_visitors"].sum() / (len(cal) / 365.25)),
+        "visitors_per_year": float(out["daily_visitors"].sum() / years),
+        "visitors_per_year_by_trail": {t: float(by_trail[:, i].sum() / years) for i, t in enumerate(out["trails"])},
         "visitors_daily_mean": float(out["daily_visitors"].mean()),
         "visitors_daily_p95": float(np.percentile(out["daily_visitors"], 95)),
         "visitors_daily_max": int(out["daily_visitors"].max()),

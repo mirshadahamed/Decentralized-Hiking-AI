@@ -19,7 +19,7 @@ WET_TWI = 8.0   # cells at or above this TWI are treated as waterlogging-prone (
 
 def load_dem(cfg):
     """Read the DEM window over the park (cached as data/raw/dem.tif)."""
-    path = RAW / "dem.tif"
+    path = RAW / ("dem_" + "_".join(f"{v:.3f}" for v in cfg["area"]["dem_bbox"]) + ".tif")
     if not path.exists():
         with rasterio.open(DEM_URL) as src:
             win = from_bounds(*cfg["area"]["dem_bbox"], src.transform)
