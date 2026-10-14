@@ -24,6 +24,14 @@ OSM trail -> 26 segment graph -> DEM slope/TWI/Tobler time -> weather + calendar
 ```
 `--quick` on `run_benchmark` runs 1 epoch and 1 seed to check the pipeline.
 
+## Dashboard
+```powershell
+.venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501
+```
+Pages: Overview · Daily forecast (map, hour-by-hour crowding, quota, JSON download, no-weather fallback) ·
+Trail and data · Simulator · Model comparison · Capacity method. Without model checkpoints on the machine,
+the forecast page uses the historical-average fallback.
+
 ## Layout
 | Path | What |
 |---|---|
@@ -34,6 +42,7 @@ OSM trail -> 26 segment graph -> DEM slope/TWI/Tobler time -> weather + calendar
 | `src/models/` | ST-GNN (GCN+GRU), LSTM / no-graph variants, HA, SARIMA |
 | `src/capacity/cifuentes.py` | carrying-capacity cascade |
 | `src/serve/predict.py` | forecast JSON (with historical-average fallback) |
+| `dashboard/` | Streamlit dashboard (`app.py` + one file per page in `views/`) |
 | `docs/` | development plan, assumptions, decision log |
 | `results/` | one folder per run (config, git hash, log, metrics, stats) + figures |
 
