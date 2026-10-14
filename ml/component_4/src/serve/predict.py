@@ -44,30 +44,34 @@ def expected_visitors(data, day_idx):
     return float(data.daily_visitors[:train_days][sel].mean())
 
 
-def forecast_day(date: str, use_weather=True, run_name=None):
-    cfg = load_config()
-    data = TrailData(cfg)
+def build_forecast(data, cfg, seg, date: str, model=None, scale=None, run=None) -> dict:
+    """Forecast + capacity for one date as a dict (no file written). model=None -> NFR2 fallback."""
     origin = int(np.searchsorted(data.times, pd.Timestamp(date)))
-    assert data.times[origin] == pd.Timestamp(date), "date outside the dataset"
+    if origin >= data.T or data.times[origin] != pd.Timestamp(date) or origin < data.L:
+        raise ValueError(f"{date} is outside the dataset")
     sensed = np.ones(data.N, bool)
 
-    if use_weather:
-        model, scale, run = load_model(data, cfg, run_name)
+    if model is not None:
         fc = predict(model, data, np.array([origin]), sensed, scale)[0]       # [24, N]
         source = {"model": "stgnn", "run": run}
+        rain = np.expm1(data.cov[origin:origin + 24, data.cov_names.index("precip_log1p")])
     else:                                                                    # NFR2 graceful fallback
         fc = HistoricalAverage().fit(data, sensed).predict(data, np.array([origin]))[0]
         source = {"model": "historical_average", "reason": "no fresh weather forecast"}
-
-    seg = gpd.read_file(PROCESSED / "segments.geojson")
-    rain = np.expm1(data.cov[origin:origin + 24, data.cov_names.index("precip_log1p")])
-    if not use_weather:
         rain = np.zeros(24)
     cap = capacity(seg, fc, rain, expected_visitors(data, origin // 24), cfg["capacity"], cfg["simulator"])
 
-    out = {"schema_version": SCHEMA_VERSION, "component": 4, "site": cfg["area"]["name"],
-           "generated_at": datetime.now().isoformat(timespec="seconds"), "forecast_date": date,
-           "source": source, "fallback_used": not use_weather, "disclaimer": DISCLAIMER, **cap}
+    return {"schema_version": SCHEMA_VERSION, "component": 4, "site": cfg["area"]["name"],
+            "generated_at": datetime.now().isoformat(timespec="seconds"), "forecast_date": date,
+            "source": source, "fallback_used": model is None, "disclaimer": DISCLAIMER, **cap}
+
+
+def forecast_day(date: str, use_weather=True, run_name=None):
+    cfg = load_config()
+    data = TrailData(cfg)
+    seg = gpd.read_file(PROCESSED / "segments.geojson")
+    model, scale, run = load_model(data, cfg, run_name) if use_weather else (None, None, None)
+    out = build_forecast(data, cfg, seg, date, model, scale, run)
     path = RESULTS / "forecasts" / f"forecast_{date}{'' if use_weather else '_fallback'}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")
