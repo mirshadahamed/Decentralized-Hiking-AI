@@ -1,16 +1,20 @@
 # Component 4: Spatio-Temporal GNN for Bottleneck Forecasting
 Owner: Weerasekera J.V (IT23343948)
 
-Forecasts hourly hiker occupancy on each ~300 m segment of the Horton Plains loop for the next day,
-then turns the forecast into a segment-level carrying capacity and a daily quota (Cifuentes cascade).
+Forecasts hiker occupancy on each ~300 m segment of the three Horton Plains trails (World's End loop,
+Kirigalpotta, Thotupola Kanda): hourly for tomorrow, and as a range for any day up to 90 days ahead.
+Turns the forecast into a carrying capacity and quota per trail (Cifuentes cascade) and suggests quieter
+days, start times or trails.
 Built from open data only: OpenStreetMap, Copernicus DEM, Open-Meteo weather, Sri Lankan holiday/Poya calendar.
 
 ## Pipeline
 ```
-OSM trail -> 26 segment graph -> DEM slope/TWI/Tobler time -> weather + calendar
-          -> synthetic occupancy simulator (calibrated target)
-          -> HA / SARIMA / LSTM / GRU / ST-GNN (GCN+GRU) -> RMSE, MAE, paired t-test
-          -> Cifuentes PCC -> RCC -> ECC -> forecast_<date>.json for Module 3 and the dashboard
+OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weather + calendar
+           -> synthetic occupancy simulator with trail choice (calibrated target)
+           -> day-ahead: HA / SARIMA / LSTM / GRU / ST-GNN (GCN+GRU) -> RMSE, MAE, paired t-test
+           -> 2-90 days: planning model (calendar + climatology + recent level, P10/P50/P90)
+           -> Cifuentes PCC -> RCC -> ECC per trail -> suggestions
+           -> forecast_<date>.json, outlook_<issue>.json, plan_<issue>_<target>.json (Module 3, dashboard)
 ```
 
 ## Run (PowerShell, from `ml/component_4`)
@@ -20,6 +24,8 @@ OSM trail -> 26 segment graph -> DEM slope/TWI/Tobler time -> weather + calendar
 .venv\Scripts\python.exe -m pytest -q                     # shape, leakage and seed tests
 .venv\Scripts\python.exe -m src.run_benchmark             # all models, both protocols (long, CPU)
 .venv\Scripts\python.exe -m src.serve.predict --date 2025-05-12
+.venv\Scripts\python.exe -m src.planning.backtest                 # planning accuracy by lead time
+.venv\Scripts\python.exe -m src.serve.outlook --issue 2025-03-01 --target 2025-05-12
 .venv\Scripts\python.exe -m src.report.figures --date 2025-05-12
 ```
 `--quick` on `run_benchmark` runs 1 epoch and 1 seed to check the pipeline.
@@ -28,8 +34,9 @@ OSM trail -> 26 segment graph -> DEM slope/TWI/Tobler time -> weather + calendar
 ```powershell
 .venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501
 ```
-Pages: Overview · Daily forecast (map, hour-by-hour crowding, quota, JSON download, no-weather fallback) ·
-Trail and data · Simulator · Model comparison · Capacity method. Without model checkpoints on the machine,
+Pages: Overview · Plan a visit (90-day outlook, range, suggestions) · Daily forecast (map, hour-by-hour
+crowding, quota per trail, JSON download, no-weather fallback) · Trail and data · Simulator · Model comparison ·
+Capacity method. Without model checkpoints on the machine,
 the forecast page uses the historical-average fallback.
 
 ## Layout
@@ -40,7 +47,8 @@ the forecast page uses the historical-average fallback.
 | `src/sim/simulator.py` | synthetic occupancy simulator |
 | `src/eval/` | windows, temporal + spatial-block splits, metrics, t-tests |
 | `src/models/` | ST-GNN (GCN+GRU), LSTM / no-graph variants, HA, SARIMA |
-| `src/capacity/cifuentes.py` | carrying-capacity cascade |
+| `src/capacity/cifuentes.py` | carrying-capacity cascade, per trail |
+| `src/planning/` | 90-day planning model, suggestions, lead-time backtest |
 | `src/serve/predict.py` | forecast JSON (with historical-average fallback) |
 | `dashboard/` | Streamlit dashboard (`app.py` + one file per page in `views/`) |
 | `docs/` | development plan, assumptions, decision log |
