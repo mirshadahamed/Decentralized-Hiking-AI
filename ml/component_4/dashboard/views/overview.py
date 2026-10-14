@@ -15,16 +15,17 @@ st.caption("Component 4 · Horton Plains National Park · Weerasekera J.V (IT233
 st.markdown(
     "**The problem.** Park access is managed with one fixed daily permit number. It ignores weather, season and "
     "*where* on the trail people bunch up. **This component** forecasts how many people will be on each ~300 m "
-    "piece of the World's End loop for every hour of the next day, and turns that forecast into a daily quota "
-    "with the Cifuentes carrying-capacity method. It uses open data only: OpenStreetMap, satellite elevation, "
-    "weather and the holiday/Poya calendar.")
+    "piece of the park's three trails (World's End loop, Kirigalpotta, Thotupola Kanda): hour by hour for "
+    "tomorrow, and as a range for any day up to 90 days ahead. It turns the forecast into a quota per trail "
+    "(Cifuentes carrying-capacity method) and suggests quieter days, start times or trails. "
+    "Open data only: OpenStreetMap, satellite elevation, weather and the holiday/Poya calendar.")
 
 s, data = summary(), get_data()
 run = default_run()
 res = run_results(run) if run else None
 
 c = st.columns(4)
-c[0].metric("Trail segments (graph nodes)", data.N, help="~300 m pieces of the 8.3 km loop")
+c[0].metric("Trail segments (graph nodes)", data.N, help="~300 m pieces of the three trails")
 c[1].metric("Simulated visitors / year", f"{s.get('visitors_per_year', 0):,.0f}",
             help="Synthetic target, 2022–2025. Calibration against field counts is still to do.")
 c[2].metric("Median loop time", f"{s.get('median_loop_hours', 0):.1f} h", help="Commonly quoted: 3–4 h")
@@ -36,18 +37,20 @@ if res is not None:
 
 st.subheader("Pipeline")
 steps = pd.DataFrame([
-    ("1. Trail graph", "OSM loop cut into ~300 m segments", "Done"),
+    ("1. Trail network", "World's End loop + Kirigalpotta + Thotupola from OSM, cut into ~300 m segments", "Done"),
     ("2. Terrain", "Slope, wetness (TWI), Tobler walking time from the Copernicus DEM", "Done"),
     ("3. Weather and calendar", "Open-Meteo hourly weather; holidays, Poya days, school holidays", "Done"),
-    ("4. Occupancy simulator", "Synthetic hourly headcounts per segment (no real counts exist yet)",
+    ("4. Occupancy simulator", "Synthetic hourly headcounts per segment, with trail choice (no real counts exist yet)",
      "Done (v1, field calibration after PP1)"),
-    ("5. Forecasting models", "Historical average, SARIMA, LSTM, GRU, ST-GNN",
+    ("5. Day-ahead models", "Historical average, SARIMA, LSTM, GRU, ST-GNN",
      "Done (from scratch; traffic pretraining after PP1)"),
     ("6. Evaluation", "Test year 2025 + spatial block CV; RMSE/MAE; paired t-test", "Done"),
-    ("7. Capacity and output", "Cifuentes PCC → RCC → ECC, daily quota, JSON for Module 3 / dashboard",
+    ("7. Capacity and output", "Cifuentes PCC → RCC → ECC per trail, quotas, JSON for Module 3 / dashboard",
      "Done (v1, parameters to confirm)"),
-    ("8. Alternative-trail diversion", "Offer Kirigalpotta / Thotupola when World's End is crowded", "Planned"),
-    ("9. On-device model", "Quantise, measure phone latency", "Planned"),
+    ("8. 90-day planning", "Range of expected visitors and crowding for any day up to 90 days ahead",
+     "Done (v1, needs real DWC counts)"),
+    ("9. Suggestions", "Quieter nearby day, later start, other trail (only if it has room)", "Done (v1)"),
+    ("10. On-device model", "Quantise, measure phone latency", "Planned"),
 ], columns=["Step", "What it does", "Status"])
 st.dataframe(steps, hide_index=True, width="stretch")
 

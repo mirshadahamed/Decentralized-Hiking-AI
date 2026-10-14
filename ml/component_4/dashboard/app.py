@@ -5,6 +5,7 @@ st.set_page_config(page_title="Horton Plains – Trail Crowd Forecast", page_ico
 
 pages = [
     st.Page("views/overview.py", title="Overview", icon=":material/home:", default=True),
+    st.Page("views/plan.py", title="Plan a visit", icon=":material/travel_explore:"),
     st.Page("views/forecast.py", title="Daily forecast", icon=":material/calendar_month:"),
     st.Page("views/trail.py", title="Trail and data", icon=":material/map:"),
     st.Page("views/simulator.py", title="Simulator", icon=":material/groups:"),

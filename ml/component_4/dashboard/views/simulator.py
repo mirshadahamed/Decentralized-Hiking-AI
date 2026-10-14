@@ -17,10 +17,10 @@ data, seg, cal, s, p = get_data(), get_segments(), calendar(), summary(), get_cf
 
 st.markdown(
     "**How a simulated day works.** (1) Expected visitors = base × day type (weekday / weekend / holiday / **Poya**) "
-    "× season × morning rain. (2) Visitors form small groups and arrive mostly 06:00–08:00. (3) Each group walks the "
-    "loop segment by segment at **Tobler's hiking speed** for that slope, slower in rain and in crowds, and stops at "
-    "Mini World's End, World's End and Baker's Falls. (4) People on each segment are averaged per hour, plus "
-    "counting noise.")
+    "× season × morning rain. (2) Visitors form small groups and arrive mostly 06:00–08:00. (3) Each group picks a "
+    "trail (the World's End loop in either direction, Kirigalpotta or Thotupola) and walks it segment by segment at "
+    "**Tobler's hiking speed** for that slope, slower in rain and in crowds, stopping at viewpoints and peaks. "
+    "(4) People on each segment are averaged per hour, plus counting noise.")
 
 k = st.columns(4)
 k[0].metric("Visitors per year", f"{s.get('visitors_per_year', 0):,.0f}")
@@ -67,6 +67,17 @@ c2.altair_chart(alt.Chart(vd).mark_boxplot().encode(
     x=alt.X("day type:N", title=None, sort=["Weekday", "Weekend / holiday", "Poya / long weekend"]),
     y=alt.Y("visitors:Q", title="Visitors per day"), color=alt.Color("day type:N", legend=None)).properties(height=280),
     width="stretch")
+
+names = get_cfg()["area"]["trail_names"]
+per_year = s.get("visitors_per_year_by_trail", {})
+if per_year:
+    st.subheader("Visitors per trail")
+    st.altair_chart(alt.Chart(pd.DataFrame([{"trail": names[t], "visitors per year": v} for t, v in per_year.items()]))
+                    .mark_bar().encode(x=alt.X("visitors per year:Q"), y=alt.Y("trail:N", title=None, sort="-x"),
+                                       tooltip=[alt.Tooltip("visitors per year:Q", format=",.0f")])
+                    .properties(height=130), width="stretch")
+    st.caption("Trail choice: " + ", ".join(f"{names[t]} {v:.0%}" for t, v in p["route_share"].items())
+               + " (assumption; to be checked against DWC data and the hiker survey).")
 
 st.subheader("Key parameters (configs/default.yaml)")
 params = pd.DataFrame([

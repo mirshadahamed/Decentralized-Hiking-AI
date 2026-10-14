@@ -76,9 +76,14 @@ else:
     st.info("This run has no spatial CV results.")
 
 st.header("3. Forecast against what happened")
-if res["has_predictions"]:
-    data, seg = get_data(), get_segments()
-    pr = run_predictions(run)
+data = get_data()
+pr = run_predictions(run) if res["has_predictions"] else None
+same_graph = pr is not None and pr["HA"].shape[-1] == data.N
+if pr is not None and not same_graph:
+    st.info(f"This run was made on an earlier trail graph ({pr['HA'].shape[-1]} segments, now {data.N}). "
+            "Pick a newer run to see forecasts against what happened.")
+if same_graph:
+    seg = get_segments()
     origins = pr["origins"]
     labels = seg.set_index("seg_id").label
     names = [labels[i] for i in walk_order()]
@@ -101,7 +106,7 @@ if res["has_predictions"]:
     st.altair_chart(alt.Chart(long).mark_line().encode(
         x=alt.X("time:T", title=None), y=alt.Y("people:Q", title="People"),
         color=alt.Color("series:N", scale=scale, title=None)).properties(height=300), width="stretch")
-else:
+elif pr is None:
     st.info("Prediction files are not committed. Rerun the benchmark on this machine to see this chart.")
 
 st.header("What this means")

@@ -17,12 +17,16 @@ from src.config import PROCESSED, RESULTS, load_config  # noqa: E402
 
 DOCS = ROOT / "docs"
 POI_LABEL = {"entrance": "Visitor Center", "mini_worlds_end": "Mini World's End",
-             "worlds_end": "World's End", "bakers_falls": "Baker's Falls"}
+             "worlds_end": "World's End", "bakers_falls": "Baker's Falls",
+             "kirigalpotta_peak": "Kirigalpotta peak", "thotupola_head": "Thotupola trailhead",
+             "thotupola_peak": "Thotupola Kanda"}
+TRAIL_SHORT = {"main": "Loop", "kirigalpotta": "Kirigalpotta", "thotupola": "Thotupola"}
+TRAIL_COLOR = {"main": [27, 127, 90], "kirigalpotta": [91, 139, 208], "thotupola": [192, 122, 44]}
 MODEL_LABEL = {"HA": "Historical average", "ARIMA": "SARIMA", "lstm": "LSTM",
                "gru_nograph": "GRU (no graph)", "stgnn": "ST-GNN (GCN + GRU)"}
 MODEL_ORDER = ["HA", "ARIMA", "lstm", "gru_nograph", "stgnn"]
 STATUS_COLOR = {"ok": [46, 139, 87], "busy": [224, 161, 0], "bottleneck": [192, 57, 43]}
-VIEW = pdk.ViewState(latitude=6.792, longitude=80.798, zoom=13.2)
+VIEW = pdk.ViewState(latitude=6.807, longitude=80.792, zoom=12.4)
 
 
 def require_dataset():
@@ -46,22 +50,40 @@ def get_data():
 def get_segments() -> gpd.GeoDataFrame:
     seg = gpd.read_file(PROCESSED / "segments.geojson")
     seg["poi"] = seg["poi"].fillna("")
-    data = get_data()
-    seg["walk_position"] = data.static[:, data.static_names.index("walk_position")]
-    seg["label"] = [f"{i:02d} {POI_LABEL.get(p, '')}".strip() for i, p in zip(seg.seg_id, seg.poi)]
+    seg["label"] = [f"{i:02d} {TRAIL_SHORT[t]}" + (f" · {POI_LABEL[p]}" if p else "")
+                    for i, t, p in zip(seg.seg_id, seg.trail, seg.poi)]
     return seg
 
 
-@st.cache_resource
-def get_extension():
-    p = PROCESSED / "extension_trails.geojson"
-    return gpd.read_file(p) if p.exists() else None
-
-
 def walk_order() -> list:
-    """Segment ids in the order a hiker meets them (standard direction)."""
-    seg = get_segments()
-    return seg.sort_values("walk_position").seg_id.tolist()
+    """Segment ids trail by trail, each in the order a hiker meets them."""
+    return [int(i) for i in get_data().walk_order()]
+
+
+def trail_names() -> dict:
+    return get_cfg()["area"]["trail_names"]
+
+
+@st.cache_resource
+def get_planner():
+    from src.serve.outlook import build_planner
+    return build_planner(get_cfg())
+
+
+@st.cache_data
+def plan_outlook(issue: str) -> pd.DataFrame:
+    return get_planner().m.outlook(issue)
+
+
+@st.cache_data
+def plan_day(issue: str, target: str) -> dict:
+    return get_planner().day(issue, target)
+
+
+def latest_planning_backtest():
+    p = RESULTS / "LATEST_PLANNING"
+    run = RESULTS / p.read_text(encoding="utf-8").strip() if p.exists() else None
+    return run if run is not None and (run / "metrics_by_lead.csv").exists() else None
 
 
 @st.cache_data
@@ -103,12 +125,13 @@ def run_predictions(run_name: str) -> dict:
 
 @st.cache_resource
 def get_model(run_name: str):
-    """(model, scale) of the temporal ST-GNN, or None when the checkpoint is not on this machine."""
+    """(model, scale) of the temporal ST-GNN, or None when the checkpoint is missing or was trained
+    on a different graph (e.g. before the three-trail network)."""
     from src.serve.predict import load_model
     try:
         model, scale, _ = load_model(get_data(), get_cfg(), run_name)
         return model, scale
-    except FileNotFoundError:
+    except (FileNotFoundError, RuntimeError):
         return None
 
 
@@ -149,26 +172,21 @@ def poi_layer(seg: gpd.GeoDataFrame):
     rows = []
     for r in seg[seg.poi != ""].itertuples():
         p = r.geometry.interpolate(0.5, normalized=True)
-        rows.append({"pos": [p.x, p.y], "text": POI_LABEL[r.poi]})
+        rows.append({"pos": [p.x, p.y], "text": POI_LABEL.get(r.poi, r.poi)})
     return pdk.Layer("TextLayer", rows, get_position="pos", get_text="text", get_size=14,
                      get_color=[20, 20, 20], get_alignment_baseline="'bottom'", get_pixel_offset=[0, -10])
 
 
-def extension_layers():
-    ext = get_extension()
-    if ext is None:
-        return []
-    trails = ext[ext.kind == "trail"]
-    peaks = ext[ext.kind == "peak"]
-    rows = [{"path": p, "name": f"{r.trail} trail (planned diversion, {r.length_m:.0f} m)", "color": [70, 110, 200]}
-            for r in trails.itertuples() for p in _paths(r.geometry)]
-    pts = [{"pos": [r.geometry.x, r.geometry.y], "name": f"{r.trail} peak", "text": r.trail} for r in peaks.itertuples()]
-    return [pdk.Layer("PathLayer", rows, get_path="path", get_color="color", width_min_pixels=3,
-                      pickable=True, opacity=0.7),
-            pdk.Layer("ScatterplotLayer", pts, get_position="pos", get_fill_color=[70, 110, 200],
-                      get_radius=60, pickable=True),
-            pdk.Layer("TextLayer", pts, get_position="pos", get_text="text", get_size=13,
-                      get_color=[40, 70, 160], get_pixel_offset=[0, -14])]
+def road_link_layer(seg: gpd.GeoDataFrame):
+    """Dashed-look thin line for trails joined only by road (e.g. Visitor Center -> Thotupola trailhead)."""
+    js = json.loads((PROCESSED / "route.json").read_text(encoding="utf-8"))
+    s = seg.set_index("seg_id")
+    rows = []
+    for a, b, _ in js.get("road_links", []):
+        pa, pb = s.loc[a].geometry.centroid, s.loc[b].geometry.centroid
+        rows.append({"path": [[pa.x, pa.y], [pb.x, pb.y]], "name": "Road link (4.2 km drive)", "color": [120, 120, 120]})
+    return pdk.Layer("PathLayer", rows, get_path="path", get_color="color", width_min_pixels=2,
+                     pickable=True, opacity=0.6)
 
 
 def deck(layers: list, tooltip_html: str, view=VIEW):

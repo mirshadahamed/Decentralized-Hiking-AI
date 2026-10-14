@@ -5,34 +5,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import altair as alt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
-import pydeck as pdk  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from common import (VIEW, calendar, deck, extension_layers, get_data, get_extension,  # noqa: E402
-                    get_segments, gradient, poi_layer, require_dataset, segment_layer)
+from common import (TRAIL_COLOR, calendar, deck, get_data, get_segments, gradient, poi_layer,  # noqa: E402
+                    require_dataset, road_link_layer, segment_layer, summary, trail_names)
 
 require_dataset()
 st.title("Trail and data")
-st.caption("The graph the model learns on, and the open data behind it.")
+st.caption("The graph the model learns on: three trails that share the park entrance, and the open data behind it.")
 
-seg, data = get_segments(), get_data()
-ATTR = {"Elevation (m)": "elev_mean", "Mean |grade|": "grade_abs_mean", "DEM slope (°)": "slope_deg_mean",
-        "Wetness index (TWI)": "twi_mean", "Walking time, standard direction (min)": "tobler_fwd_min",
-        "Length (m)": "length_m"}
-c1, c2 = st.columns([2, 1])
-attr = c1.selectbox("Colour segments by", list(ATTR))
-show_ext = c2.toggle("Show Kirigalpotta and Thotupola trails", value=True, disabled=get_extension() is None)
-
+seg, data, names = get_segments(), get_data(), trail_names()
+ATTR = {"Trail": "trail", "Elevation (m)": "elev_mean", "Mean |grade|": "grade_abs_mean",
+        "DEM slope (°)": "slope_deg_mean", "Wetness index (TWI)": "twi_mean",
+        "Walking time, standard direction (min)": "tobler_fwd_min", "Length (m)": "length_m"}
+attr = st.selectbox("Colour segments by", list(ATTR))
 col = ATTR[attr]
-extra = [{"value": f"{v:.2f}", "length": f"{l:.0f}"} for v, l in zip(seg[col], seg.length_m)]
-layers = [segment_layer(seg, gradient(seg[col]), extra)] + (extension_layers() if show_ext else []) + [poi_layer(seg)]
-view = pdk.ViewState(latitude=6.808, longitude=80.79, zoom=12.2) if show_ext else VIEW
-st.pydeck_chart(deck(layers, "<b>{name}</b><br/>" + attr + ": {value}<br/>length {length} m", view), height=480)
-st.caption(f"{data.N} segment nodes and {data.edge_index.shape[1] // 2} edges (segments that touch). "
-           "Light = low, dark red = high. Blue = alternative trails for the planned diversion feature (not in the model yet).")
+if col == "trail":
+    colors = [TRAIL_COLOR[t] for t in seg.trail]
+    extra = [{"value": names[t], "length": f"{l:.0f}"} for t, l in zip(seg.trail, seg.length_m)]
+else:
+    colors = gradient(seg[col])
+    extra = [{"value": f"{v:.2f}", "length": f"{l:.0f}"} for v, l in zip(seg[col], seg.length_m)]
+layers = [road_link_layer(seg), segment_layer(seg, colors, extra), poi_layer(seg)]
+st.pydeck_chart(deck(layers, "<b>{name}</b><br/>" + attr + ": {value}<br/>length {length} m"), height=500)
+s = summary().get("segments_by_trail", {})
+st.caption(f"{data.N} segment nodes and {data.edge_index.shape[1] // 2} edges (segments that touch, plus the road link "
+           f"to the Thotupola trailhead with half weight). "
+           + " · ".join(f"{names[t]}: {n} segments" for t, n in s.items())
+           + (". Trail colours: green = World's End loop, blue = Kirigalpotta, orange = Thotupola."
+              if col == "trail" else ". Light = low, dark red = high."))
 
 st.subheader("Segment features (model inputs that never change)")
-table = seg.drop(columns="geometry").sort_values("walk_position")
+table = seg.drop(columns="geometry").iloc[data.walk_order()]
 cols = ["label", "length_m", "elev_mean", "grade_abs_mean", "slope_deg_mean", "twi_mean", "tobler_fwd_min",
         "tobler_bwd_min", "frac_grade_med", "frac_grade_high", "frac_wet"]
 st.dataframe(table[cols].round(2), hide_index=True, width="stretch")

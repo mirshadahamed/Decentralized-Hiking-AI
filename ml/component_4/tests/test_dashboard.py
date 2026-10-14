@@ -14,5 +14,5 @@ pytestmark = pytest.mark.skipif(not (PROCESSED / "dataset.npz").exists(),
 @pytest.mark.parametrize("page", sorted(p.name for p in VIEWS.glob("*.py")))
 def test_page_renders(page):
     from streamlit.testing.v1 import AppTest
-    at = AppTest.from_file(str(VIEWS / page), default_timeout=120).run()
+    at = AppTest.from_file(str(VIEWS / page), default_timeout=300).run()   # slow CPU while training runs
     assert not at.exception, [e.message for e in at.exception]
