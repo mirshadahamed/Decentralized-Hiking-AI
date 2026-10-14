@@ -1,0 +1,64 @@
+# Assumptions (Component 4)
+
+Every number the pipeline uses that is **not** measured. Values live in `configs/default.yaml`.
+Status: **A** = from a cited/open source, **E** = engineering estimate (to calibrate with field counts / DWC data).
+
+## Trail graph
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Area | OSM paths/tracks/footways/steps in bbox 80.775–80.825 E, 6.770–6.815 N | A | OpenStreetMap |
+| Main loop | Visitor Center → Mini World's End → World's End → Baker's Falls → Visitor Center (shortest path through the POIs) | A | OSM; matches the park's standard circuit |
+| Loop length | 8.3 km walked, 7.5 km unique (shared ~670 m start/end stretch, 80 m Baker's Falls spur) | A | OSM; commonly quoted as ~9 km |
+| Graph nodes | 26 segments of ~300 m | E | Proposal targets 25–40 nodes; 300 m is about 4–5 min of walking |
+| Edges | segments that share an end point (undirected) | E | Hikers can only move to touching segments |
+
+## Terrain (Copernicus GLO-30 DEM)
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Elevation profile | sampled every 30 m, smoothed over 150 m | E | 30 m DEM noise |
+| Grade cap | ±25 % | E | Next to the World's End escarpment the DEM cells mix in the ~870 m cliff; raw values gave 40 % grades the trail does not have |
+| TWI | ln(a / tan β), D8 flow accumulation | A | Standard definition |
+| Wet ground | TWI ≥ 8 | E | Upper tail of the park's TWI distribution |
+
+## Weather and calendar
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Weather | Open-Meteo archive (ERA5-based), hourly, one grid point for the whole park | A | Park is ~5 km across; ERA5 grid is ~25 km, so all segments share weather |
+| Future weather | the model is given the **actual** weather of the forecast day (a perfect forecast) | E | Upper bound. Later: replace with archived forecasts or add forecast noise |
+| Holidays & Poya | `holidays` package, country LK | A | Matches the gazetted Poya list for 2025 |
+| School holidays | 5–20 Apr, 1–31 Aug, 10–31 Dec | E | Approximate; post-COVID calendars shifted |
+| Long weekend | ≥ 3 consecutive weekend/holiday/Poya days | E | |
+
+## Simulator (synthetic occupancy target)
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Base demand | 450 visitors on an ordinary weekday | E | Gives ~240k visitors/yr and ~660/day on average; **calibrate against DWC permit totals** |
+| Day of week | Mon–Sun ×1.0, 0.9, 0.9, 0.95, 1.1, 1.9, 2.1 | E | Domestic weekend tourism |
+| Public holiday / Poya | ×1.9 / ×2.4 (the larger of day-of-week, holiday and Poya is used) | E | Poya long-weekend crowding reported for hill-country sites (proposal ref [10]) |
+| Long weekend / school holiday | ×1.3 / ×1.25 | E | |
+| Month | Jan–Dec ×1.1, 1.1, 1.0, 1.4, 0.9, 0.8, 0.85, 1.0, 0.8, 0.8, 0.85, 1.2 | E | April New Year and Dec–Feb peak season; monsoon months lower |
+| Morning rain | demand × exp(−0.06 × rain mm 05:00–10:00), floor 0.35 | E | People cancel when it rains in the morning |
+| Day-to-day noise | lognormal, σ = 0.15 | E | |
+| Group size | 1 + Poisson(2.2) (mean 3.2) | E | Families and small groups |
+| Arrival time | 85 % Normal(06:54, 45 min), 15 % Uniform(08:30–12:30); gate 06:00, last entry 13:00 | E | Visitors come early to see World's End before the mist |
+| Direction | 85 % standard (Mini World's End first), 15 % reverse | E | |
+| Walking speed | Tobler: v = 6·exp(−3.5·\|grade + 0.05\|) km/h × 0.75 leisure factor × lognormal(σ = 0.12) per group | A + E | Tobler (1993); 0.75 because tourists stop for photos. Gives a median loop of **3.4 h** (commonly quoted 3–4 h) |
+| Rain slowdown | ×0.85 if ≥ 0.5 mm/h, ×0.70 if ≥ 3 mm/h | E | Slippery, muddy trail |
+| Crowd slowdown | speed × 1 / (1 + (ρ / 0.4)²), floor 0.4; ρ = persons per metre | E | Greenshields-type density–speed effect. Two passes per day so crowding feeds back |
+| Dwell (median, log-σ 0.4) | Mini World's End 8 min, World's End 20 min, Baker's Falls 12 min | E | Viewing and photo stops |
+| Observation noise | Poisson(true × lognormal(σ = 0.10)) | E | Error of a manual headcount |
+
+**Known limitation (FR5):** the forecast models learn from this simulator, so part of what they learn is the
+simulator's own rules. Mitigation: every assumption above is listed, the data has noise, and field
+counts (after PP1) will be used to calibrate and to check the synthetic target.
+
+## Cifuentes capacity
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Space per person | 1 m of trail | A | Cifuentes (1992) convention for trails. Viewpoints (World's End, Baker's Falls) are treated as trail length, not platform area, which makes them look stricter than they are. Measure the platform areas on a field visit |
+| Group size / gap | 10 people, 50 m between groups | A/E | Common values in Cifuentes applications |
+| Open hours | 12 (06:00–18:00) | E | |
+| Erodibility | 1.5 × fraction of segment with TWI ≥ 8 | E | Wet peaty ground erodes under trampling |
+| Accessibility | 1.0 × fraction with grade 10–20 % + 1.5 × fraction > 20 % | A | Standard Cifuentes slope classes |
+| Precipitation | share of open hours with forecast rain ≥ 0.5 mm | E | Daily, from the forecast (the dynamic part) |
+| Management capacity | 0.7 | E | Placeholder until DWC staffing data is available |
