@@ -23,8 +23,12 @@ class TrailData:
         self.static = d["static"].astype(np.float32)         # [N, Fs]
         self.static_names = list(d["static_names"])
         self.edge_index = torch.tensor(d["edge_index"], dtype=torch.long)
+        self.edge_weight = torch.tensor(d["edge_weight"], dtype=torch.float32)
         self.times = pd.to_datetime(d["times"].astype("datetime64[h]"))
         self.daily_visitors = d["daily_visitors"]
+        self.daily_visitors_by_trail = d["daily_visitors_by_trail"]        # [days, trails]
+        self.trails = list(d["trails"])
+        self.segment_trail = np.asarray(d["segment_trail"])                 # [N] trail of each segment
         self.T, self.N = self.y.shape
         self.L, self.H = cfg["task"]["input_steps"], cfg["task"]["horizon"]
 
@@ -49,10 +53,15 @@ class TrailData:
         o = np.arange(max(start, L), end - H + 1)
         return o[np.asarray(self.times[o].hour) == 0]
 
-    def spatial_blocks(self, k: int, walk_position: np.ndarray) -> list:
-        """k contiguous blocks of segments along the walking order."""
-        order = np.argsort(walk_position)
-        return [np.sort(b) for b in np.array_split(order, k)]
+    def walk_order(self) -> np.ndarray:
+        """Segments trail by trail (config order), each in walking order."""
+        wp = self.static[:, self.static_names.index("walk_position")]
+        trail_rank = np.array([self.trails.index(t) for t in self.segment_trail])
+        return np.lexsort((wp, trail_rank))
+
+    def spatial_blocks(self, k: int) -> list:
+        """k contiguous blocks of segments along the trails' walking order."""
+        return [np.sort(b) for b in np.array_split(self.walk_order(), k)]
 
     # ----- tensors -----
     def y_scale(self, sensed: np.ndarray) -> float:

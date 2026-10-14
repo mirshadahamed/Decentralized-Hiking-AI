@@ -35,7 +35,8 @@ def masks(data, origins, cfg):
 
 
 def poi_nodes(data):
-    cols = [i for i, n in enumerate(data.static_names) if n.startswith("poi_") and n != "poi_entrance"]
+    skip = {"poi_entrance", "poi_thotupola_head"}           # access points, not viewpoints
+    cols = [i for i, n in enumerate(data.static_names) if n.startswith("poi_") and n not in skip]
     return np.where(data.static[:, cols].sum(1) > 0)[0]
 
 
@@ -113,8 +114,7 @@ def main():
                             **{k: v.astype(np.float32) for k, v in preds.items()})
 
     if args.protocol in ("spatial", "both"):
-        wp = data.static[:, data.static_names.index("walk_position")]
-        blocks = data.spatial_blocks(cfg["task"]["spatial_blocks"], wp)
+        blocks = data.spatial_blocks(cfg["task"]["spatial_blocks"])
         fold_rows, fold_days = [], {}
         for f, block in enumerate(blocks):
             sensed = np.ones(data.N, bool)
