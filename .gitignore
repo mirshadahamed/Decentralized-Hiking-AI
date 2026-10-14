@@ -7,6 +7,9 @@
 .atom/
 .build/
 .buildlog/
+.venv/
+CLAUDE.md
+.claude/
 .history
 .svn/
 .swiftpm/
@@ -60,3 +63,12 @@ GoogleService-Info.plist
 # Platform-generated transient files
 ios/Flutter/ephemeral/
 macos/Flutter/ephemeral/
+
+# Component 4 (ML): downloaded/generated data and model checkpoints stay local
+ml/component_4/data/*
+!ml/component_4/data/.gitkeep
+ml/component_4/results/**/*.pt
+ml/component_4/results/**/predictions_*.npz
+ml/component_4/results/*_quick/
+__pycache__/
+.pytest_cache/
