@@ -10,6 +10,7 @@ import pandas as pd
 
 from src.config import PROCESSED, load_config
 from src.data.calendar_features import build_calendar
+from src.data.extension_trails import build_extension_trails
 from src.data.graph import build_graph
 from src.data.terrain import segment_terrain
 from src.data.weather import load_weather
@@ -55,6 +56,7 @@ def main():
     set_seed(cfg["seed"])
     seg, edge_index, walk = build_graph(cfg)
     seg = segment_terrain(cfg)
+    build_extension_trails(cfg)      # map layer for the planned diversion extension
     weather = load_weather(cfg)
     cal = build_calendar(cfg)
     assert len(weather) == len(cal) * 24, "weather must cover whole days"
