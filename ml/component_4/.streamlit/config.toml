@@ -1,0 +1,8 @@
+[server]
+address = "localhost"   # only this computer; change to 0.0.0.0 to demo from another device on the network
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#1b7f5a"
