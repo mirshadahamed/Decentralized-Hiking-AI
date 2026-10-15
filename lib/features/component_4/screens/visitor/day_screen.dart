@@ -90,7 +90,7 @@ class _DayScreenState extends State<DayScreen> {
         body: FutureBuilder(
           future: _future,
           builder: (context, snap) {
-            if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = _load()));
+            if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = _load(); }));
             if (!snap.hasData) return const Center(child: CircularProgressIndicator());
             final (plan, slots, trails) = snap.data!;
             final trailSlots = slots.forTrail(_trail);

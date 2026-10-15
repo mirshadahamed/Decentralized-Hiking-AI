@@ -239,7 +239,7 @@ class _WalkInTabState extends State<_WalkInTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     }
-    setState(() => _future = api.walkIns(widget.day));
+    setState(() { _future = api.walkIns(widget.day); });
   }
 
   @override
@@ -247,7 +247,7 @@ class _WalkInTabState extends State<_WalkInTab> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = C4Scope.of(context).walkIns(widget.day)));
+            return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = C4Scope.of(context).walkIns(widget.day); }));
           }
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final slots = snap.data!.where((s) => s.trail == _trail).toList();
@@ -307,13 +307,13 @@ class _LiveTabState extends State<_LiveTab> {
   Widget build(BuildContext context) => FutureBuilder<List<LiveSegment>>(
         future: _future,
         builder: (context, snap) {
-          if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = _load()));
+          if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = _load(); }));
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final segs = snap.data!;
           final count = {for (final l in ['green', 'amber', 'red']) l: segs.where((s) => s.light == l).length};
           final issues = segs.where((s) => s.light != 'green').toList()..sort((a, b) => b.people.compareTo(a.people));
           return RefreshIndicator(
-            onRefresh: () async => setState(() => _future = _load()),
+            onRefresh: () async => setState(() { _future = _load(); }),
             child: ListView(padding: const EdgeInsets.all(16), children: [
               Text('Estimated from tickets scanned so far · $_at', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),

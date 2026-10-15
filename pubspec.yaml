@@ -30,8 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_map: ^8.3.2
   http: ^1.6.0
   intl: ^0.20.3
+  latlong2: ^0.10.1
   mobile_scanner: ^7.4.2
   qr_flutter: ^4.1.0
   shared_preferences: ^2.5.6

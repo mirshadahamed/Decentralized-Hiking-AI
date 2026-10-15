@@ -26,7 +26,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
         // offline: keep the saved copy
       }
     }
-    setState(() => _future = store.all());
+    setState(() { _future = store.all(); });
   }
 
   @override
@@ -53,7 +53,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () async {
                             await Navigator.of(context).push(c4Route(context, TicketScreen(booking: b)));
-                            setState(() => _future = TicketStore().all());
+                            setState(() { _future = TicketStore().all(); });
                           },
                         ),
                       ),
