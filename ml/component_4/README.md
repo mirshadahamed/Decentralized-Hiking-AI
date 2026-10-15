@@ -31,7 +31,18 @@ OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weat
 ```
 `--quick` on `run_benchmark` runs 1 epoch and 1 seed to check the pipeline.
 
-## Dashboard
+## Live mode and API (real dates)
+```powershell
+.venv\Scripts\python.exe -m src.live.refresh                     # every evening: weather, history, outlook, slot plans
+.venv\Scripts\python.exe -m src.api.users add --username ranger1 --role ranger   # staff accounts (password prompted)
+.venv\Scripts\python.exe -m uvicorn src.api.app:app --port 8000  # API, docs at http://localhost:8000/docs
+```
+Weather: observed to yesterday, Open-Meteo forecast for 16 days, typical weather after. Visitor history after
+2025 is simulated with the real weather until DWC totals (`data/live/dwc_daily_totals.csv`) or gate data are
+connected; every day carries its source. Published plans follow the freeze rule (never fewer places than
+already booked). Roles: ranger < officer < admin, checked by the API on every call; actions are audited.
+
+## Dashboard (research / examiner view)
 ```powershell
 .venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501
 ```
@@ -59,6 +70,8 @@ the forecast page uses the historical-average fallback.
 | `src/capacity/cifuentes.py` | carrying-capacity cascade, per trail |
 | `src/planning/` | 90-day planning model, suggestions, lead-time backtest |
 | `src/control/` | entry control: slot tickets (LP), live nowcast, booking, policy evaluation |
+| `src/live/` | live mode: real-date inputs, live dataset, daily refresh and publishing |
+| `src/api/` | FastAPI service, staff accounts, roles, audit log |
 | `src/serve/predict.py` | forecast JSON (with historical-average fallback) |
 | `dashboard/` | Streamlit dashboard (`app.py` + one file per page in `views/`) |
 | `docs/` | development plan, assumptions, decision log |
