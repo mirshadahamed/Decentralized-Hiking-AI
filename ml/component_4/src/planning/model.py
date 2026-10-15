@@ -31,8 +31,9 @@ class DailyTable:
     def __init__(self, data, calendar: pd.DataFrame):
         days = pd.DatetimeIndex(data.times[::24])
         rain = np.expm1(data.cov[:, data.cov_names.index("precip_log1p")]).reshape(-1, 24)
-        df = calendar.reindex(days)[["dow", "is_weekend", "is_holiday", "is_poya", "is_long_weekend",
-                                     "is_school_holiday"]].astype(int).copy()
+        cal_cols = FEATURES[:6] + (["is_season"] if "is_season" in calendar else [])   # pilgrimage season if any
+        self.cols = cal_cols + FEATURES[6:]
+        df = calendar.reindex(days)[cal_cols].astype(int).copy()
         doy = days.dayofyear.values
         df["doy"] = doy
         df["doy_sin"], df["doy_cos"] = np.sin(2 * np.pi * doy / 365.25), np.cos(2 * np.pi * doy / 365.25)
@@ -56,10 +57,10 @@ class DailyTable:
 
     def features(self, issue_idx: int, target_idx: np.ndarray) -> pd.DataFrame:
         """Feature rows for targets forecast on the issue day (only data before the issue day is used)."""
-        X = self.df.iloc[target_idx][FEATURES[:-2]].copy()
+        X = self.df.iloc[target_idx][self.cols[:-2]].copy()
         X["level"] = self.df.level.iloc[issue_idx]           # mean of the 28 days before the issue day
         X["lead"] = np.asarray(target_idx) - issue_idx
-        return X[FEATURES]
+        return X[self.cols]
 
 
 class DailyModel:
@@ -77,12 +78,12 @@ class DailyModel:
                 rows.append((t - lead, t))
         issue = np.array([r[0] for r in rows])
         target = np.array([r[1] for r in rows])
-        X = table.df.iloc[target][FEATURES[:-2]].reset_index(drop=True)
+        X = table.df.iloc[target][table.cols[:-2]].reset_index(drop=True)
         X["level"] = table.df.level.values[issue]
         X["lead"] = target - issue
         y = table.df.visitors.values[target]
         for m in self.models.values():
-            m.fit(X[FEATURES], y)
+            m.fit(X[table.cols], y)
         # Trail shares by day type, from training days
         tr = table.df.iloc[:n]
         kind = self._kind(tr)

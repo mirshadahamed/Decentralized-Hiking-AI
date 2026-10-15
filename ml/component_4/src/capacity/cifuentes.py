@@ -38,7 +38,7 @@ def capacity(seg: pd.DataFrame, forecast: np.ndarray, rain_mm_hourly: np.ndarray
     or rain_share directly (e.g. from climatology for long-range planning);
     expected_by_trail: expected visitors per trail; sim: simulator parameters (walking speed, dwell)."""
     sp, L = c["space_per_person_m"], seg.length_m.values
-    open_h = np.arange(6, 6 + c["open_hours"])
+    open_h = (c.get("open_from_h", 6) + np.arange(c["open_hours"])) % 24
     if rain_share is None:
         rain_share = float((rain_mm_hourly[open_h] >= c["rain_mm"]).mean())
 
@@ -89,7 +89,7 @@ def capacity(seg: pd.DataFrame, forecast: np.ndarray, rain_mm_hourly: np.ndarray
         "crowded_hours_share": round(float(fc_crowd[i]), 3), "status": str(status[i]),
         "pcc_per_day": round(float(pcc[i])), "rcc_per_day": round(float(rcc[i])), "ecc_per_day": round(float(ecc[i])),
     } for i in range(len(seg))]
-    main = trails.get("main", next(iter(trails.values())))
+    main = trails.get(c.get("main_trail", "main"), next(iter(trails.values())))
     return {
         "rain_share_open_hours": round(rain_share, 3),
         "management_capacity": c["management_capacity"],

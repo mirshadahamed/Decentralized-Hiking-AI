@@ -124,7 +124,8 @@ else:
     s = pd.read_csv(ev / "summary.csv")
     st.dataframe(s.round(1).rename(columns={
         "person_hours_over_capacity": "person-hours over capacity", "days_overcrowded": "days with any overcrowding",
-        "mean_peak_worlds_end": "avg World's End peak", "admitted_pct": "admitted %", "moved_slot_pct": "moved slot %",
+        "mean_peak_worlds_end": "avg World's End peak", "mean_peak_focus": "avg peak at the busiest place",
+        "admitted_pct": "admitted %", "moved_slot_pct": "moved slot %",
         "moved_trail_pct": "moved trail %", "refused_pct": "another day %"}), hide_index=True, width="stretch")
     a = s.person_hours_over_capacity.iloc[0]
     tests = json.loads((ev / "tests.json").read_text(encoding="utf-8"))

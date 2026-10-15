@@ -75,7 +75,7 @@ def admit(policy, ec, size, gate, option, quota, plan, rng):
             continue
         if rng.random() < ec.c["accept_trail_swap"]:
             done = False
-            for alt in ("thotupola", "kirigalpotta", "main"):
+            for alt in reversed(trails):                      # Horton Plains: Thotupola, Kirigalpotta, main
                 ra = trails.index(alt)
                 if ra == r:
                     continue
@@ -112,8 +112,8 @@ def _run(ec, cfg, sim, year, seed, policies, write):
     precip = weather.precipitation.values.reshape(len(cal), 24)
     rng = np.random.default_rng(seed)
     demand = daily_demand(cal, precip, cfg["simulator"], rng)
-    open_h = np.arange(6, 6 + cfg["capacity"]["open_hours"])
-    we = int(np.where(ec.seg.poi == "worlds_end")[0][0])
+    open_h = (cfg["capacity"].get("open_from_h", 6) + np.arange(cfg["capacity"]["open_hours"])) % 24
+    we = int(np.where(ec.seg.poi == cfg["area"]["focus_poi"])[0][0])
     bins = ec.n_bins
     rows = []
     for di in np.where(cal.index.year == int(year))[0]:
@@ -133,7 +133,7 @@ def _run(ec, cfg, sim, year, seed, policies, write):
                          "admitted": float(s.sum()), **moved,
                          "person_hours_over": float(over.sum() * ec.c["bin_minutes"] / 60),
                          "overcrowded": bool((over > 0).any()),
-                         "peak_worlds_end": float(occ[we].max()), "cap_worlds_end": float(C[we]),
+                         "peak_focus": float(occ[we].max()), "cap_focus": float(C[we]),
                          "is_poya": int(cal.is_poya.iloc[di]), "is_weekend": int(cal.is_weekend.iloc[di])})
     df = pd.DataFrame(rows)
     g = df.groupby("policy")
@@ -141,7 +141,7 @@ def _run(ec, cfg, sim, year, seed, policies, write):
         "policy": [NAMES[p] for p in policies],
         "person_hours_over_capacity": [g.get_group(p).person_hours_over.sum() for p in policies],
         "days_overcrowded": [int(g.get_group(p).overcrowded.sum()) for p in policies],
-        "mean_peak_worlds_end": [g.get_group(p).peak_worlds_end.mean() for p in policies],
+        "mean_peak_focus": [g.get_group(p).peak_focus.mean() for p in policies],
         "admitted_pct": [100 * g.get_group(p).admitted.sum() / g.get_group(p).wanted.sum() for p in policies],
         "moved_slot_pct": [100 * g.get_group(p).moved_slot.sum() / g.get_group(p).wanted.sum() for p in policies],
         "moved_trail_pct": [100 * g.get_group(p).moved_trail.sum() / g.get_group(p).wanted.sum() for p in policies],
