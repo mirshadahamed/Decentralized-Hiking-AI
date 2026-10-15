@@ -1,0 +1,138 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import 'models.dart';
+
+/// Base URL of the Component 4 API. Override at build time:
+///   flutter run --dart-define=C4_API=http://10.0.2.2:8000     (Android emulator -> host PC)
+const String kC4ApiUrl = String.fromEnvironment('C4_API', defaultValue: 'http://localhost:8000');
+
+class ApiException implements Exception {
+  ApiException(this.statusCode, this.message, {this.alternatives = const []});
+
+  final int statusCode;
+  final String message;
+  final List<Alternative> alternatives; // filled when a slot is full (409)
+
+  bool get isFull => statusCode == 409;
+
+  @override
+  String toString() => message;
+}
+
+/// All calls to the Component 4 API. Tests replace it with a fake (implements C4Api).
+class C4Api {
+  C4Api({String? baseUrl, http.Client? client})
+      : baseUrl = baseUrl ?? kC4ApiUrl,
+        _http = client ?? http.Client();
+
+  final String baseUrl;
+  final http.Client _http;
+  StaffSession? session;
+
+  static String day(DateTime d) => d.toIso8601String().substring(0, 10);
+
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (session != null) 'Authorization': 'Bearer ${session!.token}',
+      };
+
+  Future<dynamic> _send(String method, String path, {Object? body, Map<String, String>? query}) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
+    late http.Response r;
+    try {
+      switch (method) {
+        case 'GET':
+          r = await _http.get(uri, headers: _headers);
+        case 'POST':
+          r = await _http.post(uri, headers: _headers, body: jsonEncode(body ?? {}));
+        case 'DELETE':
+          r = await _http.delete(uri, headers: _headers);
+      }
+    } catch (_) {
+      throw ApiException(0, 'Cannot reach the park server. Check your connection and try again.');
+    }
+    final decoded = r.body.isEmpty ? null : jsonDecode(utf8.decode(r.bodyBytes));
+    if (r.statusCode >= 200 && r.statusCode < 300) return decoded;
+    final detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
+    final alts = decoded is Map && decoded['alternatives'] is List
+        ? (decoded['alternatives'] as List).map((a) => Alternative.fromJson(a as Map<String, dynamic>)).toList()
+        : <Alternative>[];
+    throw ApiException(r.statusCode, detail, alternatives: alts);
+  }
+
+  // ---------- public ----------
+  Future<ServerStatus> status() async => ServerStatus.fromJson(await _send('GET', '/status'));
+
+  Future<Outlook> outlook() async => Outlook.fromJson(await _send('GET', '/outlook'));
+
+  Future<List<TrailInfo>> trails() async =>
+      (await _send('GET', '/trails') as List).map((t) => TrailInfo.fromJson(t as Map<String, dynamic>)).toList();
+
+  Future<DayPlan> plan(DateTime d) async => DayPlan.fromPlanJson(await _send('GET', '/plan/${day(d)}'));
+
+  Future<Map<String, dynamic>> tomorrow() async => await _send('GET', '/forecast/tomorrow') as Map<String, dynamic>;
+
+  Future<DaySlots> slots(DateTime d) async => DaySlots.fromJson(await _send('GET', '/slots/${day(d)}'));
+
+  Future<Booking> book(DateTime d, String trail, String slot, int groupSize) async => Booking.fromJson(
+      await _send('POST', '/bookings', body: {'day': day(d), 'trail': trail, 'slot': slot, 'group_size': groupSize}));
+
+  Future<Booking> booking(String code) async => Booking.fromJson(await _send('GET', '/bookings/$code'));
+
+  Future<void> cancel(String code) async => _send('DELETE', '/bookings/$code');
+
+  // ---------- staff ----------
+  Future<StaffSession> login(String username, String password) async {
+    session = StaffSession.fromJson(await _send('POST', '/auth/login', body: {'username': username, 'password': password}));
+    return session!;
+  }
+
+  Future<void> logout() async {
+    try {
+      await _send('POST', '/auth/logout');
+    } finally {
+      session = null;
+    }
+  }
+
+  Future<CheckInResult> checkIn(String code, {DateTime? at}) async => CheckInResult.fromJson(
+      await _send('POST', '/checkin', body: {'code': code, if (at != null) 'at': at.toIso8601String()}));
+
+  Future<List<WalkInSlot>> walkIns(DateTime d) async => ((await _send('GET', '/walkins/${day(d)}'))['slots'] as List)
+      .map((s) => WalkInSlot.fromJson(s as Map<String, dynamic>))
+      .toList();
+
+  Future<int> sellWalkIn(DateTime d, String trail, String slot, int groupSize, {DateTime? at}) async =>
+      ((await _send('POST', '/walkins', body: {
+        'day': day(d),
+        'trail': trail,
+        'slot': slot,
+        'group_size': groupSize,
+        if (at != null) 'at': at.toIso8601String(),
+      }))['left'] as num)
+          .round();
+
+  Future<List<LiveSegment>> live(DateTime d, {String? at}) async =>
+      ((await _send('GET', '/live/${day(d)}', query: at == null ? null : {'at': at}))['segments'] as List)
+          .map((s) => LiveSegment.fromJson(s as Map<String, dynamic>))
+          .toList();
+
+  Future<List<Map<String, dynamic>>> closeTrail(DateTime d, String trail, String from, String to, String reason) async =>
+      ((await _send('POST', '/admin/closures', body: {
+        'day': day(d),
+        'trail': trail,
+        'slot_from': from,
+        'slot_to': to,
+        'reason': reason,
+      }))['alerts'] as List)
+          .cast<Map<String, dynamic>>();
+
+  Future<List<Map<String, dynamic>>> alerts() async => (await _send('GET', '/admin/alerts') as List).cast<Map<String, dynamic>>();
+
+  Future<List<Map<String, dynamic>>> dayBookings(DateTime d) async =>
+      (await _send('GET', '/admin/bookings/${day(d)}') as List).cast<Map<String, dynamic>>();
+
+  Future<Map<String, dynamic>> refresh() async => await _send('POST', '/admin/refresh') as Map<String, dynamic>;
+}
