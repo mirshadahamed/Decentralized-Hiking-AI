@@ -56,6 +56,14 @@ Remove-Item Env:C4_PARK                                    # back to Horton Plai
 Gateway: `GET /parks`, and `/parks/<park>/...` forwards to that park's API (ports 8101, 8102, …).
 Adam's Peak assumptions: `docs/assumptions_adams_peak.md`.
 
+**Adding a destination** (no app change needed: the app's trip planner lists whatever `/parks` returns):
+1. Copy `configs/parks/adams_peak.yaml` to `configs/parks/<new_id>.yaml`; set `destination` (kind, region,
+   summary, elevation, best_time, getting_there, facts, accent), `area` (bbox, routes, trail names) and
+   `simulator` / `control` (`booking_mode: required` = slot tickets, `advisory` = recommended start times).
+   A new `kind` (e.g. `waterfall`) becomes a new filter chip in the app.
+2. `$env:C4_PARK = "<new_id>"`, then `src.data.build_dataset`, `src.live.refresh` and staff accounts (`src.api.users`).
+3. Restart `src.api.serve_all`: the new park gets the next port and appears in the app.
+
 ## Dashboard (research / examiner view)
 ```powershell
 .venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501

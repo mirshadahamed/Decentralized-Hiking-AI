@@ -43,8 +43,11 @@ flutter run -d chrome --dart-define=C4_API=http://localhost:8000
 
 ## Demo walk-through
 
-**Choose a place**: **Plan your visit** → pick **Horton Plains** or **Adam's Peak (Sri Pada)** (remembered;
-the ⇄ button at the top changes it). The 文A button switches English / සිංහල / தமிழ்.
+**Trip planner**: **Plan your visit** → **Where to?** lists every destination with its type, region, trails and
+the crowd for the next 7 days (quietest day marked). Filter by type (National park / Pilgrimage). Tap one →
+**Overview**: summary, the week ahead, the 3 quietest days in the next 2 weeks, best time, getting there, good to
+know, trails → **Plan your visit / Plan your climb**. The ← button returns to all destinations. The 文A button
+switches English / සිංහල / தமிழ்.
 
 **Horton Plains visitor**
 1. The 90-day calendar (green = quiet … red = very busy).
@@ -64,6 +67,16 @@ the ⇄ button at the top changes it). The 文A button switches English / සි
    → **Record** (the demo time moves on 10 minutes each time).
 3. Record 500 two or three times: the final steps take ~250 people per 10 min, so the card turns red: **HOLD**,
    with how many to let through per 10 minutes at each checkpoint.
+
+**Adam's Peak officer** (log in with an Adam's Peak **officer** account)
+1. **Tonight**: HOLD / NORMAL for the whole mountain, each halfway checkpoint (counted, last count, let pass or
+   release per 10 min, tonight's forecast plan, a warning when a holding checkpoint has not reported), the latest
+   counts. Updates every minute (pull down in demo time). **Record a count** opens the halfway screen.
+2. **Season**: every night of the next 90 days: *Checks needed* (likely), *Stand by* (only if it is as busy as the
+   high case, 1 night in 10 busier) or *Normal*. Try **25 Dec 2026**: Stand by, holds 04:15–07:45 at the summit.
+3. Tap a night → **Night plan**: expected wait at the summit through the night (likely and if busier), when each
+   checkpoint should hold, release per 10 minutes, and the start times given to pilgrims.
+4. ⟳ **Refresh forecasts** reruns the daily refresh.
 
 **Ranger** (top right **Staff** → log in as `ranger1`)
 1. Press the **Now** button at the top → set a demo date/time, e.g. 24 Nov 2026 07:00.
