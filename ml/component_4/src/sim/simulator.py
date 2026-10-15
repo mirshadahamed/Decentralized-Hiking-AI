@@ -86,14 +86,26 @@ class TrailSimulator:
             t = t + dur
         return t
 
-    def simulate_day(self, n_visitors: int, precip_h: np.ndarray, rng, route_share=None):
-        """One day. Returns hourly occupancy [24, S], main-loop durations (min), visitors per trail (dict).
-        route_share overrides the config split (used for what-if diversion experiments)."""
+    def sample_day(self, n_visitors: int, rng, route_share=None):
+        """The groups that *want* to come: size, gate time (minutes) and route option of each group."""
         p = self.p
         size = sample_groups(n_visitors, p, rng).astype(float)
+        arrive = arrival_minutes(len(size), p, rng)
+        option = rng.choice(len(self.options), size=len(size), p=self.option_probs(route_share))
+        return size, arrive, option
+
+    def option_of_trail(self, trail: str, reverse: bool = False) -> int:
+        if trail == "main":
+            return 1 if reverse else 0
+        return next(k for k, (t, _) in enumerate(self.options) if t == trail)
+
+    def simulate_groups(self, size, gate_min, option, precip_h, rng):
+        """Walk the given groups. Returns hourly occupancy [24, S], per-minute occupancy [S, 1440],
+        and the time each group spent (minutes)."""
+        p = self.p
+        size, option = np.asarray(size, float), np.asarray(option)
+        arrive = np.array(gate_min, dtype=float)
         G = len(size)
-        arrive = arrival_minutes(G, p, rng)
-        option = rng.choice(len(self.options), size=G, p=self.option_probs(route_share))
         for k, (trail, _) in enumerate(self.options):
             m = option == k
             if trail in p.get("route_last_entry_h", {}):
@@ -115,10 +127,16 @@ class TrailSimulator:
             hourly = per_min.reshape(self.S, 24, 60).mean(axis=2)
             density = hourly / self.length[:, None]
             crowd = np.maximum(p["crowd_min_speed"], 1.0 / (1.0 + (density / p["crowd_rho0_per_m"]) ** 2))
+        return hourly.T, per_min, finish - arrive
+
+    def simulate_day(self, n_visitors: int, precip_h: np.ndarray, rng, route_share=None):
+        """One day. Returns hourly occupancy [24, S], main-loop durations (min), visitors per trail (dict).
+        route_share overrides the config split (used for what-if diversion experiments)."""
+        size, gate, option = self.sample_day(n_visitors, rng, route_share)
+        hourly, _, duration = self.simulate_groups(size, gate, option, precip_h, rng)
         trail_of = np.array([self.options[k][0] for k in option])
         per_trail = {t: int(size[trail_of == t].sum()) for t in self.trails}
-        main = option < 2
-        return hourly.T, (finish - arrive)[main], per_trail
+        return hourly, duration[option < 2], per_trail
 
 
 def simulate(segments, walks: dict, weather: pd.DataFrame, cal: pd.DataFrame, params: dict, seed: int):
