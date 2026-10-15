@@ -89,8 +89,9 @@ class EntryControl:
         return (1 - rain_share) * self.K[0] + rain_share * self.K[1]
 
     # ---------- 3. slot plan ----------
-    def plan(self, rain_share: float = 0.0, daily_quota: dict | None = None) -> pd.DataFrame:
+    def plan(self, rain_share: float = 0.0, daily_quota: dict | None = None, closed: set | None = None) -> pd.DataFrame:
         """Tickets per trail and slot (DataFrame: rows = slot 'HH:MM', columns = trails).
+        closed: (trail, 'HH:MM') pairs an officer has closed; they get no tickets.
 
         maximise  sum (1 + popularity of slot) * tickets  -  smooth * sum |tickets[k] - tickets[k+1]|
         subject to the capacity rows (every segment, every half hour) and the daily quota per trail.
@@ -98,7 +99,13 @@ class EntryControl:
         """
         R, S_ = len(self.trails), len(self.slots)
         K, C = self.response(rain_share), self.capacity(rain_share) * self.c["safety_margin"]
-        xs = [(r, k) for r in range(R) for k in range(S_) if self.allowed[r, k]]
+        labels = [f"{s // 60:02d}:{s % 60:02d}" for s in self.slots]
+        allowed = self.allowed.copy()
+        for t, s in closed or ():
+            allowed[self.trails.index(t), labels.index(s)] = False
+        xs = [(r, k) for r in range(R) for k in range(S_) if allowed[r, k]]
+        if not xs:                                            # everything closed
+            return pd.DataFrame(0, index=labels, columns=self.trails)
         idx = {v: i for i, v in enumerate(xs)}
         pairs = [(idx[(r, k)], idx[(r, k + 1)]) for r, k in xs if (r, k + 1) in idx]
         nx, n = len(xs), len(xs) + len(pairs)
