@@ -30,16 +30,21 @@ def hourly_covariates(index: pd.DatetimeIndex, cal: pd.DataFrame, weather: pd.Da
         "month_sin": np.sin(2 * np.pi * (m - 1) / 12), "month_cos": np.cos(2 * np.pi * (m - 1) / 12),
         "is_open": ((h >= lo) & (h <= hi)).astype(float),
     }, index=index)
-    for c in ["is_weekend", "is_holiday", "is_poya", "is_long_weekend", "is_school_holiday"]:
-        cov[c] = day[c].values.astype(float)
+    for c in ["is_weekend", "is_holiday", "is_poya", "is_long_weekend", "is_school_holiday", "is_season"]:
+        if c in day:                                          # is_season only for parks with a season
+            cov[c] = day[c].values.astype(float)
     cov["precip_log1p"] = np.log1p(weather.precipitation.values)
     for c in ["temperature_2m", "relative_humidity_2m", "cloud_cover", "wind_speed_10m"]:
         cov[c] = weather[c].values
     return cov
 
 
-VIEWPOINTS = {"mini_worlds_end", "worlds_end", "bakers_falls", "kirigalpotta_peak", "thotupola_peak"}
-ACCESS = {"entrance", "thotupola_head"}
+def viewpoints(cfg) -> set:
+    return set(cfg["area"]["poi_roles"]["viewpoint"])
+
+
+def access_points(cfg) -> set:
+    return set(cfg["area"]["poi_roles"]["access"])
 
 
 def static_features(seg: gpd.GeoDataFrame, walks: dict, cfg) -> pd.DataFrame:
@@ -50,8 +55,8 @@ def static_features(seg: gpd.GeoDataFrame, walks: dict, cfg) -> pd.DataFrame:
     lf = sim["leisure_speed_factor"]
     poi = seg.poi.fillna("")
     st = seg[STATIC_COLS].astype(float).copy()
-    st["is_viewpoint"] = poi.isin(VIEWPOINTS).astype(float)
-    st["is_access_point"] = poi.isin(ACCESS).astype(float)
+    st["is_viewpoint"] = poi.isin(viewpoints(cfg)).astype(float)
+    st["is_access_point"] = poi.isin(access_points(cfg)).astype(float)
     st["dwell_min"] = [sim["dwell_minutes"].get(p, [0])[0] if p else 0.0 for p in poi]
     # minutes from the trail's start until a hiker first reaches the segment, passes per visit,
     # and the share of park visitors whose trail uses the segment

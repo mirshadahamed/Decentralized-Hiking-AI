@@ -88,8 +88,10 @@ def segment_terrain(cfg):
     to_m = Transformer.from_crs("EPSG:4326", cfg["area"]["crs_metric"], always_xy=True).transform
     to_ll = Transformer.from_crs(cfg["area"]["crs_metric"], "EPSG:4326", always_xy=True).transform
 
+    stairs = cfg.get("terrain", {}).get("stairs")
+    steps_share = gdf["frac_steps"].values if "frac_steps" in gdf else np.zeros(len(gdf))
     rows = []
-    for geom in gdf.geometry:
+    for geom, f_steps in zip(gdf.geometry, steps_share):
         line = transform(to_m, geom)
         n = max(2, int(line.length // PROFILE_STEP_M) + 1)
         dists = np.linspace(0, line.length, n)
@@ -100,10 +102,20 @@ def segment_terrain(cfg):
         # the 30 m DEM cells mix in the cliff drop, which is not the trail's real gradient.
         elev_s = np.convolve(np.pad(elev, 2, mode="edge"), np.ones(5) / 5, mode="valid")
         dx = np.diff(dists)
-        grade = np.clip(np.diff(elev_s) / dx, -MAX_GRADE, MAX_GRADE)
+        max_grade = cfg["graph"].get("max_grade", MAX_GRADE)
+        grade = np.clip(np.diff(elev_s) / dx, -max_grade, max_grade)
         dh = grade * dx
         fwd_min = float(np.sum(dx / 1000 / tobler_kmh(grade)) * 60)
         bwd_min = float(np.sum(dx / 1000 / tobler_kmh(-grade)) * 60)
+        if stairs and f_steps > 0:
+            # Steps: Tobler is for slopes, not stairs. Time = level walking + metres climbed / climb rate
+            # + metres descended / descent rate; blended by the share of the segment that is steps.
+            climb, drop = float(np.clip(dh, 0, None).sum()), float(np.clip(-dh, 0, None).sum())
+            flat = line.length / 1000 / stairs["flat_kmh"] * 60
+            up = flat + climb / stairs["up_m_per_min"] + drop / stairs["down_m_per_min"]
+            down = flat + drop / stairs["up_m_per_min"] + climb / stairs["down_m_per_min"]
+            fwd_min = (1 - f_steps) * fwd_min + f_steps * up
+            bwd_min = (1 - f_steps) * bwd_min + f_steps * down
         twi_pts = sample(twi, tf, lon, lat)
         rows.append({
             # length fractions used by the Cifuentes correction factors
