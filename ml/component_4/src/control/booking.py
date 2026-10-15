@@ -1,4 +1,4 @@
-﻿"""Slot booking: reserve an entry slot on a trail up to 90 days ahead, so no one is disappointed at the gate.
+"""Slot booking: reserve an entry slot on a trail up to 90 days ahead, so no one is disappointed at the gate.
 
 - Tickets per slot come from the entry-control plan (src/control/slots.py) for that day; for days further
   ahead than the weather forecast, the rain share is the typical one for that time of year.
