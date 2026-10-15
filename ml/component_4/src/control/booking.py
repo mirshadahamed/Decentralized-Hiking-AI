@@ -49,11 +49,30 @@ def _connect(db=None):
         CREATE TABLE IF NOT EXISTS walkins (
             id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, trail TEXT NOT NULL, slot TEXT NOT NULL,
             group_size INTEGER NOT NULL, sold_by TEXT NOT NULL, sold_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS checkpoint_counts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, route TEXT NOT NULL, time_min INTEGER NOT NULL,
+            count INTEGER NOT NULL CHECK (count >= 0), counted_by TEXT NOT NULL, recorded_at TEXT NOT NULL);
     """)
     cols = [r[1] for r in con.execute("PRAGMA table_info(bookings)")]
     if "checked_in_at" not in cols:                           # older databases
         con.execute("ALTER TABLE bookings ADD COLUMN checked_in_at TEXT")
     return con
+
+
+def record_checkpoint(day: str, route: str, count: int, by: str, at: datetime, db=None):
+    """A ranger at a halfway checkpoint records how many people passed (e.g. in the last 10 minutes)."""
+    with closing(_connect(db)) as con:
+        con.execute("INSERT INTO checkpoint_counts (day, route, time_min, count, counted_by, recorded_at) "
+                    "VALUES (?,?,?,?,?,?)", (day, route, at.hour * 60 + at.minute, int(count), by,
+                                             datetime.now().isoformat(timespec="seconds")))
+        con.commit()
+
+
+def checkpoint_passes(day: str, db=None) -> pd.DataFrame:
+    with closing(_connect(db)) as con:
+        rows = con.execute("SELECT route, time_min, count, counted_by FROM checkpoint_counts WHERE day=? "
+                           "ORDER BY time_min, id", (day,)).fetchall()
+    return pd.DataFrame(rows, columns=["route", "time_min", "count", "counted_by"])
 
 
 def entries(day: str, db=None) -> pd.DataFrame:
@@ -74,7 +93,8 @@ def _climatology_rain_share() -> pd.Series:
     from src.data.weather import load_weather
     cfg = load_config()
     w = load_weather(cfg)
-    open_h = (w.index.hour >= 6) & (w.index.hour < 6 + cfg["capacity"]["open_hours"])
+    lo = cfg["capacity"].get("open_from_h", 6)
+    open_h = ((w.index.hour - lo) % 24) < cfg["capacity"]["open_hours"]
     daily = (w.precipitation[open_h] >= cfg["capacity"]["rain_mm"]).groupby(w.index[open_h].normalize()).mean()
     train = daily[daily.index <= pd.Timestamp(cfg["dates"]["train_end"])]
     doy = train.index.dayofyear.values
