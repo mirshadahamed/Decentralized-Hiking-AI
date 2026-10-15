@@ -38,14 +38,40 @@ def hourly_covariates(index: pd.DatetimeIndex, cal: pd.DataFrame, weather: pd.Da
     return cov
 
 
-def static_features(seg: gpd.GeoDataFrame, cfg) -> pd.DataFrame:
-    """Fixed per-segment inputs: terrain, which trail, which POI, position along its trail."""
+VIEWPOINTS = {"mini_worlds_end", "worlds_end", "bakers_falls", "kirigalpotta_peak", "thotupola_peak"}
+ACCESS = {"entrance", "thotupola_head"}
+
+
+def static_features(seg: gpd.GeoDataFrame, walks: dict, cfg) -> pd.DataFrame:
+    """Fixed per-segment inputs that *describe* a segment rather than name it, so a model can transfer
+    them to segments it never saw counts for (spatial CV). No one-hot of trail or POI identity:
+    those values are unique to a few segments and cannot be learned when those segments are held out."""
+    sim = cfg["simulator"]
+    lf = sim["leisure_speed_factor"]
+    poi = seg.poi.fillna("")
     st = seg[STATIC_COLS].astype(float).copy()
-    for t in cfg["area"]["routes"]:
-        st[f"trail_{t}"] = (seg.trail == t).astype(float)
-    for p in cfg["area"]["pois"]:
-        st[f"poi_{p}"] = (seg.poi == p).astype(float)
-    st["walk_position"] = seg.walk_position.astype(float).values
+    st["is_viewpoint"] = poi.isin(VIEWPOINTS).astype(float)
+    st["is_access_point"] = poi.isin(ACCESS).astype(float)
+    st["dwell_min"] = [sim["dwell_minutes"].get(p, [0])[0] if p else 0.0 for p in poi]
+    # minutes from the trail's start until a hiker first reaches the segment, passes per visit,
+    # and the share of park visitors whose trail uses the segment
+    minutes, passes, share = np.zeros(len(seg)), np.zeros(len(seg)), np.zeros(len(seg))
+    seen = set()
+    for trail, walk in walks.items():
+        t, visited = 0.0, set()
+        for s, d in walk:
+            if s not in seen:
+                minutes[s] = t
+                seen.add(s)
+            if s not in visited:
+                share[s] += sim["route_share"].get(trail, 0.0)
+                visited.add(s)
+            if trail == seg.trail.iloc[s]:
+                passes[s] += 1
+            t += seg[("tobler_fwd_min" if d > 0 else "tobler_bwd_min")].iloc[s] / lf
+    st["minutes_from_trailhead"] = minutes
+    st["passes_per_visit"] = passes
+    st["visitor_share"] = share
     return st
 
 
@@ -60,7 +86,7 @@ def main():
 
     out = simulate(seg, walks, weather, cal, cfg["simulator"], seed=cfg["seed"])
     cov = hourly_covariates(weather.index, cal, weather, cfg)
-    st = static_features(seg, cfg)
+    st = static_features(seg, walks, cfg)
 
     np.savez_compressed(
         PROCESSED / "dataset.npz",
@@ -71,6 +97,8 @@ def main():
         times=weather.index.values.astype("datetime64[h]").astype(np.int64),
         daily_visitors=out["daily_visitors"], daily_visitors_by_trail=out["daily_visitors_by_trail"],
         trails=np.array(out["trails"]), segment_trail=seg.trail.values.astype(str),
+        segment_poi=seg.poi.fillna("").values.astype(str),
+        segment_walk_position=seg.walk_position.values.astype(np.float32),
         median_loop_min=out["median_loop_min"])
     cal.to_csv(PROCESSED / "calendar.csv")
 

@@ -29,6 +29,8 @@ class TrailData:
         self.daily_visitors_by_trail = d["daily_visitors_by_trail"]        # [days, trails]
         self.trails = list(d["trails"])
         self.segment_trail = np.asarray(d["segment_trail"])                 # [N] trail of each segment
+        self.segment_poi = np.asarray(d["segment_poi"])                     # [N] POI key or ""
+        self.segment_walk_position = d["segment_walk_position"]            # [N] 0..1 along its trail
         self.T, self.N = self.y.shape
         self.L, self.H = cfg["task"]["input_steps"], cfg["task"]["horizon"]
 
@@ -55,7 +57,7 @@ class TrailData:
 
     def walk_order(self) -> np.ndarray:
         """Segments trail by trail (config order), each in walking order."""
-        wp = self.static[:, self.static_names.index("walk_position")]
+        wp = self.segment_walk_position
         trail_rank = np.array([self.trails.index(t) for t in self.segment_trail])
         return np.lexsort((wp, trail_rank))
 

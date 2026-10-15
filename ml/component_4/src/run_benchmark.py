@@ -18,6 +18,7 @@ import pandas as pd
 import torch
 
 from src.config import RESULTS, load_config
+from src.data.build_dataset import VIEWPOINTS
 from src.eval.data import TrailData
 from src.eval.metrics import paired_tests, per_day_mae, summary
 from src.models.baselines import ARIMABaseline, HistoricalAverage
@@ -35,9 +36,7 @@ def masks(data, origins, cfg):
 
 
 def poi_nodes(data):
-    skip = {"poi_entrance", "poi_thotupola_head"}           # access points, not viewpoints
-    cols = [i for i, n in enumerate(data.static_names) if n.startswith("poi_") and n not in skip]
-    return np.where(data.static[:, cols].sum(1) > 0)[0]
+    return np.where(np.isin(data.segment_poi, list(VIEWPOINTS)))[0]
 
 
 def evaluate(name, pred, data, origins, nodes, cfg, extra=None):
