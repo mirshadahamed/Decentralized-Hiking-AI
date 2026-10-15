@@ -17,9 +17,27 @@ def data():
 
 def test_graph_size_and_connectivity(data):
     import networkx as nx
-    assert 25 <= data.N <= 40
+    assert 25 <= data.N <= 60
     g = nx.Graph(data.edge_index.T.tolist())
     assert nx.is_connected(g) and g.number_of_nodes() == data.N
+    assert set(data.trails) == {"main", "kirigalpotta", "thotupola"}
+    assert set(data.segment_trail) == set(data.trails)
+
+
+def test_out_and_back_trails_turn_at_the_peak():
+    import geopandas as gpd
+    from src.data.graph import load_walks
+    seg = gpd.read_file(PROCESSED / "segments.geojson").set_index("seg_id")
+    walks = load_walks()
+    for trail, peak in [("kirigalpotta", "kirigalpotta_peak"), ("thotupola", "thotupola_peak")]:
+        w = walks[trail]
+        turn = [s for (s, d), (s2, d2) in zip(w[:-1], w[1:]) if s == s2 and d != d2]
+        assert turn and seg.loc[turn[0], "poi"] == peak
+        assert w[0][0] == w[-1][0]                               # back where it started
+
+
+def test_visitors_by_trail_add_up(data):
+    assert np.array_equal(data.daily_visitors_by_trail.sum(1), data.daily_visitors)
 
 
 def test_no_negative_or_nan(data):
@@ -68,15 +86,17 @@ def test_model_output_shape_and_seed(data):
 
 
 def test_simulator_is_reproducible():
-    import json
-
     import geopandas as gpd
+    from src.data.graph import load_walks
     from src.sim.simulator import TrailSimulator
     cfg = load_config()
     seg = gpd.read_file(PROCESSED / "segments.geojson")
-    walk = [tuple(x) for x in json.loads((PROCESSED / "route.json").read_text())["walk"]]
-    sim = TrailSimulator(seg, walk, cfg["simulator"])
-    a = sim.simulate_day(800, np.zeros(24), np.random.default_rng(1))[0]
-    b = sim.simulate_day(800, np.zeros(24), np.random.default_rng(1))[0]
-    assert np.array_equal(a, b) and a.shape == (24, len(seg))
-    assert a.sum() > 0
+    seg["poi"] = seg["poi"].fillna("")
+    sim = TrailSimulator(seg, load_walks(), cfg["simulator"])
+    a, _, va = sim.simulate_day(800, np.zeros(24), np.random.default_rng(1))
+    b, _, vb = sim.simulate_day(800, np.zeros(24), np.random.default_rng(1))
+    assert np.array_equal(a, b) and a.shape == (24, len(seg)) and va == vb
+    assert a.sum() > 0 and sum(va.values()) >= 800
+    # diversion what-if: sending everyone to Thotupola leaves the World's End loop empty
+    c, _, vc = sim.simulate_day(800, np.zeros(24), np.random.default_rng(1), route_share={"thotupola": 1.0})
+    assert vc["main"] == 0 and c[:, (seg.trail == "main").values].sum() == 0

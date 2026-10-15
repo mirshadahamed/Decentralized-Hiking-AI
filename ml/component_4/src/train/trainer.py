@@ -20,7 +20,7 @@ def build_model(data, kind, hidden):
     spec = {"stgnn": dict(use_graph=True, rnn="gru"),
             "gru_nograph": dict(use_graph=False, rnn="gru"),
             "lstm": dict(use_graph=False, rnn="lstm")}[kind]
-    return STGNN(f_past, f_fut, data.edge_index, hidden=hidden, **spec)
+    return STGNN(f_past, f_fut, data.edge_index, data.edge_weight, hidden=hidden, **spec)
 
 
 @torch.no_grad()

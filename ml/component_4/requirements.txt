@@ -17,4 +17,5 @@ matplotlib==3.11.2
 requests==2.34.2
 holidays==0.106
 PyYAML==6.0.3
+streamlit==1.65.0
 pytest==9.1.1

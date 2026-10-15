@@ -1,8 +1,13 @@
-"""Build the Horton Plains trail graph from OpenStreetMap (D1 / FR1).
+"""Build the Horton Plains trail network from OpenStreetMap (D1 / FR1).
 
-Graph nodes are trail *segments* of about 300 m (occupancy is counted per segment,
-like a traffic sensor covers a road stretch). Two segments are linked when they touch.
-The main hiking loop is found as the shortest path through the key POIs in order.
+Three trails share one park entrance:
+  main         World's End loop (Visitor Center -> Mini World's End -> World's End -> Baker's Falls -> back)
+  kirigalpotta out and back from the Visitor Center to Kirigalpotta peak
+  thotupola    out and back from the Thotupola trailhead (4.2 km up the road) to Thotupola Kanda
+
+Graph nodes are trail *segments* of about 300 m (occupancy is counted per segment, like a traffic
+sensor covers a road stretch). Segments that touch are linked with weight 1. Trails that are only
+connected by road (Thotupola) are linked to the entrance with a weaker edge (config: area.road_links).
 """
 import json
 import math
@@ -25,7 +30,7 @@ def load_osm(cfg):
     ox.settings.cache_folder = str(RAW / "osm_cache")
     bbox = tuple(cfg["area"]["bbox"])
     G = ox.graph_from_bbox(bbox, custom_filter=TRAIL_FILTER, simplify=True, retain_all=True)
-    pois = ox.features_from_bbox(bbox, tags={"tourism": True, "waterway": "waterfall"})
+    pois = ox.features_from_bbox(bbox, tags={"tourism": True, "waterway": "waterfall", "natural": "peak"})
     return ox.convert.to_undirected(G), pois
 
 
@@ -39,37 +44,39 @@ def _edge_coords(G, u, v):
     return coords
 
 
-def find_route(G, pois, cfg):
-    """Shortest path through the configured POIs, as a list of OSM node ids."""
-    names = cfg["area"]["pois"]
+def find_routes(G, pois, cfg):
+    """Every configured route as a list of OSM node ids (shortest path through its POIs in order)."""
     poi_nodes, poi_points = {}, {}
-    for key, name in names.items():
+    for key, name in cfg["area"]["pois"].items():
         p = pois[pois["name"] == name].iloc[0].geometry.centroid
         poi_nodes[key] = ox.distance.nearest_nodes(G, p.x, p.y)
         poi_points[key] = p
-    route = []
-    for a, b in zip(cfg["area"]["route"][:-1], cfg["area"]["route"][1:]):
-        leg = nx.shortest_path(G, poi_nodes[a], poi_nodes[b], weight="length")
-        route += leg if not route else leg[1:]
-    return route, poi_points
+    routes = {}
+    for rname, stops in cfg["area"]["routes"].items():
+        route = []
+        for a, b in zip(stops[:-1], stops[1:]):
+            leg = nx.shortest_path(G, poi_nodes[a], poi_nodes[b], weight="length")
+            route += leg if not route else leg[1:]
+        routes[rname] = route
+    return routes, poi_points
 
 
-def build_chains(G, route):
-    """Merge the unique route edges into chains between junctions."""
+def build_chains(G, routes: dict):
+    """Merge the unique edges of all routes into chains between junctions."""
     H = nx.Graph()
-    H.add_edges_from(zip(route[:-1], route[1:]))
-    junctions = {n for n in H if H.degree(n) != 2} | {route[0]}
+    for r in routes.values():
+        H.add_edges_from(zip(r[:-1], r[1:]))
+    junctions = {n for n in H if H.degree(n) != 2} | {r[0] for r in routes.values()}
     chains, edge_to_chain, seen = [], {}, set()
-    for j in junctions:
-        for nb in H.neighbors(j):
+    for j in sorted(junctions):
+        for nb in sorted(H.neighbors(j)):
             if frozenset((j, nb)) in seen:
                 continue
             path = [j, nb]
             while path[-1] not in junctions:
-                nxt = [n for n in H.neighbors(path[-1]) if n != path[-2]][0]
-                path.append(nxt)
+                path.append([n for n in H.neighbors(path[-1]) if n != path[-2]][0])
             cid = len(chains)
-            for i, (u, v) in enumerate(zip(path[:-1], path[1:])):
+            for u, v in zip(path[:-1], path[1:]):
                 seen.add(frozenset((u, v)))
                 edge_to_chain[(u, v)] = (cid, +1)
                 edge_to_chain[(v, u)] = (cid, -1)
@@ -103,7 +110,7 @@ def split_chains(chains, cfg):
 
 
 def route_to_segments(route, chains, edge_to_chain):
-    """Walking order of the loop as (segment id, direction) pairs; direction +1 = chain order."""
+    """Walking order of one route as (segment id, direction) pairs; direction +1 = chain order."""
     steps = []
     for u, v in zip(route[:-1], route[1:]):
         cid, d = edge_to_chain[(u, v)]
@@ -116,19 +123,23 @@ def route_to_segments(route, chains, edge_to_chain):
     return out
 
 
-def segment_edges(segs):
-    """Undirected adjacency: segments that share an end point."""
+def segment_edges(segs, extra_links=()):
+    """Undirected weighted adjacency: touching segments (weight 1) + road links. Returns edge_index, weight."""
     ends = {}
     for i, s in enumerate(segs):
         for key in (s["start"], s["end"]):
             ends.setdefault(key, []).append(i)
-    edges = set()
+    w = {}
     for ids in ends.values():
         for a in ids:
             for b in ids:
                 if a != b:
-                    edges.add((a, b))
-    return np.array(sorted(edges)).T  # [2, E], both directions
+                    w[(a, b)] = 1.0
+    for a, b, weight in extra_links:
+        w.setdefault((a, b), weight)
+        w.setdefault((b, a), weight)
+    keys = sorted(w)
+    return np.array(keys).T, np.array([w[k] for k in keys], dtype=np.float32)
 
 
 def tag_pois(segs, poi_points, cfg):
@@ -139,33 +150,50 @@ def tag_pois(segs, poi_points, cfg):
         pm = transform(to_m, p)
         d = [s["geom_m"].distance(pm) for s in segs]
         i = int(np.argmin(d))
-        if d[i] <= cfg["graph"]["poi_snap_m"]:
+        if d[i] <= cfg["graph"]["poi_snap_m"] and not segs[i]["poi"]:
             segs[i]["poi"] = key
 
 
 def build_graph(cfg):
     G, pois = load_osm(cfg)
-    route, poi_points = find_route(G, pois, cfg)
-    chains, edge_to_chain = build_chains(G, route)
+    routes, poi_points = find_routes(G, pois, cfg)
+    chains, edge_to_chain = build_chains(G, routes)
     segs = split_chains(chains, cfg)
     tag_pois(segs, poi_points, cfg)
-    walk = route_to_segments(route, chains, edge_to_chain)
-    edge_index = segment_edges(segs)
+    walks = {r: route_to_segments(nodes, chains, edge_to_chain) for r, nodes in routes.items()}
+
+    # each segment belongs to the first route (config order) that walks it; position = order along that route
+    trail, pos = [""] * len(segs), [0.0] * len(segs)
+    for r, walk in walks.items():
+        for k, (s, _) in enumerate(walk):
+            if not trail[s]:
+                trail[s], pos[s] = r, k / len(walk)
+
+    poi_seg = {s["poi"]: i for i, s in enumerate(segs) if s["poi"]}
+    links = [(poi_seg[a], poi_seg[b], float(wt)) for a, b, wt in cfg["area"].get("road_links", [])]
+    edge_index, edge_weight = segment_edges(segs, links)
 
     gdf = gpd.GeoDataFrame(
-        {"seg_id": range(len(segs)),
-         "chain": [s["chain"] for s in segs],
-         "length_m": [round(s["length_m"], 1) for s in segs],
-         "poi": [s["poi"] for s in segs]},
+        {"seg_id": range(len(segs)), "chain": [s["chain"] for s in segs],
+         "trail": trail, "walk_position": [round(p, 4) for p in pos],
+         "length_m": [round(s["length_m"], 1) for s in segs], "poi": [s["poi"] for s in segs]},
         geometry=[s["geometry"] for s in segs], crs="EPSG:4326")
     gdf.to_file(PROCESSED / "segments.geojson", driver="GeoJSON")
     np.save(PROCESSED / "edge_index.npy", edge_index)
-    (PROCESSED / "route.json").write_text(json.dumps({"walk": walk}), encoding="utf-8")
-    return gdf, edge_index, walk
+    np.save(PROCESSED / "edge_weight.npy", edge_weight)
+    (PROCESSED / "route.json").write_text(json.dumps({"walks": walks, "road_links": links}), encoding="utf-8")
+    return gdf, edge_index, walks
+
+
+def load_walks():
+    js = json.loads((PROCESSED / "route.json").read_text(encoding="utf-8"))
+    return {r: [tuple(x) for x in w] for r, w in js["walks"].items()}
 
 
 if __name__ == "__main__":
     from src.config import load_config
-    gdf, ei, walk = build_graph(load_config())
-    print(f"segments={len(gdf)} edges={ei.shape[1] // 2} loop_m={gdf.length_m.sum():.0f} walk_steps={len(walk)}")
-    print(gdf[gdf.poi != ""][["seg_id", "poi", "length_m"]].to_string(index=False))
+    gdf, ei, walks = build_graph(load_config())
+    print(f"segments={len(gdf)} edges={ei.shape[1] // 2}")
+    print(gdf.groupby("trail").agg(segments=("seg_id", "count"), length_m=("length_m", "sum")).to_string())
+    print({r: len(w) for r, w in walks.items()})
+    print(gdf[gdf.poi != ""][["seg_id", "trail", "poi", "length_m"]].to_string(index=False))

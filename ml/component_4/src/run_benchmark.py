@@ -18,6 +18,7 @@ import pandas as pd
 import torch
 
 from src.config import RESULTS, load_config
+from src.data.build_dataset import VIEWPOINTS
 from src.eval.data import TrailData
 from src.eval.metrics import paired_tests, per_day_mae, summary
 from src.models.baselines import ARIMABaseline, HistoricalAverage
@@ -35,8 +36,7 @@ def masks(data, origins, cfg):
 
 
 def poi_nodes(data):
-    cols = [i for i, n in enumerate(data.static_names) if n.startswith("poi_") and n != "poi_entrance"]
-    return np.where(data.static[:, cols].sum(1) > 0)[0]
+    return np.where(np.isin(data.segment_poi, list(VIEWPOINTS)))[0]
 
 
 def evaluate(name, pred, data, origins, nodes, cfg, extra=None):
@@ -113,8 +113,7 @@ def main():
                             **{k: v.astype(np.float32) for k, v in preds.items()})
 
     if args.protocol in ("spatial", "both"):
-        wp = data.static[:, data.static_names.index("walk_position")]
-        blocks = data.spatial_blocks(cfg["task"]["spatial_blocks"], wp)
+        blocks = data.spatial_blocks(cfg["task"]["spatial_blocks"])
         fold_rows, fold_days = [], {}
         for f, block in enumerate(blocks):
             sensed = np.ones(data.N, bool)

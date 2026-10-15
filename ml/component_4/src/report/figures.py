@@ -17,7 +17,9 @@ COLORS = {"HA": "#9e9e9e", "ARIMA": "#c07a2c", "lstm": "#5b8bd0", "gru_nograph":
 LABELS = {"HA": "Historical avg", "ARIMA": "SARIMA", "lstm": "LSTM", "gru_nograph": "GRU (no graph)",
           "stgnn": "ST-GNN (GCN+GRU)"}
 POI_LABEL = {"entrance": "Visitor Center", "mini_worlds_end": "Mini World's End",
-             "worlds_end": "World's End", "bakers_falls": "Baker's Falls"}
+             "worlds_end": "World's End", "bakers_falls": "Baker's Falls",
+             "kirigalpotta_peak": "Kirigalpotta", "thotupola_head": "Thotupola trailhead",
+             "thotupola_peak": "Thotupola Kanda"}
 
 
 def _seg():
@@ -126,8 +128,9 @@ def capacity_map(date):
     seg.plot(ax=ax, column="util", cmap="RdYlGn_r", vmin=0, vmax=1.5, linewidth=5, legend=True,
              legend_kwds={"label": "Forecast peak / effective capacity", "shrink": 0.7})
     _label_pois(ax, seg)
-    ax.set_title(f"{date}: expected {js['expected_visitors']} visitors, "
-                 f"recommended quota {js['recommended_daily_quota']}")
+    lines = [f"{v['name']}: expected {v['expected_visitors']}, quota {v['recommended_daily_quota']}"
+             for v in js.get("trails", {}).values()]
+    ax.set_title(f"{date}\n" + " · ".join(lines), fontsize=9)
     ax.set_axis_off()
     fig.tight_layout()
     fig.savefig(FIGURES / f"capacity_{date}.png", dpi=180)

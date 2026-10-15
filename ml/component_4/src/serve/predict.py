@@ -34,40 +34,46 @@ def load_model(data, cfg, run_name=None, kind="stgnn", seed=42):
     return model, ck["scale"], run.name
 
 
-def expected_visitors(data, day_idx):
-    """Demand expected from the calendar alone: train-period mean for the same day type and month."""
+def expected_visitors(data, day_idx) -> dict:
+    """Demand per trail from the calendar alone: train-period mean for the same day type and month."""
     daily_cov = data.cov[::24]
     dt = day_type(daily_cov, data.cov_names)
     months = np.asarray(data.times[::24].month)
     train_days = data.train_end // 24
     sel = (dt[:train_days] == dt[day_idx]) & (months[:train_days] == months[day_idx])
-    return float(data.daily_visitors[:train_days][sel].mean())
+    means = data.daily_visitors_by_trail[:train_days][sel].mean(0)
+    return {t: float(v) for t, v in zip(data.trails, means)}
+
+
+def build_forecast(data, cfg, seg, date: str, model=None, scale=None, run=None) -> dict:
+    """Forecast + capacity for one date as a dict (no file written). model=None -> NFR2 fallback."""
+    origin = int(np.searchsorted(data.times, pd.Timestamp(date)))
+    if origin >= data.T or data.times[origin] != pd.Timestamp(date) or origin < data.L:
+        raise ValueError(f"{date} is outside the dataset")
+    sensed = np.ones(data.N, bool)
+
+    if model is not None:
+        fc = predict(model, data, np.array([origin]), sensed, scale)[0]       # [24, N]
+        source = {"model": "stgnn", "run": run}
+        rain = np.expm1(data.cov[origin:origin + 24, data.cov_names.index("precip_log1p")])
+    else:                                                                    # NFR2 graceful fallback
+        fc = HistoricalAverage().fit(data, sensed).predict(data, np.array([origin]))[0]
+        source = {"model": "historical_average", "reason": "no fresh weather forecast"}
+        rain = np.zeros(24)
+    cap = capacity(seg, fc, rain, expected_visitors(data, origin // 24), cfg["capacity"], cfg["simulator"],
+                   cfg["area"]["trail_names"])
+
+    return {"schema_version": SCHEMA_VERSION, "component": 4, "site": cfg["area"]["name"],
+            "generated_at": datetime.now().isoformat(timespec="seconds"), "forecast_date": date,
+            "source": source, "fallback_used": model is None, "disclaimer": DISCLAIMER, **cap}
 
 
 def forecast_day(date: str, use_weather=True, run_name=None):
     cfg = load_config()
     data = TrailData(cfg)
-    origin = int(np.searchsorted(data.times, pd.Timestamp(date)))
-    assert data.times[origin] == pd.Timestamp(date), "date outside the dataset"
-    sensed = np.ones(data.N, bool)
-
-    if use_weather:
-        model, scale, run = load_model(data, cfg, run_name)
-        fc = predict(model, data, np.array([origin]), sensed, scale)[0]       # [24, N]
-        source = {"model": "stgnn", "run": run}
-    else:                                                                    # NFR2 graceful fallback
-        fc = HistoricalAverage().fit(data, sensed).predict(data, np.array([origin]))[0]
-        source = {"model": "historical_average", "reason": "no fresh weather forecast"}
-
     seg = gpd.read_file(PROCESSED / "segments.geojson")
-    rain = np.expm1(data.cov[origin:origin + 24, data.cov_names.index("precip_log1p")])
-    if not use_weather:
-        rain = np.zeros(24)
-    cap = capacity(seg, fc, rain, expected_visitors(data, origin // 24), cfg["capacity"], cfg["simulator"])
-
-    out = {"schema_version": SCHEMA_VERSION, "component": 4, "site": cfg["area"]["name"],
-           "generated_at": datetime.now().isoformat(timespec="seconds"), "forecast_date": date,
-           "source": source, "fallback_used": not use_weather, "disclaimer": DISCLAIMER, **cap}
+    model, scale, run = load_model(data, cfg, run_name) if use_weather else (None, None, None)
+    out = build_forecast(data, cfg, seg, date, model, scale, run)
     path = RESULTS / "forecasts" / f"forecast_{date}{'' if use_weather else '_fallback'}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")
@@ -81,10 +87,9 @@ if __name__ == "__main__":
     ap.add_argument("--run", default=None)
     a = ap.parse_args()
     out, path = forecast_day(a.date, not a.no_weather, a.run)
-    busy = [s for s in out["segments"] if s["status"] != "ok"]
-    print(f"{path}\nexpected visitors={out['expected_visitors']} recommended quota={out['recommended_daily_quota']} "
-          f"(classic Cifuentes {out['classic_cifuentes_quota']}) limiting segment={out['limiting_segment']} "
-          f"trail factors={out['trail_correction_factors']}")
-    for s in busy:
-        print(f"  seg {s['seg_id']:>2} {s['poi'] or '':<16} peak={s['peak_occupancy']:>6} at {s['peak_hour']:02d}:00 "
-              f"holds={s['capacity_at_once']:>5} crowded_hours={s['crowded_hours_share']} {s['status']}")
+    print(f"{path}\npark: expected={out['expected_visitors']} quota={out['recommended_daily_quota']} "
+          f"(classic Cifuentes {out['classic_cifuentes_quota']})")
+    for t, v in out["trails"].items():
+        print(f"  {v['name']:<18} expected={v['expected_visitors']:>5} quota={v['recommended_daily_quota']:>5} "
+              f"classic={v['classic_cifuentes_quota']:>5} limiting seg={v['limiting_segment']:>2} "
+              f"bottlenecks={v['bottleneck_segments']} peak={v['peak_occupancy']}")

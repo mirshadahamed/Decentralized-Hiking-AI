@@ -1,8 +1,9 @@
-"""Synthetic hourly occupancy simulator for the Horton Plains loop (D2).
+"""Synthetic hourly occupancy simulator for the Horton Plains trail network (D2).
 
 Every hiker group is simulated individually, one day at a time:
-  daily demand (calendar x season x morning rain) -> groups -> gate arrival time ->
-  walk the loop segment by segment (Tobler speed x rain slowdown x crowd slowdown) + dwell at viewpoints.
+  daily park demand (calendar x season x morning rain) -> groups -> gate arrival time ->
+  choice of trail (World's End loop either way, Kirigalpotta, Thotupola) ->
+  walk it segment by segment (Tobler speed x rain slowdown x crowd slowdown) + dwell at viewpoints and peaks.
 Occupancy of a segment in an hour = average number of people on it during that hour.
 The crowd slowdown needs occupancy, so each day is simulated twice (second pass uses the first pass's density).
 All parameters live in configs/default.yaml and are justified in docs/assumptions.md.
@@ -45,15 +46,27 @@ def arrival_minutes(n: int, p: dict, rng) -> np.ndarray:
 
 
 class TrailSimulator:
-    def __init__(self, segments: pd.DataFrame, walk: list, params: dict):
+    def __init__(self, segments: pd.DataFrame, walks: dict, params: dict):
         self.p = params
         self.S = len(segments)
         self.length = segments.length_m.values
         lf = params["leisure_speed_factor"]
         self.base_time = {+1: segments.tobler_fwd_min.values / lf, -1: segments.tobler_bwd_min.values / lf}
-        self.walks = [list(walk), [(s, -d) for s, d in reversed(walk)]]   # standard, reverse
+        # Route options: the main loop in both directions, plus every other trail (out and back).
+        self.trails = list(walks)
+        main = walks["main"]
+        self.options = [("main", list(main)), ("main", [(s, -d) for s, d in reversed(main)])]
+        self.options += [(t, list(w)) for t, w in walks.items() if t != "main"]
         self.dwell = {int(i): params["dwell_minutes"][poi]
                       for i, poi in segments.poi.items() if poi in params["dwell_minutes"]}
+
+    def option_probs(self, route_share=None):
+        share = dict(route_share or self.p["route_share"])
+        std = self.p["standard_direction_share"]
+        main = share.get("main", 0.0)
+        probs = [main * std, main * (1 - std)] + [share.get(t, 0.0) for t, _ in self.options[2:]]
+        probs = np.array(probs)
+        return probs / probs.sum()
 
     def _walk(self, walk, arrive, size, speed, dwell, precip_h, crowd, diff):
         p, t = self.p, arrive.copy()
@@ -73,13 +86,19 @@ class TrailSimulator:
             t = t + dur
         return t
 
-    def simulate_day(self, n_visitors: int, precip_h: np.ndarray, rng):
-        """Hourly occupancy [24, S] for one day, plus loop durations (minutes) of every group."""
+    def simulate_day(self, n_visitors: int, precip_h: np.ndarray, rng, route_share=None):
+        """One day. Returns hourly occupancy [24, S], main-loop durations (min), visitors per trail (dict).
+        route_share overrides the config split (used for what-if diversion experiments)."""
         p = self.p
         size = sample_groups(n_visitors, p, rng).astype(float)
         G = len(size)
         arrive = arrival_minutes(G, p, rng)
-        standard = rng.random(G) < p["standard_direction_share"]
+        option = rng.choice(len(self.options), size=G, p=self.option_probs(route_share))
+        for k, (trail, _) in enumerate(self.options):
+            m = option == k
+            if trail in p.get("route_last_entry_h", {}):
+                arrive[m] = np.minimum(arrive[m], p["route_last_entry_h"][trail] * 60)
+            arrive[m] += p.get("route_start_offset_min", {}).get(trail, 0)
         speed = rng.lognormal(0.0, p["walker_speed_sd"], G)
         dwell = {s: rng.lognormal(np.log(med), sd, G) for s, (med, sd) in self.dwell.items()}
 
@@ -87,7 +106,8 @@ class TrailSimulator:
         for _ in range(2):
             diff = np.zeros((self.S, MIN_PER_DAY + 1))
             finish = np.empty(G)
-            for walk, m in zip(self.walks, (standard, ~standard)):
+            for k, (_, walk) in enumerate(self.options):
+                m = option == k
                 if m.any():
                     finish[m] = self._walk(walk, arrive[m], size[m], speed[m],
                                            {s: v[m] for s, v in dwell.items()}, precip_h, crowd, diff)
@@ -95,26 +115,30 @@ class TrailSimulator:
             hourly = per_min.reshape(self.S, 24, 60).mean(axis=2)
             density = hourly / self.length[:, None]
             crowd = np.maximum(p["crowd_min_speed"], 1.0 / (1.0 + (density / p["crowd_rho0_per_m"]) ** 2))
-        return hourly.T, finish - arrive, int(size.sum())
+        trail_of = np.array([self.options[k][0] for k in option])
+        per_trail = {t: int(size[trail_of == t].sum()) for t in self.trails}
+        main = option < 2
+        return hourly.T, (finish - arrive)[main], per_trail
 
 
-def simulate(segments, walk, weather: pd.DataFrame, cal: pd.DataFrame, params: dict, seed: int):
-    """Run the whole period. Returns dict of arrays (true and observed occupancy, daily visitors)."""
+def simulate(segments, walks: dict, weather: pd.DataFrame, cal: pd.DataFrame, params: dict, seed: int):
+    """Run the whole period. Returns dict of arrays (true and observed occupancy, visitors per day and trail)."""
     rng = np.random.default_rng(seed)
     precip = weather.precipitation.values.reshape(len(cal), 24)
     demand = daily_demand(cal, precip, params, rng)
-    sim = TrailSimulator(segments, walk, params)
+    sim = TrailSimulator(segments, walks, params)
 
     occ = np.zeros((len(cal) * 24, sim.S))
-    visitors = np.zeros(len(cal), dtype=int)
+    by_trail = np.zeros((len(cal), len(sim.trails)), dtype=int)
     durations = []
     for i in range(len(cal)):
         h, dur, v = sim.simulate_day(int(round(demand[i])), precip[i], rng)
         occ[i * 24:(i + 1) * 24] = h
-        visitors[i] = v
-        durations.append(np.median(dur))
+        by_trail[i] = [v[t] for t in sim.trails]
+        durations.append(np.median(dur) if len(dur) else np.nan)
 
     # Observation model: a headcount with multiplicative error.
     observed = rng.poisson(occ * rng.lognormal(0.0, params["obs_noise_sd"], occ.shape)).astype(float)
-    return {"occ_true": occ, "occ_obs": observed, "daily_visitors": visitors,
+    return {"occ_true": occ, "occ_obs": observed, "daily_visitors": by_trail.sum(1),
+            "daily_visitors_by_trail": by_trail, "trails": sim.trails,
             "median_loop_min": np.array(durations)}

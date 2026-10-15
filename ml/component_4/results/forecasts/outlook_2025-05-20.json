@@ -1,0 +1,1457 @@
+{
+  "schema_version": "1.1-outlook",
+  "component": 4,
+  "site": "Horton Plains National Park",
+  "generated_at": "2026-10-15T01:09:09",
+  "issue_date": "2025-05-20",
+  "horizon_days": 90,
+  "crowd_levels": "1 = quietest 20 % of days ... 5 = busiest 20 %",
+  "trails": {
+    "main": "World's End loop",
+    "kirigalpotta": "Kirigalpotta",
+    "thotupola": "Thotupola Kanda"
+  },
+  "disclaimer": "Long-range estimate from the calendar, typical weather for the time of year and recent visitor numbers, trained on a SYNTHETIC occupancy target. The range (P10-P90) should contain the real number on about 8 of 10 days. Check again closer to the date.",
+  "days": [
+    {
+      "date": "2025-05-21",
+      "lead_days": 1,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 325,
+        "p50": 422,
+        "p90": 538
+      },
+      "visitors_by_trail_p50": {
+        "main": 363,
+        "kirigalpotta": 21,
+        "thotupola": 38
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-22",
+      "lead_days": 2,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 328,
+        "p50": 426,
+        "p90": 543
+      },
+      "visitors_by_trail_p50": {
+        "main": 367,
+        "kirigalpotta": 22,
+        "thotupola": 38
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-23",
+      "lead_days": 3,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 296,
+        "p50": 386,
+        "p90": 491
+      },
+      "visitors_by_trail_p50": {
+        "main": 332,
+        "kirigalpotta": 19,
+        "thotupola": 35
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-24",
+      "lead_days": 4,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 554,
+        "p50": 720,
+        "p90": 917
+      },
+      "visitors_by_trail_p50": {
+        "main": 619,
+        "kirigalpotta": 36,
+        "thotupola": 65
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-25",
+      "lead_days": 5,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 579,
+        "p50": 753,
+        "p90": 959
+      },
+      "visitors_by_trail_p50": {
+        "main": 648,
+        "kirigalpotta": 37,
+        "thotupola": 68
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-26",
+      "lead_days": 6,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 288,
+        "p50": 374,
+        "p90": 477
+      },
+      "visitors_by_trail_p50": {
+        "main": 322,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-05-27",
+      "lead_days": 7,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 291,
+        "p50": 379,
+        "p90": 482
+      },
+      "visitors_by_trail_p50": {
+        "main": 326,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-05-28",
+      "lead_days": 8,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 299,
+        "p50": 389,
+        "p90": 496
+      },
+      "visitors_by_trail_p50": {
+        "main": 335,
+        "kirigalpotta": 20,
+        "thotupola": 35
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-05-29",
+      "lead_days": 9,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 304,
+        "p50": 396,
+        "p90": 504
+      },
+      "visitors_by_trail_p50": {
+        "main": 340,
+        "kirigalpotta": 20,
+        "thotupola": 35
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-05-30",
+      "lead_days": 10,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 307,
+        "p50": 399,
+        "p90": 508
+      },
+      "visitors_by_trail_p50": {
+        "main": 343,
+        "kirigalpotta": 20,
+        "thotupola": 36
+      },
+      "chance_wet_morning": 0.06
+    },
+    {
+      "date": "2025-05-31",
+      "lead_days": 11,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 647,
+        "p50": 842,
+        "p90": 1072
+      },
+      "visitors_by_trail_p50": {
+        "main": 724,
+        "kirigalpotta": 42,
+        "thotupola": 76
+      },
+      "chance_wet_morning": 0.05
+    },
+    {
+      "date": "2025-06-01",
+      "lead_days": 12,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 698,
+        "p50": 908,
+        "p90": 1157
+      },
+      "visitors_by_trail_p50": {
+        "main": 781,
+        "kirigalpotta": 45,
+        "thotupola": 82
+      },
+      "chance_wet_morning": 0.05
+    },
+    {
+      "date": "2025-06-02",
+      "lead_days": 13,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 270,
+        "p50": 350,
+        "p90": 446
+      },
+      "visitors_by_trail_p50": {
+        "main": 301,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.03
+    },
+    {
+      "date": "2025-06-03",
+      "lead_days": 14,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 272,
+        "p50": 354,
+        "p90": 451
+      },
+      "visitors_by_trail_p50": {
+        "main": 304,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.02
+    },
+    {
+      "date": "2025-06-04",
+      "lead_days": 15,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 268,
+        "p50": 349,
+        "p90": 444
+      },
+      "visitors_by_trail_p50": {
+        "main": 300,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-05",
+      "lead_days": 16,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 268,
+        "p50": 349,
+        "p90": 444
+      },
+      "visitors_by_trail_p50": {
+        "main": 300,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-06",
+      "lead_days": 17,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 287,
+        "p50": 373,
+        "p90": 475
+      },
+      "visitors_by_trail_p50": {
+        "main": 320,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-07",
+      "lead_days": 18,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 633,
+        "p50": 823,
+        "p90": 1048
+      },
+      "visitors_by_trail_p50": {
+        "main": 708,
+        "kirigalpotta": 41,
+        "thotupola": 74
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-08",
+      "lead_days": 19,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 721,
+        "p50": 937,
+        "p90": 1193
+      },
+      "visitors_by_trail_p50": {
+        "main": 806,
+        "kirigalpotta": 47,
+        "thotupola": 84
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-09",
+      "lead_days": 20,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 269,
+        "p50": 350,
+        "p90": 446
+      },
+      "visitors_by_trail_p50": {
+        "main": 301,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-10",
+      "lead_days": 21,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 717,
+        "p50": 932,
+        "p90": 1187
+      },
+      "visitors_by_trail_p50": {
+        "main": 802,
+        "kirigalpotta": 46,
+        "thotupola": 84
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-11",
+      "lead_days": 22,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 281,
+        "p50": 366,
+        "p90": 466
+      },
+      "visitors_by_trail_p50": {
+        "main": 315,
+        "kirigalpotta": 18,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-12",
+      "lead_days": 23,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 276,
+        "p50": 359,
+        "p90": 457
+      },
+      "visitors_by_trail_p50": {
+        "main": 309,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-13",
+      "lead_days": 24,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 282,
+        "p50": 367,
+        "p90": 467
+      },
+      "visitors_by_trail_p50": {
+        "main": 316,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-14",
+      "lead_days": 25,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 533,
+        "p50": 693,
+        "p90": 882
+      },
+      "visitors_by_trail_p50": {
+        "main": 596,
+        "kirigalpotta": 34,
+        "thotupola": 62
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-15",
+      "lead_days": 26,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 684,
+        "p50": 889,
+        "p90": 1132
+      },
+      "visitors_by_trail_p50": {
+        "main": 765,
+        "kirigalpotta": 44,
+        "thotupola": 80
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-16",
+      "lead_days": 27,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 254,
+        "p50": 330,
+        "p90": 420
+      },
+      "visitors_by_trail_p50": {
+        "main": 284,
+        "kirigalpotta": 17,
+        "thotupola": 30
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-17",
+      "lead_days": 28,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 266,
+        "p50": 346,
+        "p90": 441
+      },
+      "visitors_by_trail_p50": {
+        "main": 298,
+        "kirigalpotta": 17,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.0
+    },
+    {
+      "date": "2025-06-18",
+      "lead_days": 29,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 267,
+        "p50": 347,
+        "p90": 442
+      },
+      "visitors_by_trail_p50": {
+        "main": 298,
+        "kirigalpotta": 17,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.03
+    },
+    {
+      "date": "2025-06-19",
+      "lead_days": 30,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 259,
+        "p50": 337,
+        "p90": 430
+      },
+      "visitors_by_trail_p50": {
+        "main": 290,
+        "kirigalpotta": 17,
+        "thotupola": 30
+      },
+      "chance_wet_morning": 0.03
+    },
+    {
+      "date": "2025-06-20",
+      "lead_days": 31,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 270,
+        "p50": 351,
+        "p90": 447
+      },
+      "visitors_by_trail_p50": {
+        "main": 302,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.06
+    },
+    {
+      "date": "2025-06-21",
+      "lead_days": 32,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 515,
+        "p50": 670,
+        "p90": 853
+      },
+      "visitors_by_trail_p50": {
+        "main": 576,
+        "kirigalpotta": 33,
+        "thotupola": 60
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-06-22",
+      "lead_days": 33,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 533,
+        "p50": 693,
+        "p90": 883
+      },
+      "visitors_by_trail_p50": {
+        "main": 596,
+        "kirigalpotta": 34,
+        "thotupola": 62
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-06-23",
+      "lead_days": 34,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 225,
+        "p50": 292,
+        "p90": 372
+      },
+      "visitors_by_trail_p50": {
+        "main": 251,
+        "kirigalpotta": 15,
+        "thotupola": 26
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-06-24",
+      "lead_days": 35,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 239,
+        "p50": 311,
+        "p90": 396
+      },
+      "visitors_by_trail_p50": {
+        "main": 267,
+        "kirigalpotta": 16,
+        "thotupola": 28
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-06-25",
+      "lead_days": 36,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 254,
+        "p50": 330,
+        "p90": 420
+      },
+      "visitors_by_trail_p50": {
+        "main": 284,
+        "kirigalpotta": 17,
+        "thotupola": 30
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-06-26",
+      "lead_days": 37,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 279,
+        "p50": 362,
+        "p90": 461
+      },
+      "visitors_by_trail_p50": {
+        "main": 312,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-06-27",
+      "lead_days": 38,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 310,
+        "p50": 403,
+        "p90": 513
+      },
+      "visitors_by_trail_p50": {
+        "main": 347,
+        "kirigalpotta": 20,
+        "thotupola": 36
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-06-28",
+      "lead_days": 39,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 546,
+        "p50": 710,
+        "p90": 905
+      },
+      "visitors_by_trail_p50": {
+        "main": 611,
+        "kirigalpotta": 35,
+        "thotupola": 64
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-06-29",
+      "lead_days": 40,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 614,
+        "p50": 799,
+        "p90": 1017
+      },
+      "visitors_by_trail_p50": {
+        "main": 687,
+        "kirigalpotta": 40,
+        "thotupola": 72
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-06-30",
+      "lead_days": 41,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 287,
+        "p50": 373,
+        "p90": 475
+      },
+      "visitors_by_trail_p50": {
+        "main": 321,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-01",
+      "lead_days": 42,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 287,
+        "p50": 373,
+        "p90": 475
+      },
+      "visitors_by_trail_p50": {
+        "main": 321,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-02",
+      "lead_days": 43,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 281,
+        "p50": 366,
+        "p90": 465
+      },
+      "visitors_by_trail_p50": {
+        "main": 314,
+        "kirigalpotta": 18,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-03",
+      "lead_days": 44,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 282,
+        "p50": 367,
+        "p90": 467
+      },
+      "visitors_by_trail_p50": {
+        "main": 315,
+        "kirigalpotta": 18,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-04",
+      "lead_days": 45,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 308,
+        "p50": 401,
+        "p90": 510
+      },
+      "visitors_by_trail_p50": {
+        "main": 345,
+        "kirigalpotta": 20,
+        "thotupola": 36
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-05",
+      "lead_days": 46,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 561,
+        "p50": 730,
+        "p90": 929
+      },
+      "visitors_by_trail_p50": {
+        "main": 628,
+        "kirigalpotta": 36,
+        "thotupola": 66
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-06",
+      "lead_days": 47,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 609,
+        "p50": 792,
+        "p90": 1009
+      },
+      "visitors_by_trail_p50": {
+        "main": 681,
+        "kirigalpotta": 39,
+        "thotupola": 71
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-07",
+      "lead_days": 48,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 264,
+        "p50": 343,
+        "p90": 437
+      },
+      "visitors_by_trail_p50": {
+        "main": 295,
+        "kirigalpotta": 17,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-08",
+      "lead_days": 49,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 271,
+        "p50": 353,
+        "p90": 449
+      },
+      "visitors_by_trail_p50": {
+        "main": 303,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-09",
+      "lead_days": 50,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 272,
+        "p50": 354,
+        "p90": 450
+      },
+      "visitors_by_trail_p50": {
+        "main": 304,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-10",
+      "lead_days": 51,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 805,
+        "p50": 1048,
+        "p90": 1334
+      },
+      "visitors_by_trail_p50": {
+        "main": 902,
+        "kirigalpotta": 52,
+        "thotupola": 94
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-11",
+      "lead_days": 52,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 289,
+        "p50": 376,
+        "p90": 479
+      },
+      "visitors_by_trail_p50": {
+        "main": 324,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-12",
+      "lead_days": 53,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 560,
+        "p50": 728,
+        "p90": 927
+      },
+      "visitors_by_trail_p50": {
+        "main": 626,
+        "kirigalpotta": 36,
+        "thotupola": 66
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-13",
+      "lead_days": 54,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 620,
+        "p50": 806,
+        "p90": 1027
+      },
+      "visitors_by_trail_p50": {
+        "main": 694,
+        "kirigalpotta": 40,
+        "thotupola": 73
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-14",
+      "lead_days": 55,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 267,
+        "p50": 348,
+        "p90": 443
+      },
+      "visitors_by_trail_p50": {
+        "main": 299,
+        "kirigalpotta": 18,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-15",
+      "lead_days": 56,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 264,
+        "p50": 343,
+        "p90": 437
+      },
+      "visitors_by_trail_p50": {
+        "main": 295,
+        "kirigalpotta": 17,
+        "thotupola": 31
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-16",
+      "lead_days": 57,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 285,
+        "p50": 371,
+        "p90": 472
+      },
+      "visitors_by_trail_p50": {
+        "main": 319,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-17",
+      "lead_days": 58,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 295,
+        "p50": 384,
+        "p90": 489
+      },
+      "visitors_by_trail_p50": {
+        "main": 330,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.15
+    },
+    {
+      "date": "2025-07-18",
+      "lead_days": 59,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 306,
+        "p50": 398,
+        "p90": 506
+      },
+      "visitors_by_trail_p50": {
+        "main": 342,
+        "kirigalpotta": 20,
+        "thotupola": 36
+      },
+      "chance_wet_morning": 0.16
+    },
+    {
+      "date": "2025-07-19",
+      "lead_days": 60,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 558,
+        "p50": 726,
+        "p90": 925
+      },
+      "visitors_by_trail_p50": {
+        "main": 624,
+        "kirigalpotta": 36,
+        "thotupola": 65
+      },
+      "chance_wet_morning": 0.15
+    },
+    {
+      "date": "2025-07-20",
+      "lead_days": 61,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 616,
+        "p50": 801,
+        "p90": 1020
+      },
+      "visitors_by_trail_p50": {
+        "main": 689,
+        "kirigalpotta": 40,
+        "thotupola": 72
+      },
+      "chance_wet_morning": 0.16
+    },
+    {
+      "date": "2025-07-21",
+      "lead_days": 62,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 299,
+        "p50": 389,
+        "p90": 496
+      },
+      "visitors_by_trail_p50": {
+        "main": 335,
+        "kirigalpotta": 20,
+        "thotupola": 35
+      },
+      "chance_wet_morning": 0.15
+    },
+    {
+      "date": "2025-07-22",
+      "lead_days": 63,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 283,
+        "p50": 368,
+        "p90": 469
+      },
+      "visitors_by_trail_p50": {
+        "main": 317,
+        "kirigalpotta": 19,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-23",
+      "lead_days": 64,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 292,
+        "p50": 379,
+        "p90": 483
+      },
+      "visitors_by_trail_p50": {
+        "main": 326,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-24",
+      "lead_days": 65,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 273,
+        "p50": 355,
+        "p90": 452
+      },
+      "visitors_by_trail_p50": {
+        "main": 305,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-25",
+      "lead_days": 66,
+      "crowd_level": 2,
+      "visitors": {
+        "p10": 289,
+        "p50": 376,
+        "p90": 479
+      },
+      "visitors_by_trail_p50": {
+        "main": 323,
+        "kirigalpotta": 19,
+        "thotupola": 34
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-26",
+      "lead_days": 67,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 534,
+        "p50": 694,
+        "p90": 884
+      },
+      "visitors_by_trail_p50": {
+        "main": 597,
+        "kirigalpotta": 35,
+        "thotupola": 63
+      },
+      "chance_wet_morning": 0.13
+    },
+    {
+      "date": "2025-07-27",
+      "lead_days": 68,
+      "crowd_level": 4,
+      "visitors": {
+        "p10": 549,
+        "p50": 714,
+        "p90": 909
+      },
+      "visitors_by_trail_p50": {
+        "main": 614,
+        "kirigalpotta": 36,
+        "thotupola": 64
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-28",
+      "lead_days": 69,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 277,
+        "p50": 360,
+        "p90": 459
+      },
+      "visitors_by_trail_p50": {
+        "main": 310,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-29",
+      "lead_days": 70,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 275,
+        "p50": 357,
+        "p90": 455
+      },
+      "visitors_by_trail_p50": {
+        "main": 307,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.11
+    },
+    {
+      "date": "2025-07-30",
+      "lead_days": 71,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 278,
+        "p50": 361,
+        "p90": 460
+      },
+      "visitors_by_trail_p50": {
+        "main": 311,
+        "kirigalpotta": 18,
+        "thotupola": 32
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-07-31",
+      "lead_days": 72,
+      "crowd_level": 1,
+      "visitors": {
+        "p10": 281,
+        "p50": 365,
+        "p90": 465
+      },
+      "visitors_by_trail_p50": {
+        "main": 314,
+        "kirigalpotta": 18,
+        "thotupola": 33
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-01",
+      "lead_days": 73,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 386,
+        "p50": 502,
+        "p90": 640
+      },
+      "visitors_by_trail_p50": {
+        "main": 432,
+        "kirigalpotta": 25,
+        "thotupola": 45
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-02",
+      "lead_days": 74,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 771,
+        "p50": 1003,
+        "p90": 1277
+      },
+      "visitors_by_trail_p50": {
+        "main": 862,
+        "kirigalpotta": 50,
+        "thotupola": 90
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-03",
+      "lead_days": 75,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 801,
+        "p50": 1042,
+        "p90": 1327
+      },
+      "visitors_by_trail_p50": {
+        "main": 896,
+        "kirigalpotta": 52,
+        "thotupola": 94
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-04",
+      "lead_days": 76,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 381,
+        "p50": 496,
+        "p90": 631
+      },
+      "visitors_by_trail_p50": {
+        "main": 426,
+        "kirigalpotta": 25,
+        "thotupola": 44
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-05",
+      "lead_days": 77,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 420,
+        "p50": 547,
+        "p90": 696
+      },
+      "visitors_by_trail_p50": {
+        "main": 470,
+        "kirigalpotta": 28,
+        "thotupola": 49
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-06",
+      "lead_days": 78,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 424,
+        "p50": 552,
+        "p90": 703
+      },
+      "visitors_by_trail_p50": {
+        "main": 475,
+        "kirigalpotta": 28,
+        "thotupola": 49
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-07",
+      "lead_days": 79,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 374,
+        "p50": 487,
+        "p90": 620
+      },
+      "visitors_by_trail_p50": {
+        "main": 418,
+        "kirigalpotta": 25,
+        "thotupola": 44
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-08",
+      "lead_days": 80,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 955,
+        "p50": 1243,
+        "p90": 1582
+      },
+      "visitors_by_trail_p50": {
+        "main": 1070,
+        "kirigalpotta": 61,
+        "thotupola": 112
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-09",
+      "lead_days": 81,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 930,
+        "p50": 1210,
+        "p90": 1541
+      },
+      "visitors_by_trail_p50": {
+        "main": 1042,
+        "kirigalpotta": 60,
+        "thotupola": 109
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-10",
+      "lead_days": 82,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 964,
+        "p50": 1254,
+        "p90": 1597
+      },
+      "visitors_by_trail_p50": {
+        "main": 1080,
+        "kirigalpotta": 62,
+        "thotupola": 113
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-11",
+      "lead_days": 83,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 377,
+        "p50": 490,
+        "p90": 624
+      },
+      "visitors_by_trail_p50": {
+        "main": 422,
+        "kirigalpotta": 25,
+        "thotupola": 44
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-12",
+      "lead_days": 84,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 427,
+        "p50": 555,
+        "p90": 707
+      },
+      "visitors_by_trail_p50": {
+        "main": 478,
+        "kirigalpotta": 28,
+        "thotupola": 50
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-13",
+      "lead_days": 85,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 433,
+        "p50": 563,
+        "p90": 717
+      },
+      "visitors_by_trail_p50": {
+        "main": 484,
+        "kirigalpotta": 28,
+        "thotupola": 50
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-14",
+      "lead_days": 86,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 434,
+        "p50": 564,
+        "p90": 718
+      },
+      "visitors_by_trail_p50": {
+        "main": 485,
+        "kirigalpotta": 28,
+        "thotupola": 51
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-08-15",
+      "lead_days": 87,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 458,
+        "p50": 595,
+        "p90": 758
+      },
+      "visitors_by_trail_p50": {
+        "main": 512,
+        "kirigalpotta": 30,
+        "thotupola": 53
+      },
+      "chance_wet_morning": 0.08
+    },
+    {
+      "date": "2025-08-16",
+      "lead_days": 88,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 816,
+        "p50": 1061,
+        "p90": 1351
+      },
+      "visitors_by_trail_p50": {
+        "main": 913,
+        "kirigalpotta": 53,
+        "thotupola": 96
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-17",
+      "lead_days": 89,
+      "crowd_level": 5,
+      "visitors": {
+        "p10": 821,
+        "p50": 1068,
+        "p90": 1360
+      },
+      "visitors_by_trail_p50": {
+        "main": 919,
+        "kirigalpotta": 53,
+        "thotupola": 96
+      },
+      "chance_wet_morning": 0.1
+    },
+    {
+      "date": "2025-08-18",
+      "lead_days": 90,
+      "crowd_level": 3,
+      "visitors": {
+        "p10": 398,
+        "p50": 517,
+        "p90": 659
+      },
+      "visitors_by_trail_p50": {
+        "main": 445,
+        "kirigalpotta": 26,
+        "thotupola": 46
+      },
+      "chance_wet_morning": 0.08
+    }
+  ]
+}

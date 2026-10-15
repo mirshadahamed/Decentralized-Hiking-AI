@@ -3,16 +3,28 @@ seed: 42
 
 area:
   name: Horton Plains National Park
-  bbox: [80.775, 6.770, 80.825, 6.815]      # left, bottom, right, top (WGS84) for OSM
-  dem_bbox: [80.755, 6.755, 80.845, 6.830]  # larger, so TWI catchments are not cut off
+  bbox: [80.740, 6.770, 80.840, 6.850]      # left, bottom, right, top (WGS84) for OSM: all three trails
+  dem_bbox: [80.730, 6.755, 80.850, 6.860]  # larger, so TWI catchments are not cut off
   weather_point: [6.795, 80.800]            # lat, lon (Open-Meteo snaps to its grid)
   crs_metric: "EPSG:32644"                  # UTM 44N, metres
-  pois:
+  pois:                                     # OSM names
     entrance: "Horton Plains Visitor Center"
     mini_worlds_end: "Mini World's End"
     worlds_end: "World's End (Plate 1)"
     bakers_falls: "Baker's Falls"
-  route: [entrance, mini_worlds_end, worlds_end, bakers_falls, entrance]
+    kirigalpotta_peak: "Kirigalpotta"
+    thotupola_head: "Thotupola Trailhead"
+    thotupola_peak: "Thotupola Kanda"
+  routes:                                   # walked in this order (shortest path between the POIs)
+    main: [entrance, mini_worlds_end, worlds_end, bakers_falls, entrance]
+    kirigalpotta: [entrance, kirigalpotta_peak, entrance]
+    thotupola: [thotupola_head, thotupola_peak, thotupola_head]
+  road_links:                               # not walkable; joined in the graph with a weaker edge
+    - [entrance, thotupola_head, 0.5]       # 4.2 km drive on the Pattipola road
+  trail_names:
+    main: "World's End loop"
+    kirigalpotta: "Kirigalpotta"
+    thotupola: "Thotupola Kanda"
 
 graph:
   target_segment_m: 300   # densify the loop into ~300 m segments (graph nodes)
@@ -42,7 +54,15 @@ simulator:
   arrival_late_range_h: [8.5, 12.5]
   gate_open_h: 6.0
   gate_last_entry_h: 13.0
-  standard_direction_share: 0.85    # Mini World's End -> World's End -> Baker's Falls
+  route_share:                      # which trail a group hikes (whole-park demand is split)
+    main: 0.86
+    kirigalpotta: 0.05
+    thotupola: 0.09
+  route_last_entry_h:               # later starts are not allowed (too long to finish before closing)
+    kirigalpotta: 9.5
+  route_start_offset_min:           # extra time before the walk starts
+    thotupola: 12                   # drive 4.2 km back down the Pattipola road and park
+  standard_direction_share: 0.85    # main loop: Mini World's End -> World's End -> Baker's Falls first
   walker_speed_sd: 0.12             # lognormal spread of group walking speed
   leisure_speed_factor: 0.75        # tourists walk slower than Tobler's fit-hiker speed (photos, rests)
   rain_light_mm: 0.5
@@ -55,6 +75,8 @@ simulator:
     mini_worlds_end: [8, 0.4]
     worlds_end: [20, 0.4]
     bakers_falls: [12, 0.4]
+    kirigalpotta_peak: [20, 0.4]
+    thotupola_peak: [15, 0.4]
   obs_noise_sd: 0.10
 
 task:
