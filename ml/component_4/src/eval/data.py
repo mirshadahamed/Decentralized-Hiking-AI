@@ -13,8 +13,9 @@ from src.config import PROCESSED
 
 
 class TrailData:
-    def __init__(self, cfg):
-        d = np.load(PROCESSED / "dataset.npz", allow_pickle=True)
+    def __init__(self, cfg, path=None):
+        """path: another dataset file with the same layout (e.g. the live dataset, src/live/dataset.py)."""
+        d = np.load(path or PROCESSED / "dataset.npz", allow_pickle=True)
         self.cfg = cfg
         self.y = d["occ_obs"].astype(np.float32)            # [T, N] observed headcount
         self.y_true = d["occ_true"].astype(np.float32)

@@ -122,6 +122,16 @@ control:                  # entry control: timed tickets per trail and slot (upg
   accept_trail_swap: 0.3  # evaluation: share who accept another trail when their trail is full
   booking_horizon_days: 90
 
+live:                     # live mode: real dates, refreshed every evening (live_and_ux_plan.md, section 2)
+  horizon_days: 90        # outlook and bookings
+  forecast_days: 16       # Open-Meteo forecast horizon; climatology after this
+  calendar_extra_days: 120
+  dwc_totals_csv: data/live/dwc_daily_totals.csv   # optional: date,trail,visitors (real counts replace simulated)
+
+api:
+  allow_time_override: true   # DEMO ONLY: staff may pass a time ('at') for check-in / walk-ins / live status
+  cors_origins: ["*"]         # development; restrict to the app's origin in production
+
 arima:
   order: [1, 0, 1]
   seasonal_order: [1, 1, 1, 24]
