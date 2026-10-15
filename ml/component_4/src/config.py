@@ -1,21 +1,62 @@
-"""Paths and config loading for Component 4."""
+"""Paths and config loading for Component 4, per park.
+
+The park is chosen with the environment variable C4_PARK (default: horton_plains):
+    $env:C4_PARK = "adams_peak"; .venv\\Scripts\\python.exe -m src.data.build_dataset
+- horton_plains keeps the original folders (data/, results/) and configs/default.yaml.
+- any other park reads configs/default.yaml overridden by configs/parks/<park>.yaml and uses
+  data/<park>/ and results/<park>/.
+"""
+import copy
+import os
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]          # ml/component_4
-DATA = ROOT / "data"
+CONFIGS = ROOT / "configs"
+DEFAULT_PARK = "horton_plains"
+PARK = os.environ.get("C4_PARK", DEFAULT_PARK)
+
+DATA = ROOT / "data" if PARK == DEFAULT_PARK else ROOT / "data" / PARK
 RAW = DATA / "raw"
 INTERIM = DATA / "interim"
 PROCESSED = DATA / "processed"
-RESULTS = ROOT / "results"
+RESULTS = ROOT / "results" if PARK == DEFAULT_PARK else ROOT / "results" / PARK
 FIGURES = RESULTS / "figures"
-CONFIGS = ROOT / "configs"
 
 for _p in (RAW, INTERIM, PROCESSED, RESULTS, FIGURES):
     _p.mkdir(parents=True, exist_ok=True)
 
 
-def load_config(name: str = "default") -> dict:
+def parks() -> list:
+    return [DEFAULT_PARK] + sorted(p.stem for p in (CONFIGS / "parks").glob("*.yaml") if p.stem != DEFAULT_PARK)
+
+
+def _merge(base: dict, over: dict) -> dict:
+    """Deep merge: dicts are merged key by key, everything else (lists, numbers) is replaced.
+    A dict with `__replace__: true` replaces the base dict completely (e.g. a park's own POIs and routes)."""
+    out = copy.deepcopy(base)
+    for k, v in over.items():
+        if isinstance(v, dict) and v.get("__replace__"):
+            out[k] = _strip(v)
+        elif isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _merge(out[k], v)
+        else:
+            out[k] = _strip(v) if isinstance(v, dict) else copy.deepcopy(v)
+    return out
+
+
+def _strip(d: dict) -> dict:
+    return {k: (_strip(v) if isinstance(v, dict) else copy.deepcopy(v)) for k, v in d.items() if k != "__replace__"}
+
+
+def load_config(name: str = "default", park: str | None = None) -> dict:
+    park = park or PARK
     with open(CONFIGS / f"{name}.yaml", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    over = CONFIGS / "parks" / f"{park}.yaml"
+    if park != DEFAULT_PARK and over.exists():
+        with open(over, encoding="utf-8") as f:
+            cfg = _merge(cfg, yaml.safe_load(f))
+    cfg["park"] = park
+    return cfg
