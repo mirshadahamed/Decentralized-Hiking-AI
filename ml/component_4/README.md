@@ -26,6 +26,7 @@ OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weat
 .venv\Scripts\python.exe -m src.serve.predict --date 2025-05-12
 .venv\Scripts\python.exe -m src.planning.backtest                 # planning accuracy by lead time
 .venv\Scripts\python.exe -m src.serve.outlook --issue 2025-03-01 --target 2025-05-12
+.venv\Scripts\python.exe -m src.control.evaluate --sweep          # entry control: 4 policies + capacity trade-off
 .venv\Scripts\python.exe -m src.report.figures --date 2025-05-12
 ```
 `--quick` on `run_benchmark` runs 1 epoch and 1 seed to check the pipeline.
@@ -34,9 +35,17 @@ OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weat
 ```powershell
 .venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501
 ```
-Pages: Overview · Plan a visit (90-day outlook, range, suggestions) · Daily forecast (map, hour-by-hour
-crowding, quota per trail, JSON download, no-weather fallback) · Trail and data · Simulator · Model comparison ·
-Capacity method. Without model checkpoints on the machine,
+Pages: Overview · Plan a visit (90-day outlook, range, suggestions) · Book a slot (reserve an entry time,
+alternatives when full, gate check) · Daily forecast (map, hour-by-hour crowding, quota per trail, JSON download,
+no-weather fallback) · Entry control (tickets per slot, before/after, live traffic lights, year-long evaluation) ·
+Trail and data · Simulator · Model comparison · Capacity method.
+
+## How overcrowding is prevented
+Tickets per trail and 30-minute entry slot. A ticket fixes a trail and an entry time, so the simulator tells us
+where its holder will be. A linear programme issues tickets only while every segment stays under its safe capacity
+in every half hour (`src/control/slots.py`). When a slot is full, visitors get a later slot, another trail with room
+or another day, and can book weeks ahead (`src/control/booking.py`). On the 2025 test year (simulation), this removes
+> 99 % of the person-hours over capacity; a daily quota alone removes 73 % (`results/*_entry_control/`). Without model checkpoints on the machine,
 the forecast page uses the historical-average fallback.
 
 ## Layout
@@ -49,6 +58,7 @@ the forecast page uses the historical-average fallback.
 | `src/models/` | ST-GNN (GCN+GRU), LSTM / no-graph variants, HA, SARIMA |
 | `src/capacity/cifuentes.py` | carrying-capacity cascade, per trail |
 | `src/planning/` | 90-day planning model, suggestions, lead-time backtest |
+| `src/control/` | entry control: slot tickets (LP), live nowcast, booking, policy evaluation |
 | `src/serve/predict.py` | forecast JSON (with historical-average fallback) |
 | `dashboard/` | Streamlit dashboard (`app.py` + one file per page in `views/`) |
 | `docs/` | development plan, assumptions, decision log |

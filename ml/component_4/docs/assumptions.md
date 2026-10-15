@@ -68,6 +68,21 @@ counts (after PP1) will be used to calibrate and to check the synthetic target.
 | Management capacity | 0.7 | E | Placeholder until DWC staffing data is available |
 | Per trail | social, erodibility and accessibility factors are computed for each trail separately; park quota = sum of trail quotas | E | Each visitor hikes one trail |
 
+## Entry control and booking
+| Item | Value | Status | Reason |
+|---|---|---|---|
+| Entry slots | 30 min, 06:00–12:30 starts; Kirigalpotta none from 09:30 | E | Gate hours; Kirigalpotta length |
+| Segment capacity at once | Cifuentes social spacing (groups of 10, 50 m apart) × management capacity 0.7 × (1 − rain share) × capacity standard | A + E | Same parameters as the capacity cascade |
+| Viewpoints | at least 50 people at once (before × 0.7) | E | They are platforms, not 1-m trail. **Measure platform areas on a field visit** |
+| Access points | Visitor Center and Thotupola trailhead not limited | E | Facilities, not trail |
+| Safety margin | plan to 90 % of capacity | E | The linear model ignores crowd slowdown; every plan is checked in the full simulator |
+| Response table | 300 simulated walkers per trail × slot × dry/wet; people per segment per half hour per ticket | E | Measured with the simulator (tiny cohorts, no crowd effect) |
+| Walk-in share | 20 % of every slot not bookable | E | Visitors without internet or a booking must still be able to come |
+| Gate window | 15 min before to 15 min after the slot start | E | Practical tolerance at the gate |
+| Booking horizon | tomorrow to 90 days ahead; days beyond the forecast use typical rain for that week | E | Same horizon as the planning model |
+| Evaluation behaviour | visitors accept a slot up to 2 h later; 30 % accept another trail; the rest are offered another day | E | **Check with the hiker survey** |
+| Capacity standard | ×1 (strict Cifuentes) by default; trade-off shown for ×1 … ×4 | E | DWC's choice, not the model's |
+
 ## 90-day planning model
 | Item | Value | Status | Reason |
 |---|---|---|---|
