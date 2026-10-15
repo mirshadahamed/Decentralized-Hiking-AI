@@ -105,6 +105,23 @@ capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
   management_capacity: 0.7  # MC: share of required staff/infrastructure available (assumption)
   busy_utilisation: 0.8   # forecast peak / effective capacity above this = "busy"
 
+control:                  # entry control: timed tickets per trail and slot (upgrade_plan.md, section 2)
+  slot_minutes: 30
+  first_slot_h: 6.0       # gate opens
+  last_slot_h: 12.5       # last slot starts 12:30 (last entry 13:00)
+  bin_minutes: 30         # occupancy is checked every 30 minutes
+  viewpoint_min_at_once: 50   # placeholder: viewpoints are platforms, not 1-m-wide trail; measure on a field visit
+  exempt_access_points: true  # Visitor Center / trailhead are facilities, not trail
+  use_daily_quota: true   # also respect the Cifuentes daily quota per trail
+  safety_margin: 0.9      # plan to 90 % of capacity (crowd slowdown is not in the linear model)
+  capacity_scale: 1.0     # multiplies segment capacity; DWC's choice of standard (see the trade-off sweep)
+  walk_in_share: 0.2      # share of every slot kept for visitors without a booking
+  slot_window_min: 15     # a ticket is valid from 15 min before to 15 min after its slot start
+  response_walkers: 300   # simulated walkers per slot used to measure where a ticket-holder will be
+  max_slot_shift_h: 2     # evaluation: visitors accept a slot up to 2 h later
+  accept_trail_swap: 0.3  # evaluation: share who accept another trail when their trail is full
+  booking_horizon_days: 90
+
 arima:
   order: [1, 0, 1]
   seasonal_order: [1, 1, 1, 24]
