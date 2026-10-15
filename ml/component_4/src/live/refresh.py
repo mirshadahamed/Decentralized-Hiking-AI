@@ -80,12 +80,18 @@ def publish_slots(ctx: LiveContext, db=None) -> list:
 
 
 def publish_advisory(outlook: dict) -> dict:
-    """Recommended start times for every day of the outlook, from the expected climbers per route (likely case)."""
+    """Recommended start times for every day of the outlook, from the expected climbers per route (likely case).
+    Officers also get a high case (P90 climbers: 1 night in 10 is busier) to plan the halfway checks for."""
     from src.control.advisory import build_advisory
     adv = build_advisory()
     out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "days": {}}
     for day in outlook["days"]:
-        out["days"][day["date"]] = adv.recommend({t: float(v) for t, v in day["visitors_by_trail_p50"].items()})
+        by_trail = {t: float(v) for t, v in day["visitors_by_trail_p50"].items()}
+        rec = adv.recommend(by_trail)
+        k = day["visitors"]["p90"] / max(day["visitors"]["p50"], 1)
+        high = adv.recommend({t: v * k for t, v in by_trail.items()})
+        rec["high_case"] = {"visitors": day["visitors"]["p90"], "summit": high["summit"], "halfway": high["halfway"]}
+        out["days"][day["date"]] = rec
     (PUBLISHED / "advisory.json").write_text(json.dumps(out), encoding="utf-8")
     return out
 

@@ -1,6 +1,20 @@
 # Adam's Peak (Sri Pada). Overrides configs/default.yaml. Use with:  $env:C4_PARK = "adams_peak"
 # Every number marked (A) is an assumption to calibrate on a field visit (docs/assumptions_adams_peak.md).
 
+destination:
+  kind: pilgrimage
+  region: "Central and Sabaragamuwa Provinces · Peak Wilderness"
+  summary: "Sacred mountain climbed by night on stairways to reach the summit for sunrise."
+  elevation: "about 2,240 m"
+  best_time: "Pilgrimage season, Unduvap Poya (December) to Vesak Poya (May). Weekdays away from Poya are far quieter."
+  getting_there: "Hatton → Dalhousie (Nallathanniya) is the usual start; Ratnapura → Palabaddala and Kuruwita → Erathna from the south."
+  facts:
+    - "Sacred to Buddhists, Hindus, Muslims and Christians: dress modestly"
+    - "No tickets: start at the recommended time to avoid queues on the final steps"
+    - "Cold and windy at the summit: bring a warm layer"
+    - "Outside the season the route lights and shops are mostly closed"
+  accent: "#8A4B2A"
+
 area:
   name: "Adam's Peak (Sri Pada)"
   bbox: [80.350, 6.700, 80.620, 6.920]

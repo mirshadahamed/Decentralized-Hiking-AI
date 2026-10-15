@@ -23,7 +23,7 @@ def test_adams_peak_api_in_its_own_process():
     out = subprocess.run([sys.executable, "-m", "pytest", "-q", "-W", "ignore", "-p", "no:cacheprovider", __file__],
                          capture_output=True, text=True, cwd=ROOT, env=dict(os.environ, C4_PARK="adams_peak"))
     assert out.returncode == 0, out.stdout[-3000:]
-    assert "4 passed" in out.stdout, out.stdout[-3000:]                    # the 4 Adam's Peak tests really ran
+    assert "5 passed" in out.stdout, out.stdout[-3000:]                    # the 5 Adam's Peak tests really ran
 
 
 def test_gateway_lists_parks_and_forwards():
@@ -34,6 +34,9 @@ def test_gateway_lists_parks_and_forwards():
     assert {"horton_plains", "adams_peak"} <= set(parks)
     assert parks["adams_peak"]["booking_mode"] == "advisory"
     assert parks["horton_plains"]["booking_mode"] != "advisory"
+    for p in parks.values():                                    # what the trip planner needs for every destination
+        assert p["kind"] and p["summary"] and p["best_time"] and p["getting_there"] and p["trails"]
+    assert {parks["adams_peak"]["kind"], parks["horton_plains"]["kind"]} == {"pilgrimage", "national_park"}
     assert "nallathanniya" in parks["adams_peak"]["trails"]
     assert c.get("/parks/nowhere/health").status_code == 404
     gateway.PORTS["adams_peak"] = 1                           # nothing listens there
@@ -52,11 +55,12 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(booking, "DB", tmp_path / "bookings.sqlite")
     monkeypatch.setattr(auth, "DB", tmp_path / "auth.sqlite")
     auth.create_user("ranger1", PW, "ranger")
+    auth.create_user("officer1", PW, "officer")
     return TestClient(api.app)
 
 
-def ranger(client):
-    r = client.post("/auth/login", json={"username": "ranger1", "password": PW})
+def ranger(client, user="ranger1"):
+    r = client.post("/auth/login", json={"username": user, "password": PW})
     return {"Authorization": f"Bearer {r.json()['token']}"}
 
 
@@ -97,4 +101,21 @@ def test_halfway_checks(client):
     assert busy["hold"] is True and busy["wait_ahead_max_min"] > 20
     cp = {c["route"]: c for c in busy["checkpoints"]}
     assert cp["nallathanniya"]["counted_today"] == 5400
+    assert cp["nallathanniya"]["last_count_at"] == "02:50"
     assert all(c["release_per_10_min"] is not None for c in cp.values())
+    assert [x["time"] for x in busy["log"][:2]] == ["02:50", "02:40"] and busy["log"][0]["by"] == "ranger1"
+
+
+@in_ap
+def test_destination_and_season_plan(client):
+    d = client.get("/destination").json()
+    assert d["id"] == "adams_peak" and d["kind"] == "pilgrimage" and len(d["trails"]) == 4
+    assert client.get("/admin/season", headers=ranger(client)).status_code == 403          # officers only
+    s = client.get("/admin/season", headers=ranger(client, "officer1")).json()
+    assert len(s["days"]) >= 80 and s["limit_min"] == 20
+    for n in s["days"]:
+        assert n["checks"] in ("needed", "standby", "none")
+        assert (n["checks"] == "needed") == bool(n["hold_windows"])
+        assert n["high_peak_wait_min"] >= n["peak_wait_min"]                     # the high case is never quieter
+    a = client.get(f"/advisory/{s['days'][5]['date']}").json()
+    assert len(a["summit"]["wait_by_time"]) == 96 and "high_case" in a

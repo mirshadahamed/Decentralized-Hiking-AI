@@ -1,6 +1,19 @@
 # Component 4 default configuration. Every assumption here is explained in docs/assumptions.md.
 seed: 42
 
+destination:                                # what the app's trip planner shows (one block per park config)
+  kind: national_park                       # national_park | pilgrimage | ... (new kinds appear as app filters)
+  region: "Central Highlands · Nuwara Eliya District"
+  summary: "High-altitude plateau of grassland and cloud forest, ending at the World's End escarpment."
+  elevation: "2,100 – 2,389 m"
+  best_time: "Early morning, before the mist rises (usually before 10:00). January to March is the driest."
+  getting_there: "By road via Ohiya or Pattipola; trains to Ohiya or Pattipola station. Entry tickets at the park gate."
+  facts:
+    - "Part of the Central Highlands UNESCO World Heritage Site"
+    - "Plastic and polythene are not allowed in the park"
+    - "Cold mornings: bring a warm layer and rain gear"
+  accent: "#2F6B4F"                         # card colour in the app
+
 area:
   name: Horton Plains National Park
   bbox: [80.740, 6.770, 80.840, 6.850]      # left, bottom, right, top (WGS84) for OSM: all three trails

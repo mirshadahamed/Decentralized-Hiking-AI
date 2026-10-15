@@ -316,6 +316,7 @@ def checkpoint_status(day: date, at: time | None = None, user: dict = Depends(ro
     days = published("advisory.json")["days"]
     rates = days.get(day.isoformat(), {}).get("halfway") or adv.release_rates(adv.demand(
         {t: 1.0 for t in adv.trails}))
+    high = days.get(day.isoformat(), {}).get("high_case", {}).get("halfway", {})
     counted = passes.groupby("route")["count"].sum().to_dict() if len(passes) else {}
     last = passes.groupby("route")["time_min"].max().to_dict() if len(passes) else {}
     hhmm = lambda m: f"{int(m) // 60:02d}:{int(m) % 60:02d}"
@@ -326,6 +327,7 @@ def checkpoint_status(day: date, at: time | None = None, user: dict = Depends(ro
                              "release_per_10_min": rates[t]["release_per_10_min"] if live["hold"] else None,
                              "walk_to_summit_min": rates[t]["walk_to_summit_min"],
                              "planned_hold": rates[t].get("hold_windows", []),
+                             "planned_hold_if_busy": high.get(t, {}).get("hold_windows", []),
                              "last_count_at": hhmm(last[t]) if t in last else None,
                              "counted_today": int(counted.get(t, 0))} for t in TRAILS]}
 
@@ -360,7 +362,8 @@ def alerts(user: dict = Depends(role("officer"))):
 @app.get("/admin/season", tags=["officer"])
 def season(user: dict = Depends(role("officer"))):
     """Pilgrim sites: every night of the outlook with the expected climbers, the summit queue and when the halfway
-    checks will be needed (for planning staff)."""
+    checks will be needed (for planning staff). checks: needed (likely case) | standby (only if as busy as the
+    P90 high case) | none."""
     if not ADVISORY:
         raise HTTPException(400, "The season plan is for pilgrimage sites")
     adv, out = published("advisory.json")["days"], []
@@ -368,11 +371,12 @@ def season(user: dict = Depends(role("officer"))):
         a = adv.get(d["date"])
         if a is None:
             continue
-        s = a["summit"]
+        s, h = a["summit"], a.get("high_case", {}).get("summit", {})
         out.append({"date": d["date"], "crowd_level": d["crowd_level"], "visitors": d["visitors"],
                     "peak_queue_people": s["peak_queue_people"], "peak_wait_min": s["peak_wait_min"],
                     "peak_at": s["peak_at"], "hold_windows": s.get("hold_windows", []),
-                    "checks_needed": bool(s.get("hold_windows"))})
+                    "high_peak_wait_min": h.get("peak_wait_min", 0), "high_hold_windows": h.get("hold_windows", []),
+                    "checks": "needed" if s.get("hold_windows") else "standby" if h.get("hold_windows") else "none"})
     return {"limit_min": CFG["control"].get("queue_limit_min", 20), "days": out}
 
 

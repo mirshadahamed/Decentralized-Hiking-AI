@@ -60,3 +60,14 @@ def load_config(name: str = "default", park: str | None = None) -> dict:
             cfg = _merge(cfg, yaml.safe_load(f))
     cfg["park"] = park
     return cfg
+
+
+def destination_info(cfg: dict) -> dict:
+    """What the app's trip planner shows for a park (gateway /parks and the park's own /destination)."""
+    d, a = cfg.get("destination", {}), cfg["area"]
+    lat, lon = a["weather_point"]
+    return {"id": cfg["park"], "name": a["name"], "kind": d.get("kind", "park"), "region": d.get("region", ""),
+            "summary": d.get("summary", ""), "elevation": d.get("elevation", ""), "best_time": d.get("best_time", ""),
+            "getting_there": d.get("getting_there", ""), "facts": d.get("facts", []), "accent": d.get("accent", ""),
+            "booking_mode": cfg["control"].get("booking_mode", "required"),
+            "trails": a["trail_names"], "trail_info": a.get("trail_info", {}), "center": {"lat": lat, "lon": lon}}
