@@ -80,6 +80,64 @@ def plan_day(issue: str, target: str) -> dict:
     return get_planner().day(issue, target)
 
 
+@st.cache_resource
+def get_control():
+    from src.control.slots import build_control
+    return build_control()
+
+
+class capacity_standard:
+    """Temporarily use another capacity standard (the control object is shared and cached)."""
+    def __init__(self, scale):
+        self.ec, self.scale = get_control(), scale
+
+    def __enter__(self):
+        self.old = self.ec.c.get("capacity_scale", 1.0)
+        self.ec.c["capacity_scale"] = self.scale
+        return self.ec
+
+    def __exit__(self, *a):
+        self.ec.c["capacity_scale"] = self.old
+
+
+@st.cache_data
+def day_rain_share(day: str) -> float:
+    data, cfg = get_data(), get_cfg()
+    i = int(np.searchsorted(data.times, pd.Timestamp(day)))
+    rain = np.expm1(data.cov[i + 6:i + 6 + cfg["capacity"]["open_hours"], data.cov_names.index("precip_log1p")])
+    return float((rain >= cfg["capacity"]["rain_mm"]).mean())
+
+
+@st.cache_data
+def control_day(day: str, scale: float, seed: int = 3) -> dict:
+    """One day: ticket plan, and the same visitors with no limit (A) vs slot tickets + moving (D)."""
+    from src.control.evaluate import admit
+    from src.sim.simulator import daily_demand
+    with capacity_standard(scale) as ec:
+        rain = day_rain_share(day)
+        quota = ec.daily_quota(rain)
+        plan = ec.plan(rain, quota)
+        C = ec.capacity(rain)
+        cal = calendar()
+        i = int(np.searchsorted(cal.index, pd.Timestamp(day)))
+        precip = np.expm1(get_data().cov[i * 24:(i + 1) * 24, get_data().cov_names.index("precip_log1p")])
+        n = daily_demand(cal.iloc[[i]], precip[None, :], get_cfg()["simulator"], np.random.default_rng(seed))[0]
+        size, gate, option = ec.sim.sample_day(int(round(n)), np.random.default_rng(seed))
+        out = {"plan": plan, "capacity": C, "quota": quota, "rain_share": rain, "wanted": float(size.sum())}
+        for pol in ("A", "D"):
+            s, g, o, moved = admit(pol, ec, size, gate, option, quota, plan, np.random.default_rng(seed + 1))
+            _, per_min, _ = ec.sim.simulate_groups(s, g, o, precip, np.random.default_rng(seed + 2))
+            out[pol] = {"occ": per_min.reshape(ec.sim.S, ec.n_bins, -1).mean(-1), "admitted": float(s.sum()), **moved,
+                        "groups": pd.DataFrame({"trail": [ec.sim.options[x][0] for x in o], "gate_min": g, "size": s})}
+        return out
+
+
+def latest_control_eval():
+    p = RESULTS / "LATEST_CONTROL"
+    run = RESULTS / p.read_text(encoding="utf-8").strip() if p.exists() else None
+    return run if run is not None and (run / "summary.csv").exists() else None
+
+
 def latest_planning_backtest():
     p = RESULTS / "LATEST_PLANNING"
     run = RESULTS / p.read_text(encoding="utf-8").strip() if p.exists() else None
