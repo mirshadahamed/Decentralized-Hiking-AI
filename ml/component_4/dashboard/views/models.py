@@ -125,6 +125,10 @@ if sp:
                 + (f" but loses to **{', '.join(worse)}**." if worse else "."))
 if msgs:
     st.markdown("\n".join(msgs))
-    st.markdown("So far the **graph** part has not shown a benefit. Next steps: let the graph layer average only over "
-                "segments that have counts, rerun with 3 seeds, and test on the larger three-trail network "
-                "(see `docs/next_phase_plan.md`).")
+    graph_helps = all(sp.get(b, {}).get("significant_0.05", False) for b in ("lstm", "gru_nograph"))
+    if graph_helps:
+        st.success("**The graph helps where it matters for this park:** on segments without counts, the ST-GNN beats "
+                   "the same network without the graph and the LSTM. With counts on every segment, the graph adds "
+                   "nothing measurable: each segment's own history already says enough.")
+    else:
+        st.markdown("So far the **graph** part has not shown a clear benefit in this run.")

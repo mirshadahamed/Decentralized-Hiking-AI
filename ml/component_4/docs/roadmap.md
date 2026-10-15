@@ -144,12 +144,18 @@ Until DWC data arrives, everything runs on the simulator. That is fine for PP1 i
 | Kirigalpotta and Thotupola on the map (layer only) | `src/data/extension_trails.py` |
 | 14 tests | `tests/` |
 
-**Open result:** ST-GNN beats HA (−14 %) and SARIMA (−32 %) but is not better than the no-graph models yet.
+**Result (15 Oct, run `20261015_095519`):** ST-GNN beats HA and SARIMA everywhere, and beats the no-graph models
+on segments without counts (spatial CV); with counts on every segment it ties them.
 
 ### 7.2 Before PP1 (~6 days)
 Status 15 Oct (branch `feature/component-4-network-planning`): items 1–3 **done**, plus the three-trail network
 (Kirigalpotta + Thotupola in the graph, simulator and capacity) and trail suggestions, brought forward from 7.3.
-The full benchmark on the 48-node network is running.
+Full benchmark `20261015_095519` (48 nodes, transferable segment features, graph-layer fix):
+- all segments with counts: ST-GNN MAE 1.42 vs historical average 1.60 (−11 %) and SARIMA 1.93 (−26 %), p < 1e-11;
+  no significant difference from LSTM / GRU without graph (p = 0.12).
+- segments without counts (spatial CV): **ST-GNN best**, MAE 2.48 vs historical average 4.20 (−41 %),
+  LSTM 2.59 (−4 %), GRU without graph 2.69 (−8 %); all p < 1e-11 (Holm). The graph helps exactly in the
+  deployment case: segments nobody counts.
 
 | # | Task | Effort | Why |
 |---|---|---|---|
