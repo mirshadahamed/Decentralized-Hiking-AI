@@ -21,17 +21,18 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.api import auth
-from src.config import load_config
+from src.config import destination_info, load_config
 from src.control import booking
 from src.control.slots import build_control
 from src.live.refresh import PUBLISHED, LiveContext, refresh
 
 CFG = load_config()
 TRAILS = list(CFG["area"]["trail_names"])
+ADVISORY = CFG["control"].get("booking_mode", "required") == "advisory"   # pilgrimage site: no tickets
 TrailName = Literal[tuple(TRAILS)]
 Slot = Field(pattern=r"^\d{2}:\d{2}$")
 
-app = FastAPI(title="Horton Plains – Trail crowd forecasting and entry control (Component 4)", version="1.0")
+app = FastAPI(title=f"{CFG['area']['name']} – Trail crowd forecasting and crowd control (Component 4)", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=CFG["api"]["cors_origins"], allow_methods=["*"], allow_headers=["*"])
 
 _ctx, _lock = None, threading.Lock()
@@ -113,19 +114,41 @@ def health():
 @app.get("/status", tags=["public"])
 def status():
     s = published("status.json")
-    return {k: v for k, v in s.items() if k != "alerts"}
+    return {k: v for k, v in s.items() if k != "alerts"} | {
+        "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required"}
+
+
+@app.get("/destination", tags=["public"])
+def destination():
+    """What the trip planner shows for this park (summary, best time, getting there, trails)."""
+    return destination_info(CFG)
+
+
+def require_booking():
+    if ADVISORY:
+        raise HTTPException(400, "This site uses recommended start times, not bookings: see /advisory/{day}")
+
+
+@app.get("/advisory/{day}", tags=["public"])
+def advisory(day: date):
+    """Recommended start times per route, expected wait at the summit and halfway release rates (pilgrim sites)."""
+    if not ADVISORY:
+        raise HTTPException(400, "This site uses bookings: see /slots/{day}")
+    days = published("advisory.json")["days"]
+    if day.isoformat() not in days:
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    return {"day": day.isoformat()} | days[day.isoformat()]
 
 
 @app.get("/trails", tags=["public"])
 def trails():
-    from src.planning.planner import TRAIL_INFO
     seg = ctx().seg
     out = []
     for t in TRAILS:
         s = seg[seg.trail == t]
         out.append({"id": t, "name": CFG["area"]["trail_names"][t], "segments": int(len(s)),
-                    "length_km": round(float(s.length_m.sum()) / 1000, 1), "about": TRAIL_INFO.get(t, "Main loop: "
-                    "Mini World's End, World's End and Baker's Falls; about 3.5 hours")})
+                    "length_km": round(float(s.length_m.sum()) / 1000, 1),
+                    "about": CFG["area"].get("trail_info", {}).get(t, "")})
     return out
 
 
@@ -159,6 +182,7 @@ def plan_day(day: date):
 
 @app.get("/slots/{day}", tags=["public"])
 def slots(day: date):
+    require_booking()
     d = day.isoformat()
     av, sup = booking.availability(d), booking.supply(d)
     pub = booking._published(d)
@@ -178,6 +202,7 @@ class BookingIn(BaseModel):
 
 @app.post("/bookings", tags=["public"], status_code=201)
 def create_booking(body: BookingIn):
+    require_booking()
     try:
         code = booking.book(body.day.isoformat(), body.trail, body.slot, body.group_size, today=ctx().today.isoformat())
     except booking.SlotFull as e:
@@ -263,6 +288,48 @@ def live_status(day: date, at: time | None = None, user: dict = Depends(role("ra
     return {"day": day.isoformat(), "time": now.strftime("%H:%M"), "segments": out}
 
 
+class CheckpointIn(BaseModel):
+    route: TrailName
+    count: int = Field(ge=0, le=5000)
+    at: datetime | None = None
+
+
+@app.post("/checkpoints", tags=["ranger"])
+def record_checkpoint(body: CheckpointIn, user: dict = Depends(role("ranger"))):
+    """Halfway check: people who passed the checkpoint (e.g. in the last 10 minutes)."""
+    at = when(body.at)
+    booking.record_checkpoint(at.date().isoformat(), body.route, body.count, user["username"], at)
+    auth.audit(user["username"], "checkpoint", f"{body.route} {body.count} at {at:%H:%M}")
+    return checkpoint_status(at.date(), at.time().replace(second=0, microsecond=0), user)
+
+
+@app.get("/checkpoints/{day}", tags=["ranger"])
+def checkpoint_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """Summit queue now and in the next hour from the halfway counts, and what to do at each checkpoint."""
+    if not ADVISORY:
+        raise HTTPException(400, "Halfway checks are used at pilgrimage sites")
+    from src.control.advisory import build_advisory
+    adv = build_advisory()
+    now = when(datetime.combine(day, at) if at else None)
+    passes = booking.checkpoint_passes(day.isoformat())
+    live = adv.nowcast(passes, now.hour * 60 + now.minute)
+    days = published("advisory.json")["days"]
+    rates = days.get(day.isoformat(), {}).get("halfway") or adv.release_rates(adv.demand(
+        {t: 1.0 for t in adv.trails}))
+    counted = passes.groupby("route")["count"].sum().to_dict() if len(passes) else {}
+    last = passes.groupby("route")["time_min"].max().to_dict() if len(passes) else {}
+    hhmm = lambda m: f"{int(m) // 60:02d}:{int(m) % 60:02d}"
+    log = [{"route": r.route, "name": CFG["area"]["trail_names"][r.route], "time": hhmm(r.time_min),
+            "count": int(r.count), "by": r.counted_by} for r in passes.iloc[::-1].head(30).itertuples()]
+    return {"day": day.isoformat(), **live, "log": log,
+            "checkpoints": [{"route": t, "name": CFG["area"]["trail_names"][t],
+                             "release_per_10_min": rates[t]["release_per_10_min"] if live["hold"] else None,
+                             "walk_to_summit_min": rates[t]["walk_to_summit_min"],
+                             "planned_hold": rates[t].get("hold_windows", []),
+                             "last_count_at": hhmm(last[t]) if t in last else None,
+                             "counted_today": int(counted.get(t, 0))} for t in TRAILS]}
+
+
 # ---------- officer ----------
 class ClosureIn(BaseModel):
     day: date
@@ -288,6 +355,25 @@ def day_bookings(day: date, user: dict = Depends(role("officer"))):
 @app.get("/admin/alerts", tags=["officer"])
 def alerts(user: dict = Depends(role("officer"))):
     return published("status.json").get("alerts", [])
+
+
+@app.get("/admin/season", tags=["officer"])
+def season(user: dict = Depends(role("officer"))):
+    """Pilgrim sites: every night of the outlook with the expected climbers, the summit queue and when the halfway
+    checks will be needed (for planning staff)."""
+    if not ADVISORY:
+        raise HTTPException(400, "The season plan is for pilgrimage sites")
+    adv, out = published("advisory.json")["days"], []
+    for d in published("outlook.json")["days"]:
+        a = adv.get(d["date"])
+        if a is None:
+            continue
+        s = a["summit"]
+        out.append({"date": d["date"], "crowd_level": d["crowd_level"], "visitors": d["visitors"],
+                    "peak_queue_people": s["peak_queue_people"], "peak_wait_min": s["peak_wait_min"],
+                    "peak_at": s["peak_at"], "hold_windows": s.get("hold_windows", []),
+                    "checks_needed": bool(s.get("hold_windows"))})
+    return {"limit_min": CFG["control"].get("queue_limit_min", 20), "days": out}
 
 
 @app.post("/admin/refresh", tags=["officer"])
