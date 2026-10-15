@@ -43,8 +43,10 @@ class C4Api {
         if (session != null) 'Authorization': 'Bearer ${session!.token}',
       };
 
-  Future<dynamic> _send(String method, String path, {Object? body, Map<String, String>? query, bool gateway = false}) async {
-    final uri = Uri.parse('${gateway ? baseUrl : _root}$path').replace(queryParameters: query);
+  Future<dynamic> _send(String method, String path,
+      {Object? body, Map<String, String>? query, bool gateway = false, String? forPark}) async {
+    final root = gateway ? baseUrl : (forPark != null ? '$baseUrl/parks/$forPark' : _root);
+    final uri = Uri.parse('$root$path').replace(queryParameters: query);
     late http.Response r;
     try {
       switch (method) {
@@ -91,7 +93,10 @@ class C4Api {
 
   Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(await _send('GET', '/advisory/${day(d)}'));
 
-  Future<Outlook> outlook() async => Outlook.fromJson(await _send('GET', '/outlook'));
+  /// 90-day outlook of the current park, or of [forPark] (destination cards, without switching park).
+  Future<Outlook> outlook({String? forPark}) async => Outlook.fromJson(await _send('GET', '/outlook', forPark: forPark));
+
+  Future<ParkInfo> destination() async => ParkInfo.fromJson(await _send('GET', '/destination') as Map<String, dynamic>);
 
   Future<List<TrailInfo>> trails() async =>
       (await _send('GET', '/trails') as List).map((t) => TrailInfo.fromJson(t as Map<String, dynamic>)).toList();
@@ -151,6 +156,11 @@ class C4Api {
   /// Halfway check: [count] people passed the checkpoint on [route] (e.g. in the last 10 minutes).
   Future<CheckpointStatus> recordCheckpoint(String route, int count, {DateTime? at}) async => CheckpointStatus.fromJson(
       await _send('POST', '/checkpoints', body: {'route': route, 'count': count, if (at != null) 'at': at.toIso8601String()}));
+
+  /// Pilgrim sites (officer): every night of the outlook with the summit queue and when halfway checks are needed.
+  Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
+      .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))
+      .toList();
 
   Future<List<Map<String, dynamic>>> closeTrail(DateTime d, String trail, String from, String to, String reason) async =>
       ((await _send('POST', '/admin/closures', body: {

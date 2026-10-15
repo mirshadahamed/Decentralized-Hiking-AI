@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/api_client.dart';
 import '../../ui/c4_ui.dart';
+import 'advisory_officer_home.dart';
 import 'halfway_screen.dart';
 import 'officer_home.dart';
 import 'ranger_home.dart';
@@ -31,7 +32,9 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
       final s = await api.login(_user.text.trim(), _pass.text);
       _pass.clear();
       if (!mounted) return;
-      final Widget home = widget.advisory ? const HalfwayScreen() : (s.isOfficer ? const OfficerHome() : const RangerHome());
+      final Widget home = widget.advisory
+          ? (s.isOfficer ? const AdvisoryOfficerHome() : const HalfwayScreen())
+          : (s.isOfficer ? const OfficerHome() : const RangerHome());
       await Navigator.of(context).pushReplacement(c4Route(context, home));
     } on ApiException catch (e) {
       setState(() => _error = e.message);

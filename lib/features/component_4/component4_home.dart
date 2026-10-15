@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/api_client.dart';
 import 'data/models.dart';
@@ -8,11 +7,13 @@ import 'screens/staff/login_screen.dart';
 import 'screens/visitor/map_screen.dart';
 import 'screens/visitor/my_tickets_screen.dart';
 import 'screens/visitor/outlook_screen.dart';
+import 'screens/visitor/overview_screen.dart';
 import 'ui/c4_i18n.dart';
 import 'ui/c4_ui.dart';
 
-/// Entry point of Component 4 (crowd forecasting, booking, entry control) inside the team app.
-/// With the gateway the visitor first picks a park (remembered); a single-park server opens directly.
+/// Entry point of Component 4 (crowd forecasting, trip planning, crowd control) inside the team app.
+/// Trip planner: with the gateway the visitor first chooses a destination, then sees everything about it;
+/// a single-park server opens that park directly.
 class Component4Home extends StatefulWidget {
   const Component4Home({super.key, this.api, this.lang});
 
@@ -23,8 +24,6 @@ class Component4Home extends StatefulWidget {
   State<Component4Home> createState() => _Component4HomeState();
 }
 
-const _parkKey = 'c4_park';
-
 class _Component4HomeState extends State<Component4Home> {
   late final C4Api _api = widget.api ?? C4Api();
   late final C4Lang _lang = widget.lang ?? C4Lang();
@@ -34,23 +33,10 @@ class _Component4HomeState extends State<Component4Home> {
   void initState() {
     super.initState();
     if (widget.lang == null) C4Lang.load().then((l) => _lang.set(l.code));
-    _parks = _loadParks();
+    _parks = _api.parks();
   }
 
-  Future<List<ParkInfo>?> _loadParks() async {
-    final parks = await _api.parks();
-    if (parks != null && _api.park == null) {
-      final saved = (await SharedPreferences.getInstance()).getString(_parkKey);
-      if (parks.any((p) => p.id == saved)) _api.usePark(saved);
-    }
-    return parks;
-  }
-
-  Future<void> _pick(String? id) async {
-    setState(() => _api.usePark(id));
-    final p = await SharedPreferences.getInstance();
-    id == null ? await p.remove(_parkKey) : await p.setString(_parkKey, id);
-  }
+  void _pick(String? id) => setState(() => _api.usePark(id));
 
   @override
   Widget build(BuildContext context) => C4Frame(
@@ -62,7 +48,7 @@ class _Component4HomeState extends State<Component4Home> {
             if (snap.hasError) {
               return Scaffold(
                 appBar: AppBar(),
-                body: ErrorRetry(error: snap.error!, onRetry: () => setState(() { _parks = _loadParks(); })),
+                body: ErrorRetry(error: snap.error!, onRetry: () => setState(() { _parks = _api.parks(); })),
               );
             }
             if (snap.connectionState != ConnectionState.done) {
@@ -70,11 +56,15 @@ class _Component4HomeState extends State<Component4Home> {
             }
             final parks = snap.data;
             if (parks != null && _api.park == null) {
-              return ParkPicker(parks: parks, onPick: _pick, actions: const [LanguageButton()]);
+              return DestinationsScreen(parks: parks, onPick: _pick, actions: const [LanguageButton()]);
             }
-            return ParkHome(
-              key: ValueKey(_api.park),
-              onChangePark: parks != null && parks.length > 1 ? () => _pick(null) : null,
+            final back = parks != null && parks.length > 1;
+            return PopScope(
+              canPop: !back, // system back returns to the destinations, not out of the module
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop) _pick(null);
+              },
+              child: ParkHome(key: ValueKey(_api.park), onChangePark: back ? () => _pick(null) : null),
             );
           },
         ),
@@ -99,7 +89,8 @@ class LanguageButton extends StatelessWidget {
   }
 }
 
-/// One park: booking parks get the calendar, map and tickets; pilgrim sites the start-time planner and map.
+/// One destination: overview first, then booking parks get the calendar, map and tickets; pilgrim sites the
+/// start-time planner and map.
 class ParkHome extends StatefulWidget {
   const ParkHome({super.key, this.onChangePark});
 
@@ -120,6 +111,11 @@ class _ParkHomeState extends State<ParkHome> {
     _status = C4Scope.of(context).status();
   }
 
+  void _open(int i) => setState(() {
+        _tab = i;
+        _visited.add(i);
+      });
+
   @override
   Widget build(BuildContext context) => FutureBuilder<ServerStatus>(
         future: _status,
@@ -129,16 +125,18 @@ class _ParkHomeState extends State<ParkHome> {
           final pages = s == null
               ? <(Widget, IconData, String)>[]
               : [
+                  (OverviewScreen(onPlan: () => _open(1)), Icons.explore_outlined, 'nav_overview'),
                   (OutlookScreen(site: s.site, advisory: advisory), Icons.calendar_month, advisory ? 'nav_start_times' : 'nav_plan_book'),
                   (const MapScreen(), Icons.map_outlined, 'nav_map'),
                   if (!advisory) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
                 ];
           return Scaffold(
             appBar: AppBar(
-              title: Text(s == null ? '' : '${s.site} · ${tr(context, 'visit_planner')}'),
+              leading: widget.onChangePark == null
+                  ? null
+                  : IconButton(tooltip: tr(context, 'change_park'), icon: const Icon(Icons.arrow_back), onPressed: widget.onChangePark),
+              title: Text(s?.site ?? ''),
               actions: [
-                if (widget.onChangePark != null)
-                  IconButton(tooltip: tr(context, 'change_park'), icon: const Icon(Icons.swap_horiz), onPressed: widget.onChangePark),
                 const LanguageButton(),
                 TextButton.icon(
                   onPressed: () => Navigator.of(context).push(c4Route(context, StaffLoginScreen(advisory: advisory))),
@@ -159,10 +157,7 @@ class _ParkHomeState extends State<ParkHome> {
                 ? null
                 : NavigationBar(
                     selectedIndex: _tab,
-                    onDestinationSelected: (i) => setState(() {
-                      _tab = i;
-                      _visited.add(i);
-                    }),
+                    onDestinationSelected: _open,
                     destinations: [for (final p in pages) NavigationDestination(icon: Icon(p.$2), label: tr(context, p.$3))],
                   ),
           );

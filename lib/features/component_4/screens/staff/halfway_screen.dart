@@ -9,14 +9,16 @@ import '../../ui/c4_ui.dart';
 /// passing (e.g. every 10 minutes). From all counts the server estimates the queue on the final steps when they
 /// arrive, and says whether to HOLD groups at the rest stop and how many to let through per 10 minutes.
 class HalfwayScreen extends StatefulWidget {
-  const HalfwayScreen({super.key});
+  const HalfwayScreen({super.key, this.demo});
+
+  final DateTime? demo; // start in demo time (e.g. opened from the officer console)
 
   @override
   State<HalfwayScreen> createState() => _HalfwayScreenState();
 }
 
 class _HalfwayScreenState extends State<HalfwayScreen> {
-  DateTime? _demo; // null = real time
+  late DateTime? _demo = widget.demo; // null = real time
   String? _route;
   int _count = 0;
   bool _busy = false;
@@ -105,7 +107,7 @@ class _HalfwayScreenState extends State<HalfwayScreen> {
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView(padding: C4Space.page, children: [
-              _ActionCard(status: st),
+              CheckpointActionCard(status: st),
               const SizedBox(height: C4Space.l),
               Text('My checkpoint', style: text.labelLarge),
               const SizedBox(height: C4Space.xs),
@@ -113,6 +115,8 @@ class _HalfwayScreenState extends State<HalfwayScreen> {
                 for (final t in trails)
                   ChoiceChip(label: Text(t.name), selected: t.id == route, onSelected: (_) => setState(() => _route = t.id)),
               ]),
+              for (final c in st.checkpoints.where((c) => c.route == route))
+                BasisNote(planText(c)),
               const SizedBox(height: C4Space.m),
               Card(
                 child: Padding(
@@ -167,8 +171,15 @@ class _HalfwayScreenState extends State<HalfwayScreen> {
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.status});
+/// Tonight's forecast plan for one checkpoint, e.g. "Forecast: hold 03:15–05:00".
+String planText(CheckpointRow c) {
+  if (c.plannedHold.isNotEmpty) return 'Forecast: hold expected ${windowsText(c.plannedHold)}';
+  if (c.plannedHoldIfBusy.isNotEmpty) return 'Forecast: no hold expected; stand by ${windowsText(c.plannedHoldIfBusy)} in case it is busier';
+  return 'Forecast: no hold expected tonight';
+}
+
+class CheckpointActionCard extends StatelessWidget {
+  const CheckpointActionCard({super.key, required this.status});
 
   final CheckpointStatus status;
 

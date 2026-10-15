@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/api_client.dart';
+import '../data/models.dart';
 import 'c4_i18n.dart';
 import 'c4_theme.dart';
 
@@ -108,6 +109,91 @@ class ErrorRetry extends StatelessWidget {
         ),
       );
 }
+
+// ---------- destinations ----------
+IconData kindIcon(String kind) => switch (kind) {
+      'pilgrimage' => Icons.temple_buddhist_outlined,
+      'national_park' => Icons.forest_outlined,
+      'waterfall' => Icons.water_outlined,
+      _ => Icons.landscape_outlined,
+    };
+
+/// "national_park" -> translated label, or "National park" for kinds without a translation yet.
+String kindLabel(BuildContext context, String kind) {
+  final t = tr(context, 'kind_$kind');
+  if (t != 'kind_$kind') return t;
+  final s = kind.replaceAll('_', ' ');
+  return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+}
+
+/// Coloured header of a destination (card and overview).
+class DestinationBanner extends StatelessWidget {
+  const DestinationBanner({super.key, required this.name, required this.kind, this.region = '', this.accent, this.height = 120});
+
+  final String name, kind, region;
+  final int? accent;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = accent != null ? Color(accent!) : Theme.of(context).colorScheme.primary;
+    final dark = Color.lerp(base, Colors.black, 0.35)!;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      height: height,
+      decoration: BoxDecoration(gradient: LinearGradient(colors: [base, dark], begin: Alignment.topLeft, end: Alignment.bottomRight)),
+      child: Stack(children: [
+        Positioned(right: -10, bottom: -18, child: Icon(kindIcon(kind), size: height * 0.95, color: Colors.white.withValues(alpha: 0.13))),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(kindIcon(kind), size: 14, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(kindLabel(context, kind), style: text.labelSmall?.copyWith(color: Colors.white)),
+              ]),
+            ),
+            const SizedBox(height: 6),
+            Text(name, style: text.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+            if (region.isNotEmpty)
+              Text(region, style: text.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.85)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Coloured crowd level for each of the next days, with the weekday under it.
+class WeekStrip extends StatelessWidget {
+  const WeekStrip({super.key, required this.days});
+
+  final List<OutlookDay> days;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: days.map((d) => '${shortDate(d.date)} ${crowdLabel(context, d.crowdLevel)}').join(', '),
+        child: Row(children: [
+          for (final d in days)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(children: [
+                  Container(height: 10, decoration: BoxDecoration(color: C4Colors.level(d.crowdLevel), borderRadius: BorderRadius.circular(5))),
+                  const SizedBox(height: 2),
+                  Text(DateFormat('E').format(d.date).substring(0, 2), style: Theme.of(context).textTheme.labelSmall),
+                ]),
+              ),
+            ),
+        ]),
+      );
+}
+
+/// Day with the fewest expected visitors.
+OutlookDay quietestOf(List<OutlookDay> days) => days.reduce((a, b) => b.p50 < a.p50 ? b : a);
 
 /// Small grey line that says what an estimate is based on (every estimate carries its basis).
 class BasisNote extends StatelessWidget {
