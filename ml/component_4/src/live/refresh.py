@@ -55,7 +55,7 @@ class LiveContext:
 
     def rain_share(self, day: date) -> tuple[float, str]:
         """Share of rainy open hours: from the weather forecast within its horizon, else typical."""
-        lo = pd.Timestamp(day) + pd.Timedelta(hours=6)
+        lo = pd.Timestamp(day) + pd.Timedelta(hours=self.cfg["capacity"].get("open_from_h", 6))
         hi = lo + pd.Timedelta(hours=self.cfg["capacity"]["open_hours"] - 1)
         src = self.weather_source[(self.weather_source.index >= lo) & (self.weather_source.index <= hi)]
         if len(src) and (src == "forecast").all():
@@ -79,6 +79,23 @@ def publish_slots(ctx: LiveContext, db=None) -> list:
     return alerts
 
 
+def publish_advisory(outlook: dict) -> dict:
+    """Recommended start times for every day of the outlook, from the expected climbers per route (likely case).
+    Officers also get a high case (P90 climbers: 1 night in 10 is busier) to plan the halfway checks for."""
+    from src.control.advisory import build_advisory
+    adv = build_advisory()
+    out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "days": {}}
+    for day in outlook["days"]:
+        by_trail = {t: float(v) for t, v in day["visitors_by_trail_p50"].items()}
+        rec = adv.recommend(by_trail)
+        k = day["visitors"]["p90"] / max(day["visitors"]["p50"], 1)
+        high = adv.recommend({t: v * k for t, v in by_trail.items()})
+        rec["high_case"] = {"visitors": day["visitors"]["p90"], "summit": high["summit"], "halfway": high["halfway"]}
+        out["days"][day["date"]] = rec
+    (PUBLISHED / "advisory.json").write_text(json.dumps(out), encoding="utf-8")
+    return out
+
+
 def refresh(today: date | None = None, db=None) -> dict:
     today = today or date.today()
     ctx = LiveContext(today)
@@ -88,11 +105,16 @@ def refresh(today: date | None = None, db=None) -> dict:
     for day in outlook["days"]:
         day["weather_basis"] = ctx.rain_share(date.fromisoformat(day["date"]))[1]
     tomorrow = ctx.forecast_tomorrow()
-    alerts = publish_slots(ctx, db)
+    advisory_mode = ctx.cfg["control"].get("booking_mode", "required") == "advisory"
+    alerts = [] if advisory_mode else publish_slots(ctx, db)
+    if advisory_mode:                                       # pilgrimage site: recommended start times, no tickets
+        publish_advisory(outlook)
 
     last30 = ctx.day_source[max(0, int((pd.Timestamp(today) - ctx.data.times[0]).days) - 29):
                             int((pd.Timestamp(today) - ctx.data.times[0]).days) + 1]
     status = {
+        "park": ctx.cfg["park"], "site": ctx.cfg["area"]["name"],
+        "booking_mode": ctx.cfg["control"].get("booking_mode", "required"),
         "today": today.isoformat(), "refreshed_at": datetime.now().isoformat(timespec="seconds"),
         "forecast_model": tomorrow["source"]["model"], "model_run": ctx.run,
         "visitor_history_last_30_days": pd.Series(last30).value_counts().to_dict(),

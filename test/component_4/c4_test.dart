@@ -3,7 +3,11 @@ import 'package:decentralized_hiking_ai/app/app.dart';
 import 'package:decentralized_hiking_ai/features/component_4/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/day_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/map_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/start_times_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/ui/c4_i18n.dart';
 import 'package:decentralized_hiking_ai/features/component_4/ui/c4_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,17 +42,192 @@ final planJson = {
   },
 };
 
+Map<String, dynamic> window(String start, int wait, String reach, bool sunrise) => {
+      'start': start,
+      'expected_wait_min': wait,
+      'reach_summit': reach,
+      'before_sunrise': sunrise,
+      'recommended': wait <= 20,
+    };
+
+final advisoryJson = {
+  'day': '2026-12-23',
+  'limit_min': 20,
+  'flow_per_min': 25,
+  'routes': {
+    'nallathanniya': {
+      'windows': [window('00:00', 0, '03:17', true), window('01:00', 15, '04:17', true), window('02:00', 95, '05:17', true), window('03:00', 140, '06:17', false)],
+      'best_for_sunrise': '01:00',
+      'recommended_for_sunrise': ['00:00', '01:00'],
+      'shortest_wait': '00:00',
+    },
+    'palabaddala': {
+      'windows': [window('00:00', 0, '05:30', true)],
+      'best_for_sunrise': '00:00',
+      'recommended_for_sunrise': ['00:00'],
+      'shortest_wait': '00:00',
+    },
+  },
+  'summit': {
+    'peak_queue_people': 2140,
+    'peak_wait_min': 86,
+    'peak_at': '05:15',
+    'bin_min': 15,
+    'wait_by_time': [for (var i = 0; i < 96; i++) i >= 18 && i < 26 ? 40 : 0],
+    'hold_windows': [['04:30', '06:30']],
+  },
+  'halfway': {
+    'nallathanniya': {'release_per_10_min': 194, 'walk_to_summit_min': 143, 'hold_windows': [['02:07', '04:07']]},
+    'palabaddala': {'release_per_10_min': 30, 'walk_to_summit_min': 142, 'hold_windows': [['02:08', '04:08']]},
+  },
+  'high_case': {
+    'visitors': 9965,
+    'summit': {'peak_wait_min': 120, 'wait_by_time': [for (var i = 0; i < 96; i++) i >= 16 && i < 30 ? 70 : 0], 'hold_windows': [['04:00', '07:30']]},
+    'halfway': {
+      'nallathanniya': {'release_per_10_min': 194, 'walk_to_summit_min': 143, 'hold_windows': [['01:37', '05:07']]},
+    },
+  },
+};
+
+Map<String, dynamic> seasonNight(String date, String checks) => {
+      'date': date,
+      'crowd_level': checks == 'none' ? 2 : 5,
+      'visitors': {'p10': 5408, 'p50': 7198, 'p90': 9965},
+      'peak_queue_people': 0,
+      'peak_wait_min': checks == 'needed' ? 70 : 5,
+      'peak_at': '05:00',
+      'hold_windows': checks == 'needed' ? [['04:15', '07:45']] : [],
+      'high_peak_wait_min': 90,
+      'high_hold_windows': checks == 'none' ? [] : [['04:00', '08:00']],
+      'checks': checks,
+    };
+
+final geometryJson = {
+  'type': 'FeatureCollection',
+  'features': [
+    {
+      'type': 'Feature',
+      'properties': {'trail': 'nallathanniya', 'poi': 'head_nallathanniya'},
+      'geometry': {'type': 'LineString', 'coordinates': [[80.50, 6.83], [80.50, 6.82]]},
+    },
+    {
+      'type': 'Feature',
+      'properties': {'trail': 'nallathanniya', 'poi': 'summit'},
+      'geometry': {'type': 'LineString', 'coordinates': [[80.50, 6.82], [80.4994, 6.8096]]},
+    },
+  ],
+};
+
+Map<String, dynamic> checkpointJson(bool hold) => {
+      'day': '2026-12-23',
+      'time': '02:10',
+      'queue_now_people': hold ? 900 : 0,
+      'wait_now_min': hold ? 36 : 0,
+      'ahead_min': 158,
+      'wait_ahead_max_min': hold ? 64 : 0,
+      'action': hold ? 'HOLD at the halfway checks: release only the listed number per 10 minutes' : 'Normal: let groups continue',
+      'hold': hold,
+      'checkpoints': [
+        {
+          'route': 'nallathanniya',
+          'name': 'Nallathanniya (Hatton)',
+          'release_per_10_min': hold ? 194 : null,
+          'walk_to_summit_min': 143,
+          'counted_today': hold ? 900 : 0,
+          'last_count_at': hold ? '02:10' : null,
+          'planned_hold': [],
+          'planned_hold_if_busy': [['01:37', '05:07']],
+        },
+        {'route': 'palabaddala', 'name': 'Palabaddala (Ratnapura)', 'release_per_10_min': hold ? 30 : null, 'walk_to_summit_min': 142, 'counted_today': 0},
+      ],
+      'log': hold
+          ? [
+              {'route': 'nallathanniya', 'name': 'Nallathanniya (Hatton)', 'time': '02:10', 'count': 500, 'by': 'ranger1'},
+              {'route': 'nallathanniya', 'name': 'Nallathanniya (Hatton)', 'time': '02:00', 'count': 400, 'by': 'ranger1'},
+            ]
+          : [],
+    };
+
+final horton = ParkInfo.fromJson({
+  'id': 'horton_plains',
+  'name': 'Horton Plains National Park',
+  'kind': 'national_park',
+  'region': 'Central Highlands',
+  'summary': 'High-altitude plateau ending at World\'s End.',
+  'elevation': '2,100 – 2,389 m',
+  'best_time': 'Early morning, before the mist rises.',
+  'getting_there': 'By road via Ohiya or Pattipola.',
+  'facts': ['No plastic in the park'],
+  'accent': '#2F6B4F',
+  'booking_mode': 'required',
+  'trails': {'main': "World's End loop", 'thotupola': 'Thotupola Kanda'},
+});
+
+final adamsPeak = ParkInfo.fromJson({
+  'id': 'adams_peak',
+  'name': "Adam's Peak (Sri Pada)",
+  'kind': 'pilgrimage',
+  'region': 'Peak Wilderness',
+  'summary': 'Sacred mountain climbed by night.',
+  'elevation': 'about 2,240 m',
+  'best_time': 'December to May; weekdays away from Poya.',
+  'getting_there': 'Hatton to Dalhousie.',
+  'facts': ['Dress modestly'],
+  'accent': '#8A4B2A',
+  'booking_mode': 'advisory',
+  'trails': {'nallathanniya': 'Nallathanniya (Hatton)', 'palabaddala': 'Palabaddala (Ratnapura)'},
+});
+
 class FakeApi extends C4Api {
-  FakeApi({this.full = false, this.loginOk = true}) : super(baseUrl: 'http://fake');
+  FakeApi({this.full = false, this.loginOk = true, this.withParks = false, this.role = 'ranger'}) : super(baseUrl: 'http://fake');
 
-  final bool full, loginOk;
-  int bookings = 0;
+  final bool full, loginOk, withParks;
+  final String role;
+  int bookings = 0, recorded = 0, refreshes = 0;
+
+  bool get _ap => park == 'adams_peak';
 
   @override
-  Future<ServerStatus> status() async => ServerStatus(today: today, refreshedAt: '', note: '');
+  Future<List<ParkInfo>?> parks() async => withParks ? [horton, adamsPeak] : null;
 
   @override
-  Future<Outlook> outlook() async => Outlook(
+  Future<ParkInfo> destination() async => _ap ? adamsPeak : horton;
+
+  @override
+  Future<List<SeasonNight>> season() async => [
+        SeasonNight.fromJson(seasonNight('2026-12-23', 'standby')),
+        SeasonNight.fromJson(seasonNight('2026-12-24', 'none')),
+        SeasonNight.fromJson(seasonNight('2026-12-25', 'needed')),
+      ];
+
+  @override
+  Future<Map<String, dynamic>> refresh() async {
+    refreshes++;
+    return {'today': '2026-10-16'};
+  }
+
+  @override
+  Future<ServerStatus> status() async => _ap
+      ? ServerStatus(today: today, refreshedAt: '', note: '', park: 'adams_peak', site: "Adam's Peak (Sri Pada)", bookingMode: 'advisory')
+      : ServerStatus(today: today, refreshedAt: '', note: '');
+
+  @override
+  Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(advisoryJson);
+
+  @override
+  Future<List<MapSegment>> geometry() async => MapSegment.fromGeoJson(geometryJson);
+
+  @override
+  Future<CheckpointStatus> checkpoints(DateTime d, {String? at}) async => CheckpointStatus.fromJson(checkpointJson(recorded > 0));
+
+  @override
+  Future<CheckpointStatus> recordCheckpoint(String route, int count, {DateTime? at}) async {
+    recorded += count;
+    return CheckpointStatus.fromJson(checkpointJson(true));
+  }
+
+  @override
+  Future<Outlook> outlook({String? forPark}) async => Outlook(
         issueDate: today,
         days: [OutlookDay.fromJson(outlookDay(today.add(const Duration(days: 1)), 2)), OutlookDay.fromJson(outlookDay(visit, 4))],
         trailNames: {'main': "World's End loop"},
@@ -56,10 +235,15 @@ class FakeApi extends C4Api {
       );
 
   @override
-  Future<List<TrailInfo>> trails() async => [
-        TrailInfo(id: 'main', name: "World's End loop", lengthKm: 7.5, about: 'Main loop'),
-        TrailInfo(id: 'thotupola', name: 'Thotupola Kanda', lengthKm: 1.3, about: 'Short peak'),
-      ];
+  Future<List<TrailInfo>> trails() async => _ap
+      ? [
+          TrailInfo(id: 'nallathanniya', name: 'Nallathanniya (Hatton)', lengthKm: 4.5, about: ''),
+          TrailInfo(id: 'palabaddala', name: 'Palabaddala (Ratnapura)', lengthKm: 8.3, about: ''),
+        ]
+      : [
+          TrailInfo(id: 'main', name: "World's End loop", lengthKm: 7.5, about: 'Main loop'),
+          TrailInfo(id: 'thotupola', name: 'Thotupola Kanda', lengthKm: 1.3, about: 'Short peak'),
+        ];
 
   @override
   Future<DayPlan> plan(DateTime d) async => DayPlan.fromPlanJson(planJson);
@@ -85,7 +269,7 @@ class FakeApi extends C4Api {
   @override
   Future<StaffSession> login(String username, String password) async {
     if (!loginOk) throw ApiException(401, 'Wrong username or password, or account locked');
-    return session = StaffSession(token: 't', username: username, role: 'ranger');
+    return session = StaffSession(token: 't', username: username, role: role);
   }
 
   @override
@@ -114,6 +298,8 @@ void main() {
 
   testWidgets('calendar shows the outlook; tapping a day opens it', (t) async {
     await t.pumpWidget(MaterialApp(home: Component4Home(api: FakeApi())));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Plan & book'));
     await t.pumpAndSettle();
     expect(find.text('When do you want to visit?'), findsOneWidget);
     expect(find.text('Very busy'), findsOneWidget);
@@ -180,6 +366,161 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Check in'), findsOneWidget);
     expect(find.text('Walk-ins'), findsOneWidget);
+  });
+
+  test('advisory, checkpoint and map models parse the API JSON', () {
+    final a = StartAdvice.fromJson(advisoryJson);
+    expect(a.routes['nallathanniya']!.bestForSunrise, '01:00');
+    expect(a.routes['nallathanniya']!.windows[2].recommended, isFalse);
+    expect(a.peakQueue, 2140);
+    final c = CheckpointStatus.fromJson(checkpointJson(true));
+    expect(c.hold, isTrue);
+    expect(c.checkpoints.first.releasePer10Min, 194);
+    expect(CheckpointStatus.fromJson(checkpointJson(false)).checkpoints.first.releasePer10Min, isNull);
+    final segs = MapSegment.fromGeoJson(geometryJson);
+    expect(segs.length, 2);
+    expect(segs.last.points.last, [80.4994, 6.8096]);
+  });
+
+  test('the park prefix goes in front of every call', () {
+    final api = C4Api(baseUrl: 'http://h:8000');
+    api.usePark('adams_peak');
+    expect(api.park, 'adams_peak');
+    api.session = StaffSession(token: 't', username: 'u', role: 'ranger');
+    api.usePark('horton_plains');
+    expect(api.session, isNull); // staff accounts belong to one park
+  });
+
+  test('destination and season models parse the API JSON', () {
+    expect(adamsPeak.kind, 'pilgrimage');
+    expect(adamsPeak.accent, 0xFF8A4B2A);
+    expect(adamsPeak.isAdvisory, isTrue);
+    final n = SeasonNight.fromJson(seasonNight('2026-12-25', 'needed'));
+    expect(windowsText(n.holdWindows), '04:15–07:45');
+    final a = StartAdvice.fromJson(advisoryJson);
+    expect(a.waitByTime.length, 96);
+    expect(a.highVisitors, 9965);
+    expect(a.halfway['nallathanniya']!.holdWindows.single, ['02:07', '04:07']);
+    expect(CheckpointStatus.fromJson(checkpointJson(true)).log.first.count, 500);
+  });
+
+  testWidgets('trip planner: destinations with a week strip, a filter by kind, then the destination overview', (t) async {
+    await t.pumpWidget(MaterialApp(home: Component4Home(api: FakeApi(withParks: true), lang: C4Lang())));
+    await t.pumpAndSettle();
+    expect(find.text('Where to?'), findsOneWidget);
+    expect(find.text('Next 7 days'), findsWidgets);
+    expect(find.textContaining('Quietest:'), findsWidgets);
+    await t.tap(find.widgetWithText(ChoiceChip, 'Pilgrimage'));    // filter by kind
+    await t.pumpAndSettle();
+    expect(find.text('Horton Plains National Park'), findsNothing);
+    await t.tap(find.text("Adam's Peak (Sri Pada)"));
+    await t.pumpAndSettle();
+    expect(find.text('Sacred mountain climbed by night.'), findsOneWidget);   // overview of the destination
+    expect(find.text('My tickets'), findsNothing);                           // pilgrim site: no tickets
+    await t.scrollUntilVisible(find.text('Getting there'), 200);
+    expect(find.text('Hatton to Dalhousie.'), findsOneWidget);
+    await t.scrollUntilVisible(find.text('Plan your climb'), -200);
+    await t.tap(find.text('Plan your climb'));
+    await t.pumpAndSettle();
+    expect(find.text('When will you climb?'), findsOneWidget);
+    await t.tap(find.byTooltip('All destinations'));                         // back to the list
+    await t.pumpAndSettle();
+    expect(find.text('Where to?'), findsOneWidget);
+  });
+
+  testWidgets('Adam\'s Peak officer: tonight, season plan and a night plan', (t) async {
+    final api = FakeApi(withParks: true, role: 'officer');
+    await t.pumpWidget(MaterialApp(home: Component4Home(api: api, lang: C4Lang())));
+    await t.pumpAndSettle();
+    await t.tap(find.text("Adam's Peak (Sri Pada)"));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Staff'));
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).first, 'officer1');
+    await t.enterText(find.byType(TextField).last, 'correct-horse');
+    await t.tap(find.text('Log in'));
+    await t.pumpAndSettle();
+    expect(find.text('Tonight'), findsOneWidget);                 // officer console, not the halfway screen
+    expect(find.text('NORMAL'), findsOneWidget);
+    expect(find.textContaining('stand by 01:37–05:07'), findsOneWidget);
+    await t.dragUntilVisible(find.text('No counts yet tonight'), find.byType(ListView).first, const Offset(0, -200));
+    await t.tap(find.text('Season'));
+    await t.pumpAndSettle();
+    expect(find.text('Checks needed'), findsWidgets);
+    expect(find.text('Stand by'), findsWidgets);
+    await t.tap(find.byType(SwitchListTile));                    // only nights that may need checks
+    await t.pumpAndSettle();
+    expect(find.text(niceDate(DateTime(2026, 12, 24))), findsNothing);
+    await t.tap(find.text(niceDate(DateTime(2026, 12, 25))));
+    await t.pumpAndSettle();
+    expect(find.text('Night plan · Fri 25 Dec'), findsOneWidget);
+    expect(find.textContaining('04:30–06:30'), findsOneWidget);   // likely queue window at the summit
+    await t.scrollUntilVisible(find.textContaining('Hold: 02:07–04:07'), 200);
+    expect(find.textContaining('If busier: 01:37–05:07'), findsOneWidget);
+    await t.pageBack();
+    await t.pumpAndSettle();
+    await t.tap(find.byTooltip('Refresh forecasts'));
+    await t.pumpAndSettle();
+    expect(api.refreshes, 1);
+  });
+
+  testWidgets('start times: best start, good windows and the wait table', (t) async {
+    final api = FakeApi()..usePark('adams_peak');
+    await t.pumpWidget(wrap(StartTimesScreen(day: DateTime(2026, 12, 23)), api));
+    await t.pumpAndSettle();
+    expect(find.text('Best start for sunrise'), findsOneWidget);
+    expect(find.text('01:00'), findsWidgets);
+    expect(find.text('95 min'), findsOneWidget);   // in the table (before sunrise)
+    expect(find.text('140 min'), findsNothing);    // reaches after sunrise: chart only
+    await t.scrollUntilVisible(find.textContaining('Busiest at the summit around 05:15'), 200);
+    await t.scrollUntilVisible(find.text('Palabaddala (Ratnapura)'), -200);
+    await t.tap(find.text('Palabaddala (Ratnapura)'));
+    await t.pumpAndSettle();
+    expect(find.text('05:30'), findsOneWidget);
+  });
+
+  testWidgets('halfway check: recording a count turns the advice to HOLD with release rates', (t) async {
+    final api = FakeApi()..usePark('adams_peak');
+    await t.pumpWidget(wrap(const HalfwayScreen(), api));
+    await t.pumpAndSettle();
+    expect(find.text('NORMAL'), findsOneWidget);
+    await t.tap(find.text('+50'));
+    await t.tap(find.text('+10'));
+    await t.pump();
+    await t.tap(find.text('Record 60'));
+    await t.pumpAndSettle();
+    expect(api.recorded, 60);
+    expect(find.text('HOLD'), findsOneWidget);
+    await t.scrollUntilVisible(find.text('194'), 200);
+    expect(find.text('194'), findsOneWidget);
+  });
+
+  testWidgets('language menu switches the visitor screens to Sinhala and Tamil', (t) async {
+    final lang = C4Lang();
+    await t.pumpWidget(MaterialApp(home: Component4Home(api: FakeApi(), lang: lang)));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Plan & book'));
+    await t.pumpAndSettle();
+    expect(find.text('When do you want to visit?'), findsOneWidget);
+    await t.tap(find.byIcon(Icons.translate));
+    await t.pumpAndSettle();
+    await t.tap(find.text('සිංහල').last);
+    await t.pumpAndSettle();
+    expect(lang.code, 'si');
+    expect(find.text('ඔබ පැමිණීමට කැමති කවදාද?'), findsOneWidget);
+    await lang.set('ta');
+    await t.pumpAndSettle();
+    expect(find.text('எப்போது வர விரும்புகிறீர்கள்?'), findsOneWidget);
+    expect(find.text('கண்ணோட்டம்'), findsOneWidget);   // navigation label too
+  });
+
+  testWidgets('map shows the routes and the legend', (t) async {
+    final api = FakeApi()..usePark('adams_peak');
+    await t.pumpWidget(wrap(const Scaffold(body: MapScreen(showTiles: false)), api));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Nallathanniya (Hatton) · 4.5 km'), findsOneWidget);
+    expect(find.byIcon(Icons.flag), findsOneWidget);           // summit
+    expect(find.byIcon(Icons.directions_walk), findsOneWidget); // trail head
   });
 
   testWidgets('app home lists the modules', (t) async {

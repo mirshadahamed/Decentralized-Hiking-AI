@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../data/api_client.dart';
 import '../../ui/c4_ui.dart';
+import 'advisory_officer_home.dart';
+import 'halfway_screen.dart';
 import 'officer_home.dart';
 import 'ranger_home.dart';
 
 /// Login for park staff (rangers, officers, admins). Visitors never need an account.
 class StaffLoginScreen extends StatefulWidget {
-  const StaffLoginScreen({super.key});
+  const StaffLoginScreen({super.key, this.advisory = false});
+
+  final bool advisory; // pilgrim site: staff work the halfway checks
 
   @override
   State<StaffLoginScreen> createState() => _StaffLoginScreenState();
@@ -28,7 +32,10 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
       final s = await api.login(_user.text.trim(), _pass.text);
       _pass.clear();
       if (!mounted) return;
-      await Navigator.of(context).pushReplacement(c4Route(context, s.isOfficer ? const OfficerHome() : const RangerHome()));
+      final Widget home = widget.advisory
+          ? (s.isOfficer ? const AdvisoryOfficerHome() : const HalfwayScreen())
+          : (s.isOfficer ? const OfficerHome() : const RangerHome());
+      await Navigator.of(context).pushReplacement(c4Route(context, home));
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } finally {

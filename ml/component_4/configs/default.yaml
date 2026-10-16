@@ -1,6 +1,19 @@
 # Component 4 default configuration. Every assumption here is explained in docs/assumptions.md.
 seed: 42
 
+destination:                                # what the app's trip planner shows (one block per park config)
+  kind: national_park                       # national_park | pilgrimage | ... (new kinds appear as app filters)
+  region: "Central Highlands · Nuwara Eliya District"
+  summary: "High-altitude plateau of grassland and cloud forest, ending at the World's End escarpment."
+  elevation: "2,100 – 2,389 m"
+  best_time: "Early morning, before the mist rises (usually before 10:00). January to March is the driest."
+  getting_there: "By road via Ohiya or Pattipola; trains to Ohiya or Pattipola station. Entry tickets at the park gate."
+  facts:
+    - "Part of the Central Highlands UNESCO World Heritage Site"
+    - "Plastic and polythene are not allowed in the park"
+    - "Cold mornings: bring a warm layer and rain gear"
+  accent: "#2F6B4F"                         # card colour in the app
+
 area:
   name: Horton Plains National Park
   bbox: [80.740, 6.770, 80.840, 6.850]      # left, bottom, right, top (WGS84) for OSM: all three trails
@@ -25,10 +38,28 @@ area:
     main: "World's End loop"
     kirigalpotta: "Kirigalpotta"
     thotupola: "Thotupola Kanda"
+  trail_info:                               # one line per trail for visitors
+    main: "Loop past Mini World's End, World's End and Baker's Falls; about 3.5 hours"
+    kirigalpotta: "5.2 km each way to the 2nd-highest peak (2,388 m); long and exposed, last start 09:30"
+    thotupola: "1.3 km each way to the 3rd-highest peak (2,357 m); trailhead is a 4.2 km drive up the Pattipola road"
+  main_trail: main                          # the busiest trail (suggestions move people away from it)
+  focus_poi: worlds_end                     # the place whose crowding matters most
+  poi_roles:
+    viewpoint: [mini_worlds_end, worlds_end, bakers_falls, kirigalpotta_peak, thotupola_peak]
+    access: [entrance, thotupola_head]
+  poi_labels:
+    entrance: "Visitor Center"
+    mini_worlds_end: "Mini World's End"
+    worlds_end: "World's End"
+    bakers_falls: "Baker's Falls"
+    kirigalpotta_peak: "Kirigalpotta peak"
+    thotupola_head: "Thotupola trailhead"
+    thotupola_peak: "Thotupola Kanda"
 
 graph:
   target_segment_m: 300   # densify the loop into ~300 m segments (graph nodes)
   poi_snap_m: 80          # a POI tags the segment it lies within this distance of
+  max_grade: 0.25         # cap on DEM grades (DEM cells beside cliffs exaggerate the slope)
 
 dates:
   start: "2022-01-01"
@@ -62,6 +93,7 @@ simulator:
     kirigalpotta: 9.5
   route_start_offset_min:           # extra time before the walk starts
     thotupola: 12                   # drive 4.2 km back down the Pattipola road and park
+  reversible_routes: [main]         # loops that can be walked either way
   standard_direction_share: 0.85    # main loop: Mini World's End -> World's End -> Baker's Falls first
   walker_speed_sd: 0.12             # lognormal spread of group walking speed
   leisure_speed_factor: 0.75        # tourists walk slower than Tobler's fit-hiker speed (photos, rests)
@@ -96,10 +128,16 @@ train:
   spatial_seeds: [42]
   peak_hours: [7, 11]     # morning peak used for MAE_peak
 
+planning:
+  typical_start_h: 7      # when most visitors start (baseline for the 'start later' suggestion)
+  later_note: "Views at World's End are often lost to mist later in the morning."
+  access_note: "Check with DWC that the trail is open and whether a guide is needed."
+
 capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
   space_per_person_m: 1.0 # 1 m of trail per hiker (Cifuentes standard for trails)
   group_size: 10          # maximum group size used for the social factor
   group_gap_m: 50         # minimum distance between groups
+  open_from_h: 6          # first open hour
   open_hours: 12          # 06:00-18:00
   rain_mm: 0.5            # an open hour with >= this forecast rain counts as a rainy hour
   management_capacity: 0.7  # MC: share of required staff/infrastructure available (assumption)

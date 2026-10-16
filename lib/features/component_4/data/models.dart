@@ -299,14 +299,337 @@ class WalkInSlot {
 }
 
 class ServerStatus {
-  ServerStatus({required this.today, required this.refreshedAt, required this.note});
+  ServerStatus({
+    required this.today,
+    required this.refreshedAt,
+    required this.note,
+    this.park = 'horton_plains',
+    this.site = 'Horton Plains',
+    this.bookingMode = 'required',
+  });
 
   final DateTime today;
-  final String refreshedAt, note;
+  final String refreshedAt, note, park, site;
+  final String bookingMode; // required = slot tickets | advisory = recommended start times (pilgrim sites)
+
+  bool get isAdvisory => bookingMode == 'advisory';
 
   factory ServerStatus.fromJson(Map<String, dynamic> j) => ServerStatus(
         today: DateTime.parse(j['today'] as String),
         refreshedAt: j['refreshed_at'] as String? ?? '',
         note: j['note'] as String? ?? '',
+        park: j['park'] as String? ?? 'horton_plains',
+        site: j['site'] as String? ?? 'Horton Plains',
+        bookingMode: j['booking_mode'] as String? ?? 'required',
       );
+}
+
+// ---------- destinations (gateway /parks, park /destination) ----------
+/// One destination for the trip planner. Everything comes from the park's config, so a new destination needs
+/// no app change.
+class ParkInfo {
+  ParkInfo({
+    required this.id,
+    required this.name,
+    required this.bookingMode,
+    required this.trails,
+    this.kind = 'park',
+    this.region = '',
+    this.summary = '',
+    this.elevation = '',
+    this.bestTime = '',
+    this.gettingThere = '',
+    this.facts = const [],
+    this.accent,
+    this.trailInfo = const {},
+  });
+
+  final String id, name, bookingMode, kind, region, summary, elevation, bestTime, gettingThere;
+  final Map<String, String> trails, trailInfo;
+  final List<String> facts;
+  final int? accent; // ARGB colour for banners
+
+  bool get isAdvisory => bookingMode == 'advisory';
+
+  static Map<String, String> _strMap(dynamic m) => (m as Map<String, dynamic>? ?? {}).map((k, v) => MapEntry(k, '$v'));
+
+  static int? _color(dynamic s) {
+    if (s is! String || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(s)) return null;
+    return 0xFF000000 | int.parse(s.substring(1), radix: 16);
+  }
+
+  factory ParkInfo.fromJson(Map<String, dynamic> j) => ParkInfo(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        bookingMode: j['booking_mode'] as String? ?? 'required',
+        trails: _strMap(j['trails']),
+        kind: j['kind'] as String? ?? 'park',
+        region: j['region'] as String? ?? '',
+        summary: j['summary'] as String? ?? '',
+        elevation: j['elevation'] as String? ?? '',
+        bestTime: j['best_time'] as String? ?? '',
+        gettingThere: j['getting_there'] as String? ?? '',
+        facts: (j['facts'] as List? ?? []).map((f) => '$f').toList(),
+        accent: _color(j['accent']),
+        trailInfo: _strMap(j['trail_info']),
+      );
+}
+
+// ---------- pilgrim sites: officers' season plan ----------
+class SeasonNight {
+  SeasonNight({
+    required this.date,
+    required this.crowdLevel,
+    required this.p10,
+    required this.p50,
+    required this.p90,
+    required this.peakQueue,
+    required this.peakWaitMin,
+    required this.peakAt,
+    required this.holdWindows,
+    required this.highPeakWaitMin,
+    required this.highHoldWindows,
+    required this.checks,
+  });
+
+  final DateTime date;
+  final int crowdLevel, p10, p50, p90, peakQueue, peakWaitMin, highPeakWaitMin;
+  final String peakAt, checks; // checks: needed | standby | none
+  final List<List<String>> holdWindows, highHoldWindows;
+
+  factory SeasonNight.fromJson(Map<String, dynamic> j) => SeasonNight(
+        date: DateTime.parse(j['date'] as String),
+        crowdLevel: _int(j['crowd_level']),
+        p10: _int(j['visitors']['p10']),
+        p50: _int(j['visitors']['p50']),
+        p90: _int(j['visitors']['p90']),
+        peakQueue: _int(j['peak_queue_people']),
+        peakWaitMin: _int(j['peak_wait_min']),
+        peakAt: j['peak_at'] as String? ?? '',
+        holdWindows: windowsOf(j['hold_windows']),
+        highPeakWaitMin: _int(j['high_peak_wait_min']),
+        highHoldWindows: windowsOf(j['high_hold_windows']),
+        checks: j['checks'] as String? ?? 'none',
+      );
+}
+
+/// [["03:15","05:00"], ...] -> list of [from, to]
+List<List<String>> windowsOf(dynamic v) => (v as List? ?? []).map((w) => (w as List).map((x) => '$x').toList()).toList();
+
+String windowsText(List<List<String>> w) => w.map((x) => '${x[0]}–${x[1]}').join(', ');
+
+class HalfwayPlan {
+  HalfwayPlan({required this.releasePer10Min, required this.walkToSummitMin, required this.holdWindows});
+
+  final int releasePer10Min, walkToSummitMin;
+  final List<List<String>> holdWindows;
+
+  factory HalfwayPlan.fromJson(Map<String, dynamic> j) => HalfwayPlan(
+        releasePer10Min: _int(j['release_per_10_min']),
+        walkToSummitMin: _int(j['walk_to_summit_min']),
+        holdWindows: windowsOf(j['hold_windows']),
+      );
+
+  static Map<String, HalfwayPlan> mapOf(dynamic m) =>
+      (m as Map<String, dynamic>? ?? {}).map((k, v) => MapEntry(k, HalfwayPlan.fromJson(v as Map<String, dynamic>)));
+}
+
+// ---------- pilgrim sites: recommended start times ----------
+class StartWindow {
+  StartWindow({
+    required this.start,
+    required this.waitMin,
+    required this.reachSummit,
+    required this.beforeSunrise,
+    required this.recommended,
+  });
+
+  final String start, reachSummit;
+  final int waitMin;
+  final bool beforeSunrise, recommended;
+
+  factory StartWindow.fromJson(Map<String, dynamic> j) => StartWindow(
+        start: j['start'] as String,
+        waitMin: _int(j['expected_wait_min']),
+        reachSummit: j['reach_summit'] as String? ?? '',
+        beforeSunrise: j['before_sunrise'] as bool? ?? false,
+        recommended: j['recommended'] as bool? ?? false,
+      );
+}
+
+class RouteAdvice {
+  RouteAdvice({required this.windows, required this.bestForSunrise, required this.recommendedForSunrise, required this.shortestWait});
+
+  final List<StartWindow> windows;
+  final String bestForSunrise, shortestWait;
+  final List<String> recommendedForSunrise;
+
+  factory RouteAdvice.fromJson(Map<String, dynamic> j) => RouteAdvice(
+        windows: (j['windows'] as List).map((w) => StartWindow.fromJson(w as Map<String, dynamic>)).toList(),
+        bestForSunrise: j['best_for_sunrise'] as String? ?? '',
+        recommendedForSunrise: (j['recommended_for_sunrise'] as List? ?? []).cast<String>(),
+        shortestWait: j['shortest_wait'] as String? ?? '',
+      );
+}
+
+/// /advisory/{day}
+class StartAdvice {
+  StartAdvice({
+    required this.day,
+    required this.limitMin,
+    required this.routes,
+    required this.peakQueue,
+    required this.peakWaitMin,
+    required this.peakAt,
+    this.binMin = 15,
+    this.waitByTime = const [],
+    this.holdWindows = const [],
+    this.halfway = const {},
+    this.highVisitors = 0,
+    this.highPeakWaitMin = 0,
+    this.highWaitByTime = const [],
+    this.highHoldWindows = const [],
+    this.highHalfway = const {},
+  });
+
+  final DateTime day;
+  final int limitMin, peakQueue, peakWaitMin, binMin, highVisitors, highPeakWaitMin;
+  final String peakAt;
+  final Map<String, RouteAdvice> routes;
+  final List<int> waitByTime, highWaitByTime; // expected wait at the summit per [binMin] minutes from 00:00
+  final List<List<String>> holdWindows, highHoldWindows;
+  final Map<String, HalfwayPlan> halfway, highHalfway; // likely case / high case (P90 climbers)
+
+  static List<int> _ints(dynamic v) => (v as List? ?? []).map((x) => _int(x)).toList();
+
+  factory StartAdvice.fromJson(Map<String, dynamic> j) {
+    final s = j['summit'] as Map<String, dynamic>? ?? {};
+    final h = j['high_case'] as Map<String, dynamic>? ?? {};
+    final hs = h['summit'] as Map<String, dynamic>? ?? {};
+    return StartAdvice(
+      day: DateTime.parse(j['day'] as String),
+      limitMin: _int(j['limit_min']),
+      routes: (j['routes'] as Map<String, dynamic>).map((k, v) => MapEntry(k, RouteAdvice.fromJson(v as Map<String, dynamic>))),
+      peakQueue: _int(s['peak_queue_people']),
+      peakWaitMin: _int(s['peak_wait_min']),
+      peakAt: s['peak_at'] as String? ?? '',
+      binMin: s['bin_min'] == null ? 15 : _int(s['bin_min']),
+      waitByTime: _ints(s['wait_by_time']),
+      holdWindows: windowsOf(s['hold_windows']),
+      halfway: HalfwayPlan.mapOf(j['halfway']),
+      highVisitors: _int(h['visitors']),
+      highPeakWaitMin: _int(hs['peak_wait_min']),
+      highWaitByTime: _ints(hs['wait_by_time']),
+      highHoldWindows: windowsOf(hs['hold_windows']),
+      highHalfway: HalfwayPlan.mapOf(h['halfway']),
+    );
+  }
+}
+
+class CheckpointRow {
+  CheckpointRow({
+    required this.route,
+    required this.name,
+    required this.releasePer10Min,
+    required this.walkToSummitMin,
+    required this.countedToday,
+    this.lastCountAt,
+    this.plannedHold = const [],
+    this.plannedHoldIfBusy = const [],
+  });
+
+  final String route, name;
+  final int? releasePer10Min; // only while holding
+  final int walkToSummitMin, countedToday;
+  final String? lastCountAt;
+  final List<List<String>> plannedHold, plannedHoldIfBusy; // from the forecast: likely / if as busy as the high case
+
+  factory CheckpointRow.fromJson(Map<String, dynamic> j) => CheckpointRow(
+        route: j['route'] as String,
+        name: j['name'] as String? ?? j['route'] as String,
+        releasePer10Min: j['release_per_10_min'] == null ? null : _int(j['release_per_10_min']),
+        walkToSummitMin: _int(j['walk_to_summit_min']),
+        countedToday: _int(j['counted_today']),
+        lastCountAt: j['last_count_at'] as String?,
+        plannedHold: windowsOf(j['planned_hold']),
+        plannedHoldIfBusy: windowsOf(j['planned_hold_if_busy']),
+      );
+}
+
+class CountEntry {
+  CountEntry({required this.route, required this.name, required this.time, required this.count, required this.by});
+
+  final String route, name, time, by;
+  final int count;
+
+  factory CountEntry.fromJson(Map<String, dynamic> j) => CountEntry(
+        route: j['route'] as String,
+        name: j['name'] as String? ?? j['route'] as String,
+        time: j['time'] as String? ?? '',
+        count: _int(j['count']),
+        by: j['by'] as String? ?? '',
+      );
+}
+
+/// /checkpoints/{day}: summit queue estimated from the halfway counts, and what to do.
+class CheckpointStatus {
+  CheckpointStatus({
+    required this.time,
+    required this.queueNow,
+    required this.waitNowMin,
+    required this.waitAheadMin,
+    required this.aheadMin,
+    required this.hold,
+    required this.action,
+    required this.checkpoints,
+    this.log = const [],
+  });
+
+  final String time, action;
+  final int queueNow, waitNowMin, waitAheadMin, aheadMin;
+  final bool hold;
+  final List<CheckpointRow> checkpoints;
+  final List<CountEntry> log; // newest first
+
+  factory CheckpointStatus.fromJson(Map<String, dynamic> j) => CheckpointStatus(
+        time: j['time'] as String? ?? '',
+        queueNow: _int(j['queue_now_people']),
+        waitNowMin: _int(j['wait_now_min']),
+        waitAheadMin: _int(j['wait_ahead_max_min']),
+        aheadMin: _int(j['ahead_min']),
+        hold: j['hold'] as bool? ?? false,
+        action: j['action'] as String? ?? '',
+        checkpoints: (j['checkpoints'] as List? ?? []).map((c) => CheckpointRow.fromJson(c as Map<String, dynamic>)).toList(),
+        log: (j['log'] as List? ?? []).map((c) => CountEntry.fromJson(c as Map<String, dynamic>)).toList(),
+      );
+}
+
+/// One trail segment for the map (from /trails/geometry).
+class MapSegment {
+  MapSegment({required this.trail, required this.poi, required this.points});
+
+  final String trail, poi;
+  final List<List<double>> points; // [lon, lat]
+
+  static List<MapSegment> fromGeoJson(Map<String, dynamic> fc) {
+    final out = <MapSegment>[];
+    for (final f in (fc['features'] as List? ?? [])) {
+      final g = f['geometry'] as Map<String, dynamic>?;
+      final p = f['properties'] as Map<String, dynamic>? ?? {};
+      if (g == null) continue;
+      final lines = switch (g['type']) {
+        'LineString' => [g['coordinates'] as List],
+        'MultiLineString' => (g['coordinates'] as List).cast<List>(),
+        _ => <List>[],
+      };
+      for (final l in lines) {
+        out.add(MapSegment(
+          trail: p['trail'] as String? ?? '',
+          poi: p['poi'] as String? ?? '',
+          points: [for (final c in l) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]],
+        ));
+      }
+    }
+    return out;
+  }
 }

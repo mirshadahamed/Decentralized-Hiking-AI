@@ -18,7 +18,7 @@ import pandas as pd
 import torch
 
 from src.config import RESULTS, load_config
-from src.data.build_dataset import VIEWPOINTS
+from src.data.build_dataset import viewpoints
 from src.eval.data import TrailData
 from src.eval.metrics import paired_tests, per_day_mae, summary
 from src.models.baselines import ARIMABaseline, HistoricalAverage
@@ -36,7 +36,7 @@ def masks(data, origins, cfg):
 
 
 def poi_nodes(data):
-    return np.where(np.isin(data.segment_poi, list(VIEWPOINTS)))[0]
+    return np.where(np.isin(data.segment_poi, list(viewpoints(data.cfg))))[0]
 
 
 def evaluate(name, pred, data, origins, nodes, cfg, extra=None):

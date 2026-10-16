@@ -22,24 +22,31 @@ class ApiException implements Exception {
 }
 
 /// All calls to the Component 4 API. Tests replace it with a fake (implements C4Api).
+/// With the gateway (python -m src.api.serve_all) several parks share one address: set [park] and every call
+/// goes to /parks/{park}/...; without it ([park] null) the calls go straight to a single-park API.
 class C4Api {
-  C4Api({String? baseUrl, http.Client? client})
+  C4Api({String? baseUrl, http.Client? client, this.park})
       : baseUrl = baseUrl ?? kC4ApiUrl,
         _http = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
   StaffSession? session;
+  String? park;
 
   static String day(DateTime d) => d.toIso8601String().substring(0, 10);
+
+  String get _root => park == null ? baseUrl : '$baseUrl/parks/$park';
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         if (session != null) 'Authorization': 'Bearer ${session!.token}',
       };
 
-  Future<dynamic> _send(String method, String path, {Object? body, Map<String, String>? query}) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
+  Future<dynamic> _send(String method, String path,
+      {Object? body, Map<String, String>? query, bool gateway = false, String? forPark}) async {
+    final root = gateway ? baseUrl : (forPark != null ? '$baseUrl/parks/$forPark' : _root);
+    final uri = Uri.parse('$root$path').replace(queryParameters: query);
     late http.Response r;
     try {
       switch (method) {
@@ -62,10 +69,34 @@ class C4Api {
     throw ApiException(r.statusCode, detail, alternatives: alts);
   }
 
+  // ---------- gateway ----------
+  /// Parks served by the gateway; null when the server is a single-park API (no gateway).
+  Future<List<ParkInfo>?> parks() async {
+    try {
+      return (await _send('GET', '/parks', gateway: true) as List).map((p) => ParkInfo.fromJson(p as Map<String, dynamic>)).toList();
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Switch park (staff sessions belong to one park).
+  void usePark(String? id) {
+    if (id != park) session = null;
+    park = id;
+  }
+
   // ---------- public ----------
   Future<ServerStatus> status() async => ServerStatus.fromJson(await _send('GET', '/status'));
 
-  Future<Outlook> outlook() async => Outlook.fromJson(await _send('GET', '/outlook'));
+  Future<List<MapSegment>> geometry() async => MapSegment.fromGeoJson(await _send('GET', '/trails/geometry') as Map<String, dynamic>);
+
+  Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(await _send('GET', '/advisory/${day(d)}'));
+
+  /// 90-day outlook of the current park, or of [forPark] (destination cards, without switching park).
+  Future<Outlook> outlook({String? forPark}) async => Outlook.fromJson(await _send('GET', '/outlook', forPark: forPark));
+
+  Future<ParkInfo> destination() async => ParkInfo.fromJson(await _send('GET', '/destination') as Map<String, dynamic>);
 
   Future<List<TrailInfo>> trails() async =>
       (await _send('GET', '/trails') as List).map((t) => TrailInfo.fromJson(t as Map<String, dynamic>)).toList();
@@ -118,6 +149,18 @@ class C4Api {
       ((await _send('GET', '/live/${day(d)}', query: at == null ? null : {'at': at}))['segments'] as List)
           .map((s) => LiveSegment.fromJson(s as Map<String, dynamic>))
           .toList();
+
+  Future<CheckpointStatus> checkpoints(DateTime d, {String? at}) async =>
+      CheckpointStatus.fromJson(await _send('GET', '/checkpoints/${day(d)}', query: at == null ? null : {'at': at}));
+
+  /// Halfway check: [count] people passed the checkpoint on [route] (e.g. in the last 10 minutes).
+  Future<CheckpointStatus> recordCheckpoint(String route, int count, {DateTime? at}) async => CheckpointStatus.fromJson(
+      await _send('POST', '/checkpoints', body: {'route': route, 'count': count, if (at != null) 'at': at.toIso8601String()}));
+
+  /// Pilgrim sites (officer): every night of the outlook with the summit queue and when halfway checks are needed.
+  Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
+      .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))
+      .toList();
 
   Future<List<Map<String, dynamic>>> closeTrail(DateTime d, String trail, String from, String to, String reason) async =>
       ((await _send('POST', '/admin/closures', body: {

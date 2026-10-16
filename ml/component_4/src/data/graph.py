@@ -17,7 +17,7 @@ import networkx as nx
 import numpy as np
 import osmnx as ox
 from pyproj import Transformer
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
 from shapely.ops import substring, transform
 
 from src.config import PROCESSED, RAW
@@ -30,8 +30,27 @@ def load_osm(cfg):
     ox.settings.cache_folder = str(RAW / "osm_cache")
     bbox = tuple(cfg["area"]["bbox"])
     G = ox.graph_from_bbox(bbox, custom_filter=TRAIL_FILTER, simplify=True, retain_all=True)
-    pois = ox.features_from_bbox(bbox, tags={"tourism": True, "waterway": "waterfall", "natural": "peak"})
-    return ox.convert.to_undirected(G), pois
+    pois = None
+    if cfg["area"].get("pois"):                       # named landmarks (Horton Plains); named-path parks need none
+        pois = ox.features_from_bbox(bbox, tags={"tourism": True, "waterway": "waterfall", "natural": "peak"})
+    G = ox.convert.to_undirected(G)
+    if cfg["area"].get("summit_link"):
+        add_summit_link(G, cfg)
+    return G, pois
+
+
+SUMMIT_NODE = -1
+
+
+def add_summit_link(G, cfg):
+    """OSM paths at Adam's Peak stop ~350 m below the summit (16 Oct 2026). Add the final stairway as a straight
+    link from the nearest mapped trail point to the summit, tagged as steps. APPROXIMATE: replace with a GPS track."""
+    lon, lat = cfg["area"]["summit_point"]
+    near = ox.distance.nearest_nodes(G, lon, lat)
+    length = math.dist((G.nodes[near]["x"], G.nodes[near]["y"]), (lon, lat)) * 111_000
+    G.add_node(SUMMIT_NODE, x=lon, y=lat)
+    G.add_edge(near, SUMMIT_NODE, length=length, highway="steps", name="Final steps to the summit (approximate)",
+               geometry=LineString([(G.nodes[near]["x"], G.nodes[near]["y"]), (lon, lat)]))
 
 
 def _edge_coords(G, u, v):
@@ -44,17 +63,49 @@ def _edge_coords(G, u, v):
     return coords
 
 
+def _named_route(G, osm_name: str, summit: int):
+    """Trailhead -> summit along an OSM path name. The trailhead is the end of the named path farthest from the
+    summit; the path prefers the named edges (other edges cost 5x) so it follows the real route."""
+    def is_named(d):
+        return osm_name in str(d.get("name", ""))
+    nodes = {n for u, v, d in G.edges(data=True) if is_named(d) for n in (u, v)}
+    if not nodes:
+        raise ValueError(f"No OSM path named '{osm_name}' in the bounding box")
+    sx, sy = G.nodes[summit]["x"], G.nodes[summit]["y"]
+    head = max(nodes, key=lambda n: math.dist((G.nodes[n]["x"], G.nodes[n]["y"]), (sx, sy)))
+
+    def weight(u, v, data):
+        return min(d["length"] * (1 if is_named(d) else 1.5) for d in data.values())
+    try:
+        return nx.shortest_path(G, head, summit, weight=weight)
+    except nx.NetworkXNoPath:
+        raise ValueError(f"'{osm_name}' is not connected to the summit in OSM (add a GPS track)")
+
+
 def find_routes(G, pois, cfg):
-    """Every configured route as a list of OSM node ids (shortest path through its POIs in order)."""
+    """Every configured route as a list of OSM node ids.
+    - list of POI keys (Horton Plains): shortest path through the POIs in order
+    - {osm_name: ...} (Adam's Peak): trailhead -> summit along the named path, then back down the same way"""
+    area = cfg["area"]
     poi_nodes, poi_points = {}, {}
-    for key, name in cfg["area"]["pois"].items():
+    for key, name in (area.get("pois") or {}).items():
         p = pois[pois["name"] == name].iloc[0].geometry.centroid
         poi_nodes[key] = ox.distance.nearest_nodes(G, p.x, p.y)
         poi_points[key] = p
+    if "summit_point" in area:
+        lon, lat = area["summit_point"]
+        poi_nodes["summit"] = SUMMIT_NODE if SUMMIT_NODE in G else ox.distance.nearest_nodes(G, lon, lat)
+        poi_points["summit"] = Point(lon, lat)
     routes = {}
-    for rname, stops in cfg["area"]["routes"].items():
+    for rname, spec in area["routes"].items():
+        if isinstance(spec, dict):
+            up = _named_route(G, spec["osm_name"], poi_nodes["summit"])
+            routes[rname] = up + up[::-1][1:]
+            head = up[0]
+            poi_points[f"head_{rname}"] = Point(G.nodes[head]["x"], G.nodes[head]["y"])
+            continue
         route = []
-        for a, b in zip(stops[:-1], stops[1:]):
+        for a, b in zip(spec[:-1], spec[1:]):
             leg = nx.shortest_path(G, poi_nodes[a], poi_nodes[b], weight="length")
             route += leg if not route else leg[1:]
         routes[rname] = route
@@ -80,12 +131,26 @@ def build_chains(G, routes: dict):
                 seen.add(frozenset((u, v)))
                 edge_to_chain[(u, v)] = (cid, +1)
                 edge_to_chain[(v, u)] = (cid, -1)
-            coords = []
+            coords, edges = [], []
             for u, v in zip(path[:-1], path[1:]):
                 c = _edge_coords(G, u, v)
                 coords += c if not coords else c[1:]
-            chains.append({"nodes": path, "coords": coords})
+                data = min(G.get_edge_data(u, v).values(), key=lambda d: d["length"])
+                edges.append((float(data["length"]), "steps" in str(data.get("highway", ""))))
+            chains.append({"nodes": path, "coords": coords, "edges": edges})
     return chains, edge_to_chain
+
+
+def _steps_share(edges, a: float, b: float) -> float:
+    """Share of the stretch [a, b] (fractions 0..1 of the chain length) that is OSM highway=steps."""
+    total = sum(l for l, _ in edges) or 1.0
+    pos, steps = 0.0, 0.0
+    for length, is_steps in edges:
+        lo, hi = pos / total, (pos + length) / total
+        if is_steps:
+            steps += max(0.0, min(hi, b) - max(lo, a))
+        pos += length
+    return steps / max(b - a, 1e-9)
 
 
 def split_chains(chains, cfg):
@@ -105,6 +170,7 @@ def split_chains(chains, cfg):
             ch["segments"].append(len(segs))
             segs.append({"chain": cid, "piece": i, "length_m": piece.length,
                          "start": start, "end": end, "geom_m": piece,
+                         "frac_steps": _steps_share(ch["edges"], i / k, (i + 1) / k),
                          "geometry": transform(to_ll, piece)})
     return segs
 
@@ -154,6 +220,21 @@ def tag_pois(segs, poi_points, cfg):
             segs[i]["poi"] = key
 
 
+def tag_halfway(segs, walks, cfg):
+    """Halfway checkpoint of each named route (out and back to a summit): the first untagged segment at or after
+    half of the way up. Officers hold groups there when the summit is full (adams_peak_plan.md)."""
+    for r, spec in cfg["area"]["routes"].items():
+        if not isinstance(spec, dict):
+            continue
+        up = walks[r][:len(walks[r]) // 2]
+        cum = np.cumsum([segs[s]["length_m"] for s, _ in up])
+        start = int(np.searchsorted(cum, cum[-1] * spec.get("checkpoint_at", 0.5)))
+        for s, _ in up[start:-2]:                     # never the final steps or the summit itself
+            if not segs[s]["poi"]:
+                segs[s]["poi"] = f"half_{r}"
+                break
+
+
 def build_graph(cfg):
     G, pois = load_osm(cfg)
     routes, poi_points = find_routes(G, pois, cfg)
@@ -161,6 +242,7 @@ def build_graph(cfg):
     segs = split_chains(chains, cfg)
     tag_pois(segs, poi_points, cfg)
     walks = {r: route_to_segments(nodes, chains, edge_to_chain) for r, nodes in routes.items()}
+    tag_halfway(segs, walks, cfg)
 
     # each segment belongs to the first route (config order) that walks it; position = order along that route
     trail, pos = [""] * len(segs), [0.0] * len(segs)
@@ -176,7 +258,8 @@ def build_graph(cfg):
     gdf = gpd.GeoDataFrame(
         {"seg_id": range(len(segs)), "chain": [s["chain"] for s in segs],
          "trail": trail, "walk_position": [round(p, 4) for p in pos],
-         "length_m": [round(s["length_m"], 1) for s in segs], "poi": [s["poi"] for s in segs]},
+         "length_m": [round(s["length_m"], 1) for s in segs], "poi": [s["poi"] for s in segs],
+         "frac_steps": [round(s["frac_steps"], 3) for s in segs]},
         geometry=[s["geometry"] for s in segs], crs="EPSG:4326")
     gdf.to_file(PROCESSED / "segments.geojson", driver="GeoJSON")
     np.save(PROCESSED / "edge_index.npy", edge_index)

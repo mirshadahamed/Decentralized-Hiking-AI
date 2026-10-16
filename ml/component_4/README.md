@@ -42,6 +42,28 @@ Weather: observed to yesterday, Open-Meteo forecast for 16 days, typical weather
 connected; every day carries its source. Published plans follow the freeze rule (never fewer places than
 already booked). Roles: ranger < officer < admin, checked by the API on every call; actions are audited.
 
+## Several parks (Horton Plains, Adam's Peak)
+Each park has a config in `configs/parks/<park>.yaml` that overrides `configs/default.yaml`; `C4_PARK` picks the
+park (default `horton_plains`). Other parks keep their data in `data/<park>/` and results in `results/<park>/`.
+```powershell
+$env:C4_PARK = "adams_peak"
+.venv\Scripts\python.exe -m src.data.build_dataset         # graph, terrain, calendar, simulated history
+.venv\Scripts\python.exe -m src.control.evaluate_advisory  # start times / halfway checks on the 2025 season
+.venv\Scripts\python.exe -m src.live.refresh               # outlook + advisory.json
+Remove-Item Env:C4_PARK                                    # back to Horton Plains
+.venv\Scripts\python.exe -m src.api.serve_all              # one API per park + gateway on http://localhost:8000
+```
+Gateway: `GET /parks`, and `/parks/<park>/...` forwards to that park's API (ports 8101, 8102, …).
+Adam's Peak assumptions: `docs/assumptions_adams_peak.md`.
+
+**Adding a destination** (no app change needed: the app's trip planner lists whatever `/parks` returns):
+1. Copy `configs/parks/adams_peak.yaml` to `configs/parks/<new_id>.yaml`; set `destination` (kind, region,
+   summary, elevation, best_time, getting_there, facts, accent), `area` (bbox, routes, trail names) and
+   `simulator` / `control` (`booking_mode: required` = slot tickets, `advisory` = recommended start times).
+   A new `kind` (e.g. `waterfall`) becomes a new filter chip in the app.
+2. `$env:C4_PARK = "<new_id>"`, then `src.data.build_dataset`, `src.live.refresh` and staff accounts (`src.api.users`).
+3. Restart `src.api.serve_all`: the new park gets the next port and appears in the app.
+
 ## Dashboard (research / examiner view)
 ```powershell
 .venv\Scripts\python.exe -m streamlit run dashboard/app.py      # opens http://localhost:8501
@@ -59,19 +81,32 @@ or another day, and can book weeks ahead (`src/control/booking.py`). On the 2025
 > 99 % of the person-hours over capacity; a daily quota alone removes 73 % (`results/*_entry_control/`). Without model checkpoints on the machine,
 the forecast page uses the historical-average fallback.
 
+**Adam's Peak (no tickets).** The danger is the queue on the final steps below the summit (~25 people/min reach
+the terrace). Pilgrims get **recommended start times** per route (expected wait ≤ 20 min, summit before sunrise,
+spread so the advice does not create a new peak), and officers at each route's **halfway checkpoint** count
+passers and hold groups when the expected queue is too long (`src/control/advisory.py`, `GET /advisory/{day}`,
+`POST /checkpoints`). 2025 season (simulation): start times cut waiting by 22 %; halfway checks remove the waiting
+on the final steps (`results/adams_peak/*_advisory/`).
+
+## Research evaluation
+RQ1 graph vs no graph, RQ2 transfer between parks, RQ3 value of the forecast for crowd control, RQ4 sensitivity:
+`docs/evaluation_results.md`. Scripts: `src.run_benchmark`, `src.eval.transfer`,
+`src.control.evaluate_forecast_value`, `src.control.evaluate_advisory --sweep`.
+
 ## Layout
 | Path | What |
 |---|---|
 | `configs/default.yaml` | every parameter (seed, dates, simulator, training, capacity) |
+| `configs/parks/` | per-park overrides (`adams_peak.yaml`) |
 | `src/data/` | graph, terrain, weather, calendar, dataset builder |
 | `src/sim/simulator.py` | synthetic occupancy simulator |
 | `src/eval/` | windows, temporal + spatial-block splits, metrics, t-tests |
 | `src/models/` | ST-GNN (GCN+GRU), LSTM / no-graph variants, HA, SARIMA |
 | `src/capacity/cifuentes.py` | carrying-capacity cascade, per trail |
 | `src/planning/` | 90-day planning model, suggestions, lead-time backtest |
-| `src/control/` | entry control: slot tickets (LP), live nowcast, booking, policy evaluation |
+| `src/control/` | entry control: slot tickets (LP), live nowcast, booking, policy evaluation; `advisory.py` start times + halfway checks (pilgrim sites) |
 | `src/live/` | live mode: real-date inputs, live dataset, daily refresh and publishing |
-| `src/api/` | FastAPI service, staff accounts, roles, audit log |
+| `src/api/` | FastAPI service, staff accounts, roles, audit log; `gateway.py` + `serve_all.py` for several parks |
 | `src/serve/predict.py` | forecast JSON (with historical-average fallback) |
 | `dashboard/` | Streamlit dashboard (`app.py` + one file per page in `views/`) |
 | `docs/` | development plan, assumptions, decision log |

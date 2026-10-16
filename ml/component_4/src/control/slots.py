@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import linprog
 
-from src.data.build_dataset import ACCESS, VIEWPOINTS
+from src.data.build_dataset import access_points, viewpoints
 from src.sim.simulator import MIN_PER_DAY, arrival_minutes
 
 
@@ -47,8 +47,9 @@ class EntryControl:
             for r, t in enumerate(self.trails):
                 for k, start in enumerate(self.slots):
                     gate = start + rng.uniform(0, c["slot_minutes"], n)
-                    if t == "main":
-                        option = np.where(rng.random(n) < p["standard_direction_share"], 0, 1)
+                    if t in p.get("reversible_routes", []):
+                        option = np.where(rng.random(n) < p["standard_direction_share"],
+                                          self.sim.option_of_trail(t), self.sim.option_of_trail(t, reverse=True))
                     else:
                         option = np.full(n, self.sim.option_of_trail(t))
                     _, per_min, _ = self.sim.simulate_groups(np.full(n, 1.0 / n), gate, option, precip, rng)
@@ -69,10 +70,11 @@ class EntryControl:
         L = self.seg.length_m.values
         at_once = L / (cap["group_gap_m"] + cap["group_size"] * cap["space_per_person_m"]) * cap["group_size"]
         poi = self.seg.poi.fillna("").values
-        at_once = np.where(np.isin(poi, list(VIEWPOINTS)), np.maximum(at_once, self.c["viewpoint_min_at_once"]), at_once)
+        at_once = np.where(np.isin(poi, list(viewpoints(self.cfg))),
+                           np.maximum(at_once, self.c["viewpoint_min_at_once"]), at_once)
         C = at_once * cap["management_capacity"] * (1 - rain_share) * self.c.get("capacity_scale", 1.0)
         if self.c["exempt_access_points"]:
-            C = np.where(np.isin(poi, list(ACCESS)), np.inf, C)
+            C = np.where(np.isin(poi, list(access_points(self.cfg))), np.inf, C)
         return C
 
     def daily_quota(self, rain_share: float = 0.0) -> dict:

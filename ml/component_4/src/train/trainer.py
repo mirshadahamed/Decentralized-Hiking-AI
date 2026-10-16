@@ -33,19 +33,30 @@ def predict(model, data, origins, sensed, scale, batch=128):
     return np.clip(np.concatenate(out) * scale, 0, None)       # [D, H, N] in persons
 
 
-def train(data, kind, sensed, cfg, seed, log=print):
-    """sensed: bool [N]; unsensed nodes give no input history and no training loss."""
+def load_weights(model, state: dict):
+    """Weights trained on another park: everything except the graph (adjacency) of that park."""
+    model.load_state_dict({k: v for k, v in state.items() if k != "adj"}, strict=False)
+    return model
+
+
+def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None):
+    """sensed: bool [N]; unsensed nodes give no input history and no training loss.
+    init_state: start from these weights (fine-tuning a model trained on another park).
+    select_on_val=False: no early stopping on the validation year; train `epochs` and keep the last weights
+    (few-shot: a new park does not have a year of counts to choose the model with)."""
     tc = cfg["train"]
     set_seed(seed)
     rng = np.random.default_rng(seed)
     scale = data.y_scale(sensed)
     model = build_model(data, kind, tc["hidden"])
+    if init_state is not None:
+        load_weights(model, init_state)
     opt = torch.optim.Adam(model.parameters(), lr=tc["lr"])
     tr_o, va_o = data.origins("train", tc["train_origin_stride"]), data.origins("val")
     node_mask = torch.from_numpy(sensed)
 
     best, best_state, bad = np.inf, None, 0
-    for ep in range(tc["epochs"]):
+    for ep in range(epochs or tc["epochs"]):
         t0 = time.time()
         model.train()
         perm = rng.permutation(tr_o)
@@ -60,6 +71,9 @@ def train(data, kind, sensed, cfg, seed, log=print):
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
             losses.append(loss.item())
+        if not select_on_val:
+            log(f"  {kind} seed={seed} ep={ep:02d} train={np.mean(losses):.4f} ({time.time() - t0:.1f}s)")
+            continue
         model.eval()
         with torch.no_grad():
             xp, xf, y, om = data.batch(va_o, sensed, scale)
@@ -71,5 +85,6 @@ def train(data, kind, sensed, cfg, seed, log=print):
             bad += 1
             if bad >= tc["patience"]:
                 break
-    model.load_state_dict(best_state)
+    if best_state is not None:
+        model.load_state_dict(best_state)
     return model, scale

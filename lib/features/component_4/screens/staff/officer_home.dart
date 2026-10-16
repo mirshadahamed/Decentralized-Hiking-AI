@@ -80,7 +80,7 @@ class _WeekTabState extends State<_WeekTab> {
       final r = await C4Scope.of(context).refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Refreshed for ${r['today']}: ${r['alerts']} alerts')));
-      setState(() => _future = _load());
+      setState(() { _future = _load(); });
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
@@ -92,7 +92,7 @@ class _WeekTabState extends State<_WeekTab> {
   Widget build(BuildContext context) => FutureBuilder<(Outlook, List<int>)>(
         future: _future,
         builder: (context, snap) {
-          if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = _load()));
+          if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = _load(); }));
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final (o, booked) = snap.data!;
           return ListView(padding: const EdgeInsets.all(16), children: [
@@ -242,7 +242,7 @@ class _AlertsTabState extends State<_AlertsTab> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = C4Scope.of(context).alerts()));
+            return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = C4Scope.of(context).alerts(); }));
           }
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final a = snap.data!;

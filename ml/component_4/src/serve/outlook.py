@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 from datetime import datetime
+from pathlib import Path
 
 import geopandas as gpd
 import joblib
@@ -35,8 +36,10 @@ def build_planner(cfg=None):
     cal = pd.read_csv(PROCESSED / "calendar.csv", index_col=0, parse_dates=True)
     seg = gpd.read_file(PROCESSED / "segments.geojson")
     seg["poi"] = seg["poi"].fillna("")
+    import src.planning.model as model_code                   # a code change also refits (old pickles break)
     key = hashlib.sha1(json.dumps(cfg, sort_keys=True, default=str).encode()
-                       + str((PROCESSED / "dataset.npz").stat().st_mtime_ns).encode()).hexdigest()
+                       + str((PROCESSED / "dataset.npz").stat().st_mtime_ns).encode()
+                       + Path(model_code.__file__).read_bytes()).hexdigest()
     cache = PROCESSED / "planning_model.joblib"
     model = None
     if cache.exists():

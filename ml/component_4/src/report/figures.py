@@ -16,10 +16,9 @@ from src.eval.data import TrailData  # noqa: E402
 COLORS = {"HA": "#9e9e9e", "ARIMA": "#c07a2c", "lstm": "#5b8bd0", "gru_nograph": "#8e6cc0", "stgnn": "#1b7f5a"}
 LABELS = {"HA": "Historical avg", "ARIMA": "SARIMA", "lstm": "LSTM", "gru_nograph": "GRU (no graph)",
           "stgnn": "ST-GNN (GCN+GRU)"}
-POI_LABEL = {"entrance": "Visitor Center", "mini_worlds_end": "Mini World's End",
-             "worlds_end": "World's End", "bakers_falls": "Baker's Falls",
-             "kirigalpotta_peak": "Kirigalpotta", "thotupola_head": "Thotupola trailhead",
-             "thotupola_peak": "Thotupola Kanda"}
+POI_LABEL = load_config()["area"].get("poi_labels", {})
+FOCUS = load_config()["area"].get("focus_poi")
+FOCUS_LABEL = POI_LABEL.get(FOCUS, "the busiest place")
 
 
 def _seg():
@@ -52,7 +51,7 @@ def trail_map(data):
 
 def simulated_days(data):
     seg = _seg()
-    we = int(seg.index[seg.poi == "worlds_end"][0])
+    we = int(seg.index[seg.poi == FOCUS][0])
     cal = pd.read_csv(PROCESSED / "calendar.csv", index_col=0, parse_dates=True).loc["2023"]
     day_rain = pd.Series(np.expm1(data.cov[:, data.cov_names.index("precip_log1p")]).reshape(-1, 24)[:, 5:10].sum(1),
                          index=data.times[::24])
@@ -69,7 +68,7 @@ def simulated_days(data):
     ax.set_xlim(5, 19)
     ax.set_xlabel("Hour of day")
     ax.set_ylabel("Persons on segment")
-    ax.set_title("Simulated occupancy at World's End")
+    ax.set_title(f"Simulated occupancy at {FOCUS_LABEL}")
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
     fig.tight_layout()
@@ -80,7 +79,7 @@ def forecast_week(data, run, date):
     preds = np.load(run / "predictions_temporal.npz")
     origins = preds["origins"]
     seg = _seg()
-    we = int(seg.index[seg.poi == "worlds_end"][0])
+    we = int(seg.index[seg.poi == FOCUS][0])
     start = int(np.where(data.times[origins] == pd.Timestamp(date) - pd.Timedelta(days=3))[0][0])
     days = slice(start, start + 7)
     o = origins[days]
@@ -91,7 +90,7 @@ def forecast_week(data, run, date):
     for k in ["HA", "ARIMA", "lstm", "stgnn"]:
         if k in preds:
             ax.plot(t, preds[k][days][:, :, we].ravel(), color=COLORS[k], lw=1.1, label=LABELS[k])
-    ax.set_title(f"Day-ahead forecasts at World's End, week around {date} (test year)")
+    ax.set_title(f"Day-ahead forecasts at {FOCUS_LABEL}, week around {date} (test year)")
     ax.set_ylabel("Persons on segment")
     ax.legend(fontsize=8, ncol=5)
     ax.grid(alpha=0.3)
