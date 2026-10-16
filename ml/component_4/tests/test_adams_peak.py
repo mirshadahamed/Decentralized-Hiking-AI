@@ -91,6 +91,29 @@ def test_advisory_never_recommends_a_long_wait(ap):
     assert abs(sum(r["release_per_10_min"] for r in rates.values()) - adv.flow * 10) <= len(rates)
 
 
+def test_transfer_inputs_match_and_weights_move_between_parks():
+    """RQ2 set-up: both parks give a model the same inputs; weights load across graphs; few-shot uses k days."""
+    from src.config import processed_dir
+    from src.eval.data import TrailData
+    from src.models.baselines import HistoricalAverage
+    from src.train.trainer import build_model, load_weights
+    hp = TrailData(load_config(park="horton_plains"), path=processed_dir("horton_plains") / "dataset.npz")
+    ap = TrailData(load_config(park="adams_peak"), path=AP / "dataset.npz")
+    common = [c for c in hp.cov_names if c in ap.cov_names]
+    hp.restrict_covariates(common), ap.restrict_covariates(common)
+    assert hp.cov.shape[1] == ap.cov.shape[1] == len(common) and hp.static_names == ap.static_names
+    m_hp, m_ap = build_model(hp, "stgnn", 8), build_model(ap, "stgnn", 8)
+    load_weights(m_ap, m_hp.state_dict())                                   # different graphs, same weights
+    assert m_ap.adj.shape == (ap.N, ap.N)
+    assert all((m_ap.state_dict()[k] == v).all() for k, v in m_hp.state_dict().items() if k != "adj")
+    full = len(ap.origins("train", 4))
+    ap.use_last_train_days(30)
+    o = ap.origins("train", 4)
+    assert len(o) < full and o.min() >= ap.train_end - 30 * 24
+    table = HistoricalAverage().fit(ap, np.ones(ap.N, bool)).table
+    assert np.isfinite(table).all() and table.sum() > 0                    # unseen day types fall back
+
+
 def test_horton_plains_is_unchanged_by_the_park_switch():
     out = subprocess.run([sys.executable, "-c", "from src.config import PARK, DATA; print(PARK, DATA.name)"],
                          capture_output=True, text=True, cwd=ROOT, env=dict(os.environ, C4_PARK="horton_plains"))

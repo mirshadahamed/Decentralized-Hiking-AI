@@ -85,8 +85,13 @@ the forecast page uses the historical-average fallback.
 the terrace). Pilgrims get **recommended start times** per route (expected wait ≤ 20 min, summit before sunrise,
 spread so the advice does not create a new peak), and officers at each route's **halfway checkpoint** count
 passers and hold groups when the expected queue is too long (`src/control/advisory.py`, `GET /advisory/{day}`,
-`POST /checkpoints`). 2025 season (simulation): start times cut waiting by 24 %; halfway checks remove the waiting
+`POST /checkpoints`). 2025 season (simulation): start times cut waiting by 22 %; halfway checks remove the waiting
 on the final steps (`results/adams_peak/*_advisory/`).
+
+## Research evaluation
+RQ1 graph vs no graph, RQ2 transfer between parks, RQ3 value of the forecast for crowd control, RQ4 sensitivity:
+`docs/evaluation_results.md`. Scripts: `src.run_benchmark`, `src.eval.transfer`,
+`src.control.evaluate_forecast_value`, `src.control.evaluate_advisory --sweep`.
 
 ## Layout
 | Path | What |

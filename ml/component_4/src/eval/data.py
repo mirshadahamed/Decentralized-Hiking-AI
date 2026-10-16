@@ -41,17 +41,29 @@ class TrailData:
         lo, hi = cfg["task"]["open_hours"]
         hour = np.asarray(self.times.hour)
         self.open = (hour >= lo) & (hour <= hi)
+        self.train_start = 0          # first hour of counts used for training (few-shot: only the last days)
 
         # Covariate and static scaling: train period only (static has no time axis).
         mu, sd = self.cov[:self.train_end].mean(0), self.cov[:self.train_end].std(0) + 1e-6
         self.cov_s = (self.cov - mu) / sd
         self.static_s = (self.static - self.static.mean(0)) / (self.static.std(0) + 1e-6)
 
+    def restrict_covariates(self, names: list) -> "TrailData":
+        """Keep only these covariates, in this order (two parks must give a model the same inputs)."""
+        idx = [self.cov_names.index(n) for n in names]
+        self.cov, self.cov_s, self.cov_names = self.cov[:, idx], self.cov_s[:, idx], list(names)
+        return self
+
+    def use_last_train_days(self, days: int) -> "TrailData":
+        """Few-shot: train only on the last `days` days of counts before the validation year."""
+        self.train_start = max(0, self.train_end - days * 24)
+        return self
+
     # ----- splits -----
     def origins(self, split: str, stride: int = 1) -> np.ndarray:
         L, H = self.L, self.H
         if split == "train":
-            return np.arange(L, self.train_end - H + 1, stride)
+            return np.arange(max(L, self.train_start + L), self.train_end - H + 1, stride)
         start, end = (self.train_end, self.val_end) if split == "val" else (self.val_end, self.T)
         o = np.arange(max(start, L), end - H + 1)
         return o[np.asarray(self.times[o].hour) == 0]
@@ -68,7 +80,7 @@ class TrailData:
 
     # ----- tensors -----
     def y_scale(self, sensed: np.ndarray) -> float:
-        return float(self.y[:self.train_end][:, sensed].std())
+        return float(self.y[self.train_start:self.train_end][:, sensed].std())
 
     def batch(self, origins: np.ndarray, sensed: np.ndarray, scale: float):
         """Model inputs for a batch of origins.

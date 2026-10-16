@@ -28,6 +28,11 @@ for _p in (RAW, INTERIM, PROCESSED, RESULTS, FIGURES):
     _p.mkdir(parents=True, exist_ok=True)
 
 
+def processed_dir(park: str) -> Path:
+    """data/processed of any park (for experiments that use two parks at once)."""
+    return (ROOT / "data" if park == DEFAULT_PARK else ROOT / "data" / park) / "processed"
+
+
 def parks() -> list:
     return [DEFAULT_PARK] + sorted(p.stem for p in (CONFIGS / "parks").glob("*.yaml") if p.stem != DEFAULT_PARK)
 

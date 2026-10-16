@@ -17,7 +17,7 @@ class HistoricalAverage:
     Unsensed segments (spatial CV) get the mean profile of the sensed segments."""
 
     def fit(self, data, sensed):
-        tr = slice(0, data.train_end)
+        tr = slice(data.train_start, data.train_end)
         dt = day_type(data.cov, data.cov_names)[tr]
         hr = np.asarray(data.times.hour)[tr]
         y = data.y[tr]
@@ -25,7 +25,9 @@ class HistoricalAverage:
         for t in range(3):
             for h in range(24):
                 sel = (dt == t) & (hr == h)
-                self.table[t, h] = y[sel].mean(0) if sel.any() else 0.0
+                if not sel.any():                       # few-shot: a day type not seen yet -> any day at that hour
+                    sel = hr == h
+                self.table[t, h] = y[sel].mean(0)
         pooled = self.table[:, :, sensed].mean(-1, keepdims=True)
         self.table[:, :, ~sensed] = pooled
         self.dt, self.hr = day_type(data.cov, data.cov_names), np.asarray(data.times.hour)

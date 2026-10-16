@@ -45,17 +45,18 @@ Config: `configs/parks/adams_peak.yaml` (overrides `configs/default.yaml`). Hort
 | C1 | Pilgrims are never refused; advice only | `booking_mode: advisory` | a pilgrimage, not a park visit | Sri Pada Trust policy |
 | C2 | Recommended start = expected wait ≤ 20 min and summit before sunrise | `queue_limit_min: 20` | – | Trust / police choice |
 | C3 | **Half the advised pilgrims follow the advice** | compliance 0.5 in the evaluation | no data; reported as a parameter | a pilot season |
-| C4 | Advice is spread over windows in batches of 25 so it does not create a new peak | `Advisory.spread` | **Finding:** sending everyone to the same "quiet" time made the queue worse (46,765 vs 38,419 person-hours) | – |
+| C4 | Advice is spread over windows in batches of 25 so it does not create a new peak | `Advisory.spread` | **Finding:** sending everyone to the same "quiet" time made the queue worse (+22 % person-hours waiting vs no advice, earlier run) | – |
 | C5 | Halfway officers release at most their route's share of the summit flow per 10 min while the expected wait is over the limit | `release_rates` | the queue waits at a rest halt instead of on the steep steps | – |
 | C6 | Live estimate from manual counts at the halfway points, shifted by the walking time to the summit | `Advisory.nowcast` | no sensors | – |
 
-## Results these assumptions give (2025 season, simulation, run `*_advisory`)
+## Results these assumptions give (2025 season, simulation, run `20261016_130836_advisory`)
 | Policy | Waiting on the final steps (person-h) | Waiting at halfway (person-h) | Poya nights: most people on the final steps |
 |---|---|---|---|
-| A. Nothing | 38,419 | 0 | 3,333 |
-| B. Recommended start times | 29,016 | 0 | 3,047 |
-| C. Halfway checks | 0 | 34,185 | 2,543 |
-| D. Both | 0 | 26,368 | 2,409 |
+| A. Nothing | 45,649 | 0 | 3,273 |
+| B. Recommended start times | 35,471 | 0 | 3,017 |
+| C. Halfway checks | 0 | 41,093 | 2,558 |
+| D. Both | 0 | 33,050 | 2,410 |
 
-Start times alone cut waiting by 24 % with 2.8 % of pilgrims moving their start. Halfway checks move the waiting
-off the steep steps. Both together give the least waiting overall.
+Start times alone cut waiting by 22 % with 2.8 % of pilgrims moving their start. Halfway checks move the waiting
+off the steep steps. Both together give the least waiting overall (−28 %). How these change when B1 and C3 are
+wrong: `evaluation_results.md` (RQ4).
