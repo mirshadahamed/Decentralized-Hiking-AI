@@ -1,0 +1,7 @@
+dataset,records,source,role,status
+Candidate trail/path geometries,559,OpenStreetMap,Trail context,Usable
+Trail elevation summaries,559,Copernicus DEM derived,Terrain context,Usable
+Point-level elevation profiles,14289,Copernicus DEM derived,Terrain feature engineering,Usable
+Historical hourly weather,219120,Historical weather API,Environmental context,Usable
+Emergency/support facilities,51,OpenStreetMap,Emergency access/remoteness,Usable
+Communication structures,12,OpenStreetMap,Connectivity/remoteness proxy only,Usable as proxy
