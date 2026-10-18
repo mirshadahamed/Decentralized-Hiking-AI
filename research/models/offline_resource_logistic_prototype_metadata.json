@@ -1,0 +1,32 @@
+{
+  "model_name": "offline_resource_logistic_prototype",
+  "version": "prototype_v1",
+  "algorithm": "Logistic Regression",
+  "problem_type": "multi-label classification",
+  "training_rows": 557,
+  "input_feature_count": 35,
+  "target_count": 6,
+  "targets": [
+    "hypothermia_guidance",
+    "heat_illness_guidance",
+    "heavy_rain_guidance",
+    "strong_wind_guidance",
+    "water_safety_guidance",
+    "remote_area_emergency_guidance"
+  ],
+  "random_split_macro_f1": 0.9444,
+  "grouped_mean_macro_f1": 0.2944,
+  "grouped_mean_hamming_loss": 0.2762,
+  "model_size_bytes": 31047,
+  "mandatory_resources": [
+    "offline_map",
+    "general_first_aid",
+    "emergency_contact_info"
+  ],
+  "limitations": [
+    "Targets are rule-derived.",
+    "Historical weather context uses five Knuckles reference locations.",
+    "Grouped evaluation shows limited unseen-region generalization.",
+    "The joblib artifact is a research artifact and is not directly executable by Flutter."
+  ]
+}
