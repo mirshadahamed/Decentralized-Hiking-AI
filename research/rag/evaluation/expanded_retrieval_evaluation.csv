@@ -1,0 +1,19 @@
+test_id,category,question,result_count,unique_sources,category_matching_results,has_results,all_results_match_category
+EXP_RET_001,general_first_aid,How should I treat a bleeding wound while hiking?,4,2,4,True,True
+EXP_RET_002,hypothermia,What should I do if a hiker develops hypothermia?,4,2,4,True,True
+EXP_RET_003,heat_illness,What should I do if a hiker has heat exhaustion?,4,2,4,True,True
+EXP_RET_004,heavy_rain,What should hikers do during flooding or severe rain?,2,2,2,True,True
+EXP_RET_005,strong_wind,What should hikers do during dangerous high winds?,4,2,4,True,True
+EXP_RET_006,water_safety,How can drinking water be made safer in an emergency?,4,2,4,True,True
+EXP_RET_007,remote_emergency,What should I do if I become stranded during a hike?,5,3,5,True,True
+EXP_RET_008,snakebite,What should I do if a hiker is bitten by a snake?,4,2,4,True,True
+EXP_RET_009,insect_bites_stings,What should I do after a serious insect bite or sting?,4,2,4,True,True
+EXP_RET_010,fracture_sprain,What should I do if a hiker may have a broken leg?,4,2,4,True,True
+EXP_RET_011,burns,What first aid should be given for a burn?,2,1,2,True,True
+EXP_RET_012,poisoning,What should I do if someone may have been poisoned?,2,1,2,True,True
+EXP_RET_013,allergic_reaction,What should I do if a hiker has a severe allergic reaction?,4,2,4,True,True
+EXP_RET_014,animal_encounter,How should hikers stay safe during a dangerous wildlife encounter?,2,1,2,True,True
+EXP_RET_015,lost_navigation,What should I do if I become lost while hiking?,2,1,2,True,True
+EXP_RET_016,landslide,What should hikers do when there is a landslide risk?,4,2,4,True,True
+EXP_RET_017,lightning,What should hikers do during lightning or a thunderstorm?,2,1,2,True,True
+EXP_RET_018,sri_lanka_emergency,How can a hiker get emergency medical help in Sri Lanka?,2,1,2,True,True

@@ -1,4 +1,6 @@
+# ============================================================
 # Miscellaneous
+# ============================================================
 *.class
 *.log
 *.pyc
@@ -15,18 +17,28 @@ CLAUDE.md
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# Python cache
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ============================================================
+# IntelliJ / Android Studio
+# ============================================================
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# ============================================================
+# VS Code
+# ============================================================
+# Keep VS Code configuration available for version control if needed.
 #.vscode/
 
-# Flutter/Dart/Pub related
+# ============================================================
+# Flutter / Dart / Pub
+# ============================================================
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -36,39 +48,99 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Symbolication related
+# ============================================================
+# Symbolication
+# ============================================================
 app.*.symbols
 
-# Obfuscation related
+# ============================================================
+# Obfuscation
+# ============================================================
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# ============================================================
+# Android build artifacts
+# ============================================================
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# Widget Preview related
+# ============================================================
+# Widget Preview
+# ============================================================
 .widget_preview/
 
-# Local environment and secret material
+# ============================================================
+# Local Python environment
+# ============================================================
+.venv/
+venv/
+
+# ============================================================
+# Local environment / secrets
+# ============================================================
 .env
 .env.*
 !.env.example
+
 *.keystore
 *.jks
 key.properties
 google-services.json
 GoogleService-Info.plist
 
+# ============================================================
 # Platform-generated transient files
+# ============================================================
 ios/Flutter/ephemeral/
 macos/Flutter/ephemeral/
 
-# Component 4 (ML): downloaded/generated data and model checkpoints stay local
+# ============================================================
+# Component 4: downloaded/generated data and model checkpoints stay local
+# ============================================================
 ml/component_4/data/*
 !ml/component_4/data/.gitkeep
 ml/component_4/results/**/*.pt
 ml/component_4/results/**/predictions_*.npz
 ml/component_4/results/*_quick/
-__pycache__/
 .pytest_cache/
+
+# ============================================================
+# Research datasets
+# ============================================================
+
+# Large downloaded/raw research datasets
+/research/dataset/raw/
+
+# Large/generated processed datasets
+/research/dataset/processed/
+
+# Original manually downloaded research data
+/research/data/raw/
+/research/data/processed/
+
+# ============================================================
+# Generated ML models
+# ============================================================
+/research/models/*.pkl
+/research/models/*.joblib
+/research/models/*.h5
+/research/models/*.keras
+/research/models/*.tflite
+/research/models/*.onnx
+
+# ============================================================
+# Generated research artifacts
+# ============================================================
+/research/results/*.png
+/research/results/*.jpg
+/research/results/*.jpeg
+/research/results/*.pdf
+/research/results/*.csv
+
+# ============================================================
+# Temporary files
+# ============================================================
+*.tmp
+*.temp
+*~
