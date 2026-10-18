@@ -16,6 +16,13 @@ app.add_middleware(CORSMiddleware, allow_origins=load_config()["api"]["cors_orig
                    allow_headers=["*"])
 
 
+@app.get("/")
+def root():
+    """Opening http://localhost:8000 in a browser: say what is here instead of 404."""
+    return {"service": "Component 4 parks gateway", "parks": "/parks",
+            "per_park": "/parks/{park}/... e.g. /parks/adams_peak/status", "docs": "/docs"}
+
+
 @app.get("/health")
 def health():
     return {"ok": True}

@@ -146,7 +146,8 @@ class _WaitChart extends StatelessWidget {
               bottom: h * limit / maxWait,
               child: Divider(height: 1, color: Theme.of(context).colorScheme.outline),
             ),
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Positioned.fill(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               for (final w in windows)
                 Expanded(
                   child: Tooltip(
@@ -162,7 +163,8 @@ class _WaitChart extends StatelessWidget {
                     ),
                   ),
                 ),
-            ]),
+              ]),
+            ),
           ]),
         ),
         const SizedBox(height: C4Space.xs),
