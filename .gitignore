@@ -98,12 +98,14 @@ macos/Flutter/ephemeral/
 # ============================================================
 # Component 4: downloaded/generated data and model checkpoints stay local
 # ============================================================
-ml/component_4/data/*
-!ml/component_4/data/.gitkeep
-ml/component_4/results/**/*.pt
-ml/component_4/results/**/predictions_*.npz
-ml/component_4/results/*_quick/
+research/component_4/data/*
+!research/component_4/data/.gitkeep
+research/component_4/results/**/*.pt
+research/component_4/results/**/predictions_*.npz
+research/component_4/results/*_quick/
 .pytest_cache/
+# Office lock files (a document open in PowerPoint / Word)
+~$*
 
 # ============================================================
 # Research datasets

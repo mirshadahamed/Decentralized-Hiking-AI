@@ -1,0 +1,5 @@
+policy,person_hours_waiting_final_steps,person_hours_waiting_halfway,mean_p90_wait_min,poya_nights_max_people_final_steps,moved_start_pct
+A. Nothing,45648.504993102084,0.0,5.504094627744598,3272.6666666666665,0.0
+B. Recommended start times,35471.442653569,0.0,4.576212312027474,3017.0,2.8199144301828083
+C. Halfway checks,0.0,41093.0174148726,4.919511703030537,2558.0,0.0
+D. Both,0.0,33049.65444499906,4.263218681035234,2410.0,2.721120186697783
