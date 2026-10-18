@@ -1,0 +1,287 @@
+{
+  "tag": "advisory",
+  "git": "96cca6b",
+  "created": "2026-10-16T13:08:36.851209",
+  "config": {
+    "seed": 42,
+    "destination": {
+      "kind": "pilgrimage",
+      "region": "Central and Sabaragamuwa Provinces \u00b7 Peak Wilderness",
+      "summary": "Sacred mountain climbed by night on stairways to reach the summit for sunrise.",
+      "elevation": "about 2,240 m",
+      "best_time": "Pilgrimage season, Unduvap Poya (December) to Vesak Poya (May). Weekdays away from Poya are far quieter.",
+      "getting_there": "Hatton \u2192 Dalhousie (Nallathanniya) is the usual start; Ratnapura \u2192 Palabaddala and Kuruwita \u2192 Erathna from the south.",
+      "facts": [
+        "Sacred to Buddhists, Hindus, Muslims and Christians: dress modestly",
+        "No tickets: start at the recommended time to avoid queues on the final steps",
+        "Cold and windy at the summit: bring a warm layer",
+        "Outside the season the route lights and shops are mostly closed"
+      ],
+      "accent": "#8A4B2A"
+    },
+    "area": {
+      "name": "Adam's Peak (Sri Pada)",
+      "bbox": [
+        80.35,
+        6.7,
+        80.62,
+        6.92
+      ],
+      "dem_bbox": [
+        80.34,
+        6.69,
+        80.63,
+        6.93
+      ],
+      "weather_point": [
+        6.81,
+        80.5
+      ],
+      "crs_metric": "EPSG:32644",
+      "pois": {},
+      "routes": {
+        "nallathanniya": {
+          "osm_name": "Nallathanniya - Sri Pada Foot-path"
+        },
+        "palabaddala": {
+          "osm_name": "Palabaddala - Sri Pada Foot-path"
+        },
+        "erathna": {
+          "osm_name": "Erathna - Sri Pada Foot-path"
+        },
+        "dikelikanda": {
+          "osm_name": "Dikelikanda - Sri Padaya Foot-path"
+        }
+      },
+      "road_links": [],
+      "trail_names": {
+        "nallathanniya": "Nallathanniya (Hatton)",
+        "palabaddala": "Palabaddala (Ratnapura)",
+        "erathna": "Erathna (Kuruwita)",
+        "dikelikanda": "Dikelikanda"
+      },
+      "trail_info": {
+        "nallathanniya": "The most used route: shortest, almost all steps; very crowded on Poya nights",
+        "palabaddala": "Ratnapura side: longer and steeper, quieter; joins the Hatton route near the top",
+        "erathna": "Kuruwita side: longest and quietest; through forest",
+        "dikelikanda": "Quiet forest route; check conditions before starting"
+      },
+      "main_trail": "nallathanniya",
+      "focus_poi": "summit",
+      "poi_roles": {
+        "viewpoint": [
+          "summit"
+        ],
+        "access": [
+          "head_nallathanniya",
+          "head_palabaddala",
+          "head_erathna",
+          "head_dikelikanda"
+        ]
+      },
+      "poi_labels": {
+        "summit": "Summit (Sri Pada)",
+        "head_nallathanniya": "Nallathanniya trailhead",
+        "head_palabaddala": "Palabaddala trailhead",
+        "head_erathna": "Erathna trailhead",
+        "head_dikelikanda": "Dikelikanda trailhead",
+        "half_nallathanniya": "Halfway check \u2013 Nallathanniya",
+        "half_palabaddala": "Halfway check \u2013 Palabaddala",
+        "half_erathna": "Halfway check \u2013 Erathna",
+        "half_dikelikanda": "Halfway check \u2013 Dikelikanda"
+      },
+      "summit_point": [
+        80.4994,
+        6.8096
+      ],
+      "summit_link": true
+    },
+    "graph": {
+      "target_segment_m": 500,
+      "poi_snap_m": 150,
+      "max_grade": 0.6
+    },
+    "dates": {
+      "start": "2022-01-01",
+      "end": "2025-12-31",
+      "train_end": "2023-12-31",
+      "val_end": "2024-12-31"
+    },
+    "simulator": {
+      "base_daily_visitors": 1800,
+      "dow_multiplier": [
+        1.0,
+        0.9,
+        0.9,
+        0.95,
+        1.2,
+        2.5,
+        2.2
+      ],
+      "holiday_multiplier": 2.5,
+      "poya_multiplier": 4.0,
+      "long_weekend_multiplier": 1.3,
+      "school_holiday_multiplier": 1.2,
+      "month_multiplier": [
+        1.0,
+        1.0,
+        1.0,
+        1.1,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "daily_noise_sd": 0.2,
+      "morning_rain_k": 0.03,
+      "min_rain_multiplier": 0.35,
+      "group_size_poisson_mean": 4.0,
+      "arrival_early_share": 0.85,
+      "arrival_early_mean_h": 1.5,
+      "arrival_early_sd_h": 1.0,
+      "arrival_late_range_h": [
+        6.0,
+        12.0
+      ],
+      "gate_open_h": 0.0,
+      "gate_last_entry_h": 14.0,
+      "route_share": {
+        "nallathanniya": 0.78,
+        "palabaddala": 0.12,
+        "erathna": 0.05,
+        "dikelikanda": 0.05
+      },
+      "route_last_entry_h": {},
+      "route_start_offset_min": {},
+      "reversible_routes": [],
+      "standard_direction_share": 0.85,
+      "walker_speed_sd": 0.12,
+      "leisure_speed_factor": 0.75,
+      "rain_light_mm": 0.5,
+      "rain_heavy_mm": 3.0,
+      "rain_light_speed": 0.85,
+      "rain_heavy_speed": 0.7,
+      "crowd_rho0_per_m": 0.4,
+      "crowd_min_speed": 0.4,
+      "dwell_minutes": {},
+      "obs_noise_sd": 0.1,
+      "season_multiplier": 1.0,
+      "off_season_multiplier": 0.08,
+      "bottleneck": {
+        "flow_per_min": 25,
+        "summit_dwell_min": [
+          45,
+          0.4
+        ],
+        "hold": false
+      }
+    },
+    "task": {
+      "input_steps": 24,
+      "horizon": 24,
+      "open_hours": [
+        0,
+        23
+      ],
+      "spatial_blocks": 4
+    },
+    "train": {
+      "hidden": 32,
+      "batch_size": 64,
+      "lr": 0.002,
+      "epochs": 20,
+      "patience": 4,
+      "train_origin_stride": 4,
+      "seeds": [
+        42
+      ],
+      "spatial_seeds": [
+        42
+      ],
+      "peak_hours": [
+        7,
+        11
+      ]
+    },
+    "planning": {
+      "typical_start_h": 1.5,
+      "later_note": "Starting later means missing sunrise at the summit.",
+      "access_note": "Check with the police post at the trailhead that the route is open."
+    },
+    "capacity": {
+      "space_per_person_m": 1.0,
+      "group_size": 10,
+      "group_gap_m": 50,
+      "open_from_h": 0,
+      "open_hours": 24,
+      "rain_mm": 0.5,
+      "management_capacity": 0.7,
+      "busy_utilisation": 0.8,
+      "main_trail": "nallathanniya"
+    },
+    "control": {
+      "slot_minutes": 30,
+      "first_slot_h": 0.0,
+      "last_slot_h": 12.5,
+      "bin_minutes": 30,
+      "viewpoint_min_at_once": 1500,
+      "exempt_access_points": true,
+      "use_daily_quota": true,
+      "safety_margin": 0.9,
+      "capacity_scale": 1.0,
+      "walk_in_share": 0.2,
+      "slot_window_min": 15,
+      "response_walkers": 300,
+      "max_slot_shift_h": 2,
+      "accept_trail_swap": 0.3,
+      "booking_horizon_days": 90,
+      "booking_mode": "advisory",
+      "queue_limit_min": 20
+    },
+    "live": {
+      "horizon_days": 90,
+      "forecast_days": 16,
+      "calendar_extra_days": 120,
+      "dwc_totals_csv": "data/live/dwc_daily_totals.csv"
+    },
+    "api": {
+      "allow_time_override": true,
+      "cors_origins": [
+        "*"
+      ]
+    },
+    "arima": {
+      "order": [
+        1,
+        0,
+        1
+      ],
+      "seasonal_order": [
+        1,
+        1,
+        1,
+        24
+      ],
+      "fit_days": 60,
+      "history_days": 14
+    },
+    "terrain": {
+      "stairs": {
+        "up_m_per_min": 9,
+        "down_m_per_min": 18,
+        "flat_kmh": 4.0
+      }
+    },
+    "calendar": {
+      "season": {
+        "from_poya": "Unduvap",
+        "to_poya": "Vesak"
+      }
+    },
+    "park": "adams_peak"
+  }
+}

@@ -1,14 +1,14 @@
 // Widget tests for Component 4 with a fake API (no server needed).
 import 'package:decentralized_hiking_ai/app/app.dart';
-import 'package:decentralized_hiking_ai/features/component_4/component4_home.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
-import 'package:decentralized_hiking_ai/features/component_4/data/models.dart';
-import 'package:decentralized_hiking_ai/features/component_4/screens/staff/halfway_screen.dart';
-import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/day_screen.dart';
-import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/map_screen.dart';
-import 'package:decentralized_hiking_ai/features/component_4/screens/visitor/start_times_screen.dart';
-import 'package:decentralized_hiking_ai/features/component_4/ui/c4_i18n.dart';
-import 'package:decentralized_hiking_ai/features/component_4/ui/c4_ui.dart';
+import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/map_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c4_i18n.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

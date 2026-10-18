@@ -1,0 +1,76 @@
+variable,data_type,unit,description,origin,missing_policy
+sample_id,string,none,Planned unique trip/decision/point identity,Construct from verified route point and decision_time,Keep NULL/blank; do not invent
+trail_id,string,none,Typed OSM way identifier,OSM; not route name,Keep NULL/blank; do not invent
+latitude,float,degrees N,WGS84 point latitude,OSM/derived densification,Keep NULL/blank; do not invent
+longitude,float,degrees E,WGS84 point longitude,OSM/derived densification,Keep NULL/blank; do not invent
+timestamp,datetime,UTC ISO8601,Hourly valid time; must distinguish decision/issue/valid times,Open-Meteo,Keep NULL/blank; do not invent
+elevation_m,float,m EGM2008,DSM sampled height,Copernicus GLO-30,Keep NULL/blank; do not invent
+slope_deg,float,degrees,Local raster surface steepness,3x3 central differences; not path incline,Keep NULL/blank; do not invent
+trail_length_km,float,km,Geodesic way length; not assembled route length,OSM geometry,Keep NULL/blank; do not invent
+trail_difficulty,categorical,OSM sac_scale,Tag only; blank if absent,OSM sac_scale; never infer from path,Keep NULL/blank; do not invent
+landslide_risk,categorical,source legend,Unavailable; future susceptibility distinct from risk,Licensed NBRO GIS required,Keep NULL/blank; do not invent
+flood_risk,categorical,source legend,Unavailable; no zero-filled safe class,Licensed catchment flood GIS required,Keep NULL/blank; do not invent
+visibility_m,float,m,Unavailable from chosen historical API,Separate documented forecast source required,Keep NULL/blank; do not invent
+connectivity_indicator,nullable,source-specific,Unavailable; separate observed current and predicted future,Operator layer/consented measurements; not tower distance as signal,Keep NULL/blank; do not invent
+remoteness_indicator,float,m or minutes,Planned distance to verified support; time needs routing,Verified OSM facilities + route network,Keep NULL/blank; do not invent
+water_availability,nullable,source-specific,Mapped point presence is not potable or flowing water,OSM water tags + field verification,Keep NULL/blank; do not invent
+point_id,string,none,Requested weather sampling identity,metadata/weather_sampling_points.csv,Keep NULL/blank; do not invent
+requested_latitude,float,degrees N,API requested coordinate,Download request,Keep NULL/blank; do not invent
+requested_longitude,float,degrees E,API requested coordinate,Download request,Keep NULL/blank; do not invent
+grid_latitude,float,degrees N,Returned selected weather cell coordinate,API metadata,Keep NULL/blank; do not invent
+grid_longitude,float,degrees E,Returned selected weather cell coordinate,API metadata,Keep NULL/blank; do not invent
+api_elevation_m,float,m,"API downscaling elevation, not trail height",API metadata,Keep NULL/blank; do not invent
+chainage_m,float,m,Distance along OSM way node order,Geodesic densified profile,Keep NULL/blank; do not invent
+point_index,integer,none,Sequential profile index,Densification,Keep NULL/blank; do not invent
+minimum_elevation_m,float,m,Minimum sampled valid DSM height,Derived profile,Keep NULL/blank; do not invent
+maximum_elevation_m,float,m,Maximum sampled valid DSM height,Derived profile,Keep NULL/blank; do not invent
+elevation_gain_m,float,m,Unsmoothed positive changes in node order; NULL if incomplete,Derived profile,Keep NULL/blank; do not invent
+elevation_loss_m,float,m,Unsmoothed negative changes in node order; NULL if incomplete,Derived profile,Keep NULL/blank; do not invent
+profile_complete,boolean,none,All profile samples available,Derived quality flag,Keep NULL/blank; do not invent
+osm_type,string,none,node/way/relation,OSM,Keep NULL/blank; do not invent
+osm_id,integer,none,Identifier scoped by osm_type,OSM,Keep NULL/blank; do not invent
+geometry,GeoJSON,EPSG:4326 lon/lat,Actual way LineString; relation member multiline for Overpass,OSM; full ways may extend beyond AOI,Keep NULL/blank; do not invent
+hiking_relation_ids,array,none,Hiking relation membership; not trail verification,OSM relation members,Keep NULL/blank; do not invent
+tags,object,none,All original OSM tags preserved,OSM,Keep NULL/blank; do not invent
+verified_hiking_trail,boolean,none,Always false until independent review; not an ML label,Collection policy,Keep NULL/blank; do not invent
+osm_mobile_phone_tag_present,boolean,none,OSM tag presence only; not verified mobile service,OSM communication:mobile_phone=yes,Keep NULL/blank; do not invent
+coverage_known,boolean,none,False for all OSM structures; no coverage measurements,Collection policy,Keep NULL/blank; do not invent
+temperature_2m,float,°C,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+apparent_temperature,float,°C,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+relative_humidity_2m,float,%,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+precipitation,float,mm preceding hour,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+rain,float,mm preceding hour,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+weather_code,integer,WMO code,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+cloud_cover,float,%,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+wind_speed_10m,float,km/h,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+wind_gusts_10m,float,km/h,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+surface_pressure,float,hPa,Reanalysis weather variable; not sensor measurement,Open-Meteo ERA5-Seamless,Keep NULL/blank; do not invent
+name,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+highway,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+route,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+sac_scale,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+surface,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+smoothness,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+incline,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+trail_visibility,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+access,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+foot,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+distance,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+amenity,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+emergency,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+natural,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+operator,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+opening_hours,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+drinking_water,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+phone,string,OSM tag,Preserved if mapped; NULL/missing otherwise,OSM,Keep NULL/blank; do not invent
+offline_map,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+navigation_guide,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+general_first_aid,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+hypothermia_guide,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+heat_illness_guide,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+snakebite_guide,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+injury_guide,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+water_safety,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+weather_information,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+emergency_contacts,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
+wildlife_safety,nullable binary,0/1/uncertain,Not supplied; only independently reviewed labels,Expert validation per labeling_methodology.md,Keep NULL/blank; do not invent
