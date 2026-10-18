@@ -120,6 +120,7 @@ switches English / සිංහල / தமிழ்.
 |---|---|
 | `flutter : The term 'flutter' is not recognized` | Close **all** VS Code windows and open again (a new terminal tab is not enough). Quick fix for one terminal: `$env:Path += ";C:\Users\Jhonny\dev\flutter\bin"` |
 | Terminal 1 shows `GET / 404` or `torch.jit.script is not supported` | Harmless: the first is a browser opening the bare address (older version), the second a PyTorch warning on Python 3.14 |
+| `.venv\Scripts\python.exe` is not recognized / path `ml\component_4` not found | Component 4 moved to `research\component_4` (18 Oct 2026). Close old terminals and editor tabs, then `cd D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4` |
 | `Building with plugins requires symlink support` | Turn on Developer Mode (setup step 2) |
 | App says **Cannot reach the park server** | Terminal 1 is not running, or stopped. Check http://localhost:8000/health |
 | **The adams_peak service is not running** | `serve_all` is still starting (wait 30 s), or that park's server crashed: see Terminal 1 |
