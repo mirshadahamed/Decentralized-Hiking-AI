@@ -440,7 +440,8 @@ class NightWaitChart extends StatelessWidget {
               bottom: height * limit / maxW + 2,
               child: Text('$limit min', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline)),
             ),
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Positioned.fill(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               for (var i = 0; i < n; i++)
                 Expanded(
                   child: Tooltip(
@@ -460,7 +461,8 @@ class NightWaitChart extends StatelessWidget {
                     ]),
                   ),
                 ),
-            ]),
+              ]),
+            ),
           ]),
         ),
         const SizedBox(height: C4Space.xs),

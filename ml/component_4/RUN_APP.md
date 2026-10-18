@@ -118,7 +118,8 @@ switches English / සිංහල / தமிழ்.
 
 | You see | Do this |
 |---|---|
-| `flutter : The term 'flutter' is not recognized` | Close **all** VS Code windows and open again. Quick fix for one terminal: `$env:Path += ";C:\Users\Jhonny\dev\flutter\bin"` |
+| `flutter : The term 'flutter' is not recognized` | Close **all** VS Code windows and open again (a new terminal tab is not enough). Quick fix for one terminal: `$env:Path += ";C:\Users\Jhonny\dev\flutter\bin"` |
+| Terminal 1 shows `GET / 404` or `torch.jit.script is not supported` | Harmless: the first is a browser opening the bare address (older version), the second a PyTorch warning on Python 3.14 |
 | `Building with plugins requires symlink support` | Turn on Developer Mode (setup step 2) |
 | App says **Cannot reach the park server** | Terminal 1 is not running, or stopped. Check http://localhost:8000/health |
 | **The adams_peak service is not running** | `serve_all` is still starting (wait 30 s), or that park's server crashed: see Terminal 1 |
