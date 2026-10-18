@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../data/api_client.dart';
-import '../../data/models.dart';
-import '../../ui/c4_theme.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../../models/models.dart';
+import '../../theme/c4_theme.dart';
+import '../../widgets/c4_ui.dart';
 import 'halfway_screen.dart';
 
 /// Officer console for a pilgrim site (Adam's Peak):

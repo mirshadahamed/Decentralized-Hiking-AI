@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../data/api_client.dart';
-import '../../data/models.dart';
-import '../../data/ticket_store.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../../models/models.dart';
+import '../../../services/ticket_store.dart';
+import '../../widgets/c4_ui.dart';
 import 'ticket_screen.dart';
 
 /// Step 2: how busy the day will be, suggestions to avoid the crowd, then pick a trail and a time.

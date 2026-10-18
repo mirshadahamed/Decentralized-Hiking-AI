@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../data/api_client.dart';
-import '../../data/models.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../../models/models.dart';
+import '../../widgets/c4_ui.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 

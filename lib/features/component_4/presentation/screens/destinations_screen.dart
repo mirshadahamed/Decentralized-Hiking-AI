@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../data/models.dart';
-import '../ui/c4_theme.dart';
-import '../ui/c4_ui.dart';
+import '../../models/models.dart';
+import '../theme/c4_theme.dart';
+import '../widgets/c4_ui.dart';
 
 /// Trip planner, step 1: choose a destination. Built only from the server's destination list, so a new
 /// destination (a new configs/parks/*.yaml) appears here, with its own filter chip, without changing the app.

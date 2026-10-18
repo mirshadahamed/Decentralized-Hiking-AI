@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../data/models.dart';
-import '../../ui/c4_ui.dart';
+import '../../../models/models.dart';
+import '../../widgets/c4_ui.dart';
 import 'day_screen.dart';
 import 'start_times_screen.dart';
 

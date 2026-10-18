@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import 'data/api_client.dart';
-import 'data/models.dart';
-import 'screens/park_picker.dart';
+import '../data/api_client.dart';
+import '../models/models.dart';
+import 'screens/destinations_screen.dart';
 import 'screens/staff/login_screen.dart';
 import 'screens/visitor/map_screen.dart';
 import 'screens/visitor/my_tickets_screen.dart';
 import 'screens/visitor/outlook_screen.dart';
 import 'screens/visitor/overview_screen.dart';
-import 'ui/c4_i18n.dart';
-import 'ui/c4_ui.dart';
+import 'l10n/c4_i18n.dart';
+import 'widgets/c4_ui.dart';
 
 /// Entry point of Component 4 (crowd forecasting, trip planning, crowd control) inside the team app.
 /// Trip planner: with the gateway the visitor first chooses a destination, then sees everything about it;

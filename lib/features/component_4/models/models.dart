@@ -1,4 +1,4 @@
-// Data models for the Component 4 API (ml/component_4/src/api/app.py).
+// Data models for the Component 4 API (research/component_4/src/api/app.py).
 
 int _int(dynamic v) => (v as num?)?.round() ?? 0;
 double _dbl(dynamic v) => (v as num?)?.toDouble() ?? 0.0;

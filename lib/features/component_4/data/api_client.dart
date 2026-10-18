@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import 'models.dart';
+import '../models/models.dart';
 
 /// Base URL of the Component 4 API. Override at build time:
 ///   flutter run --dart-define=C4_API=http://10.0.2.2:8000     (Android emulator -> host PC)

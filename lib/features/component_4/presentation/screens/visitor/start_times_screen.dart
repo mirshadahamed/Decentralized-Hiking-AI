@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models.dart';
-import '../../ui/c4_theme.dart';
-import '../../ui/c4_ui.dart';
+import '../../../models/models.dart';
+import '../../theme/c4_theme.dart';
+import '../../widgets/c4_ui.dart';
 
 /// Pilgrim sites (Adam's Peak): no tickets. For one night, when to start on each route so the summit is reached
 /// before sunrise without a long wait on the final steps (src/control/advisory.py).

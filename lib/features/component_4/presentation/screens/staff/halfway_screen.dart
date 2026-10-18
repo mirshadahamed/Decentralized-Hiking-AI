@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../data/api_client.dart';
-import '../../data/models.dart';
-import '../../ui/c4_theme.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../../models/models.dart';
+import '../../theme/c4_theme.dart';
+import '../../widgets/c4_ui.dart';
 
 /// Halfway checks at a pilgrim site (Adam's Peak). The officer at a route's halfway rest stop counts the people
 /// passing (e.g. every 10 minutes). From all counts the server estimates the queue on the final steps when they

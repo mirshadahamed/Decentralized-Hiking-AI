@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data/api_client.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../widgets/c4_ui.dart';
 import 'advisory_officer_home.dart';
 import 'halfway_screen.dart';
 import 'officer_home.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../data/api_client.dart';
-import '../../data/models.dart';
-import '../../ui/c4_ui.dart';
+import '../../../data/api_client.dart';
+import '../../../models/models.dart';
+import '../../widgets/c4_ui.dart';
 import 'ranger_home.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};

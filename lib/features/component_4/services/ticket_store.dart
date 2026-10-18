@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'models.dart';
+import '../models/models.dart';
 
 /// Tickets saved on the phone, so they can be shown at the gate without a signal (offline-first).
 class TicketStore {

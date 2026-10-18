@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../data/api_client.dart';
-import '../data/models.dart';
-import 'c4_i18n.dart';
-import 'c4_theme.dart';
+import '../../data/api_client.dart';
+import '../../models/models.dart';
+import '../l10n/c4_i18n.dart';
+import '../theme/c4_theme.dart';
 
 /// Gives every Component 4 screen the same API client and language (and lets tests inject a fake API).
 /// Screens that use [tr] rebuild when the language changes.

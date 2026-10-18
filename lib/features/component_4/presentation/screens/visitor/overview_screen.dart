@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models.dart';
-import '../../ui/c4_theme.dart';
-import '../../ui/c4_ui.dart';
+import '../../../models/models.dart';
+import '../../theme/c4_theme.dart';
+import '../../widgets/c4_ui.dart';
 
 /// Trip planner, step 2: everything about one destination on one page: what it is, the week ahead, the
 /// quietest days, when to go, how to get there and its trails. "Plan" opens the calendar / start times.

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../data/models.dart';
-import '../../ui/c4_theme.dart';
-import '../../ui/c4_ui.dart';
+import '../../../models/models.dart';
+import '../../theme/c4_theme.dart';
+import '../../widgets/c4_ui.dart';
 
 /// Trails of the selected park on an OpenStreetMap background, one colour per route, with the trail heads,
 /// halfway checkpoints and the summit / viewpoints marked.

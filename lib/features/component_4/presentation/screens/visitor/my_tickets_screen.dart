@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models.dart';
-import '../../data/ticket_store.dart';
-import '../../ui/c4_ui.dart';
+import '../../../models/models.dart';
+import '../../../services/ticket_store.dart';
+import '../../widgets/c4_ui.dart';
 import 'ticket_screen.dart';
 
 /// Tickets saved on this phone. Pull down to update their status when online.

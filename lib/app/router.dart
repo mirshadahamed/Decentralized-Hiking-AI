@@ -2,7 +2,7 @@
 // navigate on their own (MaterialPageRoute), so this file stays small.
 import 'package:flutter/material.dart';
 
-import '../features/component_4/component4_home.dart';
+import '../features/component_4/presentation/component4_home.dart';
 
 class AppRoutes {
   static const home = '/';
