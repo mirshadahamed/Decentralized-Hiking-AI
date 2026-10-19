@@ -67,6 +67,9 @@ counts (after PP1) will be used to calibrate and to check the synthetic target.
 | Precipitation | share of open hours with forecast rain ≥ 0.5 mm | E | Daily, from the forecast (the dynamic part) |
 | Management capacity | 0.7 | E | Placeholder until DWC staffing data is available |
 | Per trail | social, erodibility and accessibility factors are computed for each trail separately; park quota = sum of trail quotas | E | Each visitor hikes one trail |
+| Wet ground (live service, 19 Oct 2026) | 1.5 × waterlogging-prone share × wetness; wetness = rain of the last 3 days ÷ 60 mm (max 1) | A | Peaty ground stays wet after rain; 3 days and 60 mm are placeholders – calibrate with ranger reports of muddy days. 0 in all research results |
+| Trail condition (live service) | officer report: good 0 %, muddy 20 %, partly closed 50 %, closed 100 % of capacity removed | A | Placeholders to agree with DWC; closed = no tickets. 0 in all research results |
+| Rain for a live day | weather forecast within 16 days, typical weather after (was always typical weather in the planning answer) | E | Same rule as the published slot plans |
 
 ## Entry control and booking
 | Item | Value | Status | Reason |
