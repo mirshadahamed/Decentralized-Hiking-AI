@@ -324,6 +324,100 @@ class ServerStatus {
       );
 }
 
+// ---------- safe limit per trail and day (/capacity/{day}) ----------
+class LimitFactor {
+  LimitFactor({required this.key, required this.label, required this.pct});
+
+  final String key, label;
+  final int pct; // share of the capacity this factor removes
+
+  factory LimitFactor.fromJson(Map<String, dynamic> j) =>
+      LimitFactor(key: j['key'] as String, label: j['label'] as String? ?? j['key'] as String, pct: _int(j['pct']));
+}
+
+/// A trail condition reported by an officer (good / muddy / partly_closed / closed).
+class TrailCondition {
+  TrailCondition({this.level = 'good', this.note = '', this.factor = 0, this.setBy = ''});
+
+  final String level, note, setBy;
+  final double factor;
+
+  bool get isGood => level == 'good';
+  bool get isClosed => factor >= 1;
+  String get label => level.replaceAll('_', ' ');
+
+  factory TrailCondition.fromJson(Map<String, dynamic>? j) => j == null
+      ? TrailCondition()
+      : TrailCondition(
+          level: j['level'] as String? ?? 'good',
+          note: j['note'] as String? ?? '',
+          factor: _dbl(j['factor']),
+          setBy: j['set_by'] as String? ?? '',
+        );
+}
+
+class TrailLimit {
+  TrailLimit({
+    required this.trail,
+    required this.name,
+    required this.expected,
+    required this.safeLimit,
+    required this.condition,
+    required this.factors,
+  });
+
+  final String trail, name;
+  final int expected, safeLimit;
+  final TrailCondition condition;
+  final List<LimitFactor> factors;
+
+  bool get overLimit => expected > safeLimit;
+
+  factory TrailLimit.fromJson(Map<String, dynamic> j) => TrailLimit(
+        trail: j['trail'] as String,
+        name: j['name'] as String? ?? j['trail'] as String,
+        expected: _int(j['expected_visitors']),
+        safeLimit: _int(j['safe_limit']),
+        condition: TrailCondition.fromJson(j['condition'] as Map<String, dynamic>?),
+        factors: (j['factors'] as List? ?? []).map((f) => LimitFactor.fromJson(f as Map<String, dynamic>)).toList(),
+      );
+}
+
+class DayCapacity {
+  DayCapacity({
+    required this.day,
+    required this.weatherBasis,
+    required this.rainShare,
+    required this.groundRainMm,
+    required this.groundDays,
+    required this.groundBasis,
+    required this.wetness,
+    required this.trails,
+  });
+
+  final DateTime day;
+  final String weatherBasis, groundBasis;
+  final double rainShare, groundRainMm, wetness;
+  final int groundDays;
+  final List<TrailLimit> trails;
+
+  TrailLimit? forTrail(String id) => trails.where((t) => t.trail == id).firstOrNull;
+
+  factory DayCapacity.fromJson(Map<String, dynamic> j) {
+    final g = j['ground'] as Map<String, dynamic>? ?? {};
+    return DayCapacity(
+      day: DateTime.parse(j['day'] as String),
+      weatherBasis: j['weather_basis'] as String? ?? '',
+      rainShare: _dbl(j['rain_share_open_hours']),
+      groundRainMm: _dbl(g['rain_mm']),
+      groundDays: g['days'] == null ? 3 : _int(g['days']),
+      groundBasis: g['basis'] as String? ?? '',
+      wetness: _dbl(g['wetness']),
+      trails: (j['trails'] as List? ?? []).map((t) => TrailLimit.fromJson(t as Map<String, dynamic>)).toList(),
+    );
+  }
+}
+
 // ---------- destinations (gateway /parks, park /destination) ----------
 /// One destination for the trip planner. Everything comes from the park's config, so a new destination needs
 /// no app change.

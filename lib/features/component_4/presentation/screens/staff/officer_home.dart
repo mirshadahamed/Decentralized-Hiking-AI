@@ -15,7 +15,7 @@ class OfficerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Park office · ${api.session?.username ?? ''}'),
@@ -34,13 +34,14 @@ class OfficerHome extends StatelessWidget {
               },
             ),
           ],
-          bottom: const TabBar(tabs: [
+          bottom: const TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.calendar_view_week), text: 'This week'),
+            Tab(icon: Icon(Icons.report_outlined), text: 'Trail condition'),
             Tab(icon: Icon(Icons.block), text: 'Close trail'),
             Tab(icon: Icon(Icons.notifications), text: 'Alerts'),
           ]),
         ),
-        body: const TabBarView(children: [_WeekTab(), _ClosureTab(), _AlertsTab()]),
+        body: const TabBarView(children: [_WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab()]),
       ),
     );
   }
@@ -122,6 +123,133 @@ class _WeekTabState extends State<_WeekTab> {
           ]);
         },
       );
+}
+
+/// Report a trail's condition for some days. The safe limit and the tickets of those days change at once.
+class ConditionTab extends StatefulWidget {
+  const ConditionTab({super.key});
+
+  @override
+  State<ConditionTab> createState() => _ConditionTabState();
+}
+
+class _ConditionTabState extends State<ConditionTab> {
+  static const _levels = {
+    'good': ('Good', Icons.check_circle_outline, C4Colors.green),
+    'muddy': ('Muddy', Icons.water_drop_outlined, C4Colors.amber),
+    'partly_closed': ('Partly closed', Icons.remove_road, C4Colors.amber),
+    'closed': ('Closed', Icons.block, C4Colors.red),
+  };
+  DateTime _from = DateTime.now().add(const Duration(days: 1));
+  DateTime _to = DateTime.now().add(const Duration(days: 1));
+  String _trail = 'main', _level = 'muddy';
+  final _note = TextEditingController();
+  List<Map<String, dynamic>>? _alerts;
+  DayCapacity? _cap;
+  bool _busy = false;
+
+  Future<void> _save() async {
+    setState(() => _busy = true);
+    final api = C4Scope.of(context);
+    try {
+      final a = await api.setCondition(_trail, _from, _to, _level, _note.text.trim());
+      DayCapacity? cap;
+      try {
+        cap = await api.capacity(_from);
+      } on ApiException {
+        cap = null;
+      }
+      setState(() {
+        _alerts = a;
+        _cap = cap;
+      });
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pick(bool from) async {
+    final d = await showDatePicker(context: context, initialDate: from ? _from : _to, firstDate: DateTime(2025), lastDate: DateTime(2028));
+    if (d == null) return;
+    setState(() {
+      if (from) {
+        _from = d;
+        if (_to.isBefore(d)) _to = d;
+      } else {
+        _to = d.isBefore(_from) ? _from : d;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(16), children: [
+        Text('Report a trail condition', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        const Text('Muddy or partly closed trails hold fewer people safely: the safe limit and the tickets for those '
+            'days go down at once. "Good" clears a report. Existing bookings are kept and listed below.'),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          initialValue: _trail,
+          decoration: const InputDecoration(labelText: 'Trail', border: OutlineInputBorder()),
+          items: [for (final e in _trailNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+          onChanged: (v) => setState(() => _trail = v!),
+        ),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: OutlinedButton.icon(onPressed: () => _pick(true), icon: const Icon(Icons.event), label: Text('From ${shortDate(_from)}')),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(onPressed: () => _pick(false), icon: const Icon(Icons.event), label: Text('To ${shortDate(_to)}')),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final e in _levels.entries)
+            ChoiceChip(
+              avatar: Icon(e.value.$2, size: 18, color: e.value.$3),
+              label: Text(e.value.$1),
+              selected: _level == e.key,
+              onSelected: (_) => setState(() => _level = e.key),
+            ),
+        ]),
+        const SizedBox(height: 12),
+        TextField(controller: _note, decoration: const InputDecoration(labelText: 'Note (optional, shown to visitors)', border: OutlineInputBorder())),
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          onPressed: _busy ? null : _save,
+          icon: _busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.save),
+          label: const Text('Save and re-plan tickets'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        ),
+        if (_cap != null) ...[
+          const SizedBox(height: 16),
+          Text('Safe limits on ${shortDate(_cap!.day)}', style: Theme.of(context).textTheme.titleMedium),
+          for (final t in _cap!.trails)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(t.name),
+              subtitle: Text(t.condition.isGood ? 'good' : t.condition.label),
+              trailing: Text(t.condition.isClosed ? 'closed' : '${t.expected} expected / ${t.safeLimit} safe'),
+            ),
+        ],
+        if (_alerts != null) ...[
+          const SizedBox(height: 8),
+          Text(_alerts!.isEmpty ? 'Saved. No existing bookings are over the new limit.' : '${_alerts!.length} booked slot(s) now over the limit:',
+              style: Theme.of(context).textTheme.titleMedium),
+          for (final a in _alerts!) _AlertTile(a),
+        ],
+      ]);
 }
 
 class _ClosureTab extends StatefulWidget {

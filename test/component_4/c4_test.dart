@@ -4,6 +4,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/compon
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/map_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
@@ -178,12 +179,60 @@ final adamsPeak = ParkInfo.fromJson({
   'trails': {'nallathanniya': 'Nallathanniya (Hatton)', 'palabaddala': 'Palabaddala (Ratnapura)'},
 });
 
+Map<String, dynamic> capacityJson({String mainLevel = 'good'}) => {
+      'day': '2026-11-24',
+      'rain_share_open_hours': 0.58,
+      'weather_basis': 'weather forecast',
+      'ground': {'rain_mm': 67.8, 'days': 3, 'wetness': 1.0, 'basis': 'forecast rain'},
+      'total_safe_limit': 516,
+      'total_expected': 338,
+      'trails': [
+        {
+          'trail': 'main',
+          'name': "World's End loop",
+          'expected_visitors': 291,
+          'safe_limit': mainLevel == 'closed' ? 0 : 107,
+          'over_limit': true,
+          'condition': mainLevel == 'good' ? {'level': 'good', 'note': '', 'factor': 0.0} : {'level': mainLevel, 'note': 'wet boardwalk', 'factor': 0.2},
+          'factors': [
+            {'key': 'precipitation', 'label': 'rain during opening hours', 'pct': 58},
+            {'key': 'wet_ground', 'label': 'ground still wet from earlier rain', 'pct': 12},
+            {'key': 'condition', 'label': 'trail condition', 'pct': mainLevel == 'good' ? 0 : 20},
+            {'key': 'crowding', 'label': 'expected crowding at the busiest place', 'pct': 16},
+          ],
+        },
+        {
+          'trail': 'thotupola',
+          'name': 'Thotupola Kanda',
+          'expected_visitors': 30,
+          'safe_limit': 218,
+          'over_limit': false,
+          'condition': {'level': 'good', 'note': '', 'factor': 0.0},
+          'factors': [
+            {'key': 'precipitation', 'label': 'rain during opening hours', 'pct': 58},
+          ],
+        },
+      ],
+    };
+
 class FakeApi extends C4Api {
   FakeApi({this.full = false, this.loginOk = true, this.withParks = false, this.role = 'ranger'}) : super(baseUrl: 'http://fake');
 
   final bool full, loginOk, withParks;
   final String role;
   int bookings = 0, recorded = 0, refreshes = 0;
+  String mainLevel = 'good';
+
+  @override
+  Future<DayCapacity> capacity(DateTime d) async => DayCapacity.fromJson(capacityJson(mainLevel: mainLevel));
+
+  @override
+  Future<List<Map<String, dynamic>>> setCondition(String trail, DateTime from, DateTime to, String level, String note) async {
+    mainLevel = level;
+    return [
+      {'day': '2026-11-24', 'trail': trail, 'slot': '07:00', 'booked': 18, 'safe_places': 12, 'reason': 'trail condition'},
+    ];
+  }
 
   bool get _ap => park == 'adams_peak';
 
@@ -521,6 +570,50 @@ void main() {
     expect(find.textContaining('Nallathanniya (Hatton) · 4.5 km'), findsOneWidget);
     expect(find.byIcon(Icons.flag), findsOneWidget);           // summit
     expect(find.byIcon(Icons.directions_walk), findsOneWidget); // trail head
+  });
+
+  test('safe-limit model parses the API JSON', () {
+    final c = DayCapacity.fromJson(capacityJson(mainLevel: 'muddy'));
+    expect(c.weatherBasis, 'weather forecast');
+    expect(c.groundRainMm, 67.8);
+    final main = c.forTrail('main')!;
+    expect(main.safeLimit, 107);
+    expect(main.overLimit, isTrue);
+    expect(main.condition.label, 'muddy');
+    expect(main.factors.first.pct, 58);
+    expect(c.forTrail('thotupola')!.condition.isGood, isTrue);
+  });
+
+  testWidgets('day screen shows the safe limit and why it is that low', (t) async {
+    final api = FakeApi()..mainLevel = 'muddy';
+    await t.pumpWidget(wrap(DayScreen(day: visit), api));
+    await t.pumpAndSettle();
+    expect(find.text('Safe limit for this day'), findsOneWidget);
+    expect(find.text('about 290 / 107'), findsOneWidget);       // expected / safe limit
+    expect(find.text('muddy'), findsOneWidget);                  // reported condition
+    expect(find.textContaining('More people expected than is safe'), findsOneWidget);
+    expect(find.textContaining('68 mm of forecast rain in the last 3 days (wet ground)'), findsWidgets);
+    await t.tap(find.text('Why this limit?'));
+    await t.pumpAndSettle();
+    expect(find.text("Why the limit on World's End loop is 107"), findsOneWidget);
+    expect(find.text('Rain during opening hours'), findsOneWidget);
+    expect(find.text('−58 %'), findsOneWidget);
+    expect(find.text('Trail condition'), findsOneWidget);       // −20 % from the officer's report
+  });
+
+  testWidgets('officer reports a muddy trail and sees the new limits and affected bookings', (t) async {
+    final api = FakeApi(role: 'officer');
+    await t.pumpWidget(wrap(const Scaffold(body: ConditionTab()), api));
+    await t.pumpAndSettle();
+    expect(find.text('Report a trail condition'), findsOneWidget);
+    await t.tap(find.text('Muddy'));
+    await t.enterText(find.widgetWithText(TextField, 'Note (optional, shown to visitors)'), 'wet boardwalk');
+    await t.tap(find.text('Save and re-plan tickets'));
+    await t.pumpAndSettle();
+    expect(api.mainLevel, 'muddy');
+    await t.dragUntilVisible(find.textContaining('now over the limit'), find.byType(ListView).first, const Offset(0, -200));
+    expect(find.textContaining('291 expected / 107 safe'), findsOneWidget);
+    expect(find.textContaining('1 booked slot(s) now over the limit'), findsOneWidget);
   });
 
   testWidgets('app home lists the modules', (t) async {
