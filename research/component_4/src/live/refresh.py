@@ -63,6 +63,19 @@ class LiveContext:
             return float((w >= self.cfg["capacity"]["rain_mm"]).mean()), "weather forecast"
         return booking.typical_rain_share(day.isoformat()), "typical weather"
 
+    def ground_wetness(self, day: date) -> dict:
+        """How wet the ground is when the trail opens on `day`: rain of the previous `wet_ground.days` days
+        (observed, forecast or typical weather, whichever the live weather has for those hours)."""
+        from src.capacity.cifuentes import wetness_from_rain
+        c = self.cfg["capacity"]
+        n = c.get("wet_ground", {}).get("days", 3)
+        hi = pd.Timestamp(day) + pd.Timedelta(hours=c.get("open_from_h", 6))
+        lo = hi - pd.Timedelta(days=n)
+        rain = float(self.weather.precipitation[(self.weather.index >= lo) & (self.weather.index < hi)].sum())
+        kinds = set(self.weather_source[(self.weather_source.index >= lo) & (self.weather_source.index < hi)])
+        basis = "measured rain" if kinds <= {"observed"} else "forecast rain" if "typical" not in kinds else "typical rain"
+        return {"rain_mm": round(rain, 1), "days": n, "wetness": round(wetness_from_rain(rain, c), 3), "basis": basis}
+
     def forecast_tomorrow(self) -> dict:
         tomorrow = (self.today + timedelta(days=1)).isoformat()
         out = build_forecast(self.data, self.cfg, self.seg, tomorrow, self.model, self.scale, self.run)
@@ -75,7 +88,7 @@ def publish_slots(ctx: LiveContext, db=None) -> list:
     for k in range(1, ctx.cfg["live"]["horizon_days"] + 1):
         d = ctx.today + timedelta(days=k)
         rain, basis = ctx.rain_share(d)
-        alerts += booking.publish_day(d.isoformat(), rain, basis, db)
+        alerts += booking.publish_day(d.isoformat(), rain, basis, db, wetness=ctx.ground_wetness(d)["wetness"])
     return alerts
 
 

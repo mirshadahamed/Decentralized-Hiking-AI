@@ -168,16 +168,65 @@ def forecast_tomorrow():
     return published("forecast_tomorrow.json")
 
 
+def live_inputs(c: LiveContext, day: date) -> dict:
+    """What the safe limit of a day depends on, today: rain (forecast or typical), ground wetness, conditions."""
+    rain, rain_basis = c.rain_share(day)
+    return {"rain_share": rain, "rain_basis": rain_basis, "wet": c.ground_wetness(day),
+            "conditions": booking.conditions(day.isoformat())}
+
+
+def _plan(c: LiveContext, day: date, inputs: dict) -> dict:
+    return c.planner.day(c.today.isoformat(), day.isoformat(), rain_share=inputs["rain_share"],
+                         wetness=inputs["wet"]["wetness"],
+                         conditions={t: v["factor"] for t, v in inputs["conditions"].items()})
+
+
 @app.get("/plan/{day}", tags=["public"])
 def plan_day(day: date):
     """Expected crowd for a day (2-90 days ahead) with suggestions to avoid it."""
     c = ctx()
     if not c.today + timedelta(days=2) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
         raise HTTPException(400, "Choose a day from 2 to 90 days ahead (tomorrow: /forecast/tomorrow)")
-    p = c.planner.day(c.today.isoformat(), day.isoformat())
+    p = _plan(c, day, live_inputs(c, day))
     p.pop("hourly", None)
     p["capacity"] = {"trails": p["capacity"]["trails"]}
     return p
+
+
+@app.get("/capacity/{day}", tags=["public"])
+def day_capacity(day: date):
+    """Safe limit per trail for a day (1-90 days ahead): the Cifuentes carrying capacity for that day's weather,
+    ground wetness, forecast crowding and reported trail condition, with what lowered it."""
+    c = ctx()
+    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    inputs = live_inputs(c, day)
+    cap = _plan(c, day, inputs)["capacity"]
+    from src.capacity.cifuentes import FACTOR_LABELS
+    out = []
+    for t, v in cap["trails"].items():
+        f = v["factors"]
+        out.append({
+            "trail": t, "name": v["name"], "expected_visitors": v["expected_visitors"],
+            "safe_limit": v["recommended_daily_quota"], "over_limit": v["expected_visitors"] > v["recommended_daily_quota"],
+            "condition": inputs["conditions"].get(t, {"level": "good", "note": "", "factor": 0.0}),
+            # what each factor removes from the capacity (the factors multiply); crowding is the forecast's effect
+            "factors": [{"key": k, "label": FACTOR_LABELS.get(k, k), "pct": round(100 * float(f[k]))}
+                        for k in ("precipitation", "wet_ground", "condition", "erodibility", "accessibility", "social")
+                        if k in f] + [{
+                            "key": "crowding", "label": "expected crowding at the busiest place",
+                            "pct": round(100 * (1 - v["recommended_daily_quota"] / max(v["classic_cifuentes_quota"], 1)))}],
+        })
+    return {"day": day.isoformat(), "rain_share_open_hours": round(inputs["rain_share"], 3),
+            "weather_basis": inputs["rain_basis"], "ground": inputs["wet"],
+            "total_safe_limit": cap["recommended_daily_quota"], "total_expected": cap["expected_visitors"],
+            "trails": out}
+
+
+@app.get("/conditions/{day}", tags=["public"])
+def trail_conditions(day: date):
+    """Trail conditions reported by officers for a day (trails not listed are in good condition)."""
+    return {"day": day.isoformat(), "levels": booking.condition_levels(), "trails": booking.conditions(day.isoformat())}
 
 
 @app.get("/slots/{day}", tags=["public"])
@@ -187,10 +236,11 @@ def slots(day: date):
     av, sup = booking.availability(d), booking.supply(d)
     pub = booking._published(d)
     closed = booking.closed_slots(d)
+    shut = {t for t, v in booking.conditions(d).items() if v["factor"] >= 1}      # reported closed
     return {"day": d, "basis": pub.basis.iloc[0] if pub is not None else "provisional (typical weather)",
             "walk_in_share": build_control().c["walk_in_share"],
             "slots": [{"slot": s, "trail": t, "places_left": int(av.loc[s, t]), "bookable": int(sup.loc[s, t]),
-                       "closed": (t, s) in closed} for s in av.index for t in av.columns]}
+                       "closed": (t, s) in closed or t in shut} for s in av.index for t in av.columns]}
 
 
 class BookingIn(BaseModel):
@@ -346,6 +396,26 @@ def close(body: ClosureIn, user: dict = Depends(role("officer"))):
     alerts = booking.close(body.day.isoformat(), body.trail, body.slot_from, body.slot_to, body.reason,
                            user["username"])
     auth.audit(user["username"], "closure", f"{body.day} {body.trail} {body.slot_from}-{body.slot_to}: {body.reason}")
+    return {"alerts": alerts}
+
+
+class ConditionIn(BaseModel):
+    trail: TrailName
+    day_from: date
+    day_to: date
+    level: Literal["good", "muddy", "partly_closed", "closed"]
+    note: str = Field(default="", max_length=200)
+
+
+@app.post("/admin/conditions", tags=["officer"])
+def set_condition(body: ConditionIn, user: dict = Depends(role("officer"))):
+    """Report a trail's condition for a range of days ('good' clears it). The safe limit and the tickets of those
+    days change at once; bookings already made are kept and listed as alerts if now over the limit."""
+    if body.day_to < body.day_from or (body.day_to - body.day_from).days > 30:
+        raise HTTPException(400, "Choose 1 to 31 days")
+    alerts = booking.set_condition(body.day_from.isoformat(), body.day_to.isoformat(), body.trail, body.level,
+                                   body.note, user["username"])
+    auth.audit(user["username"], "condition", f"{body.trail} {body.level} {body.day_from}..{body.day_to}: {body.note}")
     return {"alerts": alerts}
 
 

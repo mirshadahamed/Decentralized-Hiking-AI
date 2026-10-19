@@ -142,6 +142,14 @@ capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
   rain_mm: 0.5            # an open hour with >= this forecast rain counts as a rainy hour
   management_capacity: 0.7  # MC: share of required staff/infrastructure available (assumption)
   busy_utilisation: 0.8   # forecast peak / effective capacity above this = "busy"
+  wet_ground:             # ground stays wet after rain: lowers the limit on waterlogging-prone segments (TWI)
+    days: 3               # (A) rain of the last 3 days counts
+    saturation_mm: 60     # (A) this much rain in those days = fully wet ground
+  condition_levels:       # trail condition set by an officer -> share of capacity removed
+    good: 0.0
+    muddy: 0.2            # (A) slower walking, people bunch at the wet patches
+    partly_closed: 0.5
+    closed: 1.0
 
 control:                  # entry control: timed tickets per trail and slot (upgrade_plan.md, section 2)
   slot_minutes: 30

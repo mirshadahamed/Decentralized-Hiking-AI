@@ -49,7 +49,11 @@ class Planner:
                         "reverse": _minutes_to(self.seg, rev, self.focus, lf) if self.focus is not None else 0.0}
 
     # ---------- one day ----------
-    def day(self, issue_date, target_date, horizon=90) -> dict:
+    def day(self, issue_date, target_date, horizon=90, rain_share: float | None = None, wetness: float = 0.0,
+            conditions: dict | None = None) -> dict:
+        """rain_share / wetness / conditions: the live service passes the weather forecast (when it reaches that
+        day), the ground wetness from earlier rain and officer-reported trail conditions; without them the rain
+        comes from the planning model's typical weather and the ground is assumed dry."""
         ol = self.m.outlook(issue_date, horizon)
         target = pd.Timestamp(target_date)
         if target not in ol.index:
@@ -57,10 +61,11 @@ class Planner:
         row = ol.loc[target]
         occ = {q: self.m.hourly(row, q) for q in ("p10", "p50", "p90")}
         expected = {t: float(row[f"{t}_p50"]) for t in self.m.daily.trails}
-        rain_share = float(row.p_wet) * 0.5          # wet mornings: about half the open hours have rain (approx.)
+        if rain_share is None:
+            rain_share = float(row.p_wet) * 0.5      # wet mornings: about half the open hours have rain (approx.)
         cap = capacity(self.seg.reset_index(drop=True), occ["p50"], None, expected,
                        self.cfg["capacity"] | {"main_trail": self.main}, self.cfg["simulator"], self.names,
-                       rain_share=rain_share)
+                       rain_share=rain_share, wetness=wetness, conditions=conditions)
         sugg = self.suggestions(ol, target, occ["p50"], cap)
         return {"issue_date": str(pd.Timestamp(issue_date).date()), "target_date": str(target.date()),
                 "lead_days": int(row.lead), "confidence": self.confidence(int(row.lead)),
