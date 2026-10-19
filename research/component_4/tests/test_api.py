@@ -79,6 +79,26 @@ def test_gate_flow_and_live_lights(client):
     assert {s["light"] for s in live["segments"]} <= {"green", "amber", "red"}
 
 
+def test_safe_limit_and_trail_conditions(client):
+    from datetime import date, timedelta
+    day = (date.fromisoformat(client.get("/status").json()["today"]) + timedelta(days=10)).isoformat()
+    cap = client.get(f"/capacity/{day}").json()
+    assert {"weather_basis", "ground", "trails", "total_safe_limit"} <= set(cap)
+    main = next(t for t in cap["trails"] if t["trail"] == "main")
+    assert main["safe_limit"] >= 0 and {f["key"] for f in main["factors"]} >= {"precipitation", "wet_ground", "condition"}
+    assert client.get("/capacity/2030-01-01").status_code == 400
+    body = {"trail": "main", "day_from": day, "day_to": day, "level": "closed", "note": "landslide"}
+    assert client.post("/admin/conditions", json=body).status_code == 401                       # login needed
+    assert client.post("/admin/conditions", json=body, headers=token(client, "ranger1")).status_code == 403
+    assert client.post("/admin/conditions", json=body, headers=token(client, "officer1")).status_code == 200
+    after = next(t for t in client.get(f"/capacity/{day}").json()["trails"] if t["trail"] == "main")
+    assert after["safe_limit"] == 0 and after["condition"]["level"] == "closed"
+    assert client.get(f"/conditions/{day}").json()["trails"]["main"]["note"] == "landslide"
+    assert all(s["closed"] for s in client.get(f"/slots/{day}").json()["slots"] if s["trail"] == "main")
+    bad = body | {"level": "flooded"}
+    assert client.post("/admin/conditions", json=bad, headers=token(client, "officer1")).status_code == 422
+
+
 def test_lockout_after_five_failures(client):
     for _ in range(5):
         assert client.post("/auth/login", json={"username": "ranger1", "password": "wrong-password"}).status_code == 401

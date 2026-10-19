@@ -15,28 +15,47 @@ Trail-level factors, as in Cifuentes (limiting length or hours / total length or
 Segment-level factor added by this project (same form as FCpre):
     FCcrowd_s = share of open hours in which the FORECAST occupancy of segment s exceeds the
                 number of people the segment holds at the social spacing      -> changes daily
+Trail-level factors added for the live service (both 0 unless given, so research results are unchanged):
+    FCwet     wet ground: waterlogging-prone share of the trail x how wet the ground is from the last days' rain
+              (wetness 0..1 = rain of the last `wet_ground.days` / `saturation_mm`)      -> changes daily
+    FCcond    trail condition set by an officer (good / muddy / partly closed / closed)  -> changes when reported
 """
 import numpy as np
 import pandas as pd
 
+FACTOR_LABELS = {"social": "space between groups", "erodibility": "erosion-prone ground",
+                 "accessibility": "steep sections", "precipitation": "rain during opening hours",
+                 "wet_ground": "ground still wet from earlier rain", "condition": "trail condition"}
 
-def trail_factors(seg: pd.DataFrame, rain_share: float, c: dict) -> dict:
+
+def trail_factors(seg: pd.DataFrame, rain_share: float, c: dict, wetness: float = 0.0,
+                  condition: float = 0.0) -> dict:
     sp, g, gap = c["space_per_person_m"], c["group_size"], c["group_gap_m"]
     w = seg.length_m.values / seg.length_m.sum()
+    wet_prone = float(np.sum(w * seg.frac_wet.values))
     return {
         "social": 1 - g * sp / (gap + g * sp),
-        "erodibility": float(min(0.9, np.sum(w * seg.frac_wet.values) * 1.5)),
+        "erodibility": float(min(0.9, wet_prone * 1.5)),
         "accessibility": float(min(0.9, np.sum(w * (seg.frac_grade_med.values + 1.5 * seg.frac_grade_high.values)))),
         "precipitation": rain_share,
+        "wet_ground": float(min(0.9, wet_prone * 1.5 * min(1.0, max(0.0, wetness)))),
+        "condition": float(min(1.0, max(0.0, condition))),
     }
+
+
+def wetness_from_rain(rain_mm: float, c: dict) -> float:
+    """0 = dry ground ... 1 = fully wet, from the rain of the last few days."""
+    return float(min(1.0, max(0.0, rain_mm) / c.get("wet_ground", {}).get("saturation_mm", 60)))
 
 
 def capacity(seg: pd.DataFrame, forecast: np.ndarray, rain_mm_hourly: np.ndarray | None,
              expected_by_trail: dict, c: dict, sim: dict, trail_names: dict | None = None,
-             rain_share: float | None = None) -> dict:
+             rain_share: float | None = None, wetness: float = 0.0, conditions: dict | None = None) -> dict:
     """seg: segment table (with a `trail` column); forecast: [24, N] persons; rain_mm_hourly: [24] forecast rain,
     or rain_share directly (e.g. from climatology for long-range planning);
-    expected_by_trail: expected visitors per trail; sim: simulator parameters (walking speed, dwell)."""
+    expected_by_trail: expected visitors per trail; sim: simulator parameters (walking speed, dwell);
+    wetness: 0..1 ground wetness from earlier rain; conditions: {trail: share removed by its reported condition}."""
+    conditions = conditions or {}
     sp, L = c["space_per_person_m"], seg.length_m.values
     open_h = (c.get("open_from_h", 6) + np.arange(c["open_hours"])) % 24
     if rain_share is None:
@@ -53,7 +72,7 @@ def capacity(seg: pd.DataFrame, forecast: np.ndarray, rain_mm_hourly: np.ndarray
     trails = {}
     for t in seg.trail.unique():
         m = (seg.trail == t).values
-        fc = trail_factors(seg[m], rain_share, c)
+        fc = trail_factors(seg[m], rain_share, c, wetness, conditions.get(t, 0.0))
         keep[m] = np.prod([1 - v for v in fc.values()])
         trails[t] = {"factors": fc}
     rcc_classic = pcc * keep
@@ -92,6 +111,7 @@ def capacity(seg: pd.DataFrame, forecast: np.ndarray, rain_mm_hourly: np.ndarray
     main = trails.get(c.get("main_trail", "main"), next(iter(trails.values())))
     return {
         "rain_share_open_hours": round(rain_share, 3),
+        "ground_wetness": round(float(wetness), 3),
         "management_capacity": c["management_capacity"],
         "expected_visitors": round(sum(t["expected_visitors"] for t in trails.values())),
         "recommended_daily_quota": round(sum(t["recommended_daily_quota"] for t in trails.values())),

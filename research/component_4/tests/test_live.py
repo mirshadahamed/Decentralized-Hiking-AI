@@ -44,6 +44,34 @@ def test_closure_removes_tickets_and_alerts(db):
     assert b.bookings_for_code(code, db)["status"] == "booked"
 
 
+def test_trail_condition_lowers_tickets_and_keeps_bookings(db):
+    from src.control import booking as b
+    b.publish_day(DAY, 0.0, "test", db)
+    good = b.supply(DAY, db)["main"].sum()
+    b.set_condition(DAY, DAY, "main", "muddy", "wet boardwalk", "officer1", db)
+    muddy = b.supply(DAY, db)["main"].sum()
+    assert muddy < good                                       # fewer tickets on a muddy trail
+    assert b.conditions(DAY, db)["main"]["level"] == "muddy"
+    code = b.book(DAY, "thotupola", "09:00", 3, today="2026-10-15", db=db)
+    alerts = b.set_condition(DAY, DAY, "thotupola", "closed", "landslide", "officer1", db)
+    sup = b.supply(DAY, db)
+    assert sup["thotupola"].sum() == 3                        # closed: only the existing booking stays
+    assert [a for a in alerts if a["trail"] == "thotupola" and a["reason"] == "closed"]
+    assert b.bookings_for_code(code, db)["status"] == "booked"
+    b.set_condition(DAY, DAY, "main", "good", "", "officer1", db)          # 'good' clears the report
+    assert "main" not in b.conditions(DAY, db) and b.supply(DAY, db)["main"].sum() == good
+
+
+def test_wet_ground_lowers_the_daily_quota():
+    from src.control.slots import build_control
+    ec = build_control()
+    dry, wet = ec.daily_quota(0.0), ec.daily_quota(0.0, wetness=1.0)
+    assert wet["main"] < dry["main"]                          # the loop has waterlogging-prone ground
+    assert all(wet[t] <= dry[t] for t in dry)
+    assert ec.daily_quota(0.0, conditions={"main": 1.0})["main"] == 0
+    assert ec.daily_quota(0.0, wetness=0.0, conditions={}) == dry          # defaults: research results unchanged
+
+
 def test_walk_in_sales_are_limited(db):
     from src.control import booking as b
     b.publish_day(DAY, 0.0, "test", db)

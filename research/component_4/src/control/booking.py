@@ -52,11 +52,56 @@ def _connect(db=None):
         CREATE TABLE IF NOT EXISTS checkpoint_counts (
             id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, route TEXT NOT NULL, time_min INTEGER NOT NULL,
             count INTEGER NOT NULL CHECK (count >= 0), counted_by TEXT NOT NULL, recorded_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS trail_conditions (
+            day TEXT NOT NULL, trail TEXT NOT NULL, level TEXT NOT NULL, note TEXT NOT NULL,
+            set_by TEXT NOT NULL, set_at TEXT NOT NULL, PRIMARY KEY (day, trail));
     """)
     cols = [r[1] for r in con.execute("PRAGMA table_info(bookings)")]
     if "checked_in_at" not in cols:                           # older databases
         con.execute("ALTER TABLE bookings ADD COLUMN checked_in_at TEXT")
+    if "wetness" not in [r[1] for r in con.execute("PRAGMA table_info(published_slots)")]:
+        con.execute("ALTER TABLE published_slots ADD COLUMN wetness REAL NOT NULL DEFAULT 0")
     return con
+
+
+# ---------- trail conditions (reported by officers) ----------
+def condition_levels() -> dict:
+    return load_config()["capacity"]["condition_levels"]
+
+
+def conditions(day: str, db=None) -> dict:
+    """{trail: {"level", "note", "factor", "set_by", "set_at"}} for trails with a reported condition that day."""
+    levels = condition_levels()
+    with closing(_connect(db)) as con:
+        rows = con.execute("SELECT trail, level, note, set_by, set_at FROM trail_conditions WHERE day=?",
+                           (day,)).fetchall()
+    return {t: {"level": lv, "note": n, "factor": float(levels.get(lv, 0.0)), "set_by": by, "set_at": at}
+            for t, lv, n, by, at in rows if lv != "good"}
+
+
+def condition_factors(day: str, db=None) -> dict:
+    return {t: v["factor"] for t, v in conditions(day, db).items()}
+
+
+def set_condition(day_from: str, day_to: str, trail: str, level: str, note: str, by: str, db=None) -> list:
+    """An officer reports a trail's condition for a range of days ('good' clears it). Every affected day that has
+    a published plan is re-published at once (fewer tickets; the freeze rule keeps existing bookings and raises
+    alerts). Returns the alerts."""
+    if level not in condition_levels():
+        raise ValueError(f"Unknown condition '{level}'")
+    days = pd.date_range(day_from, day_to).strftime("%Y-%m-%d")
+    now = datetime.now().isoformat(timespec="seconds")
+    with closing(_connect(db)) as con:
+        con.executemany("INSERT OR REPLACE INTO trail_conditions VALUES (?,?,?,?,?,?)",
+                        [(d, trail, level, note, by, now) for d in days])
+        con.commit()
+    alerts = []
+    for d in days:
+        pub = _published(d, db)
+        if pub is not None:
+            alerts += publish_day(d, float(pub.rain_share.iloc[0]), pub.basis.iloc[0], db,
+                                  wetness=float(pub.wetness.iloc[0]))
+    return alerts
 
 
 def record_checkpoint(day: str, route: str, count: int, by: str, at: datetime, db=None):
@@ -106,10 +151,14 @@ def _climatology_rain_share() -> pd.Series:
 
 
 @lru_cache(maxsize=512)
-def _planned(day: str, rain_share: float, closed: tuple = ()) -> pd.DataFrame:
-    """All tickets per slot and trail (bookable + walk-in) from the entry-control plan."""
+def _planned(day: str, rain_share: float, closed: tuple = (), wetness: float = 0.0,
+             cond: tuple = ()) -> pd.DataFrame:
+    """All tickets per slot and trail (bookable + walk-in) from the entry-control plan.
+    cond: ((trail, share removed), ...) from reported trail conditions; a closed trail gets no tickets."""
     ec = build_control()
-    return ec.plan(rain_share, ec.daily_quota(rain_share), closed=set(closed))
+    cond = dict(cond)
+    closed = set(closed) | {(t, f"{s // 60:02d}:{s % 60:02d}") for t, f in cond.items() if f >= 1.0 for s in ec.slots}
+    return ec.plan(rain_share, ec.daily_quota(rain_share, wetness, cond), closed=closed)
 
 
 def typical_rain_share(day: str) -> float:
@@ -118,12 +167,12 @@ def typical_rain_share(day: str) -> float:
 
 def _published(day: str, db=None) -> pd.DataFrame | None:
     with closing(_connect(db)) as con:
-        rows = con.execute("SELECT slot, trail, tickets, bookable, walk_in, rain_share, basis, published_at "
+        rows = con.execute("SELECT slot, trail, tickets, bookable, walk_in, rain_share, basis, published_at, wetness "
                            "FROM published_slots WHERE day=?", (day,)).fetchall()
     if not rows:
         return None
     return pd.DataFrame(rows, columns=["slot", "trail", "tickets", "bookable", "walk_in", "rain_share", "basis",
-                                       "published_at"])
+                                       "published_at", "wetness"])
 
 
 def supply(day: str, db=None) -> pd.DataFrame:
@@ -132,7 +181,7 @@ def supply(day: str, db=None) -> pd.DataFrame:
     pub = _published(day, db)
     if pub is not None:
         return pub.pivot(index="slot", columns="trail", values="bookable")[build_control().trails].astype(int)
-    plan = _planned(day, typical_rain_share(day))
+    plan = _planned(day, typical_rain_share(day), cond=tuple(sorted(condition_factors(day, db).items())))
     return np.floor(plan * (1 - build_control().c["walk_in_share"])).astype(int)
 
 
@@ -145,13 +194,15 @@ def closed_slots(day: str, db=None) -> set:
     return {(t, s) for t, a, b in rows for s in labels if a <= s <= b}
 
 
-def publish_day(day: str, rain_share: float, basis: str, db=None) -> list:
+def publish_day(day: str, rain_share: float, basis: str, db=None, wetness: float = 0.0) -> list:
     """Publish the slot plan for a day with the FREEZE RULE: a slot never offers fewer bookable places than are
-    already booked. Walk-in places are cut first; if booked places exceed the safe plan (worse weather or a
-    closure), an alert is returned for the officer (bookings are never cancelled silently)."""
+    already booked. Walk-in places are cut first; if booked places exceed the safe plan (worse weather, wet ground,
+    a reported trail condition or a closure), an alert is returned for the officer (bookings are never cancelled
+    silently)."""
     ec = build_control()
     closed = tuple(sorted(closed_slots(day, db)))
-    plan = _planned(day, round(rain_share, 3), closed)
+    cond = condition_factors(day, db)
+    plan = _planned(day, round(rain_share, 3), closed, round(wetness, 3), tuple(sorted(cond.items())))
     safe_bookable = np.floor(plan * (1 - ec.c["walk_in_share"])).astype(int)
     bk = booked(day, db, index=plan.index, columns=plan.columns)
     bookable = np.maximum(safe_bookable, bk)
@@ -160,15 +211,17 @@ def publish_day(day: str, rain_share: float, basis: str, db=None) -> list:
     for slot in plan.index:
         for trail in plan.columns:
             if bk.loc[slot, trail] > safe_bookable.loc[slot, trail]:
+                reason = ("closed" if (trail, slot) in closed or cond.get(trail, 0) >= 1 else
+                          "trail condition" if trail in cond else "lower capacity (weather)")
                 alerts.append({"day": day, "trail": trail, "slot": slot, "booked": int(bk.loc[slot, trail]),
-                               "safe_places": int(safe_bookable.loc[slot, trail]),
-                               "reason": "closed" if (trail, slot) in closed else "lower capacity (weather)"})
+                               "safe_places": int(safe_bookable.loc[slot, trail]), "reason": reason})
     now = datetime.now().isoformat(timespec="seconds")
     with closing(_connect(db)) as con:
         con.execute("DELETE FROM published_slots WHERE day=?", (day,))
-        con.executemany("INSERT INTO published_slots VALUES (?,?,?,?,?,?,?,?,?)",
+        con.executemany("INSERT INTO published_slots (day, trail, slot, tickets, bookable, walk_in, rain_share, "
+                        "basis, published_at, wetness) VALUES (?,?,?,?,?,?,?,?,?,?)",
                         [(day, t, s, int(plan.loc[s, t]), int(bookable.loc[s, t]), int(walk_in.loc[s, t]),
-                          float(rain_share), basis, now) for s in plan.index for t in plan.columns])
+                          float(rain_share), basis, now, float(wetness)) for s in plan.index for t in plan.columns])
         con.commit()
     return alerts
 
@@ -183,14 +236,15 @@ def close(day: str, trail: str, slot_from: str, slot_to: str, reason: str, by: s
     pub = _published(day, db)
     rain = float(pub.rain_share.iloc[0]) if pub is not None else typical_rain_share(day)
     basis = pub.basis.iloc[0] if pub is not None else "typical weather"
-    return publish_day(day, rain, basis, db)
+    wet = float(pub.wetness.iloc[0]) if pub is not None else 0.0
+    return publish_day(day, rain, basis, db, wetness=wet)
 
 
 def walk_in_left(day: str, db=None) -> pd.DataFrame:
     pub = _published(day, db)
     if pub is None:
         ec = build_control()
-        plan = _planned(day, typical_rain_share(day))
+        plan = _planned(day, typical_rain_share(day), cond=tuple(sorted(condition_factors(day, db).items())))
         cap = plan - np.floor(plan * (1 - ec.c["walk_in_share"])).astype(int)
     else:
         cap = pub.pivot(index="slot", columns="trail", values="walk_in")[build_control().trails]

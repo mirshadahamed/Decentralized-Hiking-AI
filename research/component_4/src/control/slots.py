@@ -77,12 +77,12 @@ class EntryControl:
             C = np.where(np.isin(poi, list(access_points(self.cfg))), np.inf, C)
         return C
 
-    def daily_quota(self, rain_share: float = 0.0) -> dict:
-        """Classic Cifuentes daily quota per trail (no forecast needed) for this day's rain,
-        scaled by the same capacity standard as the half-hour limits."""
+    def daily_quota(self, rain_share: float = 0.0, wetness: float = 0.0, conditions: dict | None = None) -> dict:
+        """Classic Cifuentes daily quota per trail (no forecast needed) for this day's rain, ground wetness and
+        reported trail conditions, scaled by the same capacity standard as the half-hour limits."""
         from src.capacity.cifuentes import capacity
         cap = capacity(self.seg, np.zeros((24, len(self.seg))), None, {}, self.cfg["capacity"],
-                       self.cfg["simulator"], rain_share=rain_share)
+                       self.cfg["simulator"], rain_share=rain_share, wetness=wetness, conditions=conditions)
         scale = self.c.get("capacity_scale", 1.0)
         return {t: v["recommended_daily_quota"] * scale for t, v in cap["trails"].items()}
 

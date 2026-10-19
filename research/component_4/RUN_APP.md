@@ -51,7 +51,9 @@ switches English / සිංහල / தமிழ்.
 
 **Horton Plains visitor**
 1. The 90-day calendar (green = quiet … red = very busy).
-2. Tap a day (e.g. **24 Nov 2026**, Il Poya) → expected crowd, suggestions for a quieter visit, trails.
+2. Tap a day (e.g. **24 Nov 2026**, Il Poya) → expected crowd, the **safe limit for this day** per trail
+   (expected / limit; it changes with rain, wet ground, crowding and trail condition – tap **Why this limit?**),
+   suggestions for a quieter visit, trails.
 3. Pick trail, group size and a time (`07:00 · 20 left`) → **Book** → QR ticket with an 8-letter code.
 4. **My tickets** shows it again (works offline). **Map**: the three trails.
 
@@ -87,8 +89,10 @@ switches English / සිංහල / தமிழ்.
 
 **Park officer** (log out, log in as `officer1`)
 1. **This week**: next 7 days with bookings; **Refresh now** re-runs the daily refresh.
-2. **Close trail**: date, trail, time window, reason → affected bookings are listed (never cancelled).
-3. **Alerts**: slots with more bookings than is safe after the weather got worse or a closure.
+2. **Trail condition**: trail, days, Good / Muddy / Partly closed / Closed, note → the safe limit and tickets
+   for those days change at once; bookings now over the limit are listed. Visitors see the condition on the day screen.
+3. **Close trail**: date, trail, time window, reason → affected bookings are listed (never cancelled).
+4. **Alerts**: slots with more bookings than is safe after the weather got worse, a trail condition or a closure.
 
 ---
 
