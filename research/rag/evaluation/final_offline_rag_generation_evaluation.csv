@@ -1,0 +1,50 @@
+category,question,retrieval_success,retrieved_chunks,source_ids,answer_mode,answer_generated,fallback_used,foreign_numbers_detected,prompt_echo,generation_time_seconds,final_output
+hypothermia,What should I do if a hiker shows signs of hypothermia?,True,3,SRC_014,local_llm_rag,True,False,,False,4.1672967089998565,"**FINAL ANSWER:**
+
+If a hiker shows signs of hypothermia, immediately move them indoors or into a sheltered place as quickly as possible. Remove any wet clothing, wrap them in a blanket, sleeping bag, or dry towel, ensuring their head is covered. Give them a warm non-alcoholic drink and some sugary food like chocolate if they are fully awake. Keep them awake by talking to them until help arrives. Ensure you or someone else stay with them. Do not use a hot bath, hot water bottle, or heat lamp to warm them up. Do not rub their arms, legs, feet, or hands. Do not give them alcohol to drink. Do not drive to A&E. Ask someone to drive you or call [foreign emergency number omitted] and ask for an ambulance. Bring any medicines you take with you. Do not give them alcohol to
+
+Sources: SRC_014"
+heat_illness,What should I do if a hiker shows signs of heat illness?,True,4,SRC_015,local_llm_rag,True,False,,False,4.044978416999584,"Based on the provided authoritative context, here is the practical instruction for handling a hiker showing signs of heat illness:
+
+**Immediate Action Required:**
+Call [foreign emergency number omitted] now if the hiker shows signs of heatstroke, including:
+*   Still being unwell after 30 minutes of resting in a cool place.
+*   Being cooled and drinking fluids.
+*   A very high temperature with hot skin that is not sweating and might look red (this can be harder to see on brown or black skin).
+*   A fast heartbeat, fast breathing, or shortness of breath.
+*   Confusion or lack of coordination.
+*   A seizure or fit (fit) or loss of consciousness.
+
+**What to Do While Waiting for Help:**
+*   Wrap the person in a cool, wet sheet or fan them/sponge
+
+Sources: SRC_015"
+water_safety,What should a hiker do to reduce water-related safety risks?,True,4,SRC_017,local_llm_rag,True,False,,False,4.474007999999685,"To reduce water-related safety risks for a hiker in Sri Lanka, the following practical instructions are provided based on the authoritative context:
+
+1.  **Prioritize Disinfected Water**: If regular water service is interrupted (e.g., by a hurricane or pipe break), use only bottled water or water that has been properly disinfected. Do not rely on drinking or cooking water.
+2.  **Boil Water Safely**: If you do not have bottled water, boil water for at least one minute. If the water is cloudy, let it settle and filter it through a clean cloth, paper towel, or coffee filter.
+3.  **Use Proper Bleach Disinfection**: If boiling is not possible, use household liquid chlorine bleach. Add one part of the bleach solution to every 100 parts of water. For example, use
+
+Sources: SRC_017"
+lost_navigation,What should I do if I become lost while hiking?,True,3,EXP_011,local_llm_rag,True,False,,False,3.463773833000232,"To help you safely navigate in Sri Lanka, follow these practical steps:
+
+1.  **Check Your Location**: Use the map to identify your current position. If you are lost, you may need to use the map to find your way back to your starting point.
+2.  **Prepare Gear**: Ensure you have a distress beacon, emergency shelter, warm and waterproof clothing, a survival kit, first aid kit, navigation tools, a torch, spare batteries, and spare food.
+3.  **Stay Safe**: Before leaving, share your plans with a trusted person. If you are unsure of the way out, stay where you are. Make sure to get warm, eat, and drink. Use first aid if needed. Call for help and make yourself visible.
+4.  **Emergency Actions**: If you are lost, stop and assess the situation.
+
+Sources: EXP_011"
+insect_bites_stings,What should I do if a hiker is bitten or stung by an insect?,True,4,EXP_016,local_llm_rag,True,False,,False,5.2065728749998925,"Based on the provided context, here is the practical safety guidance for a hiker bitten or stung by an insect:
+
+**Immediate Action:**
+1.  **Remove the stinger:** If the stinger is stuck in the skin, use fine-tipped tweezers or a tick-removal tool to grasp it as close to the skin as possible. Slowly pull upwards to remove it. Do not squeeze the stinger or leave its mouth in the skin.
+2.  **Clean the area:** Wash the bite or sting area with soap and water to remove any remaining stinger, ticks, or caterpillars.
+3.  **Manage symptoms:** If the area is swollen or painful, apply an ice pack wrapped in a cloth or a clean cloth soaked in cold water for at least 20 minutes. Keep the area raised if possible
+
+Sources: EXP_016"
+allergic_reaction,What should I do if a hiker develops a serious allergic reaction?,True,4,EXP_017,local_llm_rag,False,True,,False,3.0155511250000018,"The offline knowledge base does not contain enough information to answer this safely.
+
+Sources: EXP_017"
+sri_lanka_emergency,How can I request an emergency ambulance in Sri Lanka?,True,4,EXP_015,verified_deterministic,True,False,,False,0.0,"For a medical emergency in Sri Lanka, you can request the 1990 Suwa Seriya pre-hospital emergency ambulance service by dialing 1990. The retrieved offline Sri Lankan source states that the hotline is toll-free and the service covers all districts of the country.
+
+Sources: EXP_015"
