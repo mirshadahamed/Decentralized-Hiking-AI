@@ -1,0 +1,1272 @@
+{
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_binary_litter.json",
+  "source_sha256": "3726b02314ed9be10b18e7516acf344a7749770408843167afa18105c8810333",
+  "source_images": 3831,
+  "source_annotations": 8334,
+  "quarantined_image_ids": [
+    53,
+    393,
+    473,
+    695,
+    738,
+    1268,
+    1394,
+    1577,
+    1609,
+    1690,
+    1983,
+    2094,
+    2213,
+    2801,
+    3113,
+    3315,
+    3422,
+    3507,
+    3670,
+    3683,
+    3713,
+    3774,
+    3800
+  ],
+  "quarantined_images": 23,
+  "invalid_annotations": 32,
+  "quarantined_annotations": 200,
+  "retained_images": 3808,
+  "retained_annotations": 8134,
+  "policy": "Whole image quarantined if any annotation fails existing strict polygon validation; no broad clipping.",
+  "quarantines": [
+    {
+      "image_id": 53,
+      "source_file_name": "unofficial/000053.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 107,
+          "raw_source_annotation_index": 107,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 106,
+          "raw_source_annotation_index": 106
+        },
+        {
+          "annotation_id": 107,
+          "raw_source_annotation_index": 107
+        },
+        {
+          "annotation_id": 108,
+          "raw_source_annotation_index": 108
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 393,
+      "source_file_name": "unofficial/000393.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 766,
+          "raw_source_annotation_index": 766,
+          "reasons": [
+            "Annotation 766, polygon 0: point (2370, 748) is outside image 2368x4208 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 756,
+          "raw_source_annotation_index": 756
+        },
+        {
+          "annotation_id": 757,
+          "raw_source_annotation_index": 757
+        },
+        {
+          "annotation_id": 758,
+          "raw_source_annotation_index": 758
+        },
+        {
+          "annotation_id": 759,
+          "raw_source_annotation_index": 759
+        },
+        {
+          "annotation_id": 760,
+          "raw_source_annotation_index": 760
+        },
+        {
+          "annotation_id": 761,
+          "raw_source_annotation_index": 761
+        },
+        {
+          "annotation_id": 762,
+          "raw_source_annotation_index": 762
+        },
+        {
+          "annotation_id": 763,
+          "raw_source_annotation_index": 763
+        },
+        {
+          "annotation_id": 764,
+          "raw_source_annotation_index": 764
+        },
+        {
+          "annotation_id": 765,
+          "raw_source_annotation_index": 765
+        },
+        {
+          "annotation_id": 766,
+          "raw_source_annotation_index": 766
+        },
+        {
+          "annotation_id": 767,
+          "raw_source_annotation_index": 767
+        },
+        {
+          "annotation_id": 768,
+          "raw_source_annotation_index": 768
+        },
+        {
+          "annotation_id": 769,
+          "raw_source_annotation_index": 769
+        },
+        {
+          "annotation_id": 770,
+          "raw_source_annotation_index": 770
+        },
+        {
+          "annotation_id": 771,
+          "raw_source_annotation_index": 771
+        },
+        {
+          "annotation_id": 772,
+          "raw_source_annotation_index": 772
+        },
+        {
+          "annotation_id": 773,
+          "raw_source_annotation_index": 773
+        },
+        {
+          "annotation_id": 774,
+          "raw_source_annotation_index": 774
+        },
+        {
+          "annotation_id": 775,
+          "raw_source_annotation_index": 775
+        },
+        {
+          "annotation_id": 776,
+          "raw_source_annotation_index": 776
+        },
+        {
+          "annotation_id": 777,
+          "raw_source_annotation_index": 777
+        },
+        {
+          "annotation_id": 778,
+          "raw_source_annotation_index": 778
+        },
+        {
+          "annotation_id": 779,
+          "raw_source_annotation_index": 779
+        },
+        {
+          "annotation_id": 780,
+          "raw_source_annotation_index": 780
+        },
+        {
+          "annotation_id": 781,
+          "raw_source_annotation_index": 781
+        },
+        {
+          "annotation_id": 782,
+          "raw_source_annotation_index": 782
+        },
+        {
+          "annotation_id": 783,
+          "raw_source_annotation_index": 783
+        },
+        {
+          "annotation_id": 784,
+          "raw_source_annotation_index": 784
+        },
+        {
+          "annotation_id": 785,
+          "raw_source_annotation_index": 785
+        },
+        {
+          "annotation_id": 786,
+          "raw_source_annotation_index": 786
+        },
+        {
+          "annotation_id": 787,
+          "raw_source_annotation_index": 787
+        },
+        {
+          "annotation_id": 788,
+          "raw_source_annotation_index": 788
+        },
+        {
+          "annotation_id": 789,
+          "raw_source_annotation_index": 789
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 473,
+      "source_file_name": "unofficial/000473.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 974,
+          "raw_source_annotation_index": 974,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 965,
+          "raw_source_annotation_index": 965
+        },
+        {
+          "annotation_id": 966,
+          "raw_source_annotation_index": 966
+        },
+        {
+          "annotation_id": 967,
+          "raw_source_annotation_index": 967
+        },
+        {
+          "annotation_id": 968,
+          "raw_source_annotation_index": 968
+        },
+        {
+          "annotation_id": 969,
+          "raw_source_annotation_index": 969
+        },
+        {
+          "annotation_id": 970,
+          "raw_source_annotation_index": 970
+        },
+        {
+          "annotation_id": 971,
+          "raw_source_annotation_index": 971
+        },
+        {
+          "annotation_id": 972,
+          "raw_source_annotation_index": 972
+        },
+        {
+          "annotation_id": 973,
+          "raw_source_annotation_index": 973
+        },
+        {
+          "annotation_id": 974,
+          "raw_source_annotation_index": 974
+        },
+        {
+          "annotation_id": 975,
+          "raw_source_annotation_index": 975
+        },
+        {
+          "annotation_id": 976,
+          "raw_source_annotation_index": 976
+        },
+        {
+          "annotation_id": 977,
+          "raw_source_annotation_index": 977
+        },
+        {
+          "annotation_id": 978,
+          "raw_source_annotation_index": 978
+        },
+        {
+          "annotation_id": 979,
+          "raw_source_annotation_index": 979
+        },
+        {
+          "annotation_id": 980,
+          "raw_source_annotation_index": 980
+        },
+        {
+          "annotation_id": 981,
+          "raw_source_annotation_index": 981
+        },
+        {
+          "annotation_id": 982,
+          "raw_source_annotation_index": 982
+        },
+        {
+          "annotation_id": 983,
+          "raw_source_annotation_index": 983
+        },
+        {
+          "annotation_id": 984,
+          "raw_source_annotation_index": 984
+        },
+        {
+          "annotation_id": 985,
+          "raw_source_annotation_index": 985
+        },
+        {
+          "annotation_id": 986,
+          "raw_source_annotation_index": 986
+        },
+        {
+          "annotation_id": 987,
+          "raw_source_annotation_index": 987
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 695,
+      "source_file_name": "unofficial/000695.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 1422,
+          "raw_source_annotation_index": 1422,
+          "reasons": [
+            "Annotation 1422, polygon 0: point (8652, 13496) is outside image 3024x4032 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 1422,
+          "raw_source_annotation_index": 1422
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 738,
+      "source_file_name": "unofficial/000738.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 1486,
+          "raw_source_annotation_index": 1486,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 1485,
+          "raw_source_annotation_index": 1485
+        },
+        {
+          "annotation_id": 1486,
+          "raw_source_annotation_index": 1486
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1268,
+      "source_file_name": "unofficial/001268.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 2599,
+          "raw_source_annotation_index": 2599,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 2596,
+          "raw_source_annotation_index": 2596
+        },
+        {
+          "annotation_id": 2597,
+          "raw_source_annotation_index": 2597
+        },
+        {
+          "annotation_id": 2598,
+          "raw_source_annotation_index": 2598
+        },
+        {
+          "annotation_id": 2599,
+          "raw_source_annotation_index": 2599
+        },
+        {
+          "annotation_id": 2600,
+          "raw_source_annotation_index": 2600
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1394,
+      "source_file_name": "unofficial/001394.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 2854,
+          "raw_source_annotation_index": 2854,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 2853,
+          "raw_source_annotation_index": 2853
+        },
+        {
+          "annotation_id": 2854,
+          "raw_source_annotation_index": 2854
+        },
+        {
+          "annotation_id": 2855,
+          "raw_source_annotation_index": 2855
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1577,
+      "source_file_name": "unofficial/001577.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 3246,
+          "raw_source_annotation_index": 3246,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 3239,
+          "raw_source_annotation_index": 3239
+        },
+        {
+          "annotation_id": 3240,
+          "raw_source_annotation_index": 3240
+        },
+        {
+          "annotation_id": 3241,
+          "raw_source_annotation_index": 3241
+        },
+        {
+          "annotation_id": 3242,
+          "raw_source_annotation_index": 3242
+        },
+        {
+          "annotation_id": 3243,
+          "raw_source_annotation_index": 3243
+        },
+        {
+          "annotation_id": 3244,
+          "raw_source_annotation_index": 3244
+        },
+        {
+          "annotation_id": 3245,
+          "raw_source_annotation_index": 3245
+        },
+        {
+          "annotation_id": 3246,
+          "raw_source_annotation_index": 3246
+        },
+        {
+          "annotation_id": 3247,
+          "raw_source_annotation_index": 3247
+        },
+        {
+          "annotation_id": 3248,
+          "raw_source_annotation_index": 3248
+        },
+        {
+          "annotation_id": 3249,
+          "raw_source_annotation_index": 3249
+        },
+        {
+          "annotation_id": 3250,
+          "raw_source_annotation_index": 3250
+        },
+        {
+          "annotation_id": 3251,
+          "raw_source_annotation_index": 3251
+        },
+        {
+          "annotation_id": 3252,
+          "raw_source_annotation_index": 3252
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1609,
+      "source_file_name": "unofficial/001609.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 3363,
+          "raw_source_annotation_index": 3363,
+          "reasons": [
+            "Annotation 3363, polygon 0: point (1184, -6) is outside image 4032x3024 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 3361,
+          "raw_source_annotation_index": 3361
+        },
+        {
+          "annotation_id": 3362,
+          "raw_source_annotation_index": 3362
+        },
+        {
+          "annotation_id": 3363,
+          "raw_source_annotation_index": 3363
+        },
+        {
+          "annotation_id": 3364,
+          "raw_source_annotation_index": 3364
+        },
+        {
+          "annotation_id": 3365,
+          "raw_source_annotation_index": 3365
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1690,
+      "source_file_name": "unofficial/001690.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 3515,
+          "raw_source_annotation_index": 3515,
+          "reasons": [
+            "Annotation 3515, polygon 0: point (1653, 2369) is outside image 4208x2368 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 3513,
+          "raw_source_annotation_index": 3513
+        },
+        {
+          "annotation_id": 3514,
+          "raw_source_annotation_index": 3514
+        },
+        {
+          "annotation_id": 3515,
+          "raw_source_annotation_index": 3515
+        },
+        {
+          "annotation_id": 3516,
+          "raw_source_annotation_index": 3516
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 1983,
+      "source_file_name": "unofficial/001983.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4166,
+          "raw_source_annotation_index": 4166,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 4166,
+          "raw_source_annotation_index": 4166
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 2094,
+      "source_file_name": "unofficial/002094.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4427,
+          "raw_source_annotation_index": 4427,
+          "reasons": [
+            "Annotation 4427, polygon 0: point (312, -5) is outside image 2976x2976 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 4425,
+          "raw_source_annotation_index": 4425
+        },
+        {
+          "annotation_id": 4426,
+          "raw_source_annotation_index": 4426
+        },
+        {
+          "annotation_id": 4427,
+          "raw_source_annotation_index": 4427
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 2213,
+      "source_file_name": "unofficial/002213.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4660,
+          "raw_source_annotation_index": 4660,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 4660,
+          "raw_source_annotation_index": 4660
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 2801,
+      "source_file_name": "unofficial/002801.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 6044,
+          "raw_source_annotation_index": 6044,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 6044,
+          "raw_source_annotation_index": 6044
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3113,
+      "source_file_name": "unofficial/003113.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 6717,
+          "raw_source_annotation_index": 6717,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 6717,
+          "raw_source_annotation_index": 6717
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3315,
+      "source_file_name": "unofficial/003315.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7122,
+          "raw_source_annotation_index": 7122,
+          "reasons": [
+            "Annotation 7122, polygon 0: point (198, -2) is outside image 720x1280 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 7122,
+          "raw_source_annotation_index": 7122
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3422,
+      "source_file_name": "unofficial/003422.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7402,
+          "raw_source_annotation_index": 7402,
+          "reasons": [
+            "Annotation 7402, polygon 0: point (2376, 2366) is outside image 2368x4208 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7403,
+          "raw_source_annotation_index": 7403,
+          "reasons": [
+            "Annotation 7403, polygon 0: point (2372, 2738) is outside image 2368x4208 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7404,
+          "raw_source_annotation_index": 7404,
+          "reasons": [
+            "Annotation 7404, polygon 0: point (2373, 2954) is outside image 2368x4208 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7405,
+          "raw_source_annotation_index": 7405,
+          "reasons": [
+            "Annotation 7405, polygon 0: point (2376, 2876) is outside image 2368x4208 (1px tolerance)",
+            "Annotation 7405, polygon 1: point (2372, 2854) is outside image 2368x4208 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 7366,
+          "raw_source_annotation_index": 7366
+        },
+        {
+          "annotation_id": 7367,
+          "raw_source_annotation_index": 7367
+        },
+        {
+          "annotation_id": 7368,
+          "raw_source_annotation_index": 7368
+        },
+        {
+          "annotation_id": 7369,
+          "raw_source_annotation_index": 7369
+        },
+        {
+          "annotation_id": 7370,
+          "raw_source_annotation_index": 7370
+        },
+        {
+          "annotation_id": 7371,
+          "raw_source_annotation_index": 7371
+        },
+        {
+          "annotation_id": 7372,
+          "raw_source_annotation_index": 7372
+        },
+        {
+          "annotation_id": 7373,
+          "raw_source_annotation_index": 7373
+        },
+        {
+          "annotation_id": 7374,
+          "raw_source_annotation_index": 7374
+        },
+        {
+          "annotation_id": 7375,
+          "raw_source_annotation_index": 7375
+        },
+        {
+          "annotation_id": 7376,
+          "raw_source_annotation_index": 7376
+        },
+        {
+          "annotation_id": 7377,
+          "raw_source_annotation_index": 7377
+        },
+        {
+          "annotation_id": 7378,
+          "raw_source_annotation_index": 7378
+        },
+        {
+          "annotation_id": 7379,
+          "raw_source_annotation_index": 7379
+        },
+        {
+          "annotation_id": 7380,
+          "raw_source_annotation_index": 7380
+        },
+        {
+          "annotation_id": 7381,
+          "raw_source_annotation_index": 7381
+        },
+        {
+          "annotation_id": 7382,
+          "raw_source_annotation_index": 7382
+        },
+        {
+          "annotation_id": 7383,
+          "raw_source_annotation_index": 7383
+        },
+        {
+          "annotation_id": 7384,
+          "raw_source_annotation_index": 7384
+        },
+        {
+          "annotation_id": 7385,
+          "raw_source_annotation_index": 7385
+        },
+        {
+          "annotation_id": 7386,
+          "raw_source_annotation_index": 7386
+        },
+        {
+          "annotation_id": 7387,
+          "raw_source_annotation_index": 7387
+        },
+        {
+          "annotation_id": 7388,
+          "raw_source_annotation_index": 7388
+        },
+        {
+          "annotation_id": 7389,
+          "raw_source_annotation_index": 7389
+        },
+        {
+          "annotation_id": 7390,
+          "raw_source_annotation_index": 7390
+        },
+        {
+          "annotation_id": 7391,
+          "raw_source_annotation_index": 7391
+        },
+        {
+          "annotation_id": 7392,
+          "raw_source_annotation_index": 7392
+        },
+        {
+          "annotation_id": 7393,
+          "raw_source_annotation_index": 7393
+        },
+        {
+          "annotation_id": 7394,
+          "raw_source_annotation_index": 7394
+        },
+        {
+          "annotation_id": 7395,
+          "raw_source_annotation_index": 7395
+        },
+        {
+          "annotation_id": 7396,
+          "raw_source_annotation_index": 7396
+        },
+        {
+          "annotation_id": 7397,
+          "raw_source_annotation_index": 7397
+        },
+        {
+          "annotation_id": 7398,
+          "raw_source_annotation_index": 7398
+        },
+        {
+          "annotation_id": 7399,
+          "raw_source_annotation_index": 7399
+        },
+        {
+          "annotation_id": 7400,
+          "raw_source_annotation_index": 7400
+        },
+        {
+          "annotation_id": 7401,
+          "raw_source_annotation_index": 7401
+        },
+        {
+          "annotation_id": 7402,
+          "raw_source_annotation_index": 7402
+        },
+        {
+          "annotation_id": 7403,
+          "raw_source_annotation_index": 7403
+        },
+        {
+          "annotation_id": 7404,
+          "raw_source_annotation_index": 7404
+        },
+        {
+          "annotation_id": 7405,
+          "raw_source_annotation_index": 7405
+        },
+        {
+          "annotation_id": 7406,
+          "raw_source_annotation_index": 7406
+        },
+        {
+          "annotation_id": 7407,
+          "raw_source_annotation_index": 7407
+        },
+        {
+          "annotation_id": 7408,
+          "raw_source_annotation_index": 7408
+        },
+        {
+          "annotation_id": 7409,
+          "raw_source_annotation_index": 7409
+        },
+        {
+          "annotation_id": 7410,
+          "raw_source_annotation_index": 7410
+        },
+        {
+          "annotation_id": 7411,
+          "raw_source_annotation_index": 7411
+        },
+        {
+          "annotation_id": 7412,
+          "raw_source_annotation_index": 7412
+        },
+        {
+          "annotation_id": 7413,
+          "raw_source_annotation_index": 7413
+        },
+        {
+          "annotation_id": 7414,
+          "raw_source_annotation_index": 7414
+        },
+        {
+          "annotation_id": 7415,
+          "raw_source_annotation_index": 7415
+        },
+        {
+          "annotation_id": 7416,
+          "raw_source_annotation_index": 7416
+        },
+        {
+          "annotation_id": 7417,
+          "raw_source_annotation_index": 7417
+        },
+        {
+          "annotation_id": 7418,
+          "raw_source_annotation_index": 7418
+        },
+        {
+          "annotation_id": 7419,
+          "raw_source_annotation_index": 7419
+        },
+        {
+          "annotation_id": 7420,
+          "raw_source_annotation_index": 7420
+        },
+        {
+          "annotation_id": 7421,
+          "raw_source_annotation_index": 7421
+        },
+        {
+          "annotation_id": 7422,
+          "raw_source_annotation_index": 7422
+        },
+        {
+          "annotation_id": 7423,
+          "raw_source_annotation_index": 7423
+        },
+        {
+          "annotation_id": 7424,
+          "raw_source_annotation_index": 7424
+        },
+        {
+          "annotation_id": 7425,
+          "raw_source_annotation_index": 7425
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3507,
+      "source_file_name": "unofficial/003507.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7597,
+          "raw_source_annotation_index": 7597,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 7597,
+          "raw_source_annotation_index": 7597
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3670,
+      "source_file_name": "unofficial/003670.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7937,
+          "raw_source_annotation_index": 7937,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 7936,
+          "raw_source_annotation_index": 7936
+        },
+        {
+          "annotation_id": 7937,
+          "raw_source_annotation_index": 7937
+        },
+        {
+          "annotation_id": 7938,
+          "raw_source_annotation_index": 7938
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3683,
+      "source_file_name": "unofficial/003683.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7964,
+          "raw_source_annotation_index": 7964,
+          "reasons": [
+            "Annotation 7964, polygon 0: point (12808, 15641) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7965,
+          "raw_source_annotation_index": 7965,
+          "reasons": [
+            "Annotation 7965, polygon 0: point (8233, 14951) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7966,
+          "raw_source_annotation_index": 7966,
+          "reasons": [
+            "Annotation 7966, polygon 0: point (6377, 2076) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7967,
+          "raw_source_annotation_index": 7967,
+          "reasons": [
+            "Annotation 7967, polygon 0: point (7478, 7529) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7968,
+          "raw_source_annotation_index": 7968,
+          "reasons": [
+            "Annotation 7968, polygon 0: point (1012, 17552) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7969,
+          "raw_source_annotation_index": 7969,
+          "reasons": [
+            "Annotation 7969, polygon 0: point (3981, 7748) is outside image 3000x4000 (1px tolerance)"
+          ]
+        },
+        {
+          "annotation_id": 7970,
+          "raw_source_annotation_index": 7970,
+          "reasons": [
+            "Annotation 7970, polygon 0: point (606, 18761) is outside image 3000x4000 (1px tolerance)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 7964,
+          "raw_source_annotation_index": 7964
+        },
+        {
+          "annotation_id": 7965,
+          "raw_source_annotation_index": 7965
+        },
+        {
+          "annotation_id": 7966,
+          "raw_source_annotation_index": 7966
+        },
+        {
+          "annotation_id": 7967,
+          "raw_source_annotation_index": 7967
+        },
+        {
+          "annotation_id": 7968,
+          "raw_source_annotation_index": 7968
+        },
+        {
+          "annotation_id": 7969,
+          "raw_source_annotation_index": 7969
+        },
+        {
+          "annotation_id": 7970,
+          "raw_source_annotation_index": 7970
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3713,
+      "source_file_name": "unofficial/003713.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 8061,
+          "raw_source_annotation_index": 8061,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 8060,
+          "raw_source_annotation_index": 8060
+        },
+        {
+          "annotation_id": 8061,
+          "raw_source_annotation_index": 8061
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3774,
+      "source_file_name": "unofficial/003774.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 8211,
+          "raw_source_annotation_index": 8211,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 8208,
+          "raw_source_annotation_index": 8208
+        },
+        {
+          "annotation_id": 8209,
+          "raw_source_annotation_index": 8209
+        },
+        {
+          "annotation_id": 8210,
+          "raw_source_annotation_index": 8210
+        },
+        {
+          "annotation_id": 8211,
+          "raw_source_annotation_index": 8211
+        },
+        {
+          "annotation_id": 8212,
+          "raw_source_annotation_index": 8212
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    },
+    {
+      "image_id": 3800,
+      "source_file_name": "unofficial/003800.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 8258,
+          "raw_source_annotation_index": 8258,
+          "reasons": [
+            "segmentation must be a nonempty list of polygons (RLE unsupported)"
+          ]
+        }
+      ],
+      "excluded_annotations": [
+        {
+          "annotation_id": 8249,
+          "raw_source_annotation_index": 8249
+        },
+        {
+          "annotation_id": 8250,
+          "raw_source_annotation_index": 8250
+        },
+        {
+          "annotation_id": 8251,
+          "raw_source_annotation_index": 8251
+        },
+        {
+          "annotation_id": 8252,
+          "raw_source_annotation_index": 8252
+        },
+        {
+          "annotation_id": 8253,
+          "raw_source_annotation_index": 8253
+        },
+        {
+          "annotation_id": 8254,
+          "raw_source_annotation_index": 8254
+        },
+        {
+          "annotation_id": 8255,
+          "raw_source_annotation_index": 8255
+        },
+        {
+          "annotation_id": 8256,
+          "raw_source_annotation_index": 8256
+        },
+        {
+          "annotation_id": 8257,
+          "raw_source_annotation_index": 8257
+        },
+        {
+          "annotation_id": 8258,
+          "raw_source_annotation_index": 8258
+        },
+        {
+          "annotation_id": 8259,
+          "raw_source_annotation_index": 8259
+        },
+        {
+          "annotation_id": 8260,
+          "raw_source_annotation_index": 8260
+        },
+        {
+          "annotation_id": 8261,
+          "raw_source_annotation_index": 8261
+        },
+        {
+          "annotation_id": 8262,
+          "raw_source_annotation_index": 8262
+        },
+        {
+          "annotation_id": 8263,
+          "raw_source_annotation_index": 8263
+        },
+        {
+          "annotation_id": 8264,
+          "raw_source_annotation_index": 8264
+        },
+        {
+          "annotation_id": 8265,
+          "raw_source_annotation_index": 8265
+        },
+        {
+          "annotation_id": 8266,
+          "raw_source_annotation_index": 8266
+        },
+        {
+          "annotation_id": 8267,
+          "raw_source_annotation_index": 8267
+        },
+        {
+          "annotation_id": 8268,
+          "raw_source_annotation_index": 8268
+        }
+      ],
+      "reason": "Whole image excluded to avoid incomplete segmentation targets; source needs annotation review."
+    }
+  ],
+  "originals_preserved": true
+}

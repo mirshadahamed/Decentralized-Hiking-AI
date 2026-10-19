@@ -1,0 +1,506 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TACO: Create environment",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "-m",
+        "venv",
+        "${workspaceFolder}/sajana/.venv"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Install preprocessing dependencies",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "${workspaceFolder}/sajana/requirements_preprocess.txt"
+      ],
+      "dependsOn": "TACO: Create environment",
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Audit uploaded labels",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.verify_taco_ready",
+        "--dataset",
+        "sajana/data/processed/taco_litter_seg_clean",
+        "--annotations",
+        "sajana/data/interim/taco/annotations_official_cleaned.json",
+        "--labels-only",
+        "--report",
+        "sajana/results/taco_preprocessing/official_clean_labels_audit.json"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Regenerate labels",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.prepare_supplied_taco"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Download missing images",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.download_taco_images",
+        "--skip-existing",
+        "--workers",
+        "8"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Import local images",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.download_taco_images",
+        "--skip-existing",
+        "--image-root",
+        "${input:tacoImageRoot}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Verify complete dataset",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.verify_taco_ready",
+        "--dataset",
+        "sajana/data/processed/taco_litter_seg_clean",
+        "--annotations",
+        "sajana/data/interim/taco/annotations_official_cleaned.json",
+        "--report",
+        "sajana/results/taco_preprocessing/official_clean_readiness.json"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Preview polygon overlays",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.contact_sheet",
+        "--dataset",
+        "sajana/data/processed/taco_litter_seg_clean",
+        "--output-dir",
+        "sajana/results/taco_preprocessing/clean"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Download, preprocess and verify",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "TACO: Install preprocessing dependencies",
+        "TACO: Regenerate original baseline labels",
+        "TACO: Download missing images",
+        "TACO: Preprocess supplied data",
+        "TACO: Preview polygon overlays"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Import, preprocess and verify",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "TACO: Install preprocessing dependencies",
+        "TACO: Regenerate original baseline labels",
+        "TACO: Import local images",
+        "TACO: Preprocess supplied data",
+        "TACO: Preview polygon overlays"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Run preprocessing tests",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "sajana/tests",
+        "-v"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Regenerate original baseline labels",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.preprocess_taco"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Preprocess supplied data",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.prepare_supplied_taco"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "TACO: Audit unofficial labels",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.verify_taco_ready",
+        "--dataset",
+        "sajana/data/processed/taco_unofficial_litter_seg",
+        "--annotations",
+        "sajana/data/interim/taco/annotations_unofficial_validated.json",
+        "--split-policy",
+        "train_only",
+        "--labels-only",
+        "--report",
+        "sajana/results/taco_preprocessing/unofficial_labels_audit.json"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Regenerate labels",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.preprocess_mju_waste"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Download RGB archive",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.download_mju_waste"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Prepare RGB images",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.prepare_mju_images"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Verify complete dataset",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.verify_mju_ready"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Preview polygon overlays",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.contact_sheet",
+        "--dataset",
+        "sajana/data/processed/mju_waste_litter_seg",
+        "--output-dir",
+        "sajana/results/mju_preprocessing"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Build TACO + MJU auxiliary dataset",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.build_litter_aux_combined"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Preprocess and add data",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "MJU: Regenerate labels",
+        "MJU: Prepare RGB images",
+        "MJU: Verify complete dataset",
+        "MJU: Preview polygon overlays",
+        "MJU: Build TACO + MJU auxiliary dataset"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "MJU: Install preprocessing dependencies",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "${workspaceFolder}/sajana/requirements_mju.txt"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Download RGB and masks",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.download_orfd_rgb"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Preprocess, verify and preview",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.preprocess_orfd_rgb"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Verify prepared data",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.preprocess_orfd_rgb",
+        "--verify-only"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Download and preprocess",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ORFD: Download RGB and masks",
+        "ORFD: Preprocess, verify and preview"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Install preprocessing dependencies",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "${workspaceFolder}/sajana/requirements_orfd.txt"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ORFD: Preprocess recovered partial data",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv/Scripts/python.exe"
+      },
+      "args": [
+        "-B",
+        "-m",
+        "sajana.src.data.preprocess_orfd_rgb",
+        "--raw-root",
+        "sajana/data/raw/orfd/partial/ORFD",
+        "--out",
+        "sajana/data/processed/orfd_path_seg_partial",
+        "--allow-incomplete"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "tacoImageRoot",
+      "type": "promptString",
+      "description": "Folder containing original TACO batch_1, batch_2, ... image directories"
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/mju_waste_litter_seg",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/mju_waste",
+  "source_sha256": {
+    "train": "8c4a335555c46b0d2cc6332d1f0b5db9ec9cb2c86f3926fdaddcb9feb9354b1a",
+    "val": "20b003be77430ae5c58c7ca147378d914fb4385d30aa5809d7db0939a5937d9f",
+    "test": "cf710d42e282fe4d1bc57799995c95ba7080081a80d03b9fdbb7daac427b2d6a"
+  },
+  "labels_only": false,
+  "passed": true,
+  "labels_valid": true,
+  "training_ready": true,
+  "auxiliary_train_ready": true,
+  "independent_evaluation_supported": false,
+  "temporal_audit": {
+    "adjacent_pairs_within_10s": 2093,
+    "cross_split_pairs_within_10s": 1116,
+    "timestamped_images": 2475,
+    "examples": [
+      {
+        "first": "2019-09-19_16_19_44-93_color.png",
+        "second": "2019-09-19_16_19_49-57_color.png",
+        "gap_seconds": 4.64
+      },
+      {
+        "first": "2019-09-19_16_19_49-57_color.png",
+        "second": "2019-09-19_16_19_55-63_color.png",
+        "gap_seconds": 6.06
+      },
+      {
+        "first": "2019-09-19_16_19_55-63_color.png",
+        "second": "2019-09-19_16_20_00-38_color.png",
+        "gap_seconds": 4.75
+      },
+      {
+        "first": "2019-09-19_16_20_00-38_color.png",
+        "second": "2019-09-19_16_20_06-93_color.png",
+        "gap_seconds": 6.55
+      },
+      {
+        "first": "2019-09-19_16_20_11-29_color.png",
+        "second": "2019-09-19_16_20_17-93_color.png",
+        "gap_seconds": 6.64
+      },
+      {
+        "first": "2019-09-19_16_20_17-93_color.png",
+        "second": "2019-09-19_16_20_22-04_color.png",
+        "gap_seconds": 4.11
+      },
+      {
+        "first": "2019-09-19_16_20_49-60_color.png",
+        "second": "2019-09-19_16_20_55-21_color.png",
+        "gap_seconds": 5.61
+      },
+      {
+        "first": "2019-09-19_16_20_55-21_color.png",
+        "second": "2019-09-19_16_20_59-69_color.png",
+        "gap_seconds": 4.48
+      },
+      {
+        "first": "2019-09-19_16_20_59-69_color.png",
+        "second": "2019-09-19_16_21_07-68_color.png",
+        "gap_seconds": 7.99
+      },
+      {
+        "first": "2019-09-19_16_21_07-68_color.png",
+        "second": "2019-09-19_16_21_12-04_color.png",
+        "gap_seconds": 4.36
+      }
+    ],
+    "interpretation": "Filename timestamps indicate adjacent frames across splits; use MJU train as auxiliary training, with TACO/local holdouts for evaluation."
+  },
+  "splits": {
+    "train": {
+      "images": 1485,
+      "instances": 1527,
+      "present_labels": 1485,
+      "present_images": 1485,
+      "missing_images": 0,
+      "verified_images": 1485,
+      "negative_images": 8
+    },
+    "val": {
+      "images": 248,
+      "instances": 261,
+      "present_labels": 248,
+      "present_images": 248,
+      "missing_images": 0,
+      "verified_images": 248,
+      "negative_images": 0
+    },
+    "test": {
+      "images": 742,
+      "instances": 744,
+      "present_labels": 742,
+      "present_images": 742,
+      "missing_images": 0,
+      "verified_images": 742,
+      "negative_images": 0
+    }
+  },
+  "issue_count": 0,
+  "issues": [],
+  "warnings": [
+    "MJU official splits contain temporally adjacent frames; use TACO/local held-out data for the component evaluation."
+  ]
+}

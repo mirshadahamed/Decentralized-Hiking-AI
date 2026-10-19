@@ -1,0 +1,11 @@
+{
+  "updated_at_utc": "2026-10-18T23:10:02.987812+00:00",
+  "manifest_images": 1500,
+  "requested_images": 1,
+  "completed_images": 1,
+  "limit": null,
+  "complete_manifest_run": false,
+  "last_run_failures": 0,
+  "known_failures": 0,
+  "note": "Acquisition history is cumulative; run full verification for current readiness."
+}

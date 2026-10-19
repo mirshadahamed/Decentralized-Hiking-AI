@@ -1,0 +1,37 @@
+{
+  "uploaded_files": [
+    "__init__(1).py",
+    "base_data_loader(1).py",
+    "base_dataset(1).py",
+    "ORFD_dataset(1).py",
+    "__init__.cpython-36(1).pyc",
+    "base_data_loader.cpython-36(1).pyc",
+    "base_dataset.cpython-36(1).pyc",
+    "ORFD_dataset.cpython-36(1).pyc"
+  ],
+  "finding": "These uploads are ORFD PyTorch data-loader/source files plus compiled Python cache files; they are not the ORFD image/mask dataset.",
+  "legacy_loader_behavior": {
+    "train_rgb_pattern": "training/*/image_data/*.png",
+    "val_rgb_pattern": "validation/*/image_data/*.png",
+    "test_rgb_pattern": "testing/*/image_data/*.png",
+    "loads_depth": true,
+    "loads_calibration_for_SNE_when_enabled": true,
+    "gt_rule": "gt_image/<stem>_fillcolor.png; positive label where source blue channel > 200",
+    "legacy_resize": "RGB resized to configurable use_size; mask resized to 1/4 dimensions"
+  },
+  "component_2_decision": {
+    "use": [
+      "RGB image_data",
+      "gt_image freespace masks"
+    ],
+    "do_not_use_for_initial_component": [
+      "dense_depth",
+      "sparse_depth",
+      "LiDAR",
+      "calibration",
+      "SNE surface normals"
+    ],
+    "reason": "Component 2 is intended to work from ordinary smartphone RGB imagery, so ORFD is used as an auxiliary RGB traversability/freespace dataset."
+  },
+  "pyc_policy": "Do not copy or commit .pyc files. They are Python 3.6 bytecode caches and are not source data."
+}

@@ -1,0 +1,336 @@
+{
+  "passed": true,
+  "preprocessing_complete": true,
+  "all_prepared_images_present": false,
+  "official": {
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg_clean",
+    "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_cleaned.json",
+    "images": 1499,
+    "annotations": 4783,
+    "training_ready": true,
+    "verification": {
+      "mode": "full",
+      "passed": true,
+      "training_ready": true,
+      "training_pool_ready": false,
+      "split_policy": "official_batches",
+      "dataset_role": "official benchmark",
+      "status": "training_ready",
+      "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg_clean",
+      "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_cleaned.json",
+      "source_coverage": {
+        "images": 1499,
+        "annotations": 4783,
+        "manifest_images": 1499,
+        "missing_images": 0,
+        "unexpected_images": 0
+      },
+      "image_checks_performed": true,
+      "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+      "splits": {
+        "train": {
+          "images": 1028,
+          "objects": 3611,
+          "present_labels": 1028,
+          "present_images": 1028,
+          "missing_images": 0,
+          "verified_images": 1028,
+          "resized_images": 0
+        },
+        "val": {
+          "images": 286,
+          "objects": 675,
+          "present_labels": 286,
+          "present_images": 286,
+          "missing_images": 0,
+          "verified_images": 286,
+          "resized_images": 0
+        },
+        "test": {
+          "images": 185,
+          "objects": 497,
+          "present_labels": 185,
+          "present_images": 185,
+          "missing_images": 0,
+          "verified_images": 185,
+          "resized_images": 0
+        }
+      },
+      "warnings": [
+        "source annotation ID 309 is repeated; all records are retained",
+        "source annotation ID 4040 is repeated; all records are retained"
+      ],
+      "issues": []
+    },
+    "excluded_images": 1,
+    "excluded_annotations": 1,
+    "image_import": {
+      "hardlinked": 1499
+    }
+  },
+  "unofficial": {
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_unofficial_litter_seg",
+    "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_validated.json",
+    "images": 3808,
+    "annotations": 8134,
+    "training_ready": false,
+    "training_pool_ready": false,
+    "labels_only": true,
+    "verification": {
+      "mode": "labels_only",
+      "passed": true,
+      "training_ready": false,
+      "training_pool_ready": false,
+      "split_policy": "train_only",
+      "dataset_role": "optional train-only pool",
+      "status": "labels_verified_images_not_checked",
+      "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_unofficial_litter_seg",
+      "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_validated.json",
+      "source_coverage": {
+        "images": 3808,
+        "annotations": 8134,
+        "manifest_images": 3808,
+        "missing_images": 0,
+        "unexpected_images": 0
+      },
+      "image_checks_performed": false,
+      "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+      "splits": {
+        "train": {
+          "images": 3808,
+          "objects": 8134,
+          "present_labels": 3808,
+          "present_images": 0,
+          "missing_images": 3808,
+          "verified_images": 0,
+          "resized_images": 0
+        },
+        "val": {
+          "images": 0,
+          "objects": 0,
+          "present_labels": 0,
+          "present_images": 0,
+          "missing_images": 0,
+          "verified_images": 0,
+          "resized_images": 0
+        },
+        "test": {
+          "images": 0,
+          "objects": 0,
+          "present_labels": 0,
+          "present_images": 0,
+          "missing_images": 0,
+          "verified_images": 0,
+          "resized_images": 0
+        }
+      },
+      "warnings": [],
+      "issues": []
+    },
+    "role": "optional train-only pool; never an evaluation benchmark",
+    "quarantined_images": 23,
+    "quarantined_annotations": 200
+  },
+  "raw_sources": {
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_binary_litter.json": "7ed9c2301c2c10414440422e65bee1241586d78c5ced7b6064367153647ad7e7",
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_binary_litter.json": "3726b02314ed9be10b18e7516acf344a7749770408843167afa18105c8810333"
+  },
+  "originals_preserved": true,
+  "network_used": false,
+  "component_scope": "Litter instance segmentation only. Trail-damage/path masks and local paired annotations are still required for the full component.",
+  "mju": {
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/mju_waste_litter_seg",
+    "role": "auxiliary one-class litter training",
+    "images": 2475,
+    "annotations": 2532,
+    "labels_valid": true,
+    "training_ready": true,
+    "auxiliary_train_ready": true,
+    "verification": {
+      "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/mju_waste_litter_seg",
+      "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/mju_waste",
+      "source_sha256": {
+        "train": "8c4a335555c46b0d2cc6332d1f0b5db9ec9cb2c86f3926fdaddcb9feb9354b1a",
+        "val": "20b003be77430ae5c58c7ca147378d914fb4385d30aa5809d7db0939a5937d9f",
+        "test": "cf710d42e282fe4d1bc57799995c95ba7080081a80d03b9fdbb7daac427b2d6a"
+      },
+      "labels_only": false,
+      "passed": true,
+      "labels_valid": true,
+      "training_ready": true,
+      "auxiliary_train_ready": true,
+      "independent_evaluation_supported": false,
+      "temporal_audit": {
+        "adjacent_pairs_within_10s": 2093,
+        "cross_split_pairs_within_10s": 1116,
+        "timestamped_images": 2475,
+        "examples": [
+          {
+            "first": "2019-09-19_16_19_44-93_color.png",
+            "second": "2019-09-19_16_19_49-57_color.png",
+            "gap_seconds": 4.64
+          },
+          {
+            "first": "2019-09-19_16_19_49-57_color.png",
+            "second": "2019-09-19_16_19_55-63_color.png",
+            "gap_seconds": 6.06
+          },
+          {
+            "first": "2019-09-19_16_19_55-63_color.png",
+            "second": "2019-09-19_16_20_00-38_color.png",
+            "gap_seconds": 4.75
+          },
+          {
+            "first": "2019-09-19_16_20_00-38_color.png",
+            "second": "2019-09-19_16_20_06-93_color.png",
+            "gap_seconds": 6.55
+          },
+          {
+            "first": "2019-09-19_16_20_11-29_color.png",
+            "second": "2019-09-19_16_20_17-93_color.png",
+            "gap_seconds": 6.64
+          },
+          {
+            "first": "2019-09-19_16_20_17-93_color.png",
+            "second": "2019-09-19_16_20_22-04_color.png",
+            "gap_seconds": 4.11
+          },
+          {
+            "first": "2019-09-19_16_20_49-60_color.png",
+            "second": "2019-09-19_16_20_55-21_color.png",
+            "gap_seconds": 5.61
+          },
+          {
+            "first": "2019-09-19_16_20_55-21_color.png",
+            "second": "2019-09-19_16_20_59-69_color.png",
+            "gap_seconds": 4.48
+          },
+          {
+            "first": "2019-09-19_16_20_59-69_color.png",
+            "second": "2019-09-19_16_21_07-68_color.png",
+            "gap_seconds": 7.99
+          },
+          {
+            "first": "2019-09-19_16_21_07-68_color.png",
+            "second": "2019-09-19_16_21_12-04_color.png",
+            "gap_seconds": 4.36
+          }
+        ],
+        "interpretation": "Filename timestamps indicate adjacent frames across splits; use MJU train as auxiliary training, with TACO/local holdouts for evaluation."
+      },
+      "splits": {
+        "train": {
+          "images": 1485,
+          "instances": 1527,
+          "present_labels": 1485,
+          "present_images": 1485,
+          "missing_images": 0,
+          "verified_images": 1485,
+          "negative_images": 8
+        },
+        "val": {
+          "images": 248,
+          "instances": 261,
+          "present_labels": 248,
+          "present_images": 248,
+          "missing_images": 0,
+          "verified_images": 248,
+          "negative_images": 0
+        },
+        "test": {
+          "images": 742,
+          "instances": 744,
+          "present_labels": 742,
+          "present_images": 742,
+          "missing_images": 0,
+          "verified_images": 742,
+          "negative_images": 0
+        }
+      },
+      "issue_count": 0,
+      "issues": [],
+      "warnings": [
+        "MJU official splits contain temporally adjacent frames; use TACO/local held-out data for the component evaluation."
+      ]
+    }
+  },
+  "taco_mju_auxiliary": {
+    "built": true,
+    "training_ready": true,
+    "splits": {
+      "train": {
+        "images": 2513,
+        "instances": 5138
+      },
+      "val": {
+        "images": 286,
+        "instances": 675
+      },
+      "test": {
+        "images": 185,
+        "instances": 497
+      }
+    },
+    "split_policy": "train=TACO clean train+MJU train; val/test=TACO clean only",
+    "evaluation_source": "TACO official held-out batches; future local trail test remains separate",
+    "source_label_audits_passed": true,
+    "issues": [],
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/litter_taco_mju_aux"
+  },
+  "orfd": {
+    "passed": true,
+    "training_ready": false,
+    "training_pool_ready": true,
+    "train_only": false,
+    "partial_available_source": true,
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/orfd_path_seg_partial",
+    "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/orfd/partial/ORFD",
+    "splits": {
+      "train": {
+        "images": 3806,
+        "verified_pairs": 3806
+      },
+      "val": {
+        "images": 0,
+        "verified_pairs": 0
+      },
+      "test": {
+        "images": 2193,
+        "verified_pairs": 2193
+      }
+    },
+    "issue_count": 0,
+    "issues": [],
+    "published_image_count": 12198,
+    "available_image_count": 5999,
+    "published_split_counts": {
+      "train": 8398,
+      "val": 1245,
+      "test": 2555
+    },
+    "published_count_complete": false,
+    "independent_hiking_evaluation_supported": false,
+    "source_sequence_metadata_available": false,
+    "warnings": [
+      "Author-linked mirror may omit source frames; available counts are not the full published dataset.",
+      "Freespace is an auxiliary vehicle traversability proxy, not hiking safety or damage ground truth.",
+      "Flattened mirror lacks original sequence names; do not claim verified sequence independence."
+    ],
+    "phase": "partial_preprocessed_download_quota_exceeded",
+    "download_complete": false,
+    "full_mirror_ready": false,
+    "download": {
+      "complete": false,
+      "phase": "download_failed",
+      "completed_ranges": 229,
+      "expected_ranges": 507,
+      "downloaded_bytes": 7482522514,
+      "expected_bytes": 16547561726,
+      "elapsed_seconds": 811,
+      "source_url": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
+      "error": "Drive refused range: HTTP 200; Google Drive - Quota exceeded",
+      "resume_supported": true
+    },
+    "expected_mirror_pairs": 11830
+  }
+}

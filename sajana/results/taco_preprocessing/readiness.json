@@ -1,0 +1,52 @@
+{
+  "mode": "full",
+  "passed": true,
+  "training_ready": true,
+  "status": "training_ready",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg",
+  "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_binary_litter.json",
+  "source_coverage": {
+    "images": 1500,
+    "annotations": 4784,
+    "manifest_images": 1500,
+    "missing_images": 0,
+    "unexpected_images": 0
+  },
+  "image_checks_performed": true,
+  "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+  "splits": {
+    "train": {
+      "images": 1029,
+      "objects": 3612,
+      "present_labels": 1029,
+      "present_images": 1029,
+      "missing_images": 0,
+      "verified_images": 1029,
+      "resized_images": 0
+    },
+    "val": {
+      "images": 286,
+      "objects": 675,
+      "present_labels": 286,
+      "present_images": 286,
+      "missing_images": 0,
+      "verified_images": 286,
+      "resized_images": 0
+    },
+    "test": {
+      "images": 185,
+      "objects": 497,
+      "present_labels": 185,
+      "present_images": 185,
+      "missing_images": 0,
+      "verified_images": 185,
+      "resized_images": 0
+    }
+  },
+  "warnings": [
+    "source annotation ID 309 is repeated; all records are retained",
+    "source annotation ID 4040 is repeated; all records are retained",
+    "train/batch_8__000005.jpg: identical decoded pixels also in train/batch_7__000000.jpg"
+  ],
+  "issues": []
+}

@@ -1,0 +1,31 @@
+{
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_binary_litter.json",
+  "source_sha256": "7ed9c2301c2c10414440422e65bee1241586d78c5ced7b6064367153647ad7e7",
+  "source_images": 1500,
+  "source_annotations": 4784,
+  "excluded_image_ids": [
+    1173
+  ],
+  "excluded_images": 1,
+  "excluded_annotations": 1,
+  "retained_images": 1499,
+  "retained_annotations": 4783,
+  "exclusions": [
+    {
+      "image_id": 1173,
+      "kept_image_id": 1305,
+      "source_file": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg/images/train/batch_7__000000.jpg",
+      "kept_file": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg/images/train/batch_8__000005.jpg",
+      "split": "train",
+      "image_sha256": "d3732612979b85d11f6738870ebbd01fbeb8a0b43de30a521211cf085a2c1ac7",
+      "removed_annotations": [
+        {
+          "annotation_id": 3636,
+          "raw_source_annotation_index": 3635
+        }
+      ],
+      "reason": "Identical image bytes within one split; retained the image record with most annotations, then lowest ID."
+    }
+  ],
+  "originals_preserved": true
+}

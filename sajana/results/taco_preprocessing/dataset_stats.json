@@ -1,0 +1,51 @@
+{
+  "source": "user-supplied TACO annotations.json",
+  "class_mapping": "all 60 TACO categories -> class 0 litter",
+  "split_strategy": "batch holdout",
+  "train_batches": [
+    "batch_1",
+    "batch_10",
+    "batch_12",
+    "batch_13",
+    "batch_2",
+    "batch_5",
+    "batch_6",
+    "batch_7",
+    "batch_8",
+    "batch_9"
+  ],
+  "val_batches": [
+    "batch_11",
+    "batch_3",
+    "batch_4"
+  ],
+  "test_batches": [
+    "batch_14",
+    "batch_15"
+  ],
+  "images_total": 1500,
+  "annotations_total": 4784,
+  "categories_original": 60,
+  "multi_polygon_annotations": 114,
+  "invalid_annotations": 0,
+  "splits": {
+    "train": {
+      "images": 1029,
+      "objects": 3612,
+      "natural_focus_images": 783,
+      "natural_focus_pct": 76.1
+    },
+    "val": {
+      "images": 286,
+      "objects": 675,
+      "natural_focus_images": 209,
+      "natural_focus_pct": 73.1
+    },
+    "test": {
+      "images": 185,
+      "objects": 497,
+      "natural_focus_images": 185,
+      "natural_focus_pct": 100.0
+    }
+  }
+}

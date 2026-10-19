@@ -1,0 +1,8 @@
+# TACO clean + MJU training; TACO-only validation and test.
+# Prefer the generated dataset data.yaml with absolute paths for training.
+train: ../data/processed/litter_taco_mju_aux/images/train
+val: ../data/processed/litter_taco_mju_aux/images/val
+test: ../data/processed/litter_taco_mju_aux/images/test
+
+names:
+  0: litter

@@ -1,0 +1,15 @@
+# Verified recovered subset; auxiliary training only, no validation split.
+dataset: ORFD_partial_recovery
+task: binary_semantic_segmentation
+processed_root: ../data/processed/orfd_path_seg_partial
+training_images: ../data/processed/orfd_path_seg_partial/images/train
+training_masks: ../data/processed/orfd_path_seg_partial/masks/train
+mask_format: PNG_L_class_ids_0_1
+classes:
+  0: non_freespace
+  1: freespace_traversable_proxy
+available_training_pairs: 3806
+available_validation_pairs: 0
+available_testing_pairs: 2193
+benchmark_ready: false
+published_coverage_complete: false

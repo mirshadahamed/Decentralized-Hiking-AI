@@ -72,3 +72,16 @@ ml/component_4/results/**/predictions_*.npz
 ml/component_4/results/*_quick/
 __pycache__/
 .pytest_cache/
+
+# Component 2: source photos, generated machine-specific YAML and model outputs
+sajana/data/raw/
+sajana/data/processed/**/images/
+sajana/data/processed/**/orientation_review/
+sajana/data/processed/**/data.yaml
+sajana/results/**/*.jpg
+sajana/results/**/*.png
+sajana/results/**/*.pt
+sajana/runs/
+
+# ORFD semantic label PNGs are generated from retained source masks
+sajana/data/processed/orfd_path_seg*/masks/

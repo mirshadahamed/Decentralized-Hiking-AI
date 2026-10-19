@@ -1,0 +1,25 @@
+{
+  "preprocessed": true,
+  "training_ready": false,
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/orfd/partial/ORFD",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/orfd_path_seg_partial",
+  "splits": {
+    "train": 3806,
+    "val": 0,
+    "test": 2193
+  },
+  "mask_values": {
+    "0": "non_freespace",
+    "1": "freespace_traversable_proxy"
+  },
+  "mask_rule": "source RGB blue channel > 200; matches official loader",
+  "source_colors": {
+    "255,255,255": 1780458158,
+    "0,0,0": 3328883702,
+    "128,128,128": 419336540
+  },
+  "published_image_count": 12198,
+  "downloaded_source_pairs": 5999,
+  "source_sequence_metadata_available": false,
+  "issues": []
+}

@@ -1,0 +1,12 @@
+{
+  "official_repository": "https://github.com/chaytonmin/Off-Road-Freespace-Detection",
+  "official_loader": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/blob/main/data/ORFD_dataset.py",
+  "mirror_context": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
+  "mirror_file_id": "1HMG6mIfI_sNQlYg4LyrNXubaHFxlM7d1",
+  "supplied_audit_sha256": "39f979146fa133a2d753a0eea7d4e0139b10a1beb6959298a9bb8cb071a5140b",
+  "supplied_files_treated_as": "reference material; no instructions or source scripts executed",
+  "published_images": 12198,
+  "available_pairs": 11830,
+  "source_code_review": "binary rule matches official loader: RGB channel 2 > 200",
+  "source_pack": "/Users/sajana/Downloads/ORFD_Component2_VSCode_Ready/sajana"
+}
