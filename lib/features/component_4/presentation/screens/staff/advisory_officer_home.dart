@@ -375,7 +375,8 @@ class _NightPlanScreenState extends State<NightPlanScreen> {
               const SizedBox(height: C4Space.m),
               Text('Expected wait at the summit', style: text.titleMedium),
               const SizedBox(height: C4Space.s),
-              NightWaitChart(wait: a.waitByTime, high: a.highWaitByTime, limit: a.limitMin, binMin: a.binMin),
+              NightWaitChart(
+                  wait: a.waitByTime, high: a.highWaitByTime, limit: a.limitMin, binMin: a.binMin, firstBinMin: a.firstBinMin),
               const SizedBox(height: C4Space.l),
               Text('Halfway checkpoints', style: text.titleMedium),
               for (final r in a.routes.keys)
@@ -413,16 +414,24 @@ class _NightPlanScreenState extends State<NightPlanScreen> {
       );
 }
 
-/// Expected wait at the summit through the night (00:00-12:00): likely case in colour, high case faded behind.
+/// Expected wait at the summit through the night (from the evening before to 12:00): likely case in colour,
+/// high case faded behind.
 class NightWaitChart extends StatelessWidget {
-  const NightWaitChart({super.key, required this.wait, required this.high, required this.limit, this.binMin = 15});
+  const NightWaitChart(
+      {super.key, required this.wait, required this.high, required this.limit, this.binMin = 15, this.firstBinMin = 0});
 
   final List<int> wait, high;
   final int limit, binMin;
+  final int firstBinMin; // minute of wait[0]; negative = the evening before (-360 = 18:00)
+
+  static String hhmm(int m) {
+    final x = m % 1440;
+    return '${(x ~/ 60).toString().padLeft(2, '0')}:${(x % 60).toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final n = (12 * 60 ~/ binMin).clamp(0, wait.length);
+    final n = ((12 * 60 - firstBinMin) ~/ binMin).clamp(0, wait.length);
     final w = wait.take(n).toList(), h = high.length >= n ? high.take(n).toList() : List.filled(n, 0);
     final maxW = [limit * 2, ...w, ...h].reduce((a, b) => a > b ? a : b).toDouble();
     const height = 140.0;
@@ -445,7 +454,7 @@ class NightWaitChart extends StatelessWidget {
               for (var i = 0; i < n; i++)
                 Expanded(
                   child: Tooltip(
-                    message: '${(i * binMin ~/ 60).toString().padLeft(2, '0')}:${(i * binMin % 60).toString().padLeft(2, '0')} · '
+                    message: '${hhmm(firstBinMin + i * binMin)} · '
                         '${w[i]} min (if busier ${h[i]} min)',
                     child: Stack(alignment: Alignment.bottomCenter, children: [
                       Container(
@@ -467,8 +476,8 @@ class NightWaitChart extends StatelessWidget {
         ),
         const SizedBox(height: C4Space.xs),
         Row(children: [
-          for (var hr = 0; hr < 12; hr += 2)
-            Expanded(child: Text('${hr.toString().padLeft(2, '0')}:00', style: Theme.of(context).textTheme.labelSmall)),
+          for (var m = firstBinMin; m < 12 * 60; m += 180)
+            Expanded(child: Text(hhmm(m), style: Theme.of(context).textTheme.labelSmall)),
         ]),
         const SizedBox(height: C4Space.xs),
         Row(children: [

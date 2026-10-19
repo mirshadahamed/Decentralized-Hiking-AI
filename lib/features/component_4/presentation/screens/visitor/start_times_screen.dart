@@ -65,13 +65,17 @@ class _StartTimesScreenState extends State<StartTimesScreen> {
                   ),
               ]),
               const SizedBox(height: C4Space.m),
-              _BestCard(advice: r, limit: adv.limitMin),
+              _BestCard(advice: r, limit: adv.limitMin, sunrise: adv.sunrise),
+              if (r.eveningPlan != null) ...[const SizedBox(height: C4Space.m), _EveningCard(plan: r.eveningPlan!)],
               const SizedBox(height: C4Space.m),
               Text(tr(context, 'wait_at_top'), style: text.titleMedium),
               const SizedBox(height: C4Space.s),
               _WaitChart(windows: r.windows, limit: adv.limitMin),
               const SizedBox(height: C4Space.m),
-              _WindowTable(windows: r.windows.where((w) => w.beforeSunrise).toList()),
+              _WindowTable(
+                  windows: r.windows
+                      .where((w) => (w.beforeSunrise && !w.tooEarly) || r.recommendedForSunrise.contains(w.start))
+                      .toList()),
               const SizedBox(height: C4Space.m),
               Card(
                 child: ListTile(
@@ -91,31 +95,96 @@ class _StartTimesScreenState extends State<StartTimesScreen> {
 }
 
 class _BestCard extends StatelessWidget {
-  const _BestCard({required this.advice, required this.limit});
+  const _BestCard({required this.advice, required this.limit, required this.sunrise});
 
   final RouteAdvice advice;
   final int limit;
+  final String sunrise;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     final good = advice.recommendedForSunrise;
+    final best = advice.best;
+    final evening = {for (final w in advice.windows) w.start: w.eveningBefore};
+    String label(String s) => evening[s] == true ? '$s · ${tr(context, 'evening_before')}' : s;
+    final withCrowdSlower = advice.usualStart.isNotEmpty && advice.usualStartClimbH > advice.climbH + 0.5;
     return Card(
       color: good.isEmpty ? scheme.errorContainer : scheme.primaryContainer,
       child: Padding(
         padding: C4Space.page,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr(context, 'best_start'), style: Theme.of(context).textTheme.labelLarge),
-          Text(advice.bestForSunrise, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w700)),
+          if (sunrise.isNotEmpty)
+            Row(children: [
+              const Icon(Icons.wb_twilight, size: 18),
+              const SizedBox(width: C4Space.xs),
+              Text(tr(context, 'sunrise_at', {'time': sunrise}), style: text.labelLarge),
+            ]),
+          const SizedBox(height: C4Space.s),
+          Text(tr(context, 'best_start'), style: text.labelLarge),
+          Text(advice.bestForSunrise, style: text.displaySmall?.copyWith(fontWeight: FontWeight.w700)),
+          if (best?.eveningBefore == true) Text(tr(context, 'evening_before'), style: text.titleSmall),
+          if (best != null && advice.climbH > 0)
+            Text(tr(context, 'climb_best', {'start': advice.bestForSunrise, 'h': advice.climbH, 'reach': best.reachSummit})),
+          if (withCrowdSlower) ...[
+            const SizedBox(height: C4Space.xs),
+            Text(tr(context, 'crowd_climb',
+                {'start': advice.usualStart, 'h': advice.usualStartClimbH, 'reach': advice.usualStartReaches})),
+          ],
+          if (advice.earlyArrivalNeeded) ...[
+            const SizedBox(height: C4Space.xs),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.ac_unit, size: 18),
+              const SizedBox(width: C4Space.xs),
+              Expanded(child: Text(tr(context, 'early_warning'), style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+            ]),
+          ],
           const SizedBox(height: C4Space.s),
           if (good.isEmpty)
             Text(tr(context, 'no_good_start'))
           else ...[
-            Text(tr(context, 'good_starts'), style: Theme.of(context).textTheme.labelLarge),
+            Text(tr(context, 'good_starts'), style: text.labelLarge),
             const SizedBox(height: C4Space.xs),
             Wrap(spacing: C4Space.xs, runSpacing: C4Space.xs, children: [
-              for (final s in good) Chip(label: Text(s), visualDensity: VisualDensity.compact),
+              for (final s in good) Chip(label: Text(label(s)), visualDensity: VisualDensity.compact),
             ]),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+/// Start the evening before, rest at the halfway hall, leave it at the recommended time.
+class _EveningCard extends StatelessWidget {
+  const _EveningCard({required this.plan});
+
+  final EveningPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Card(
+      child: Padding(
+        padding: C4Space.page,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.nights_stay_outlined),
+            const SizedBox(width: C4Space.s),
+            Expanded(child: Text(tr(context, 'evening_title'), style: text.titleSmall)),
+          ]),
+          const SizedBox(height: C4Space.xs),
+          Text(tr(context, 'evening_body', {
+            'from': plan.startFrom,
+            'to': plan.startTo,
+            'leave': plan.leaveHallAt,
+            'reach': plan.reachSummit,
+          })),
+          if (plan.hallMayBeFull) ...[
+            const SizedBox(height: C4Space.xs),
+            Text(tr(context, 'hall_full', {'n': plan.hallPeopleExpected, 'cap': plan.hallCapacity ?? '?'}),
+                style: text.bodySmall?.copyWith(color: C4Colors.red)),
           ],
         ]),
       ),

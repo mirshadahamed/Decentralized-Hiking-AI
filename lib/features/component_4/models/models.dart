@@ -536,11 +536,17 @@ class StartWindow {
     required this.reachSummit,
     required this.beforeSunrise,
     required this.recommended,
+    this.eveningBefore = false,
+    this.tooEarly = false,
+    this.climbH = 0,
   });
 
   final String start, reachSummit;
   final int waitMin;
   final bool beforeSunrise, recommended;
+  final bool eveningBefore; // starts the evening before the sunrise date
+  final bool tooEarly; // reaches the top hours before sunrise (cold wait)
+  final double climbH; // hours from start to summit at tonight's expected crowd
 
   factory StartWindow.fromJson(Map<String, dynamic> j) => StartWindow(
         start: j['start'] as String,
@@ -548,21 +554,79 @@ class StartWindow {
         reachSummit: j['reach_summit'] as String? ?? '',
         beforeSunrise: j['before_sunrise'] as bool? ?? false,
         recommended: j['recommended'] as bool? ?? false,
+        eveningBefore: j['evening_before'] as bool? ?? false,
+        tooEarly: j['too_early'] as bool? ?? false,
+        climbH: _dbl(j['climb_h']),
       );
 }
 
+/// Start the evening before, rest at the route's halfway hall, leave it at a recommended time.
+class EveningPlan {
+  EveningPlan({
+    required this.startFrom,
+    required this.startTo,
+    required this.reachHallBy,
+    required this.leaveHallAt,
+    required this.reachSummit,
+    required this.hallPeopleExpected,
+    this.hallCapacity,
+    this.hallMayBeFull = false,
+  });
+
+  final String startFrom, startTo, reachHallBy, leaveHallAt, reachSummit;
+  final int hallPeopleExpected;
+  final int? hallCapacity;
+  final bool hallMayBeFull;
+
+  static EveningPlan? fromJson(Map<String, dynamic>? j) => j == null
+      ? null
+      : EveningPlan(
+          startFrom: j['start_from'] as String? ?? '',
+          startTo: j['start_to'] as String? ?? '',
+          reachHallBy: j['reach_hall_by'] as String? ?? '',
+          leaveHallAt: j['leave_hall_at'] as String? ?? '',
+          reachSummit: j['reach_summit'] as String? ?? '',
+          hallPeopleExpected: _int(j['hall_people_expected']),
+          hallCapacity: j['hall_capacity'] == null ? null : _int(j['hall_capacity']),
+          hallMayBeFull: j['hall_may_be_full'] as bool? ?? false,
+        );
+}
+
 class RouteAdvice {
-  RouteAdvice({required this.windows, required this.bestForSunrise, required this.recommendedForSunrise, required this.shortestWait});
+  RouteAdvice({
+    required this.windows,
+    required this.bestForSunrise,
+    required this.recommendedForSunrise,
+    required this.shortestWait,
+    this.earlyArrivalNeeded = false,
+    this.climbH = 0,
+    this.usualStart = '',
+    this.usualStartClimbH = 0,
+    this.usualStartReaches = '',
+    this.eveningPlan,
+  });
 
   final List<StartWindow> windows;
   final String bestForSunrise, shortestWait;
   final List<String> recommendedForSunrise;
+  final bool earlyArrivalNeeded; // busy night: only starts ahead of the crowd make sunrise
+  final double climbH, usualStartClimbH; // climb time of the best start / of the usual start (with the crowd)
+  final String usualStart, usualStartReaches;
+  final EveningPlan? eveningPlan;
+
+  StartWindow? get best => windows.where((w) => w.start == bestForSunrise).firstOrNull;
 
   factory RouteAdvice.fromJson(Map<String, dynamic> j) => RouteAdvice(
         windows: (j['windows'] as List).map((w) => StartWindow.fromJson(w as Map<String, dynamic>)).toList(),
         bestForSunrise: j['best_for_sunrise'] as String? ?? '',
         recommendedForSunrise: (j['recommended_for_sunrise'] as List? ?? []).cast<String>(),
         shortestWait: j['shortest_wait'] as String? ?? '',
+        earlyArrivalNeeded: j['early_arrival_needed'] as bool? ?? false,
+        climbH: _dbl(j['climb_h']),
+        usualStart: j['usual_start'] as String? ?? '',
+        usualStartClimbH: _dbl(j['usual_start_climb_h']),
+        usualStartReaches: j['usual_start_reaches'] as String? ?? '',
+        eveningPlan: EveningPlan.fromJson(j['evening_plan'] as Map<String, dynamic>?),
       );
 }
 
@@ -576,6 +640,8 @@ class StartAdvice {
     required this.peakWaitMin,
     required this.peakAt,
     this.binMin = 15,
+    this.firstBinMin = 0,
+    this.sunrise = '',
     this.waitByTime = const [],
     this.holdWindows = const [],
     this.halfway = const {},
@@ -588,9 +654,10 @@ class StartAdvice {
 
   final DateTime day;
   final int limitMin, peakQueue, peakWaitMin, binMin, highVisitors, highPeakWaitMin;
-  final String peakAt;
+  final int firstBinMin; // minute of the first bin (negative = the evening before, e.g. -360 = 18:00)
+  final String peakAt, sunrise; // sunrise at the summit on that date
   final Map<String, RouteAdvice> routes;
-  final List<int> waitByTime, highWaitByTime; // expected wait at the summit per [binMin] minutes from 00:00
+  final List<int> waitByTime, highWaitByTime; // expected wait at the summit per [binMin] minutes from [firstBinMin]
   final List<List<String>> holdWindows, highHoldWindows;
   final Map<String, HalfwayPlan> halfway, highHalfway; // likely case / high case (P90 climbers)
 
@@ -608,6 +675,8 @@ class StartAdvice {
       peakWaitMin: _int(s['peak_wait_min']),
       peakAt: s['peak_at'] as String? ?? '',
       binMin: s['bin_min'] == null ? 15 : _int(s['bin_min']),
+      firstBinMin: _int(s['first_bin_min']),
+      sunrise: j['sunrise'] as String? ?? '',
       waitByTime: _ints(s['wait_by_time']),
       holdWindows: windowsOf(s['hold_windows']),
       halfway: HalfwayPlan.mapOf(j['halfway']),

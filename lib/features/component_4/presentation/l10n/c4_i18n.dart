@@ -106,6 +106,34 @@ const Map<String, Map<String, String>> _strings = {
     'si': 'සෙනඟ වැඩි රාත්‍රීවල අතරමග නැවතුම්පොළවල නිලධාරීන් කණ්ඩායම්වලට එහි රැඳී සිටින ලෙස ඉල්ලා සිටිය හැක. එය බෑවුම් සහිත අවසන් පඩිපෙළේ රැඳීමට වඩා ආරක්ෂිතයි.',
     'ta': 'கூட்டமான இரவுகளில் பாதி வழி ஓய்விடங்களில் அதிகாரிகள் குழுக்களை அங்கு காத்திருக்கச் சொல்லலாம். இது செங்குத்தான இறுதிப் படிகளில் காத்திருப்பதை விட பாதுகாப்பானது.',
   },
+  'sunrise_at': {'en': 'Sunrise at the summit: {time}', 'si': 'මුදුනේ හිරු උදාව: {time}', 'ta': 'உச்சியில் சூரிய உதயம்: {time}'},
+  'climb_best': {
+    'en': 'Starting at {start}, the climb takes about {h} h tonight: at the top around {reach}.',
+    'si': '{start} ට ආරම්භ කළහොත්, අද රාත්‍රියේ නැගීමට පැය {h} ක් පමණ ගතවේ: {reach} පමණ මුදුනට.',
+    'ta': '{start} மணிக்குத் தொடங்கினால், இன்றிரவு ஏற சுமார் {h} மணி நேரம்: சுமார் {reach} மணிக்கு உச்சியில்.',
+  },
+  'crowd_climb': {
+    'en': 'Starting with the crowd at {start} takes about {h} h (at the top around {reach}): the steps are packed tonight.',
+    'si': 'සෙනඟ සමඟ {start} ට ආරම්භ කළහොත් පැය {h} ක් පමණ ගතවේ ({reach} පමණ මුදුනට): අද රාත්‍රියේ පඩිපෙළ පිරී ඇත.',
+    'ta': 'கூட்டத்துடன் {start} மணிக்குத் தொடங்கினால் சுமார் {h} மணி நேரம் ஆகும் ({reach} அளவில் உச்சியில்): இன்றிரவு படிகள் நெரிசலாக இருக்கும்.',
+  },
+  'early_warning': {
+    'en': 'Busy night: only starts ahead of the crowd reach the top before sunrise. You will arrive early – bring warm clothes.',
+    'si': 'සෙනඟ වැඩි රාත්‍රියකි: සෙනඟට පෙර ආරම්භ කරන අයට පමණක් හිරු උදාවට පෙර මුදුනට යා හැක. ඔබ කලින් පැමිණෙනු ඇත – උණුසුම් ඇඳුම් රැගෙන යන්න.',
+    'ta': 'கூட்டமான இரவு: கூட்டத்திற்கு முன் தொடங்குபவர்கள் மட்டுமே சூரிய உதயத்திற்கு முன் உச்சியை அடைவார்கள். நீங்கள் முன்கூட்டியே வருவீர்கள் – சூடான உடைகளை எடுத்துச் செல்லுங்கள்.',
+  },
+  'evening_before': {'en': 'the evening before', 'si': 'පෙර දින සවස', 'ta': 'முந்தைய மாலை'},
+  'evening_title': {'en': 'Or start the evening before and rest on the way', 'si': 'නැතහොත් පෙර දින සවස ආරම්භ කර මඟදී විවේක ගන්න', 'ta': 'அல்லது முந்தைய மாலை தொடங்கி வழியில் ஓய்வெடுங்கள்'},
+  'evening_body': {
+    'en': 'Start between {from} and {to}, rest at the halfway hall, leave the hall at {leave} → at the top around {reach}.',
+    'si': '{from} සහ {to} අතර ආරම්භ කර, අතරමග ශාලාවේ විවේක ගෙන, {leave} ට ශාලාවෙන් පිටත් වන්න → {reach} පමණ මුදුනට.',
+    'ta': '{from} முதல் {to} வரை தொடங்கி, பாதி வழி மண்டபத்தில் ஓய்வெடுத்து, {leave} மணிக்கு மண்டபத்தை விட்டு புறப்படுங்கள் → சுமார் {reach} மணிக்கு உச்சியில்.',
+  },
+  'hall_full': {
+    'en': 'About {n} people may rest on this route tonight – more than the halls hold (about {cap}). Bring warm clothes and rain gear.',
+    'si': 'අද රාත්‍රියේ මෙම මාර්ගයේ {n} ක් පමණ විවේක ගත හැක – ශාලාවලට දැරිය හැකි ප්‍රමාණයට ({cap} පමණ) වඩා වැඩිය. උණුසුම් ඇඳුම් සහ වැසි ආරක්ෂණ රැගෙන යන්න.',
+    'ta': 'இன்றிரவு இந்த வழியில் சுமார் {n} பேர் ஓய்வெடுக்கலாம் – மண்டபங்கள் தாங்குவதை (சுமார் {cap}) விட அதிகம். சூடான உடைகளையும் மழைக் கவசத்தையும் எடுத்துச் செல்லுங்கள்.',
+  },
   'advice_basis': {
     'en': 'Estimated from the crowd forecast and walking times; starting when advised spreads the crowd. Not a booking.',
     'si': 'සෙනඟ පුරෝකථනය සහ ඇවිදීමේ කාලයෙන් ඇස්තමේන්තු කර ඇත; උපදෙස් අනුව ආරම්භ කිරීම සෙනඟ බෙදා හරියි. මෙය වෙන්කිරීමක් නොවේ.',

@@ -328,6 +328,15 @@ class FakeApi extends C4Api {
   Future<List<LiveSegment>> live(DateTime d, {String? at}) async => [];
 }
 
+class _AdvisoryApi extends FakeApi {
+  _AdvisoryApi(this.json);
+
+  final Map<String, dynamic> json;
+
+  @override
+  Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(json);
+}
+
 Widget wrap(Widget child, C4Api api) => MaterialApp(home: C4Scope(api: api, child: child));
 
 void main() {
@@ -522,10 +531,49 @@ void main() {
     expect(find.text('95 min'), findsOneWidget);   // in the table (before sunrise)
     expect(find.text('140 min'), findsNothing);    // reaches after sunrise: chart only
     await t.scrollUntilVisible(find.textContaining('Busiest at the summit around 05:15'), 200);
-    await t.scrollUntilVisible(find.text('Palabaddala (Ratnapura)'), -200);
+    await t.drag(find.byType(ListView), const Offset(0, 3000));          // back to the top
+    await t.pumpAndSettle();
     await t.tap(find.text('Palabaddala (Ratnapura)'));
     await t.pumpAndSettle();
     expect(find.text('05:30'), findsOneWidget);
+  });
+
+  testWidgets('busy night: sunrise, slower climb with the crowd, early start and the evening plan', (t) async {
+    final json = Map<String, dynamic>.from(advisoryJson)
+      ..['sunrise'] = '06:10'
+      ..['routes'] = {
+        'nallathanniya': {
+          'windows': [
+            {'start': '22:30', 'start_min': -90, 'evening_before': true, 'expected_wait_min': 0, 'reach_summit': '02:05', 'climb_h': 3.6, 'before_sunrise': true, 'too_early': true, 'recommended': true},
+            {'start': '23:30', 'start_min': -30, 'evening_before': true, 'expected_wait_min': 0, 'reach_summit': '03:05', 'climb_h': 3.6, 'before_sunrise': true, 'too_early': true, 'recommended': true},
+            {'start': '01:30', 'start_min': 90, 'evening_before': false, 'expected_wait_min': 5, 'reach_summit': '09:22', 'climb_h': 7.6, 'before_sunrise': false, 'too_early': false, 'recommended': false},
+          ],
+          'best_for_sunrise': '23:30',
+          'recommended_for_sunrise': ['22:30', '23:30'],
+          'early_arrival_needed': true,
+          'shortest_wait': '22:30',
+          'climb_h': 3.6,
+          'usual_start': '01:30',
+          'usual_start_climb_h': 7.6,
+          'usual_start_reaches': '09:22',
+          'evening_plan': {
+            'start_from': '18:00', 'start_to': '22:55', 'reach_hall_by': '00:00', 'leave_hall_at': '01:00',
+            'reach_summit': '04:05', 'hall_people_expected': 1400, 'hall_capacity': 2000, 'hall_may_be_full': false,
+          },
+        },
+      };
+    final api = _AdvisoryApi(json)..usePark('adams_peak');
+    await t.pumpWidget(wrap(StartTimesScreen(day: DateTime(2026, 12, 25)), api));
+    await t.pumpAndSettle();
+    expect(find.text('Sunrise at the summit: 06:10'), findsOneWidget);
+    expect(find.text('23:30'), findsWidgets);
+    expect(find.text('the evening before'), findsOneWidget);
+    expect(find.textContaining('the climb takes about 3.6 h tonight'), findsOneWidget);
+    expect(find.textContaining('Starting with the crowd at 01:30 takes about 7.6 h'), findsOneWidget);
+    expect(find.textContaining('You will arrive early'), findsOneWidget);
+    expect(find.text('23:30 · the evening before'), findsOneWidget);    // good start chip
+    await t.scrollUntilVisible(find.text('Or start the evening before and rest on the way'), 200);
+    expect(find.textContaining('leave the hall at 01:00'), findsOneWidget);
   });
 
   testWidgets('halfway check: recording a count turns the advice to HOLD with release rates', (t) async {
