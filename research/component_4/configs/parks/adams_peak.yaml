@@ -126,8 +126,18 @@ planning:
   access_note: "Check with the police post at the trailhead that the route is open."
 
 control:
-  first_slot_h: 0.0                  # recommended start windows from midnight
+  first_slot_h: -6.0                 # recommended start windows from 18:00 the evening before (a "night" = its sunrise date)
   last_slot_h: 12.5
+  night_start_h: 18                  # times from 18:00 belong to the next night (counts, advice)
+  summit_elevation_m: 2243           # sunrise is earlier from the summit (horizon dip)
+  evening_share: 0.20                # (A) share of pilgrims who start the evening before and rest on the way
+  rest_hall_capacity:                # (A) people the rest halls / halts around each route's halfway point shelter at once
+    nallathanniya: 2000              #     (many halls and tea stalls on the Hatton side); count on a field visit
+    palabaddala: 400
+    erathna: 200
+    dikelikanda: 200
+  max_early_h: 2.0                   # a "good" start reaches the summit at most this long before sunrise
+  crowd_levels: [0, 500, 1500, 3000, 5000, 7500, 10000, 13000]   # climbers per night: climb times measured at these
   viewpoint_min_at_once: 1500        # (A) summit terrace and surroundings: measure on a field visit
   booking_mode: advisory             # pilgrims are never refused: start times are recommendations
   queue_limit_min: 20                # (A) longest acceptable wait on the final steps

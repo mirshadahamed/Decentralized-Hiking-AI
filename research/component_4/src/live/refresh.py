@@ -100,9 +100,9 @@ def publish_advisory(outlook: dict) -> dict:
     out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "days": {}}
     for day in outlook["days"]:
         by_trail = {t: float(v) for t, v in day["visitors_by_trail_p50"].items()}
-        rec = adv.recommend(by_trail)
+        rec = adv.recommend(by_trail, day=day["date"])           # sunrise of that date, climb times at that crowd
         k = day["visitors"]["p90"] / max(day["visitors"]["p50"], 1)
-        high = adv.recommend({t: v * k for t, v in by_trail.items()})
+        high = adv.recommend({t: v * k for t, v in by_trail.items()}, day=day["date"])
         rec["high_case"] = {"visitors": day["visitors"]["p90"], "summit": high["summit"], "halfway": high["halfway"]}
         out["days"][day["date"]] = rec
     (PUBLISHED / "advisory.json").write_text(json.dumps(out), encoding="utf-8")
