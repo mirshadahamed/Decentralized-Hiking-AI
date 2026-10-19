@@ -59,8 +59,11 @@ switches English / සිංහල / தமிழ்.
 
 **Adam's Peak pilgrim** (no tickets)
 1. **Start times** → calendar of the season (e.g. **Wed 23 Dec 2026**, Unduvap Poya: the season opens).
-2. Tap a night → pick a route → best start for sunrise, good start times, expected wait near the top per start
-   time (green bars = recommended), and when the summit is busiest.
+2. Tap a night → pick a route → sunrise at the summit for that date, best start for sunrise and how long the
+   climb takes with that night's crowd (busy nights move the start into **the evening before**, with an
+   "arrive early" warning), the **evening plan** (start the evening before, rest at the halfway hall, leave at the
+   given time), expected wait near the top per start time, and when the summit is busiest.
+   Compare **Tue 10 Nov** (quiet: best 02:30) with **Fri 25 Dec** (busy: best 23:30 the evening before).
 3. **Map**: the four routes, start points, halfway checkpoints and the summit (dashed = approximate last part).
 
 **Adam's Peak halfway officer** (choose Adam's Peak → **Staff** → log in with an Adam's Peak account)
