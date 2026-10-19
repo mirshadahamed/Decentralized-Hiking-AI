@@ -23,7 +23,7 @@ def test_adams_peak_api_in_its_own_process():
     out = subprocess.run([sys.executable, "-m", "pytest", "-q", "-W", "ignore", "-p", "no:cacheprovider", __file__],
                          capture_output=True, text=True, cwd=ROOT, env=dict(os.environ, C4_PARK="adams_peak"))
     assert out.returncode == 0, out.stdout[-3000:]
-    assert "5 passed" in out.stdout, out.stdout[-3000:]                    # the 5 Adam's Peak tests really ran
+    assert "6 passed" in out.stdout, out.stdout[-3000:]                    # the 6 Adam's Peak tests really ran
 
 
 def test_gateway_lists_parks_and_forwards():
@@ -107,6 +107,18 @@ def test_halfway_checks(client):
 
 
 @in_ap
+def test_evening_counts_belong_to_the_next_night(client):
+    h = ranger(client)
+    r = client.post("/checkpoints", json={"route": "nallathanniya", "count": 120, "at": "2026-12-24T22:00:00"},
+                    headers=h).json()
+    assert r["day"] == "2026-12-25"                         # 22:00 on 24 Dec climbs for the sunrise of 25 Dec
+    night = client.get("/checkpoints/2026-12-25", params={"at": "01:00"}, headers=h).json()
+    assert [x["time"] for x in night["log"]] == ["22:00"]
+    assert next(c for c in night["checkpoints"] if c["route"] == "nallathanniya")["counted_today"] == 120
+    assert client.get("/checkpoints/2026-12-24", params={"at": "03:00"}, headers=h).json()["log"] == []
+
+
+@in_ap
 def test_destination_and_season_plan(client):
     d = client.get("/destination").json()
     assert d["id"] == "adams_peak" and d["kind"] == "pilgrimage" and len(d["trails"]) == 4
@@ -118,4 +130,6 @@ def test_destination_and_season_plan(client):
         assert (n["checks"] == "needed") == bool(n["hold_windows"])
         assert n["high_peak_wait_min"] >= n["peak_wait_min"]                     # the high case is never quieter
     a = client.get(f"/advisory/{s['days'][5]['date']}").json()
-    assert len(a["summit"]["wait_by_time"]) == 96 and "high_case" in a
+    s = a["summit"]                                       # the night runs from 18:00 the evening before to midnight
+    assert len(s["wait_by_time"]) == (1440 - s["first_bin_min"]) // s["bin_min"] and "high_case" in a
+    assert s["first_bin"] == "18:00" and a["sunrise"] < "06:30"

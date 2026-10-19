@@ -96,6 +96,12 @@ and it is a result about **decision-focused** forecast evaluation, not only accu
 
 ---
 
+> **Note (19 Oct 2026):** RQ3 and RQ4 were run with the *earlier* advice model (climb times on an empty
+> mountain, starts from 00:00, sunrise fixed at 06:00). The advice now uses crowd-dependent climb times,
+> starts from 18:00 the evening before and the real sunrise of each date (`assumptions_adams_peak.md`, N1–N7).
+> Re-run `src.control.evaluate_advisory`, `--sweep` and `src.control.evaluate_forecast_value` to update these
+> numbers (planned after PP1).
+
 ## RQ4 – Sensitivity (`src.control.evaluate_advisory --sweep`, run `results/adams_peak/20261016_112652_advisory_sweep`)
 
 Final-steps flow (people per minute; assumed 25) × share of pilgrims who follow the advice (assumed 50 %).

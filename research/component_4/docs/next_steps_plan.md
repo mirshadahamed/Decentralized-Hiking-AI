@@ -112,6 +112,11 @@ no published per-trail counts for Knuckles).
 
 ## 4b. Feature C – Adam's Peak: start the evening before and rest at a community hall
 
+**Status 19 Oct 2026: C1, C4, C5, C7, C8 done on `feature/component-4-adams-peak-crowd` (not committed), plus
+crowd-dependent climb times and the real sunrise per date.** Open: C2–C3 (hall locations from OSM and a
+walk-with-rest inside the research simulator – the advice uses the halfway checkpoints as the halls), C6
+(re-run RQ3/RQ4 with the new advice).
+
 **Why:** today the recommended start times only run from **00:00**. In reality many pilgrims start the **evening
 before**, walk part of the way and **rest in community halls / rest halts (ambalama)** along the route, then
 continue so they reach the summit for sunrise. That is a second way to avoid the queue: arrive at a hall early,

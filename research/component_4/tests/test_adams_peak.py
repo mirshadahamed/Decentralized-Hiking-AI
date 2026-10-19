@@ -91,6 +91,34 @@ def test_advisory_never_recommends_a_long_wait(ap):
     assert abs(sum(r["release_per_10_min"] for r in rates.values()) - adv.flow * 10) <= len(rates)
 
 
+def test_sunrise_is_computed_for_the_date_and_the_summit():
+    from src.control.advisory import sunrise_minutes
+    lat, lon = 6.8096, 80.4994
+    dec, jun = sunrise_minutes("2026-12-25", lat, lon, 2243), sunrise_minutes("2026-06-15", lat, lon, 2243)
+    assert 5 * 60 + 50 <= dec <= 6 * 60 + 25 and 5 * 60 + 35 <= jun <= 6 * 60 + 10   # published times, +- a few min
+    assert sunrise_minutes("2026-12-25", lat, lon, 0) - dec > 3                      # earlier seen from the top
+
+
+def test_advice_follows_the_crowd_and_the_date(ap):
+    from src.control.advisory import Advisory
+    cfg, seg, walks, sim = ap
+    adv = Advisory(sim, seg, cfg)
+    share = cfg["simulator"]["route_share"]
+    quiet = adv.recommend({t: 200 * s for t, s in share.items()}, day="2026-11-10")["routes"]["nallathanniya"]
+    busy = adv.recommend({t: 7000 * s for t, s in share.items()}, day="2026-12-25")
+    n = busy["routes"]["nallathanniya"]
+    start = lambda r: next(w["start_min"] for w in r["windows"] if w["start"] == r["best_for_sunrise"])
+    assert start(n) < start(quiet)                          # busier night -> start earlier
+    assert n["usual_start_climb_h"] > quiet["usual_start_climb_h"] + 1     # climbing with the crowd is slower
+    assert busy["sunrise"] != "06:00" and busy["crowd_level"] > 0
+    for w in n["windows"]:
+        if w["start"] in n["recommended_for_sunrise"]:      # good-for-sunrise starts make it in time, short wait
+            assert w["before_sunrise"] and w["expected_wait_min"] <= adv.limit
+    ev = n["evening_plan"]                                  # start the evening before, rest, leave the hall
+    assert ev is not None and ev["start_from"] == "18:00" and ev["leave_hall_at"] < busy["sunrise"]
+    assert ev["reach_summit"] <= busy["sunrise"] or ev["reach_summit"] > "18:00"
+
+
 def test_transfer_inputs_match_and_weights_move_between_parks():
     """RQ2 set-up: both parks give a model the same inputs; weights load across graphs; few-shot uses k days."""
     from src.config import processed_dir

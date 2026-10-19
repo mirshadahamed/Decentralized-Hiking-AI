@@ -353,26 +353,52 @@ def record_checkpoint(body: CheckpointIn, user: dict = Depends(role("ranger"))):
     return checkpoint_status(at.date(), at.time().replace(second=0, microsecond=0), user)
 
 
+NIGHT_START_H = CFG["control"].get("night_start_h", 24)        # pilgrim sites: evenings belong to the next night
+
+
+def night_of(at: datetime) -> tuple[date, int]:
+    """The night (named after its sunrise date) a moment belongs to, and its minute in that night
+    (negative = the evening before): 22:00 on 24 Dec is minute -120 of the night of 25 Dec."""
+    m = at.hour * 60 + at.minute
+    if at.hour >= NIGHT_START_H:
+        return at.date() + timedelta(days=1), m - 1440
+    return at.date(), m
+
+
+def night_passes(night: date) -> "pd.DataFrame":
+    """Halfway counts of one night: its own date before the evening, plus the evening before (shifted < 0)."""
+    import pandas as pd
+    cut = NIGHT_START_H * 60
+    own = booking.checkpoint_passes(night.isoformat())
+    eve = booking.checkpoint_passes((night - timedelta(days=1)).isoformat())
+    eve = eve[eve.time_min >= cut].assign(time_min=lambda d: d.time_min - 1440)
+    return pd.concat([eve, own[own.time_min < cut]], ignore_index=True).sort_values("time_min", kind="stable")
+
+
 @app.get("/checkpoints/{day}", tags=["ranger"])
 def checkpoint_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
-    """Summit queue now and in the next hour from the halfway counts, and what to do at each checkpoint."""
+    """Summit queue now and ahead from the halfway counts, and what to do at each checkpoint. Times from
+    `night_start_h` (18:00) count for the next night (pilgrims climbing for the next sunrise)."""
     if not ADVISORY:
         raise HTTPException(400, "Halfway checks are used at pilgrimage sites")
     from src.control.advisory import build_advisory
     adv = build_advisory()
-    now = when(datetime.combine(day, at) if at else None)
-    passes = booking.checkpoint_passes(day.isoformat())
-    live = adv.nowcast(passes, now.hour * 60 + now.minute)
+    night, now_min = night_of(when(datetime.combine(day, at) if at else None))
+    outlook_days = {d["date"]: d for d in published("outlook.json")["days"]}
+    if night.isoformat() in outlook_days:                       # walking times at tonight's expected crowd
+        adv.use_crowd(outlook_days[night.isoformat()]["visitors"]["p50"])
+    passes = night_passes(night)
+    live = adv.nowcast(passes, now_min)
     days = published("advisory.json")["days"]
-    rates = days.get(day.isoformat(), {}).get("halfway") or adv.release_rates(adv.demand(
+    rates = days.get(night.isoformat(), {}).get("halfway") or adv.release_rates(adv.demand(
         {t: 1.0 for t in adv.trails}))
-    high = days.get(day.isoformat(), {}).get("high_case", {}).get("halfway", {})
+    high = days.get(night.isoformat(), {}).get("high_case", {}).get("halfway", {})
     counted = passes.groupby("route")["count"].sum().to_dict() if len(passes) else {}
     last = passes.groupby("route")["time_min"].max().to_dict() if len(passes) else {}
-    hhmm = lambda m: f"{int(m) // 60:02d}:{int(m) % 60:02d}"
+    hhmm = lambda m: f"{int(m) % 1440 // 60:02d}:{int(m) % 60:02d}"
     log = [{"route": r.route, "name": CFG["area"]["trail_names"][r.route], "time": hhmm(r.time_min),
             "count": int(r.count), "by": r.counted_by} for r in passes.iloc[::-1].head(30).itertuples()]
-    return {"day": day.isoformat(), **live, "log": log,
+    return {"day": night.isoformat(), **live, "log": log,
             "checkpoints": [{"route": t, "name": CFG["area"]["trail_names"][t],
                              "release_per_10_min": rates[t]["release_per_10_min"] if live["hold"] else None,
                              "walk_to_summit_min": rates[t]["walk_to_summit_min"],

@@ -49,6 +49,17 @@ Config: `configs/parks/adams_peak.yaml` (overrides `configs/default.yaml`). Hort
 | C5 | Halfway officers release at most their route's share of the summit flow per 10 min while the expected wait is over the limit | `release_rates` | the queue waits at a rest halt instead of on the steep steps | – |
 | C6 | Live estimate from manual counts at the halfway points, shifted by the walking time to the summit | `Advisory.nowcast` | no sensors | – |
 
+## Advice for each night (added 19 Oct 2026)
+| # | Assumption | Value | Why | Replace with |
+|---|---|---|---|---|
+| N1 | A night is named after its sunrise date and starts at 18:00 the evening before | `night_start_h: 18` | Pilgrims start the day before and rest in community halls on the way | – |
+| N2 | **Climb times depend on the night's crowd** | measured in the simulator at 0, 500, 1,500, 3,000, 5,000, 7,500, 10,000, 13,000 climbers; the nearest level is used | The crowd slowdown (W1/W2 + Greenshields-type density) makes the Nallathanniya climb ~3 h on a quiet night and ~6–7.6 h with the crowd on a busy one | timed climbs on a Poya night |
+| N3 | Sunrise at the summit for each date | NOAA solar equations, summit 6.8096 N 80.4994 E, horizon dip for 2,243 m (≈ 5 min earlier) | Sunrise moves 05:48–06:18 over the season | – |
+| N4 | **20 % of pilgrims start the evening before** | `evening_share: 0.20` | Reported practice; no counts | survey at the trailheads |
+| N5 | Rest-hall capacity around each route's halfway point | Nallathanniya 2,000; Palabaddala 400; Erathna 200; Dikelikanda 200 | Placeholders (many halls and tea stalls on the Hatton side) | count on a field visit |
+| N6 | A "good" start reaches the summit at most 2 h before sunrise; on busy nights where only earlier starts make sunrise, the latest of those are offered with an "arrive early" warning | `max_early_h: 2` | Waiting hours in the cold at the top is not a good recommendation | – |
+| N7 | Evening plan: start from 18:00, at least 1 h rest at the halfway hall, leave the hall at the latest time that reaches the summit before sunrise with a short wait | – | – | – |
+
 ## Results these assumptions give (2025 season, simulation, run `20261016_130836_advisory`)
 | Policy | Waiting on the final steps (person-h) | Waiting at halfway (person-h) | Poya nights: most people on the final steps |
 |---|---|---|---|
