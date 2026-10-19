@@ -1,0 +1,19 @@
+category,retrieval_success,category_consistent,retrieved_chunks,unique_sources,source_ids,country_contexts
+general_first_aid,True,True,3,1,SRC_016,Not specified
+hypothermia,True,True,3,1,SRC_014,Not specified
+heat_illness,True,True,4,1,SRC_015,Not specified
+heavy_rain,True,True,2,1,SRC_006,Not specified
+strong_wind,True,True,4,1,SRC_007,Not specified
+water_safety,True,True,4,1,SRC_017,Not specified
+remote_emergency,True,True,4,2,"SRC_010, SRC_009",Not specified
+snakebite,True,True,4,2,"EXP_001, EXP_002","Sri Lanka, International"
+insect_bites_stings,True,True,4,1,EXP_016,United Kingdom (England)
+fracture_sprain,True,True,4,2,"EXP_004, EXP_005",United Kingdom
+burns,True,True,4,1,EXP_006,United Kingdom
+poisoning,True,True,4,1,EXP_007,United Kingdom
+allergic_reaction,True,True,4,1,EXP_017,United Kingdom (England)
+animal_encounter,True,True,3,1,EXP_009,United States
+lost_navigation,True,True,3,1,EXP_011,New Zealand
+landslide,True,True,4,2,"EXP_012, EXP_013","Sri Lanka, United States"
+lightning,True,True,4,1,EXP_014,United Kingdom
+sri_lanka_emergency,True,True,4,1,EXP_015,Sri Lanka
