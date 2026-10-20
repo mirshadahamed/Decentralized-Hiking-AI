@@ -1,0 +1,71 @@
+{
+  "compliance": 0.5,
+  "seed": 11,
+  "tests": {
+    "hist_avg_vs_none": {
+      "mean_diff_person_hours_per_night": 0.0,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "hist_avg_vs_plan_lead1": {
+      "mean_diff_person_hours_per_night": 20.905477975674476,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "hist_avg_vs_perfect": {
+      "mean_diff_person_hours_per_night": 119.09409695660604,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_none": {
+      "mean_diff_person_hours_per_night": -27.334724548587815,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_plan_lead1": {
+      "mean_diff_person_hours_per_night": -6.429246572913341,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_perfect": {
+      "mean_diff_person_hours_per_night": 91.75937240801822,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_vs_none": {
+      "mean_diff_person_hours_per_night": -20.905477975674476,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_vs_perfect": {
+      "mean_diff_person_hours_per_night": 98.18861898093157,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_none": {
+      "mean_diff_person_hours_per_night": -138.88727075464004,
+      "wilcoxon_p": 0.09423828125,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_plan_lead1": {
+      "mean_diff_person_hours_per_night": -117.98179277896558,
+      "wilcoxon_p": 0.09423828125,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_perfect": {
+      "mean_diff_person_hours_per_night": -19.793173798034008,
+      "wilcoxon_p": 1.0,
+      "nights": 132
+    },
+    "perfect_vs_none": {
+      "mean_diff_person_hours_per_night": -119.09409695660604,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "perfect_vs_plan_lead1": {
+      "mean_diff_person_hours_per_night": -98.18861898093157,
+      "wilcoxon_p": null,
+      "nights": 132
+    }
+  }
+}

@@ -1,0 +1,1130 @@
+{
+  "trails": {
+    "adams_peak_candidate_paths.geojson": {
+      "features": 253,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 253
+      },
+      "missing_tags": {
+        "name": 229,
+        "sac_scale": 240,
+        "surface": 228,
+        "smoothness": 253,
+        "incline": 240,
+        "trail_visibility": 253,
+        "access": 250,
+        "foot": 243
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "ella_candidate_paths.geojson": {
+      "features": 582,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 582
+      },
+      "missing_tags": {
+        "name": 558,
+        "sac_scale": 523,
+        "surface": 464,
+        "smoothness": 562,
+        "incline": 557,
+        "trail_visibility": 546,
+        "access": 559,
+        "foot": 530
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "haputale_candidate_paths.geojson": {
+      "features": 1013,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 1013
+      },
+      "missing_tags": {
+        "name": 997,
+        "sac_scale": 995,
+        "surface": 916,
+        "smoothness": 1001,
+        "incline": 993,
+        "trail_visibility": 994,
+        "access": 1006,
+        "foot": 1001
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "horton_plains_candidate_paths.geojson": {
+      "features": 204,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 204
+      },
+      "missing_tags": {
+        "name": 162,
+        "sac_scale": 174,
+        "surface": 156,
+        "smoothness": 204,
+        "incline": 200,
+        "trail_visibility": 184,
+        "access": 192,
+        "foot": 204
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "knuckles_candidate_paths.geojson": {
+      "features": 559,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 559
+      },
+      "missing_tags": {
+        "name": 532,
+        "sac_scale": 558,
+        "surface": 514,
+        "smoothness": 552,
+        "incline": 555,
+        "trail_visibility": 559,
+        "access": 551,
+        "foot": 545
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "meemure_candidate_paths.geojson": {
+      "features": 28,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 28
+      },
+      "missing_tags": {
+        "name": 27,
+        "sac_scale": 27,
+        "surface": 21,
+        "smoothness": 27,
+        "incline": 28,
+        "trail_visibility": 28,
+        "access": 26,
+        "foot": 25
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "namunukula_candidate_paths.geojson": {
+      "features": 339,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 339
+      },
+      "missing_tags": {
+        "name": 321,
+        "sac_scale": 310,
+        "surface": 272,
+        "smoothness": 324,
+        "incline": 327,
+        "trail_visibility": 322,
+        "access": 329,
+        "foot": 300
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "riverston_candidate_paths.geojson": {
+      "features": 19,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 19
+      },
+      "missing_tags": {
+        "name": 18,
+        "sac_scale": 19,
+        "surface": 18,
+        "smoothness": 18,
+        "incline": 19,
+        "trail_visibility": 19,
+        "access": 19,
+        "foot": 18
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "sigiriya_pidurangala_candidate_paths.geojson": {
+      "features": 181,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 181
+      },
+      "missing_tags": {
+        "name": 181,
+        "sac_scale": 173,
+        "surface": 139,
+        "smoothness": 169,
+        "incline": 169,
+        "trail_visibility": 175,
+        "access": 174,
+        "foot": 179
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    },
+    "sinharaja_candidate_paths.geojson": {
+      "features": 658,
+      "duplicate_ids": 0,
+      "invalid_coordinate_parts": 0,
+      "zero_length": 0,
+      "geometry_types": {
+        "LineString": 658
+      },
+      "missing_tags": {
+        "name": 654,
+        "sac_scale": 658,
+        "surface": 630,
+        "smoothness": 657,
+        "incline": 658,
+        "trail_visibility": 658,
+        "access": 647,
+        "foot": 646
+      },
+      "crs": "GeoJSON WGS84 lon/lat",
+      "verified_hiking_count": 0
+    }
+  },
+  "weather": {
+    "adams_peak_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.800003",
+      "grid_longitude": "80.600006",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "ella_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.9000015",
+      "grid_longitude": "81.0",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "haputale_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.800003",
+      "grid_longitude": "80.899994",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "horton_plains_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.9000015",
+      "grid_longitude": "80.80002",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "knuckles_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.4000015",
+      "grid_longitude": "80.80002",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "knuckles_1_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.300003",
+      "grid_longitude": "80.70001",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "knuckles_2_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.300003",
+      "grid_longitude": "80.899994",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "knuckles_3_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.5",
+      "grid_longitude": "80.70001",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "knuckles_4_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.5999985",
+      "grid_longitude": "80.899994",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "meemure_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.4000015",
+      "grid_longitude": "80.899994",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "namunukula_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.9000015",
+      "grid_longitude": "81.100006",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "riverston_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "7.5",
+      "grid_longitude": "80.80002",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "sigiriya_pidurangala_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "8.0",
+      "grid_longitude": "80.80002",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    },
+    "sinharaja_0_hourly.csv": {
+      "rows": 43824,
+      "expected_rows": 43824,
+      "duplicate_keys": 0,
+      "missing_values": {
+        "point_id": 0,
+        "region": 0,
+        "requested_latitude": 0,
+        "requested_longitude": 0,
+        "grid_latitude": 0,
+        "grid_longitude": 0,
+        "api_elevation_m": 0,
+        "timestamp": 0,
+        "temperature_2m": 0,
+        "apparent_temperature": 0,
+        "relative_humidity_2m": 0,
+        "precipitation": 0,
+        "rain": 0,
+        "weather_code": 0,
+        "cloud_cover": 0,
+        "wind_speed_10m": 0,
+        "wind_gusts_10m": 0,
+        "surface_pressure": 0
+      },
+      "invalid_time": 0,
+      "nonhourly_steps": 0,
+      "range_flags": {},
+      "start": "2021-01-01T00:00:00Z",
+      "end": "2025-12-31T23:00:00Z",
+      "grid_latitude": "6.4000015",
+      "grid_longitude": "80.5",
+      "raw_units": {
+        "time": "iso8601",
+        "temperature_2m": "\u00b0C",
+        "apparent_temperature": "\u00b0C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "rain": "mm",
+        "weather_code": "wmo code",
+        "cloud_cover": "%",
+        "wind_speed_10m": "km/h",
+        "wind_gusts_10m": "km/h",
+        "surface_pressure": "hPa"
+      },
+      "invalid_coordinates": 0,
+      "utc_offset_seconds": 0
+    }
+  },
+  "elevation": {
+    "adams_peak_trail_points.csv": {
+      "rows": 7601,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "ella_trail_points.csv": {
+      "rows": 10164,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 81,
+      "invalid_slope": 0
+    },
+    "haputale_trail_points.csv": {
+      "rows": 17075,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 72,
+      "invalid_slope": 0
+    },
+    "horton_plains_trail_points.csv": {
+      "rows": 6476,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "knuckles_trail_points.csv": {
+      "rows": 14289,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "meemure_trail_points.csv": {
+      "rows": 2050,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "namunukula_trail_points.csv": {
+      "rows": 9786,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "riverston_trail_points.csv": {
+      "rows": 613,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    },
+    "sigiriya_pidurangala_trail_points.csv": {
+      "rows": 1631,
+      "duplicate_keys": 0,
+      "missing_elevation": 12,
+      "missing_slope": 16,
+      "invalid_slope": 0
+    },
+    "sinharaja_trail_points.csv": {
+      "rows": 16373,
+      "duplicate_keys": 0,
+      "missing_elevation": 0,
+      "missing_slope": 0,
+      "invalid_slope": 0
+    }
+  },
+  "connectivity": {
+    "knuckles_osm_communication_structures.geojson": {
+      "structures": 12,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "ella_osm_communication_structures.geojson": {
+      "structures": 2,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "adams_peak_osm_communication_structures.geojson": {
+      "structures": 0,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "namunukula_osm_communication_structures.geojson": {
+      "structures": 8,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "riverston_osm_communication_structures.geojson": {
+      "structures": 1,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "haputale_osm_communication_structures.geojson": {
+      "structures": 12,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "horton_plains_osm_communication_structures.geojson": {
+      "structures": 3,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "meemure_osm_communication_structures.geojson": {
+      "structures": 0,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "sigiriya_pidurangala_osm_communication_structures.geojson": {
+      "structures": 1,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    },
+    "sinharaja_osm_communication_structures.geojson": {
+      "structures": 5,
+      "coverage_observations": 0,
+      "limitation": "Only explicitly tagged OSM nodes inside bbox; no buffer, no ways/relations, no measured coverage"
+    }
+  },
+  "warnings": [
+    "Overlapping AOIs duplicate OSM IDs across files; deduplicate before splitting",
+    "Missing tags are unknown, not easy/safe/access permitted",
+    "No validated recommendation labels",
+    "No licensed spatial landslide/flood training layer",
+    "OSM structure absence is not no coverage",
+    "Visibility unavailable",
+    "Historical realised weather must not leak into pre-trip forecast evaluation",
+    "Existing user Knuckles trail file not supplied",
+    "PBF facilities and regional extracts are derived despite raw folder location",
+    "Unsmooth DSM profiles may inflate ascent/descent; validate against survey/GNSS",
+    "Relation-based facilities not assembled in PBF extraction; raw Overpass may include them"
+  ],
+  "cross_region_repeated_trail_ids": 291,
+  "unique_candidate_trail_ids": 3545,
+  "warning_rss": {
+    "items": 0,
+    "copyright": "Public Domain",
+    "meaning": "Snapshot only; empty feed is not evidence of historical no hazard"
+  },
+  "raw_overpass": {
+    "sigiriya_pidurangala_overpass.json": {
+      "elements": 181,
+      "remark": null,
+      "osm_base": "2026-10-14T08:24:41Z",
+      "usable_without_truncation_warning": true
+    },
+    "adams_peak_overpass.json": {
+      "elements": 253,
+      "remark": null,
+      "osm_base": "2026-10-14T08:20:35Z",
+      "usable_without_truncation_warning": true
+    },
+    "haputale_overpass.json": {
+      "elements": 999,
+      "remark": null,
+      "osm_base": "2026-10-14T08:26:43Z",
+      "usable_without_truncation_warning": true
+    },
+    "meemure_overpass.json": {
+      "elements": 28,
+      "remark": null,
+      "osm_base": "2026-10-14T08:23:36Z",
+      "usable_without_truncation_warning": true
+    }
+  },
+  "support_facilities": {
+    "sinharaja_facilities.geojson": {
+      "features": 15,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 15
+      },
+      "independently_verified": false
+    },
+    "meemure_facilities.geojson": {
+      "features": 1,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "LineString": 1
+      },
+      "independently_verified": false
+    },
+    "knuckles_facilities.geojson": {
+      "features": 51,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 44,
+        "LineString": 7
+      },
+      "independently_verified": false
+    },
+    "horton_plains_facilities.geojson": {
+      "features": 3,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 3
+      },
+      "independently_verified": false
+    },
+    "riverston_facilities.geojson": {
+      "features": 0,
+      "duplicate_ids": 0,
+      "geometry_types": {},
+      "independently_verified": false
+    },
+    "namunukula_facilities.geojson": {
+      "features": 11,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 8,
+        "LineString": 3
+      },
+      "independently_verified": false
+    },
+    "haputale_facilities.geojson": {
+      "features": 11,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 8,
+        "LineString": 3
+      },
+      "independently_verified": false
+    },
+    "ella_facilities.geojson": {
+      "features": 15,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 13,
+        "LineString": 2
+      },
+      "independently_verified": false
+    },
+    "sigiriya_pidurangala_facilities.geojson": {
+      "features": 7,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 6,
+        "LineString": 1
+      },
+      "independently_verified": false
+    },
+    "adams_peak_facilities.geojson": {
+      "features": 11,
+      "duplicate_ids": 0,
+      "geometry_types": {
+        "Point": 8,
+        "LineString": 3
+      },
+      "independently_verified": false
+    }
+  }
+}

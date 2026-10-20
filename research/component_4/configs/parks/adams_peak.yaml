@@ -1,0 +1,143 @@
+# Adam's Peak (Sri Pada). Overrides configs/default.yaml. Use with:  $env:C4_PARK = "adams_peak"
+# Every number marked (A) is an assumption to calibrate on a field visit (docs/assumptions_adams_peak.md).
+
+destination:
+  kind: pilgrimage
+  region: "Central and Sabaragamuwa Provinces · Peak Wilderness"
+  summary: "Sacred mountain climbed by night on stairways to reach the summit for sunrise."
+  elevation: "about 2,240 m"
+  best_time: "Pilgrimage season, Unduvap Poya (December) to Vesak Poya (May). Weekdays away from Poya are far quieter."
+  getting_there: "Hatton → Dalhousie (Nallathanniya) is the usual start; Ratnapura → Palabaddala and Kuruwita → Erathna from the south."
+  facts:
+    - "Sacred to Buddhists, Hindus, Muslims and Christians: dress modestly"
+    - "No tickets: start at the recommended time to avoid queues on the final steps"
+    - "Cold and windy at the summit: bring a warm layer"
+    - "Outside the season the route lights and shops are mostly closed"
+  accent: "#8A4B2A"
+
+area:
+  name: "Adam's Peak (Sri Pada)"
+  bbox: [80.350, 6.700, 80.620, 6.920]
+  dem_bbox: [80.340, 6.690, 80.630, 6.930]
+  weather_point: [6.810, 80.500]
+  summit_point: [80.4994, 6.8096]          # lon, lat of the summit (Sri Pada); DEM there: 2,192 m
+  summit_link: true                        # OSM paths stop ~350 m below the summit: add the final steps (approx.)
+  pois: {__replace__: true}                # no named landmarks: routes come from OSM path names
+  routes:
+    __replace__: true
+    nallathanniya: {osm_name: "Nallathanniya - Sri Pada Foot-path"}   # Hatton side, busiest
+    palabaddala: {osm_name: "Palabaddala - Sri Pada Foot-path"}       # Ratnapura side
+    erathna: {osm_name: "Erathna - Sri Pada Foot-path"}               # Kuruwita side
+    dikelikanda: {osm_name: "Dikelikanda - Sri Padaya Foot-path"}
+  road_links: []
+  trail_names:
+    __replace__: true
+    nallathanniya: "Nallathanniya (Hatton)"
+    palabaddala: "Palabaddala (Ratnapura)"
+    erathna: "Erathna (Kuruwita)"
+    dikelikanda: "Dikelikanda"
+  trail_info:
+    __replace__: true
+    nallathanniya: "The most used route: shortest, almost all steps; very crowded on Poya nights"
+    palabaddala: "Ratnapura side: longer and steeper, quieter; joins the Hatton route near the top"
+    erathna: "Kuruwita side: longest and quietest; through forest"
+    dikelikanda: "Quiet forest route; check conditions before starting"
+  main_trail: nallathanniya
+  focus_poi: summit
+  poi_roles:
+    __replace__: true
+    viewpoint: [summit]
+    access: [head_nallathanniya, head_palabaddala, head_erathna, head_dikelikanda]
+  poi_labels:
+    __replace__: true
+    summit: "Summit (Sri Pada)"
+    head_nallathanniya: "Nallathanniya trailhead"
+    head_palabaddala: "Palabaddala trailhead"
+    head_erathna: "Erathna trailhead"
+    head_dikelikanda: "Dikelikanda trailhead"
+    half_nallathanniya: "Halfway check – Nallathanniya"
+    half_palabaddala: "Halfway check – Palabaddala"
+    half_erathna: "Halfway check – Erathna"
+    half_dikelikanda: "Halfway check – Dikelikanda"
+
+graph:
+  target_segment_m: 500     # longer routes: ~500 m segments keep the graph near 60 nodes
+  poi_snap_m: 150
+  max_grade: 0.60           # steep stairways are real here (not DEM artefacts)
+
+terrain:
+  stairs:                   # (A) walking model on steps, calibrate by timing groups between rest halts
+    up_m_per_min: 9         # metres climbed per minute on steps
+    down_m_per_min: 18
+    flat_kmh: 4.0
+
+calendar:
+  season: {from_poya: "Unduvap", to_poya: "Vesak"}    # pilgrimage season, December to May
+
+simulator:
+  base_daily_visitors: 1800          # (A) ordinary weekday in season
+  dow_multiplier: [1.0, 0.9, 0.9, 0.95, 1.2, 2.5, 2.2]
+  holiday_multiplier: 2.5
+  poya_multiplier: 4.0               # (A) Poya nights: several thousand climbers
+  long_weekend_multiplier: 1.3
+  school_holiday_multiplier: 1.2
+  month_multiplier: [1.0, 1.0, 1.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  season_multiplier: 1.0
+  off_season_multiplier: 0.08        # (A) a few hikers outside the season
+  daily_noise_sd: 0.20
+  morning_rain_k: 0.03
+  group_size_poisson_mean: 4.0       # pilgrims come as families and groups
+  arrival_early_share: 0.85          # night climbers aiming for sunrise
+  arrival_early_mean_h: 1.5          # (A) leave the trailhead around 01:30
+  arrival_early_sd_h: 1.0
+  arrival_late_range_h: [6.0, 12.0]  # day climbers
+  gate_open_h: 0.0
+  gate_last_entry_h: 14.0
+  route_share:
+    __replace__: true
+    nallathanniya: 0.78              # (A)
+    palabaddala: 0.12
+    erathna: 0.05
+    dikelikanda: 0.05
+  route_last_entry_h: {__replace__: true}
+  route_start_offset_min: {__replace__: true}
+  reversible_routes: []
+  dwell_minutes: {__replace__: true}  # the summit stay is part of the bottleneck below
+  bottleneck:
+    flow_per_min: 25                 # (A) people per minute up the final steps onto the summit
+    summit_dwell_min: [45, 0.4]      # (A) median stay on the summit (sunrise, worship), log-sd
+    hold: false                      # status quo: no halfway checks
+
+task:
+  open_hours: [0, 23]                # people are on the trail day and night
+
+train:
+  seeds: [42]                        # one seed before PP1 (CPU time); three seeds after
+  spatial_seeds: [42]
+
+capacity:
+  open_from_h: 0
+  open_hours: 24
+  main_trail: nallathanniya
+
+planning:
+  typical_start_h: 1.5
+  later_note: "Starting later means missing sunrise at the summit."
+  access_note: "Check with the police post at the trailhead that the route is open."
+
+control:
+  first_slot_h: -6.0                 # recommended start windows from 18:00 the evening before (a "night" = its sunrise date)
+  last_slot_h: 12.5
+  night_start_h: 18                  # times from 18:00 belong to the next night (counts, advice)
+  summit_elevation_m: 2243           # sunrise is earlier from the summit (horizon dip)
+  evening_share: 0.20                # (A) share of pilgrims who start the evening before and rest on the way
+  rest_hall_capacity:                # (A) people the rest halls / halts around each route's halfway point shelter at once
+    nallathanniya: 2000              #     (many halls and tea stalls on the Hatton side); count on a field visit
+    palabaddala: 400
+    erathna: 200
+    dikelikanda: 200
+  max_early_h: 2.0                   # a "good" start reaches the summit at most this long before sunrise
+  crowd_levels: [0, 500, 1500, 3000, 5000, 7500, 10000, 13000]   # climbers per night: climb times measured at these
+  viewpoint_min_at_once: 1500        # (A) summit terrace and surroundings: measure on a field visit
+  booking_mode: advisory             # pilgrims are never refused: start times are recommendations
+  queue_limit_min: 20                # (A) longest acceptable wait on the final steps

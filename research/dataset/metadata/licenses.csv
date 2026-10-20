@@ -1,0 +1,106 @@
+dataset_name,license,source_url,access_date,redistribution_status
+Copernicus_DSM_COG_10_N06_00_E080_00_DEM,Copernicus DEM GLO-30 licence (not CC BY),https://registry.opendata.aws/copernicus-dem/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Copernicus_DSM_COG_10_N06_00_E081_00_DEM,Copernicus DEM GLO-30 licence (not CC BY),https://registry.opendata.aws/copernicus-dem/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_1_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_2_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Copernicus_DSM_COG_10_N07_00_E080_00_DEM,Copernicus DEM GLO-30 licence (not CC BY),https://registry.opendata.aws/copernicus-dem/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_3_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Copernicus_DSM_COG_10_N07_00_E081_00_DEM,Copernicus DEM GLO-30 licence (not CC BY),https://registry.opendata.aws/copernicus-dem/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_4_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sri-lanka-261012.osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meteo_cap_rss,Public Domain as declared by downloaded RSS copyright field,https://was.meteo.gov.lk/api-docs,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+copernicus_aws_readme,Documentation reference; Copernicus DEM separate licence,https://copernicus-dem-30m.s3.amazonaws.com/readme.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sri-lanka-261012.osm.pbf,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka-261012.osm.pbf.md5,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_0_2021_2025,CC BY 4.0; free API non-commercial,https://open-meteo.com/en/docs/historical-weather-api,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_overpass,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_facilities_osm,ODbL 1.0,https://www.openstreetmap.org/copyright,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+knuckles_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+horton_plains_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+adams_peak_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+ella_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+riverston_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+meemure_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sinharaja_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+sigiriya_pidurangala_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+namunukula_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_Regional candidate way geometry; full tags,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_Region-related hiking relations and member roles,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_OSM support features,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+haputale_Explicitly mapped communication structure nodes; not measured coverage,ODbL 1.0,https://download.geofabrik.de/asia/sri-lanka.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+NBRO landslide portal,Not established; request permission,https://lrip.nbro.gov.lk/portal/apps/webappviewer/index.html?id=7524ad70c98e4124a6f4dfed6ea615fe,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+NBRO official map download page,No open redistribution licence verified,https://nbri.gov.lk/index.php?Itemid=208&id=38&lang=en&option=com_content&view=article,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+NBRO integrated hazard example,No redistribution permission established,https://www.nbro.gov.lk/images/content_image/landslide_maps/10000/5325.pdf,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+DMC hazard profiles,Copyright; open GIS reuse permission not verified,https://www.dmc.gov.lk/hazard/hazard/Report.html,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+DMC flood sheet 66,Copyright; permission not established,https://www.dmc.gov.lk/images/hazard/hazard/Hazard%20Profile%20Maps%20-%20Low%20Resolution/Flood/66%20Flood.pdf,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Meteorology warnings JSON,Public API; reuse licence must be clarified,https://was.meteo.gov.lk/api-docs,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Sri Lanka open data portal,Dataset-specific licence required,https://www.data.gov.lk/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+OpenCelliD Sri Lanka cells,CC BY-SA 4.0; attribution; check service terms,https://opencellid.net/downloads.php,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+OpenCelliD database format,CC BY-SA 4.0 for database; documentation separate,https://docs.opencellid.org/docs/downloads/database-format,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Dialog coverage guide,Copyright; no open extraction permission verified,https://dialog.lk/node/453,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Mobitel coverage guide,Copyright; no open extraction permission verified,https://www.mobitel.lk/coverage,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+SLT fixed home 4G guide,Copyright; no open extraction permission verified,https://www.slt.lk/en/personal/internet/broadband/4gcoverage,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+TRCSL,Permission required unless supplied with open licence,https://www.trc.gov.lk/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Mozilla Location Service retirement,Historical licences do not establish current service access,https://github.com/mozilla/ichnaea/issues/2065,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+IFRC first aid guidelines,Copyright; offline copying/redistribution permission not verified,https://www.ifrc.org/document/international-first-aid-resuscitation-and-education-guidelines,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+WHO snakebite treatment,WHO content copyright; verify individual licence before reuse,https://www.who.int/teams/control-of-neglected-tropical-diseases/snakebite-envenoming/treatment,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+WHO heat and hydration,WHO content copyright; verify individual licence,https://www.who.int/news-room/questions-and-answers/item/heatwaves-how-to-stay-cool,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+WHO water safety,WHO content copyright; verify individual licence,https://www.who.int/health-topics/drowning,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Suwa Seriya ambulance,Public factual contact metadata; website copyright,https://www.1990.lk/faquestions/how-can-i-request-for-an-ambulance/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+Sri Lanka Police emergency,Public factual contact metadata; website copyright,https://www.police.lk/?p=18161,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.
+DMC emergency,Public factual contact metadata; website copyright,https://www.dmc.gov.lk/,2026-10-14,Data-specific; see README. Metadata-only items do not include source content.

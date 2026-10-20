@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import 'models.dart';
+import '../models/models.dart';
 
 /// Base URL of the Component 4 API. Override at build time:
 ///   flutter run --dart-define=C4_API=http://10.0.2.2:8000     (Android emulator -> host PC)
@@ -91,6 +91,15 @@ class C4Api {
 
   Future<List<MapSegment>> geometry() async => MapSegment.fromGeoJson(await _send('GET', '/trails/geometry') as Map<String, dynamic>);
 
+  /// Safe limit per trail for a day (tomorrow up to 90 days ahead) and what lowered it.
+  Future<DayCapacity> capacity(DateTime d) async =>
+      DayCapacity.fromJson(await _send('GET', '/capacity/${day(d)}') as Map<String, dynamic>);
+
+  /// Trail conditions reported by officers for a day: {trail: condition}.
+  Future<Map<String, TrailCondition>> conditions(DateTime d) async =>
+      ((await _send('GET', '/conditions/${day(d)}'))['trails'] as Map<String, dynamic>)
+          .map((k, v) => MapEntry(k, TrailCondition.fromJson(v as Map<String, dynamic>)));
+
   Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(await _send('GET', '/advisory/${day(d)}'));
 
   /// 90-day outlook of the current park, or of [forPark] (destination cards, without switching park).
@@ -161,6 +170,17 @@ class C4Api {
   Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
       .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))
       .toList();
+
+  /// Officer: report a trail's condition for a range of days ('good' clears it). Returns affected bookings.
+  Future<List<Map<String, dynamic>>> setCondition(String trail, DateTime from, DateTime to, String level, String note) async =>
+      ((await _send('POST', '/admin/conditions', body: {
+        'trail': trail,
+        'day_from': day(from),
+        'day_to': day(to),
+        'level': level,
+        'note': note,
+      }))['alerts'] as List)
+          .cast<Map<String, dynamic>>();
 
   Future<List<Map<String, dynamic>>> closeTrail(DateTime d, String trail, String from, String to, String reason) async =>
       ((await _send('POST', '/admin/closures', body: {
