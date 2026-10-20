@@ -1,0 +1,29 @@
+{
+  "passed": false,
+  "counts": {
+    "hardlinked": 15052,
+    "normalized": 48
+  },
+  "issues": [
+    {
+      "image_id": 372,
+      "reason": "EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 528,
+      "reason": "EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 449,
+      "reason": "EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 651,
+      "reason": "EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 317,
+      "reason": "EXIF orientation 3 needs manual annotation alignment"
+    }
+  ]
+}

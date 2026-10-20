@@ -279,20 +279,20 @@
   },
   "orfd": {
     "passed": true,
-    "training_ready": false,
-    "training_pool_ready": true,
+    "training_ready": true,
+    "training_pool_ready": false,
     "train_only": false,
-    "partial_available_source": true,
-    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/orfd_path_seg_partial",
-    "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/orfd/partial/ORFD",
+    "partial_available_source": false,
+    "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/orfd_path_seg",
+    "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/orfd/ORFD",
     "splits": {
       "train": {
-        "images": 3806,
-        "verified_pairs": 3806
+        "images": 8392,
+        "verified_pairs": 8392
       },
       "val": {
-        "images": 0,
-        "verified_pairs": 0
+        "images": 1245,
+        "verified_pairs": 1245
       },
       "test": {
         "images": 2193,
@@ -302,7 +302,7 @@
     "issue_count": 0,
     "issues": [],
     "published_image_count": 12198,
-    "available_image_count": 5999,
+    "available_image_count": 11830,
     "published_split_counts": {
       "train": 8398,
       "val": 1245,
@@ -315,23 +315,7 @@
       "Author-linked mirror may omit source frames; available counts are not the full published dataset.",
       "Freespace is an auxiliary vehicle traversability proxy, not hiking safety or damage ground truth.",
       "Flattened mirror lacks original sequence names; do not claim verified sequence independence."
-    ],
-    "phase": "partial_preprocessed_download_quota_exceeded",
-    "download_complete": false,
-    "full_mirror_ready": false,
-    "expected_mirror_pairs": 11830,
-    "download": {
-      "complete": false,
-      "phase": "download_failed",
-      "completed_ranges": 229,
-      "expected_ranges": 507,
-      "downloaded_bytes": 7482522514,
-      "expected_bytes": 16547561726,
-      "elapsed_seconds": 811,
-      "source_url": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
-      "error": "Drive refused range: HTTP 200; Google Drive - Quota exceeded",
-      "resume_supported": true
-    }
+    ]
   },
   "readiness_recheck": {
     "checked_at": "2026-10-20T12:33:03.678122+05:30",

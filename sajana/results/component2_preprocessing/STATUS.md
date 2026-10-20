@@ -1,6 +1,6 @@
 # Component 2 dataset preparation status
 
-Checked: 2026-10-20T17:58:37.293467+05:30
+Checked: 2026-10-20T18:45:48.604125+05:30
 
 | Source | Prepared pairs | State | Source release complete |
 | --- | ---: | --- | --- |
@@ -8,8 +8,8 @@ Checked: 2026-10-20T17:58:37.293467+05:30
 | mju | 2,475 | verified_prepared | True |
 | taco_mju | 2,984 | verified_prepared | True |
 | unofficial_taco | 3,762 | verified_auxiliary_pool | False |
-| plitter | 0 | labels_prepared_images_pending | False |
-| orfd | 5,999 | verified_auxiliary_pool | False |
+| plitter | 15,100 | not_ready | False |
+| orfd | 11,830 | verified_prepared | True |
 | rugd | 7,436 | verified_prepared | True |
 | wildscenes | 0 | acquisition_incomplete | False |
 
