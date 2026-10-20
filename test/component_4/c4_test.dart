@@ -331,12 +331,17 @@ class FakeApi extends C4Api {
   Future<List<LiveSegment>> live(DateTime d, {String? at}) async => [];
 }
 
-/// Serves the edge-pack fixture (a pack for 2025-04-11) and "today" = the day before; can go offline.
+/// Serves the edge-pack fixture (a pack for 2025-04-11) and "today" = the day before; can go offline
+/// (only the pack download fails) or into airplane mode (every call fails).
 class _EdgeApi extends FakeApi {
   bool online = true;
+  bool airplane = false;
 
   @override
-  Future<ServerStatus> status() async => ServerStatus(today: DateTime(2025, 4, 10), refreshedAt: '', note: '');
+  Future<ServerStatus> status() async {
+    if (airplane) throw ApiException(0, 'Cannot reach the park server.');
+    return ServerStatus(today: DateTime(2025, 4, 10), refreshedAt: '', note: '');
+  }
 
   @override
   Future<Map<String, dynamic>> tomorrow() async => {
@@ -708,6 +713,17 @@ void main() {
     await open();
     expect(card, findsOneWidget);
     expect(find.text('offline copy', skipOffstage: false), findsOneWidget);
+    api.airplane = true;                                   // airplane mode: the server cannot be reached at all
+    await open();
+    expect(card, findsOneWidget);
+    expect(find.text('offline copy', skipOffstage: false), findsOneWidget);
+    expect(find.textContaining('Cannot reach the park server', skipOffstage: false), findsOneWidget);
+    await t.pumpWidget(wrap(DayScreen(key: UniqueKey(), day: DateTime(2025, 4, 20)), api)); // another day: no card
+    for (var i = 0; i < 10; i++) {
+      await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await t.pump();
+    }
+    expect(card, findsNothing);
   });
 
   testWidgets('app home lists the modules', (t) async {

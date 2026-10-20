@@ -109,7 +109,9 @@ laptop must be on the **same Wi-Fi**. The laptop's Wi-Fi address here is `192.16
 ```powershell
 .venv\Scripts\python.exe -m src.api.serve_all --host 0.0.0.0
 ```
-If Windows asks to allow Python through the firewall, tick **Private networks** → Allow. On the phone's browser,
+The laptop's Wi-Fi must be a **Private** network (Settings → Network & internet → Wi-Fi → the network →
+Network profile type: **Private**). It was *Public* on 20 Oct, and then Windows blocks the phone. If Windows asks
+to allow Python through the firewall, tick **Private networks** → Allow. On the phone's browser,
 http://192.168.1.6:8000/parks should list both parks. If it doesn't load, the firewall is blocking port 8000.
 
 ### Option A – in the phone's browser (works now, nothing to install)
@@ -144,10 +146,16 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
 - The Android emulator uses `C4_API=http://10.0.2.2:8000` instead.
 
 **Demo with no signal (the on-device forecast):**
-1. Open tomorrow's date once while connected.
-2. Turn on airplane mode, open tomorrow again.
-3. The card **"Forecast made on this phone"** still appears ("offline copy"), with the time it took on *this*
-   phone. That is the real-phone NFR1 measurement (plan item B4).
+1. Run the Horton Plains `refresh` **on the demo day**. The pack is for the day after the refresh, and the app's
+   "tomorrow" is that day.
+2. While connected: Horton Plains → Plan & book → tap **tomorrow** → the card **"Forecast made on this phone"**
+   appears. The pack is now stored on the phone. Press ← back to the calendar.
+3. Turn on **airplane mode** (Wi-Fi off too).
+4. Tap **tomorrow** again. The card is still there, now with **offline copy**. Below it the app says it cannot
+   reach the park server: the rest of the day screen needs the server.
+5. The number of ms in the card is the time on *this* phone: the real-phone NFR1 measurement (plan item B4).
+
+Don't close the app while in airplane mode: the destination list itself needs the server when the app starts.
 
 ---
 

@@ -35,7 +35,13 @@ class _DayScreenState extends State<DayScreen> {
 
   Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _load() async {
     final api = C4Scope.of(context);
-    final status = await api.status();
+    final ServerStatus status;
+    try {
+      status = await api.status();
+    } on ApiException {
+      _edge = _runOnDevice(api); // no connection: the stored pack still gives tomorrow's forecast (if it is for this day)
+      rethrow;
+    }
     final isTomorrow = widget.day.difference(status.today).inDays <= 1;
     if (isTomorrow) _edge = _runOnDevice(api);
     final plan = isTomorrow
@@ -58,6 +64,16 @@ class _DayScreenState extends State<DayScreen> {
     if (model.day != C4Api.day(widget.day)) return null; // pack is for another day
     return (model.forecast(), offline);
   }
+
+  Widget _onDevice(List<TrailInfo> trails) => FutureBuilder<(EdgeForecast, bool)?>(
+        future: _edge,
+        builder: (context, e) => e.data == null
+            ? const SizedBox.shrink()
+            : Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: OnDeviceCard(forecast: e.data!.$1, offline: e.data!.$2, trails: trails),
+              ),
+      );
 
   Future<void> _book(DateTime day, String trail, String slot) async {
     final api = C4Scope.of(context);
@@ -109,7 +125,11 @@ class _DayScreenState extends State<DayScreen> {
         body: FutureBuilder(
           future: _future,
           builder: (context, snap) {
-            if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = _load(); }));
+            if (snap.hasError) {
+              final retry = ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = _load(); }));
+              if (_edge == null) return retry;
+              return ListView(padding: const EdgeInsets.all(16), children: [_onDevice(const []), retry]);
+            }
             if (!snap.hasData) return const Center(child: CircularProgressIndicator());
             final (plan, slots, trails, cap) = snap.data!;
             final trailSlots = slots.forTrail(_trail);
@@ -118,16 +138,7 @@ class _DayScreenState extends State<DayScreen> {
             return ListView(padding: const EdgeInsets.all(16), children: [
               _Summary(plan: plan),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
-              if (_edge != null)
-                FutureBuilder<(EdgeForecast, bool)?>(
-                  future: _edge,
-                  builder: (context, e) => e.data == null
-                      ? const SizedBox.shrink()
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: OnDeviceCard(forecast: e.data!.$1, offline: e.data!.$2, trails: trails),
-                        ),
-                ),
+              if (_edge != null) _onDevice(trails),
               if (plan.suggestions.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text('Want a quieter visit?', style: Theme.of(context).textTheme.titleMedium),
