@@ -13,7 +13,7 @@ app features until they are done.
 
 | Item | State | Where |
 |---|---|---|
-| P0-1 pretraining | Traffic pretraining **done** (METR-LA → PEMS-BAY); transfer to the parks (RQ5) **running** | `src/pretrain/traffic.py`, `src/eval/pretrain_transfer.py` |
+| P0-1 pretraining | **Done** (RQ5): helps Horton Plains with 30–90 days of counts (−5 to −12 %), no help at Adam's Peak, zero-shot fails. Domain-adaptation variants (e.g. freezing the graph layer) not tried | `src/pretrain/traffic.py`, `src/eval/pretrain_transfer.py` |
 | P0-2 edge | **Done**: ONNX 1.9–2.2 ms, int8 rejected; pure-Dart forecast on the phone, works offline | `src/edge/`, `domain/edge_forecaster.dart`, evaluation_results.md RQ6 |
 | P0-3 field validation | Protocol and criteria **fixed**; comparison tool **ready**; visits in Dec | `docs/field_validation_protocol.md`, `src/eval/field_validation.py` |
 | P0-4 vs LSTM | 3 seeds + LSTM-cell variant **done**: tie with every segment counted (p ≈ 0.1); Adam's Peak spatial CV with 3 seeds still to run | evaluation_results.md "RQ1 update" |

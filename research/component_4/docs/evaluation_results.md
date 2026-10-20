@@ -10,6 +10,8 @@ Significance: paired tests over forecast days (or nights), Holm-corrected where 
 | RQ2 | Does a model trained on one park work on another? | **Not as it is** (worse than a historical average). Pre-training **does** help a new park learn from little data, but with ≤ 90 days of counts a historical average is as good |
 | RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~20 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it |
 | RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: useful when the final steps are a real bottleneck (≤ 25 people/min), little effect above** |
+| RQ5 | Does pretraining on urban traffic (METR-LA, PEMS-BAY) help? | **Only at Horton Plains with 30–90 days of counts** (−5 to −12 % vs scratch); no help at Adam's Peak; zero-shot fails; a historical average still wins at ≤ 90 days |
+| RQ6 | Can the forecast run on the phone within 2 s? | **Yes**: 2 ms (ONNX, laptop core), ~140 ms in plain Dart, offline |
 
 ---
 
@@ -142,6 +144,49 @@ the LSTM-cell variant is **worse** than the GRU ST-GNN at Adam's Peak (p = 0.007
 Horton Plains (p = 0.005), so it is dropped. **Reading:** the earlier single-seed "LSTM beats ST-GNN at Adam's
 Peak" was seed noise. With every segment counted the graph adds nothing measurable; its value is on segments
 *without* counts (spatial CV, Horton Plains significant). **Next:** spatial CV at Adam's Peak with 3 seeds.
+
+## RQ5 – Pretraining on urban traffic (objective O3, P0-1; `src.pretrain.traffic`, `src.eval.pretrain_transfer`, 20 Oct 2026)
+
+The ST-GNN is pretrained on METR-LA and then PEMS-BAY. The target is congestion = 1 − speed / free-flow speed,
+averaged per hour, on a road graph with Gaussian-kernel edge weights (run `20261020_050444_pretrain`). After
+pretraining, the test congestion MAE is 8.1–8.3 % on METR-LA (the hour-of-day average gets 6.4 %) and 4.2–4.4 %
+on PEMS-BAY (the average gets 4.8 %). The pretrained weights are then used at both parks:
+- **zero-shot:** no training on the park; only the output is scaled, using 30 days of counts;
+- **pretrained:** fine-tuned on the park;
+- **scratch:** trained from random weights on the same data.
+
+Same inputs and splits as RQ2, 3 seeds. Run `20261020_075237_pretrain_transfer`; MAE in people per segment per hour.
+
+| Park | HA (2 y) | Zero-shot | Scratch, full | Pretrained, full | HA 30 d | Scratch 30 d | Pretrained 30 d | HA 90 d | Scratch 90 d | Pretrained 90 d | HA 365 d | Scratch 365 d | Pretrained 365 d |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Horton Plains | 1.60 | 7.04 | **1.42** | 1.43 | **2.06** | 3.11 | 2.96 | **1.61** | 2.72 | 2.40 | **1.61** | 1.69 | 1.71 |
+| Adam's Peak | 10.89 | 36.62 | **4.23** | 4.59 | 9.99 | 9.89 | 10.47 | **9.21** | 9.59 | 9.61 | 10.63 | **6.25** | 6.69 |
+
+Paired tests against the matching scratch model (Holm-corrected, over the 365 test days):
+
+| Training data | Horton Plains | Adam's Peak |
+|---|---|---|
+| 30 days | pretraining **better** (−0.15, p < 0.001) | pretraining worse (+0.58, p < 0.001) |
+| 90 days | pretraining **better** (−0.32, p < 0.001) | no difference (p = 0.45) |
+| 365 days | pretraining slightly worse (+0.02, p < 0.001) | pretraining worse (+0.43, p < 0.001) |
+| Full training data | pretraining slightly worse (+0.01, p = 0.005) | pretraining worse (+0.36, p < 0.001) |
+
+- **Zero-shot traffic weights are useless on trails.** They are 4–5× worse than the historical average.
+- **Pretraining helps only where the park is traffic-like and data are scarce.** Horton Plains is a daytime
+  peak on a small network. There, fine-tuning beats training from scratch with 30 and 90 days of counts
+  (−5 % and −12 %).
+- **It does not help Adam's Peak.** The night pilgrimage with a summit queue has no counterpart in road traffic,
+  and pretraining is worse or no different at every amount of data.
+- **With a full year or more of data, pretraining costs a little everywhere.** This is negative transfer:
+  the network starts from a road-traffic solution and does not fully leave it.
+- **A historical average from the same few days still wins up to 90 days at both parks.** At Adam's Peak the
+  network overtakes it at 365 days (6.25 vs 10.63). At Horton Plains it does not overtake it with 365 days of
+  the target park alone (1.69 vs 1.61); it needs the full multi-year training set.
+
+**Reading:** the proposal's research gap gets a clear, mostly negative answer. Dense urban traffic is a
+useful starting point only for a new trail park with a few months of counts, and only if its crowds behave like
+traffic peaks. Pretraining on the other park (RQ2) gives similar gains. In both cases, a new park should start
+with the historical average.
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
