@@ -798,3 +798,108 @@ class MapSegment {
     return out;
   }
 }
+
+/// One day of one trail in the officer records (GET /admin/records).
+class RecordRow {
+  RecordRow({
+    required this.date,
+    required this.trail,
+    required this.trailName,
+    required this.period,
+    this.visitors,
+    this.low,
+    this.high,
+    this.source = '',
+    this.booked = 0,
+    this.checkedIn = 0,
+    this.walkIns = 0,
+    this.gateTotal = 0,
+    this.halfway = 0,
+    this.safeLimit,
+  });
+
+  final DateTime date;
+  final String trail, trailName, period; // period: past | today | future
+  final int? visitors, low, high, safeLimit;
+  final String source;
+  final int booked, checkedIn, walkIns, gateTotal, halfway;
+
+  bool get overLimit => visitors != null && safeLimit != null && visitors! > safeLimit!;
+
+  factory RecordRow.fromJson(Map<String, dynamic> j) => RecordRow(
+        date: DateTime.parse(j['date'] as String),
+        trail: j['trail'] as String,
+        trailName: j['trail_name'] as String? ?? j['trail'] as String,
+        period: j['period'] as String,
+        visitors: (j['visitors'] as num?)?.round(),
+        low: (j['low'] as num?)?.round(),
+        high: (j['high'] as num?)?.round(),
+        source: j['source'] as String? ?? '',
+        booked: (j['booked'] as num?)?.round() ?? 0,
+        checkedIn: (j['checked_in'] as num?)?.round() ?? 0,
+        walkIns: (j['walk_ins'] as num?)?.round() ?? 0,
+        gateTotal: (j['gate_total'] as num?)?.round() ?? 0,
+        halfway: (j['halfway'] as num?)?.round() ?? 0,
+        safeLimit: (j['safe_limit'] as num?)?.round(),
+      );
+
+  static const csvHeader =
+      'date,trail,period,visitors,low,high,source,booked,checked_in,walk_ins,gate_total,halfway,safe_limit';
+
+  String toCsv() {
+    String q(String s) => s.contains(',') || s.contains('"') ? '"${s.replaceAll('"', '""')}"' : s;
+    String n(int? v) => v?.toString() ?? '';
+    return [
+      date.toIso8601String().substring(0, 10), q(trailName), period, n(visitors), n(low), n(high), q(source),
+      '$booked', '$checkedIn', '$walkIns', '$gateTotal', '$halfway', n(safeLimit),
+    ].join(',');
+  }
+}
+
+class CrowdRecords {
+  CrowdRecords({required this.site, required this.today, required this.trails, required this.rows, this.note = ''});
+
+  final String site;
+  final DateTime today;
+  final Map<String, String> trails; // id -> name
+  final List<RecordRow> rows;
+  final String note;
+
+  factory CrowdRecords.fromJson(Map<String, dynamic> j) => CrowdRecords(
+        site: j['site'] as String? ?? '',
+        today: DateTime.parse(j['today'] as String),
+        trails: (j['trails'] as Map<String, dynamic>? ?? {}).map((k, v) => MapEntry(k, v as String)),
+        rows: [for (final r in j['rows'] as List) RecordRow.fromJson(r as Map<String, dynamic>)],
+        note: j['note'] as String? ?? '',
+      );
+
+  /// All trails of a day added up (visitors, ranges, counts, limits); one entry per date, in order.
+  List<RecordRow> perDay() {
+    final byDay = <DateTime, List<RecordRow>>{};
+    for (final r in rows) {
+      byDay.putIfAbsent(r.date, () => []).add(r);
+    }
+    int? sum(Iterable<int?> v) => v.any((x) => x == null) ? null : v.fold<int>(0, (a, b) => a + b!);
+    return [
+      for (final e in byDay.entries)
+        RecordRow(
+          date: e.key,
+          trail: 'all',
+          trailName: 'All trails',
+          period: e.value.first.period,
+          visitors: sum(e.value.map((r) => r.visitors)),
+          low: sum(e.value.map((r) => r.low)),
+          high: sum(e.value.map((r) => r.high)),
+          source: e.value.first.source,
+          booked: e.value.fold(0, (a, r) => a + r.booked),
+          checkedIn: e.value.fold(0, (a, r) => a + r.checkedIn),
+          walkIns: e.value.fold(0, (a, r) => a + r.walkIns),
+          gateTotal: e.value.fold(0, (a, r) => a + r.gateTotal),
+          halfway: e.value.fold(0, (a, r) => a + r.halfway),
+          safeLimit: sum(e.value.map((r) => r.safeLimit)),
+        ),
+    ];
+  }
+
+  String toCsv() => [RecordRow.csvHeader, for (final r in rows) r.toCsv()].join('\n');
+}

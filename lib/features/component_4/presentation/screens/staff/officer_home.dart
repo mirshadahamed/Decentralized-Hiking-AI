@@ -5,6 +5,7 @@ import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
 import 'ranger_home.dart';
+import 'records_screen.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
@@ -16,7 +17,7 @@ class OfficerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Park office · ${api.session?.username ?? ''}'),
@@ -41,11 +42,12 @@ class OfficerHome extends StatelessWidget {
             Tab(icon: Icon(Icons.report_outlined), text: 'Trail condition'),
             Tab(icon: Icon(Icons.block), text: 'Close trail'),
             Tab(icon: Icon(Icons.notifications), text: 'Alerts'),
+            Tab(icon: Icon(Icons.table_chart_outlined), text: 'Records'),
           ]),
         ),
         body: const TabBarView(
           physics: NeverScrollableScrollPhysics(), // the bottleneck map pans with a drag
-          children: [BottleneckView(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab()],
+          children: [BottleneckView(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab()],
         ),
       ),
     );

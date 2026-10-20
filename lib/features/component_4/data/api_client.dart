@@ -219,6 +219,11 @@ class C4Api {
       await _send('POST', '/checkpoints', body: {'route': route, 'count': count, if (at != null) 'at': at.toIso8601String()}));
 
   /// Pilgrim sites (officer): every night of the outlook with the summit queue and when halfway checks are needed.
+  /// Officer records: visitors per day and trail for past, today and future days (trail null = all trails).
+  Future<CrowdRecords> records(DateTime start, DateTime end, {String? trail}) async => CrowdRecords.fromJson(
+      await _send('GET', '/admin/records', query: {'start': day(start), 'end': day(end), 'trail': ?trail})
+          as Map<String, dynamic>);
+
   Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
       .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))
       .toList();
