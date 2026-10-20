@@ -161,6 +161,10 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
 6. The number of ms on the cards is the time on *this* phone: the real-phone NFR1 measurement (plan item B4).
 
 **Crowding tab (the proposal's core output), also offline:**
+- **Days:** the chips at the top pick **Today**, **Tomorrow** or one of the next 5 days.
+  - Today and tomorrow: "ST-GNN on this phone · … ms".
+  - Later days: "Planning outlook · saved on this phone" (calendar + typical or forecast weather).
+  - The whole week is in the daily pack, so it works offline.
 - **Where:**
   - hikers: **Crowding** in the bottom bar;
   - officers: **Bottlenecks**, the first tab (Adam's Peak: the third);

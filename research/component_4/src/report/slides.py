@@ -818,13 +818,13 @@ def build():
                 "at 08:00 World's End and Baker's Falls are over capacity. Right: the safe number per trail and for "
                 "the park, set by the most limiting section, instead of one fixed quota. Officers get the same view "
                 "as their first tab. (~60 s)")
-    phones(s, [("11_bottleneck_map", "Tomorrow, hour by hour:\nevery section coloured"),
+    phones(s, [("11_bottleneck_map", "Today + 6 days, hour by hour:\nevery section coloured"),
                ("12_safe_numbers", "Safe number per trail,\nset by its limiting section")])
     d.bullets(s, [
         "Per section::  ST-GNN forecast ÷ people it holds at once (groups of 10, 50 m apart)",
         "Per trail::  Cifuentes PCC → RCC → ECC; the most limiting section sets the safe number",
         "Instead of a fixed quota::  690 tomorrow (weather, wet ground, crowding) vs 719 fixed",
-        "Offline::  drawn from the forecast the phone computes itself (RQ6)",
+        "A week, offline::  today and tomorrow forecast by the ST-GNN on the phone (RQ6); days 3-7 from the planning model, saved",
         "Users::  officers (first tab), rangers, hikers (Crowding tab) · whole app works offline",
     ], Inches(5.3), Inches(1.6), Inches(7.8), Inches(5.2), 15, 12)
 
