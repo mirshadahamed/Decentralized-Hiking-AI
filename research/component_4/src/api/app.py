@@ -17,7 +17,7 @@ from typing import Literal
 import numpy as np
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from src.api import auth
@@ -468,6 +468,25 @@ def day_bookings(day: date, user: dict = Depends(role("officer"))):
 @app.get("/admin/alerts", tags=["officer"])
 def alerts(user: dict = Depends(role("officer"))):
     return published("status.json").get("alerts", [])
+
+
+@app.get("/admin/records", tags=["officer"])
+def records(start: date, end: date, trail: str | None = None, format: Literal["json", "csv"] = "json",
+            user: dict = Depends(role("officer"))):
+    """Daily visitors per trail for past, today and future days (records to keep): estimate / DWC total for the
+    past, the forecast with a range for the future, and this system's own counts (bookings, gate, halfway).
+    Filter by trail; up to 400 days per request; format=csv to download."""
+    from src.serve.records import daily_records, to_csv
+    if end < start or (end - start).days > 400:
+        raise HTTPException(400, "Choose an end date after the start date, at most 400 days apart")
+    if trail not in (None, "", "all") and trail not in TRAILS:
+        raise HTTPException(400, f"Unknown trail '{trail}'")
+    out = daily_records(ctx(), start, end, trail, published("outlook.json"))
+    if format == "csv":
+        name = f"crowd_records_{CFG['park']}_{out['start']}_{out['end']}{'_' + trail if trail else ''}.csv"
+        return Response(to_csv(out["rows"]), media_type="text/csv",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+    return out
 
 
 @app.get("/admin/season", tags=["officer"])
