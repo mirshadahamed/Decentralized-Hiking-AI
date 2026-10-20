@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "c4-module3-feed-1",
+  "title": "Component 4 -> Module 3 feed: tomorrow's bottlenecks and safe numbers for one park",
+  "description": "Read-only, versioned. Produced daily by Component 4 (GET /module3/feed). Module 3 (safety assistant) and the authority dashboard consume it. Occupancy comes from a model trained on a SYNTHETIC target (see disclaimer).",
+  "type": "object",
+  "required": ["schema", "producer", "park", "site", "forecast_date", "generated_at", "model", "open_hours",
+               "busy_utilisation", "safe_visitors_per_day", "expected_visitors", "segments", "trails", "disclaimer"],
+  "properties": {
+    "schema": {"const": "c4-module3-feed-1"},
+    "producer": {"type": "string"},
+    "park": {"type": "string", "description": "park id, e.g. horton_plains"},
+    "site": {"type": "string"},
+    "forecast_date": {"type": "string", "format": "date"},
+    "generated_at": {"type": "string"},
+    "model": {"type": "string", "description": "stgnn, or historical_average when no trained model was available"},
+    "open_hours": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 23}, "minItems": 1},
+    "busy_utilisation": {"type": "number", "exclusiveMinimum": 0, "description": "people / capacity_at_once at or above which a segment is busy"},
+    "safe_visitors_per_day": {"type": "integer", "minimum": 0, "description": "Cifuentes effective carrying capacity of the park for the day (sum over trails)"},
+    "expected_visitors": {"type": "integer", "minimum": 0},
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "trail", "place", "length_m", "people_hourly", "capacity_at_once", "status",
+                     "peak_hour", "avoid_hours", "safe_visits_per_day"],
+        "properties": {
+          "segment_id": {"type": "integer", "minimum": 0},
+          "trail": {"type": "string"},
+          "place": {"type": ["string", "null"], "description": "named place on the segment (viewpoint, summit, checkpoint), else null"},
+          "length_m": {"type": "integer", "minimum": 0},
+          "people_hourly": {"type": "array", "items": {"type": "number", "minimum": 0}, "minItems": 24, "maxItems": 24,
+                            "description": "expected people on the segment, hour 0..23 of forecast_date"},
+          "capacity_at_once": {"type": "number", "minimum": 0, "description": "people it holds at Cifuentes social spacing (groups of 10, 50 m apart)"},
+          "status": {"enum": ["ok", "busy", "bottleneck"]},
+          "peak_hour": {"type": "integer", "minimum": 0, "maximum": 23},
+          "avoid_hours": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 23},
+                          "description": "open hours when people / capacity_at_once >= busy_utilisation: route hikers away from it then"},
+          "safe_visits_per_day": {"type": "integer", "minimum": 0, "description": "Cifuentes ECC of the segment (visits per day)"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "trails": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["trail_id", "name", "safe_visitors_per_day", "expected_visitors", "limiting_segment_id", "bottleneck_segments"],
+        "properties": {
+          "trail_id": {"type": "string"},
+          "name": {"type": "string"},
+          "safe_visitors_per_day": {"type": "integer", "minimum": 0},
+          "expected_visitors": {"type": "integer", "minimum": 0},
+          "limiting_segment_id": {"type": "integer", "minimum": 0},
+          "bottleneck_segments": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      }
+    },
+    "disclaimer": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

@@ -175,6 +175,14 @@ def edge_pack():
     return published("edge_pack.json")
 
 
+@app.get("/module3/feed", tags=["public"])
+def module3_feed():
+    """Data contract for Module 3 and the authority dashboard (schema c4-module3-feed-1,
+    docs/schema/c4_module3_feed.schema.json): tomorrow's people per segment and hour, safe capacity, hours to avoid."""
+    from src.serve.module3 import module3_feed as feed
+    return feed(published("forecast_tomorrow.json"), CFG)
+
+
 def live_inputs(c: LiveContext, day: date) -> dict:
     """What the safe limit of a day depends on, today: rain (forecast or typical), ground wetness, conditions."""
     rain, rain_basis = c.rain_share(day)
