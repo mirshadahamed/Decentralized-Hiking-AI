@@ -127,6 +127,48 @@ Cut in waiting on the final steps from **start times alone (B)**, vs no control:
 
 ---
 
+## RQ1 update – 3 seeds and an LSTM-cell variant (P0-4, 20 Oct 2026)
+
+Temporal protocol (every segment counted), 3 seeds, runs `results/adams_peak/20261020_002150_benchmark_p04`
+and `results/20261020_020459_benchmark_p04` (tagged runs: the app's model is unchanged).
+
+| Park | LSTM (no graph) | ST-GNN (GRU) | ST-GNN (LSTM cell) |
+|---|---|---|---|
+| Adam's Peak | 3.83 | **3.80** | 3.87 |
+| Horton Plains | **1.42** | 1.42 | 1.43 |
+
+Paired tests (Holm): ST-GNN (GRU) vs LSTM – no significant difference at either park (p = 0.09 / 0.12);
+the LSTM-cell variant is **worse** than the GRU ST-GNN at Adam's Peak (p = 0.007) and worse than the LSTM at
+Horton Plains (p = 0.005), so it is dropped. **Reading:** the earlier single-seed "LSTM beats ST-GNN at Adam's
+Peak" was seed noise. With every segment counted the graph adds nothing measurable; its value is on segments
+*without* counts (spatial CV, Horton Plains significant). **Next:** spatial CV at Adam's Peak with 3 seeds.
+
+## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
+
+Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE
+laptop CPU thread (ONNX Runtime), median of 200 runs. Runs `results/20261020_001929_edge`,
+`results/adams_peak/20261020_002009_edge`.
+
+| | Horton Plains | Adam's Peak |
+|---|---|---|
+| Parameters | 13,665 | 13,665 |
+| ONNX file (fp32) | 103 KB | 111 KB |
+| Latency, ONNX fp32 | **1.9 ms** | **2.2 ms** |
+| Latency, PyTorch | 3.5 ms | 4.0 ms |
+| ONNX fp32 vs PyTorch, largest difference | 0.0001 people | 0.0012 people |
+| int8 (dynamic) MAE change | −0.3 % | **+24.6 %** |
+| int8 file | 101 KB | 109 KB |
+
+NFR1 (< 2 s) is met with a margin of about 1,000× on a laptop core (a phone core is a few times slower).
+**int8 quantisation is not used:** the model is already tiny, int8 saves 2 KB and at Adam's Peak, where crowds
+span a much wider range, it raises the error by a quarter.
+
+**On the phone:** the same model runs in plain Dart (`lib/features/component_4/domain/edge_forecaster.dart`) from a
+daily "edge pack" (`src/edge/pack.py`, `GET /edge/pack`, ~175 KB): the phone builds the inputs and runs the
+forecast itself, also with no connection. Parity with PyTorch: largest difference **0.00007 people** over 24 h ×
+48 segments; about 140 ms per forecast in the Dart test runner (unoptimised). Tests:
+`test/component_4/edge_forecaster_test.dart`, `tests/test_edge.py`.
+
 ## Limitations (say these before an examiner does)
 1. The target is synthetic: all RQs test the method, not the real parks. Field counts (Horton: World's End on
    2–3 days; Adam's Peak: flow on the final steps on one Poya night) would calibrate and validate the simulator.

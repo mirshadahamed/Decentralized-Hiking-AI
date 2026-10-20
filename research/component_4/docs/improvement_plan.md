@@ -9,6 +9,16 @@ app). The *research* is behind on three things the proposal promised and examine
 "edge-native"), (3) field validation of the synthetic target.** The plan below puts those first and freezes new
 app features until they are done.
 
+### Progress (20 Oct 2026, branch `feature/component-4-research-gaps`)
+
+| Item | State | Where |
+|---|---|---|
+| P0-1 pretraining | Traffic pretraining **done** (METR-LA → PEMS-BAY); transfer to the parks (RQ5) **running** | `src/pretrain/traffic.py`, `src/eval/pretrain_transfer.py` |
+| P0-2 edge | **Done**: ONNX 1.9–2.2 ms, int8 rejected; pure-Dart forecast on the phone, works offline | `src/edge/`, `domain/edge_forecaster.dart`, evaluation_results.md RQ6 |
+| P0-3 field validation | Protocol and criteria **fixed**; comparison tool **ready**; visits in Dec | `docs/field_validation_protocol.md`, `src/eval/field_validation.py` |
+| P0-4 vs LSTM | 3 seeds + LSTM-cell variant **done**: tie with every segment counted (p ≈ 0.1); Adam's Peak spatial CV with 3 seeds still to run | evaluation_results.md "RQ1 update" |
+| P0-5 surveys | Not started | – |
+
 ---
 
 ## 1. Proposal objectives – where each one stands

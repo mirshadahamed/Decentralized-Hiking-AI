@@ -93,6 +93,17 @@ RQ1 graph vs no graph, RQ2 transfer between parks, RQ3 value of the forecast for
 `docs/evaluation_results.md`. Scripts: `src.run_benchmark`, `src.eval.transfer`,
 `src.control.evaluate_forecast_value`, `src.control.evaluate_advisory --sweep`.
 
+RQ5 traffic pretraining, RQ6 on-device inference, RQ7 field validation:
+```powershell
+.venv\Scripts\python.exe -m src.pretrain.traffic                # METR-LA -> PEMS-BAY (data/external/traffic/*.h5)
+.venv\Scripts\python.exe -m src.eval.pretrain_transfer          # RQ5: pretrained vs scratch, both parks (hours)
+.venv\Scripts\python.exe -m src.edge.export                     # RQ6: ONNX, int8, latency, memory
+.venv\Scripts\python.exe -m src.edge.pack --fixture             # test pack for the Flutter engine test
+.venv\Scripts\python.exe -m src.eval.field_validation data/field/horton_plains/*.csv   # RQ7, after the visits
+```
+Protocol and pre-registered criteria: `docs/field_validation_protocol.md`. The live refresh also publishes
+`edge_pack.json` (`GET /edge/pack`), which the app runs on the phone for tomorrow's forecast.
+
 ## Layout
 | Path | What |
 |---|---|
