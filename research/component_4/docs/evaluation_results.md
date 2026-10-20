@@ -273,6 +273,26 @@ forecast itself, also with no connection. Parity with PyTorch: largest differenc
 48 segments; about 140 ms per forecast in the Dart test runner (unoptimised). Tests:
 `test/component_4/edge_forecaster_test.dart`, `tests/test_edge.py`.
 
+## O1 – Rain from a second source (`src.data.rain_check`, 21 Oct 2026)
+
+Daily rain 2022–2025 at each park's weather point: Open-Meteo / ERA5 (what the model uses) vs NASA POWER
+(PRECTOTCORR). Runs `results/20261021_013055_rain_check`, `results/adams_peak/20261021_013106_rain_check`.
+
+| | Horton Plains | Adam's Peak |
+|---|---|---|
+| Daily correlation (Pearson / Spearman) | 0.65 / 0.72 | 0.52 / 0.61 |
+| Mean rain, Open-Meteo vs NASA POWER (mm/day) | 6.1 vs 6.4 | 10.9 vs 6.4 |
+| Wet-day agreement (≥ 1 mm) | 80 % | 77 % |
+| Monthly correlation | 0.77 | 0.51 |
+
+- **The two sources agree on which days are wet** (77–80 %), which is what the demand and FCpre factors use.
+- **They disagree on amounts.** This is worst at Adam's Peak: Open-Meteo has 70 % more rain on the wet
+  south-western slope.
+- **NASA POWER cannot tell the two parks apart.** It gives *identical* series for both: they fall in the same
+  ~50 km grid cell. It is too coarse to be a useful extra feature for a single trail.
+- **Decision:** keep Open-Meteo (finer grid, hourly) as the feature and NASA POWER as a published cross-check.
+  Add **CHIRPS** (~5 km, daily) as the second source the proposal names (W5).
+
 ## Limitations (say these before an examiner does)
 1. The target is synthetic: all RQs test the method, not the real parks. Field counts (Horton: World's End on
    2–3 days; Adam's Peak: flow on the final steps on one Poya night) would calibrate and validate the simulator.

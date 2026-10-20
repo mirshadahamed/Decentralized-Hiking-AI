@@ -179,6 +179,18 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
   good options (start time, the loop the other way round, another trail). Each phone draws a different good option,
   so the advice does not move the whole crowd to one place (RQ8).
 
+**Officer records (keep the daily counts):** log in as an officer → **Records** tab (both parks).
+- **Dates:** presets (Past 30 days + next week, Past 30 days, Today + 6 days, Next 90 days, Past year) or
+  **Custom…** for any range.
+- **Trails:** the trail dropdown filters to one trail.
+- **Per day:**
+  - visitors: past = DWC total or the estimate, labelled; future = the forecast with its range;
+  - the system's own counts: booked, at the gate, halfway;
+  - the safe limit. Red days were above the safe limit.
+- **Keep the records:** the copy button puts the table on the clipboard as CSV (paste into Excel). Or download:
+  http://localhost:8101/admin/records?start=2026-10-01&end=2026-10-31&format=csv (needs an officer token; easiest
+  from http://localhost:8101/docs → Authorize).
+
 **Module 3 and the authority dashboard:**
 - The feed for Module 3: http://localhost:8000/parks/horton_plains/module3/feed. Contract:
   `docs/schema/c4_module3_feed.schema.json`; sample: `docs/schema/sample_module3_feed.json`.

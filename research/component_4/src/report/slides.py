@@ -1021,6 +1021,22 @@ def build():
         "segment-hour occupancy better (1.44 vs 1.65)",
     ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 15, 10)
 
+    # B2 --------------------------------------------------------------- officer records (backup)
+    s = d.slide("Backup – Officer records: past, today and the week ahead", "Backup",
+                "For keeping records: visitors per day for any trail and date range - the past (DWC total or the "
+                "estimate, labelled), today, and the forecast with its range - next to this system's own counts "
+                "(bookings, gate, halfway) and the day's safe limit. Red = above the safe limit. Copy as CSV, or "
+                "GET /admin/records?format=csv for Excel. Officers only. (~30 s)")
+    pic = d.image(s, screens / "14_records.png", Inches(0.55), Inches(1.45), h=Inches(5.5))
+    pic.line.color.rgb = rgb("#C9D3CD")
+    d.bullets(s, [
+        "Daily, per trail::  past · today · future, filter by trail and by date range (presets or any range)",
+        "Past::  DWC daily total when connected, otherwise the estimate simulated with the real weather (labelled)",
+        "Future::  planning-model forecast with its likely range (P10–P90)",
+        "Own records::  booked, checked in at the gate, walk-ins, halfway counts, the day's safe limit",
+        "Keep::  copy as CSV in the app, or /admin/records?format=csv (Excel); works offline from the last copy",
+    ], Inches(3.4), Inches(1.6), Inches(9.6), Inches(5.0), 15, 12)
+
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "PP1_Component4.pptx"
     d.prs.save(path)

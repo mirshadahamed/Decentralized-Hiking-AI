@@ -95,6 +95,16 @@ Replaces the plans of 19–20 Oct. App-specific history: `proposal_alignment_pla
 
 ---
 
+### Progress since 21 Oct (branch `feature/component-4-bottleneck-map`)
+| Item | State |
+|---|---|
+| **Officer records** (new) | **Done**: daily visitors per trail for past / today / future, filter by trail and dates, own counts (booked, gate, halfway), safe limit, CSV (`GET /admin/records`, officer "Records" tab) |
+| W5 rain | **Partly**: NASA POWER cross-check done (agrees on wet days; same 50 km cell for both parks, so not a useful feature). CHIRPS still open |
+| W7 integration | **Partly**: Module 3 feed now inside the offline pack + `EdgeStore.module3Feed()`; Module 3 sign-off open |
+| W10 CI | **Done**: `.github/workflows/component4.yml` (pytest + flutter analyze/test on Component 4 paths); first run on the next push |
+| W2 (d) | **Running**: Horton Plains spatial CV with 3 seeds |
+| W3 | **Running**: layer freezing (`--variants pretrained frozen`, `trainer.FREEZE_CORE`); PeMS04/08 and adversarial alignment open |
+
 ## 2. Work packages
 
 | ID | Work | How | Done when |
