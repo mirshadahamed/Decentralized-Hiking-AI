@@ -90,7 +90,17 @@ with data that already exists. **B** items close real gaps. **C** items are exte
   - `presentation/screens/bottleneck_screen.dart` and `domain/bottleneck.dart`;
   - the pack's `map` block (`src/edge/pack.py: map_extras`);
   - entry points: the officer's first tab, Map → "Tomorrow's crowding", and the on-device card.
-- **A4 (home by role):** still open.
+- **A4 (home by role):** done. Hikers get a "Crowding" tab, rangers a "Tomorrow" tab, officers "Bottlenecks" first.
+
+**B1–B5 also done on 20–21 Oct:**
+
+| Item | Where |
+|---|---|
+| B1 offline-first | Every GET is stored on the phone and used with no connection; offline banner; the park's screens and the forecast pack are prefetched when it opens online (`data/api_client.dart`) |
+| B2 offline walk advice, spread | "Your walk" tab (`domain/walk_advice.dart`) |
+| B3 RQ8 | `src/control/evaluate_advice.py`, results in `evaluation_results.md`: spread advice −73 %, herd advice backfires, limit + spread −95 % |
+| B4 Module 3 contract | `docs/schema/c4_module3_feed.schema.json`, sample, `GET /module3/feed`, `tests/test_module3.py`. Still needs Ahamed M.M's sign-off |
+| B5 authority dashboard | Streamlit page "Bottlenecks (authority)", with an optional Module 2 damage cross-reference |
 | ID | Work | Proposal link | Data already there |
 |---|---|---|---|
 | A1 | **Bottleneck map.** The trail map coloured **by segment** for tomorrow: green / amber / red = forecast people ÷ segment capacity, with an **hour slider** (06:00–18:00) and peak segments marked. Tap a segment → hourly forecast, capacity, status | FR2, title "micro-spatial bottleneck forecasting" | `segments[].forecast_hourly`, `capacity_at_once`, `utilisation`, `status`; geometry already in the app |
