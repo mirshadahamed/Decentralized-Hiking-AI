@@ -106,7 +106,7 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
     ctx.model.eval()
     pack = build_pack(ctx.data, ctx.model, ctx.scale, origin, ctx.cfg, run=ctx.run)
     if forecast is not None:
-        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg)
+        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data)
     (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     return True
 

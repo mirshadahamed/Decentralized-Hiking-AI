@@ -63,13 +63,22 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
     }
 
 
-def map_extras(forecast: dict, seg, cfg: dict) -> dict:
+def map_extras(forecast: dict, seg, cfg: dict, data=None) -> dict:
     """What the phone needs to draw the bottleneck map and the capacity table offline (optional "map" key):
     each segment's line (simplified, lon/lat), Cifuentes capacity (people at once, PCC / RCC / ECC per day),
     the trail summaries (recommended daily number, limiting segment) and the open hours.
+    With `data` (TrailData) also the walking minutes from the trail start to each segment, so the phone can work
+    out where a hiker will be at each hour (offline walk advice).
     `forecast` is build_forecast()'s output for the pack's day (the server's capacity answer)."""
     by_id = {s["seg_id"]: s for s in forecast["segments"]}
-    c = cfg["capacity"]
+    c, sim = cfg["capacity"], cfg["simulator"]
+    minutes = walk = None
+    if data is not None:
+        names = list(data.static_names)
+        minutes = data.static[:, names.index("minutes_from_trailhead")]
+        # minutes spent on the segment itself: walking at leisure speed + the stop at a viewpoint
+        walk = data.static[:, names.index("tobler_fwd_min")] / sim["leisure_speed_factor"] + \
+            data.static[:, names.index("dwell_min")]
     lines = []
     for _, r in seg.sort_values("seg_id").iterrows():
         g = r.geometry.simplify(0.00002)                       # ~2 m: invisible on a phone map, 3x smaller
@@ -81,8 +90,14 @@ def map_extras(forecast: dict, seg, cfg: dict) -> dict:
             "pcc_per_day": s["pcc_per_day"], "rcc_per_day": s["rcc_per_day"], "ecc_per_day": s["ecc_per_day"],
             "status": s["status"],
         })
+        if minutes is not None:
+            lines[-1]["minutes_from_start"] = round(float(minutes[int(r.seg_id)]), 1)
+            lines[-1]["minutes_on_segment"] = round(float(walk[int(r.seg_id)]), 1)
     return {
         "open_hours": [int((c.get("open_from_h", 6) + k) % 24) for k in range(c["open_hours"])],
+        "last_entry_hour": sim.get("gate_last_entry_h"),
+        "reversible_trails": list(sim.get("reversible_routes", [])),
+        "main_trail": cfg["area"].get("main_trail", "main"),
         "busy_utilisation": c["busy_utilisation"],
         "segments": lines,
         "trails": {t: {k: v[k] for k in ("name", "expected_visitors", "recommended_daily_quota",
@@ -120,7 +135,7 @@ if __name__ == "__main__":
     pack = build_pack(data, model, scale, origin, cfg, run=run)
     seg = gpd.read_file(PROCESSED / "segments.geojson")
     seg["poi"] = seg["poi"].fillna("")
-    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg)
+    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data)
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
     Path(a.fixture).parent.mkdir(parents=True, exist_ok=True)
     Path(a.fixture).write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
