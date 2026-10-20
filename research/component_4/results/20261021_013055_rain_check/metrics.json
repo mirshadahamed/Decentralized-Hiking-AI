@@ -1,0 +1,20 @@
+{
+  "park": "horton_plains",
+  "point": [
+    6.795,
+    80.8
+  ],
+  "days": 1461,
+  "pearson_daily": 0.646,
+  "spearman_daily": 0.718,
+  "mean_mm_open_meteo": 6.14,
+  "mean_mm_nasa_power": 6.38,
+  "bias_mm_per_day": -0.24,
+  "mae_mm_per_day": 4.59,
+  "wet_day_agreement": 0.803,
+  "wet_days_open_meteo": 1051,
+  "wet_days_nasa_power": 1011,
+  "pearson_monthly": 0.773,
+  "same_story": false,
+  "decision": "add NASA POWER as an extra rain feature and re-run RQ1 (sources disagree)"
+}
