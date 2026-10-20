@@ -96,7 +96,7 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
     """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py), plus
     the segment lines and capacities for the bottleneck map (from tomorrow's server forecast, if given).
     Not published when only the historical-average fallback is available (no trained model)."""
-    from src.edge.pack import build_pack, map_extras
+    from src.edge.pack import build_pack, map_extras, week_forecasts
     if ctx.model is None:
         return False
     tomorrow = pd.Timestamp(ctx.today + timedelta(days=1))
@@ -104,9 +104,16 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
     if origin >= ctx.data.T or origin < ctx.data.L:
         return False
     ctx.model.eval()
-    pack = build_pack(ctx.data, ctx.model, ctx.scale, origin, ctx.cfg, run=ctx.run)
+    # the phone forecasts today and tomorrow itself; days 3-7 come from the planning model (Crowding: a week)
+    pack = build_pack(ctx.data, ctx.model, ctx.scale, origin, ctx.cfg, run=ctx.run, extra_origins=[origin - 24])
     if forecast is not None:
-        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data)
+        def live_inputs(d):
+            return {"rain_share": ctx.rain_share(date.fromisoformat(d))[0],
+                    "wetness": ctx.ground_wetness(date.fromisoformat(d))["wetness"],
+                    "conditions": {t: v["factor"] for t, v in booking.conditions(d).items()}}
+        week = week_forecasts(ctx.data, ctx.cfg, ctx.seg, ctx.model, ctx.scale, ctx.run, ctx.today.isoformat(),
+                              ctx.planner, plan_kwargs=live_inputs)
+        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data, week)
     (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     return True
 

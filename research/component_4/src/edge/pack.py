@@ -24,6 +24,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 
 SCHEMA = "c4-edge-1"
@@ -34,12 +35,21 @@ def _w(t: torch.Tensor) -> dict:
     return {"shape": list(a.shape), "data": [round(float(x), 7) for x in a.ravel()]}
 
 
+def _day_inputs(data, origin: int, scale: float) -> dict:
+    """The parts of the model input that change from day to day (scaled like TrailData.batch)."""
+    past, fut = np.arange(origin - data.L, origin), np.arange(origin, origin + data.H)
+    return {
+        "occupancy_past": [[round(float(x), 6) for x in row] for row in (data.y[past] / scale)],
+        "covariates_past": [[round(float(x), 6) for x in row] for row in data.cov_s[past]],
+        "covariates_future": [[round(float(x), 6) for x in row] for row in data.cov_s[fut]],
+    }
+
+
 def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run: str | None = None,
-               sensed: np.ndarray | None = None) -> dict:
-    """Pack for the day starting at hour index `origin` of `data` (TrailData)."""
+               sensed: np.ndarray | None = None, extra_origins=()) -> dict:
+    """Pack for the day starting at hour index `origin` of `data` (TrailData). `extra_origins`: other days the
+    phone should also forecast itself (e.g. today), stored as "extra_inputs" {date: day inputs}."""
     sensed = np.ones(data.N, bool) if sensed is None else sensed
-    L, H = data.L, data.H
-    past, fut = np.arange(origin - L, origin), np.arange(origin, origin + H)
     state = {k: v for k, v in model.state_dict().items() if k != "adj"}
     rnn = "lstm" if isinstance(model.rnn, torch.nn.LSTM) else "gru"
     poi = [str(p) for p in data.segment_poi]
@@ -48,10 +58,10 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
         "day": str(data.times[origin].date()), "scale": float(scale),
         "model": {"rnn": rnn, "hidden": int(model.inp.out_features), "use_graph": bool(model.use_graph),
                   "adjacency": _w(model.adj), "weights": {k: _w(v) for k, v in state.items()}},
+        "extra_inputs": {str(data.times[o].date()): _day_inputs(data, int(o), scale) for o in extra_origins
+                         if data.L <= o <= data.T - data.H},
         "inputs": {
-            "occupancy_past": [[round(float(x), 6) for x in row] for row in (data.y[past] / scale)],
-            "covariates_past": [[round(float(x), 6) for x in row] for row in data.cov_s[past]],
-            "covariates_future": [[round(float(x), 6) for x in row] for row in data.cov_s[fut]],
+            **_day_inputs(data, origin, scale),
             "static": [[round(float(x), 6) for x in row] for row in data.static_s],
             "sensed": [bool(x) for x in sensed],
             "covariate_names": list(data.cov_names), "static_names": list(data.static_names),
@@ -63,7 +73,48 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
     }
 
 
-def map_extras(forecast: dict, seg, cfg: dict, data=None) -> dict:
+def _day_block(date: str, source: str, fc: dict, people: bool) -> dict:
+    """Capacity (and, for days the phone cannot forecast itself, the people per hour) of one day."""
+    out = {
+        "date": date, "source": source,
+        "segments": [{"id": int(s["seg_id"]), "capacity_at_once": s["capacity_at_once"], "pcc_per_day": s["pcc_per_day"],
+                      "rcc_per_day": s["rcc_per_day"], "ecc_per_day": s["ecc_per_day"], "status": s["status"]}
+                     for s in fc["segments"]],
+        "trails": {t: {k: v[k] for k in ("name", "expected_visitors", "recommended_daily_quota",
+                                         "classic_cifuentes_quota", "limiting_segment", "factors")}
+                   for t, v in fc["trails"].items()},
+        "expected_visitors": fc.get("expected_visitors"),
+        "recommended_daily_quota": fc.get("recommended_daily_quota"),
+        "classic_cifuentes_quota": fc.get("classic_cifuentes_quota"),
+        "rain_share_open_hours": fc.get("rain_share_open_hours"),
+    }
+    if people:                                                   # [hour][segment], same layout as the phone's output
+        hourly = np.array([s["forecast_hourly"] for s in sorted(fc["segments"], key=lambda s: s["seg_id"])]).T
+        out["people"] = [[round(float(v), 1) for v in row] for row in hourly]
+    return out
+
+
+def week_forecasts(data, cfg, seg, model, scale, run, today: str, planner, days: int = 7, plan_kwargs=None):
+    """Today and tomorrow from the ST-GNN (the phone repeats these itself), later days from the planning model.
+    plan_kwargs(date) -> rain_share / wetness / conditions for planner.day (the live service's inputs).
+    Returns [(date, source, forecast dict)]."""
+    from src.serve.predict import build_forecast
+    out = []
+    t0 = pd.Timestamp(today)
+    for k in range(days):
+        d = (t0 + pd.Timedelta(days=k)).date().isoformat()
+        try:
+            if k <= 1:
+                out.append((d, "stgnn", build_forecast(data, cfg, seg, d, model, scale, run)))
+            else:
+                p = planner.day(today, d, **(plan_kwargs(d) if plan_kwargs else {}))
+                out.append((d, "planning", p["capacity"]))
+        except ValueError:                                       # outside the data / the outlook
+            continue
+    return out
+
+
+def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None) -> dict:
     """What the phone needs to draw the bottleneck map and the capacity table offline (optional "map" key):
     each segment's line (simplified, lon/lat), Cifuentes capacity (people at once, PCC / RCC / ECC per day),
     the trail summaries (recommended daily number, limiting segment) and the open hours.
@@ -108,6 +159,9 @@ def map_extras(forecast: dict, seg, cfg: dict, data=None) -> dict:
         "classic_cifuentes_quota": forecast.get("classic_cifuentes_quota"),
         "rain_share_open_hours": forecast.get("rain_share_open_hours"),
         "disclaimer": forecast.get("disclaimer", ""),
+        # the week: today .. +6 days; "stgnn" days are forecast on the phone (inputs / extra_inputs), "planning"
+        # days carry the planning model's people per hour
+        "days": [_day_block(d, src, fc, people=src != "stgnn") for d, src, fc in (week or [])],
     }
 
 
@@ -123,6 +177,7 @@ if __name__ == "__main__":
 
     from src.config import PROCESSED, load_config
     from src.eval.data import TrailData
+    from src.serve.outlook import build_planner
     from src.serve.predict import build_forecast, load_model
     ap = argparse.ArgumentParser()
     ap.add_argument("--fixture", required=True, help="where to write the pack + PyTorch output for the Dart test")
@@ -131,12 +186,16 @@ if __name__ == "__main__":
     data = TrailData(cfg)
     model, scale, run = load_model(data, cfg)
     model.eval()
-    origin = int(data.origins("test")[100])
-    pack = build_pack(data, model, scale, origin, cfg, run=run)
+    origin = int(data.origins("test")[100])                     # "tomorrow"; "today" = the day before
+    pack = build_pack(data, model, scale, origin, cfg, run=run, extra_origins=[origin - 24])
     seg = gpd.read_file(PROCESSED / "segments.geojson")
     seg["poi"] = seg["poi"].fillna("")
-    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data)
+    today = str(data.times[origin - 24].date())
+    week = week_forecasts(data, cfg, seg, model, scale, run, today, build_planner(cfg))
+    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data, week)
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
+    pack["expected_people_today"] = [[round(float(x), 5) for x in row]
+                                     for row in torch_forecast(model, data, origin - 24, scale)]
     Path(a.fixture).parent.mkdir(parents=True, exist_ok=True)
     Path(a.fixture).write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     print(a.fixture, f"{Path(a.fixture).stat().st_size / 1024:.0f} KB")
