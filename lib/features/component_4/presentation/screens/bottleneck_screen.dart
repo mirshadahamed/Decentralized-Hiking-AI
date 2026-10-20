@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/bottleneck.dart';
+import '../../domain/walk_advice.dart';
 import '../../models/models.dart';
 import '../../services/edge_store.dart';
 import '../theme/c4_theme.dart';
@@ -43,8 +47,22 @@ class _BottleneckViewState extends State<BottleneckView> {
     _future = _load();
   }
 
+  int _device = 0; // random per install: each phone draws its own suggestion (no herding)
+
+  Future<int> _deviceSeed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final s = prefs.getInt('c4_device_seed') ?? math.Random().nextInt(1 << 30);
+      await prefs.setInt('c4_device_seed', s);
+      return s;
+    } catch (_) {
+      return 1;
+    }
+  }
+
   Future<BottleneckDay> _load() async {
     final api = C4Scope.of(context);
+    _device = await _deviceSeed();
     final loaded = await EdgeStore.load(api); // downloads today's pack, or uses the stored one offline
     if (loaded != null && loaded.$1.pack['map'] is Map) {
       final (model, offline) = loaded;
@@ -67,17 +85,19 @@ class _BottleneckViewState extends State<BottleneckView> {
           final d = snap.data!;
           final hour = _hour ?? d.worstHour;
           return DefaultTabController(
-            length: 2,
+            length: 3,
             child: Column(children: [
               _SourceBar(day: d),
               const TabBar(tabs: [
-                Tab(icon: Icon(Icons.map_outlined), text: 'Bottleneck map'),
+                Tab(key: Key('tab_bottleneck_map'), icon: Icon(Icons.map_outlined), text: 'Map'),
                 Tab(icon: Icon(Icons.shield_outlined), text: 'Safe numbers'),
+                Tab(icon: Icon(Icons.directions_walk), text: 'Your walk'),
               ]),
               Expanded(
                 child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
                   _MapTab(day: d, hour: hour, onHour: (h) => setState(() => _hour = h), showTiles: widget.showTiles),
                   _CapacityTab(day: d),
+                  _WalkTab(day: d, seed: Object.hash(_device, d.day)),
                 ]),
               ),
             ]),
@@ -457,5 +477,86 @@ class _TrailCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ---------- your walk (offline hiker guidance) ----------
+class _WalkTab extends StatelessWidget {
+  const _WalkTab({required this.day, required this.seed});
+
+  final BottleneckDay day;
+  final int seed;
+
+  String _what(WalkOption o) {
+    final name = day.trails[o.trail]?.name ?? o.trail;
+    // walked the other way, the first stop is the viewpoint furthest along the usual direction
+    final stops = day.sections.where((s) =>
+        s.trail == o.trail && s.poi.isNotEmpty && s.poi != 'entrance' && !s.poi.startsWith('head_') && s.minutesFromStart != null);
+    final first = o.reverse && stops.isNotEmpty
+        ? stops.reduce((a, b) => a.minutesFromStart! > b.minutesFromStart! ? a : b)
+        : null;
+    final dir = o.reverse ? ', the other way round${first != null ? ' (${day.nameOf(first)} first)' : ''}' : '';
+    return '$name$dir, start at ${_h(o.startHour)}';
+  }
+
+  String _meet(WalkOption o) => o.worstSection == null
+      ? 'No crowding expected on the way.'
+      : 'Fullest place on the way: ${day.nameOf(o.worstSection!)} at ${_h(o.worstHour)}, '
+          '${(o.worst * 100).round()} % of what it holds safely.';
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final a = adviseWalk(day, seed: seed);
+    if (a.pick == null) {
+      return const Center(child: Padding(padding: C4Space.page, child: Text('No walk advice for this place yet.')));
+    }
+    final others = a.good.where((o) => o.key != a.pick!.key).take(4).toList();
+    return ListView(padding: C4Space.page, children: [
+      if (a.usual != null)
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.groups, color: _levelColor[a.usual!.worst > 1 ? Crowding.over : Crowding.busy]),
+            title: const Text('What most visitors will do'),
+            subtitle: Text('${_what(a.usual!)}.\n${_meet(a.usual!)}'),
+            isThreeLine: true,
+          ),
+        ),
+      Card(
+        key: const Key('walk_pick'),
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: Padding(
+          padding: C4Space.page,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.directions_walk),
+              const SizedBox(width: C4Space.s),
+              Text('Suggested for you', style: text.titleMedium),
+            ]),
+            const SizedBox(height: C4Space.s),
+            Text(_what(a.pick!), style: text.titleLarge),
+            const SizedBox(height: C4Space.xs),
+            Text(_meet(a.pick!)),
+          ]),
+        ),
+      ),
+      if (others.isNotEmpty) ...[
+        const SizedBox(height: C4Space.s),
+        Text('Other good options', style: text.titleSmall),
+        for (final o in others)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.circle, size: 12, color: _levelColor[o.worst >= day.busyUtilisation / 2 ? Crowding.filling : Crowding.quiet]),
+            title: Text(_what(o)),
+            subtitle: Text(_meet(o)),
+          ),
+      ],
+      const SizedBox(height: C4Space.s),
+      const BasisNote('Worked out on this phone from tomorrow\'s forecast, also with no signal. Each phone suggests '
+          'one of the good options at random, weighted by the room left, so people who follow the advice spread '
+          'out instead of all moving to the same quiet place. The same options are offered to the safety assistant '
+          '(Module 3).'),
+    ]);
   }
 }

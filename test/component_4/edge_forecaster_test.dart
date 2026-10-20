@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:decentralized_hiking_ai/features/component_4/domain/bottleneck.dart';
 import 'package:decentralized_hiking_ai/features/component_4/domain/edge_forecaster.dart';
+import 'package:decentralized_hiking_ai/features/component_4/domain/walk_advice.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -60,5 +61,25 @@ void main() {
     expect(d.sections.where((x) => x.trail == 'main').map((x) => x.ecc).reduce((a, b) => a < b ? a : b),
         main.recommended); // the trail's safe number is its most limiting section
     expect(d.nameOf(d.sections.firstWhere((x) => x.poi == 'worlds_end')), "World's End");
+  });
+
+  test('walk advice: avoids busy sections, uses the other direction of the loop, and spreads people out', () {
+    final d = BottleneckDay.fromPack(pack, EdgeForecaster.fromPack(pack).forecast());
+    expect(d.sections.every((s) => s.minutesFromStart != null), isTrue);
+    expect(d.reversibleTrails, contains('main'));
+    final a = adviseWalk(d, seed: 1);
+    expect(a.all, isNotEmpty);
+    expect(a.all.any((o) => o.reverse), isTrue);                       // the loop the other way round is an option
+    expect(a.good, isNotEmpty);
+    for (final o in a.good) {
+      expect(o.worst, lessThan(d.busyUtilisation));                    // good = never on a busy section
+    }
+    expect(a.good.map((o) => o.key), contains(a.pick!.key));
+    if (a.usual != null) expect(a.pick!.worst, lessThanOrEqualTo(a.usual!.worst));
+    // different phones (seeds) do not all get the same suggestion
+    final picks = {for (var seed = 0; seed < 40; seed++) adviseWalk(d, seed: seed).pick!.key};
+    if (a.good.length > 1) expect(picks.length, greaterThan(1));
+    // ... and the same phone gets the same suggestion all day
+    expect(adviseWalk(d, seed: 7).pick!.key, adviseWalk(d, seed: 7).pick!.key);
   });
 }

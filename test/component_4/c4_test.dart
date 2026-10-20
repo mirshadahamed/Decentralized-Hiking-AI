@@ -16,6 +16,8 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final today = DateTime(2026, 10, 15);
@@ -733,7 +735,7 @@ void main() {
     t.view.devicePixelRatio = 3;
     addTearDown(t.view.reset);
     final api = _EdgeApi();
-    final tab = find.text('Bottleneck map');
+    final tab = find.byKey(const Key('tab_bottleneck_map'));
     Future<void> open() async {
       await t.pumpWidget(wrap(BottleneckScreen(key: UniqueKey(), showTiles: false), api));
       for (var i = 0; i < 40 && tab.evaluate().isEmpty; i++) {       // real time: read the pack, run the ST-GNN
@@ -769,11 +771,41 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Effective (ECC)'), findsOneWidget);
     expect(find.textContaining('Holds safely at once'), findsOneWidget);
+    Navigator.of(t.element(find.text('Effective (ECC)'))).pop();          // close the section sheet
+    await t.pumpAndSettle();
+    await t.tap(find.text('Your walk'));                                  // offline walk advice (spread, not herd)
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('walk_pick')), findsOneWidget);
+    expect(find.text('What most visitors will do'), findsOneWidget);
+    expect(find.textContaining('Fullest place on the way'), findsWidgets);
 
     api.online = false;                                                  // airplane mode: the stored pack
     await open();
     expect(tab, findsOneWidget);
     expect(find.text('offline copy'), findsOneWidget);
+  });
+
+  test('offline-first: a screen seen once opens again with no connection, from the stored copy', () async {
+    var online = true;
+    final client = MockClient((r) async {
+      if (!online) throw const SocketException('airplane mode');
+      if (r.url.path.endsWith('/status')) {
+        return http.Response(jsonEncode({'site': 'Horton Plains National Park', 'today': '2026-10-20'}), 200);
+      }
+      return http.Response('{"detail": "not here"}', 404);
+    });
+    final api = C4Api(baseUrl: 'http://park', client: client, park: 'horton_plains');
+    expect((await api.status()).site, 'Horton Plains National Park');
+    expect(api.offline.value, isNull);
+    online = false;                                                    // airplane mode
+    final s = await api.status();
+    expect(s.site, 'Horton Plains National Park');                     // the stored copy
+    expect(api.offline.value, isNotNull);                              // ... and the app knows it is offline
+    await expectLater(api.trails(), throwsA(isA<ApiException>()));      // never seen: still a clear error
+    await expectLater(api.book(DateTime(2026, 10, 21), 'main', '07:00', 2), throwsA(isA<ApiException>())); // no offline booking
+    online = true;
+    await api.status();
+    expect(api.offline.value, isNull);                                 // back online
   });
 
   testWidgets('app home lists the modules', (t) async {

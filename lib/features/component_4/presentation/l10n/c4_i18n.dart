@@ -58,6 +58,7 @@ const Map<String, Map<String, String>> _strings = {
   'nav_tickets': {'en': 'My tickets', 'si': 'මගේ ප්‍රවේශපත්', 'ta': 'என் டிக்கெட்டுகள்'},
   'nav_start_times': {'en': 'Start times', 'si': 'ආරම්භක වේලාවන්', 'ta': 'தொடக்க நேரங்கள்'},
   'nav_map': {'en': 'Map', 'si': 'සිතියම', 'ta': 'வரைபடம்'},
+  'nav_crowding': {'en': 'Crowding', 'si': 'සෙනඟ', 'ta': 'கூட்டம்'},
   // ---------- outlook ----------
   'when_visit': {'en': 'When do you want to visit?', 'si': 'ඔබ පැමිණීමට කැමති කවදාද?', 'ta': 'எப்போது வர விரும்புகிறீர்கள்?'},
   'pick_day': {

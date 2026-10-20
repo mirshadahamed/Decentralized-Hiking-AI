@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../data/api_client.dart';
 import '../models/models.dart';
+import '../services/edge_store.dart';
+import 'screens/bottleneck_screen.dart';
 import 'screens/destinations_screen.dart';
 import 'screens/staff/login_screen.dart';
 import 'screens/visitor/map_screen.dart';
@@ -108,7 +110,14 @@ class _ParkHomeState extends State<ParkHome> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _status = C4Scope.of(context).status();
+    final api = C4Scope.of(context);
+    _status = api.status();
+    _status.then((_) {
+      if (api.offline.value == null) {
+        api.prefetch(); // online: keep this park's screens for offline use
+        EdgeStore.load(api).catchError((_) => null); // and tomorrow's forecast pack (bottleneck map offline)
+      }
+    }, onError: (_) {});
   }
 
   void _open(int i) => setState(() {
@@ -127,6 +136,7 @@ class _ParkHomeState extends State<ParkHome> {
               : [
                   (OverviewScreen(onPlan: () => _open(1)), Icons.explore_outlined, 'nav_overview'),
                   (OutlookScreen(site: s.site, advisory: advisory), Icons.calendar_month, advisory ? 'nav_start_times' : 'nav_plan_book'),
+                  (const BottleneckView(), Icons.groups_outlined, 'nav_crowding'), // tomorrow per section, offline
                   (const MapScreen(), Icons.map_outlined, 'nav_map'),
                   if (!advisory) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
                 ];

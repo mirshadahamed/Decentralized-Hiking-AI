@@ -21,7 +21,14 @@ class BottleneckDay {
     this.classicQuota,
     this.rainShare,
     this.disclaimer = '',
+    this.lastEntryHour,
+    this.reversibleTrails = const [],
+    this.mainTrail,
   });
+
+  final double? lastEntryHour; // gate closes for new walkers (e.g. 13:00)
+  final List<String> reversibleTrails; // loops that can be walked either way
+  final String? mainTrail; // the busiest trail
 
   final String day;
   final List<Section> sections;
@@ -55,9 +62,14 @@ class BottleneckDay {
             rcc: _i(s['rcc_per_day']),
             ecc: _i(s['ecc_per_day']),
             lengthM: _i(s['length_m']),
+            minutesFromStart: (s['minutes_from_start'] as num?)?.toDouble(),
+            minutesOnSection: (s['minutes_on_segment'] as num?)?.toDouble(),
           ),
       ],
       trails: _trails(m['trails']),
+      lastEntryHour: (m['last_entry_hour'] as num?)?.toDouble(),
+      reversibleTrails: [for (final t in m['reversible_trails'] as List? ?? []) t as String],
+      mainTrail: m['main_trail'] as String?,
       openHours: [for (final h in m['open_hours'] as List) (h as num).toInt()],
       busyUtilisation: _d(m['busy_utilisation'], 0.8),
       source: 'phone',
@@ -189,8 +201,12 @@ class Section {
     required this.rcc,
     required this.ecc,
     required this.lengthM,
+    this.minutesFromStart,
+    this.minutesOnSection,
   });
 
+  final double? minutesFromStart; // walking minutes from the trail start (usual direction) to this section
+  final double? minutesOnSection; // minutes spent on it (walking at leisure + viewpoint stop)
   final int id;
   final String trail, poi;
   final List<List<List<double>>> lines; // [part][point][lon, lat]

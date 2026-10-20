@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/models.dart';
 
@@ -43,10 +45,25 @@ class C4Api {
         if (session != null) 'Authorization': 'Bearer ${session!.token}',
       };
 
+  /// Offline-first: every successful GET is kept on the device; with no connection the last copy is returned
+  /// and [offline] says since when (null = live). The edge pack has its own store (services/edge_store.dart).
+  final ValueNotifier<DateTime?> offline = ValueNotifier(null);
+
+  static bool _cacheable(String method, String path) => method == 'GET' && !path.startsWith('/edge/pack');
+
+  Future<SharedPreferences?> _prefs() async {
+    try {
+      return await SharedPreferences.getInstance();
+    } catch (_) {
+      return null; // no storage (some tests): just no offline copy
+    }
+  }
+
   Future<dynamic> _send(String method, String path,
       {Object? body, Map<String, String>? query, bool gateway = false, String? forPark}) async {
     final root = gateway ? baseUrl : (forPark != null ? '$baseUrl/parks/$forPark' : _root);
     final uri = Uri.parse('$root$path').replace(queryParameters: query);
+    final key = 'c4_cache:$uri';
     late http.Response r;
     try {
       switch (method) {
@@ -58,10 +75,25 @@ class C4Api {
           r = await _http.delete(uri, headers: _headers);
       }
     } catch (_) {
+      if (_cacheable(method, path)) {
+        final saved = (await _prefs())?.getString(key);
+        if (saved != null) {
+          final s = jsonDecode(saved) as Map<String, dynamic>;
+          offline.value = DateTime.tryParse(s['t'] as String? ?? '') ?? DateTime.now();
+          return jsonDecode(s['b'] as String);
+        }
+      }
       throw ApiException(0, 'Cannot reach the park server. Check your connection and try again.');
     }
     final decoded = r.body.isEmpty ? null : jsonDecode(utf8.decode(r.bodyBytes));
-    if (r.statusCode >= 200 && r.statusCode < 300) return decoded;
+    if (r.statusCode >= 200 && r.statusCode < 300) {
+      offline.value = null;
+      if (_cacheable(method, path) && r.body.isNotEmpty) {
+        await (await _prefs())
+            ?.setString(key, jsonEncode({'t': DateTime.now().toIso8601String(), 'b': utf8.decode(r.bodyBytes)}));
+      }
+      return decoded;
+    }
     final detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
     final alts = decoded is Map && decoded['alternatives'] is List
         ? (decoded['alternatives'] as List).map((a) => Alternative.fromJson(a as Map<String, dynamic>)).toList()
@@ -88,6 +120,23 @@ class C4Api {
 
   // ---------- public ----------
   Future<ServerStatus> status() async => ServerStatus.fromJson(await _send('GET', '/status'));
+
+  /// While online: fetch (and so keep on the device) what the visitor screens need for this park and tomorrow,
+  /// so they also open with no connection. Failures are ignored.
+  Future<void> prefetch() async {
+    try {
+      final s = await status();
+      final tm = s.today.add(const Duration(days: 1));
+      for (final f in <Future<Object?> Function()>[
+        destination, outlook, trails, geometry, tomorrow,
+        if (s.isAdvisory) () => advisory(tm) else ...[() => capacity(tm), () => slots(tm)],
+      ]) {
+        try {
+          await f();
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
 
   Future<List<MapSegment>> geometry() async => MapSegment.fromGeoJson(await _send('GET', '/trails/geometry') as Map<String, dynamic>);
 

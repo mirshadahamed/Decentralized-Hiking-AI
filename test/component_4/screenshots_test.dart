@@ -174,7 +174,7 @@ void main() {
     await phone(t);
     final api = FixtureApi()..usePark('horton_plains');
     await t.pumpWidget(_scoped(const BottleneckScreen(showTiles: false), api));
-    for (var i = 0; i < 50 && find.text('Bottleneck map').evaluate().isEmpty; i++) {
+    for (var i = 0; i < 50 && find.byKey(const Key('tab_bottleneck_map')).evaluate().isEmpty; i++) {
       await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
       await t.pump();
     }
@@ -183,6 +183,8 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text("World's End loop"));
     await _shot(t, '12_safe_numbers');
+    await t.tap(find.text('Your walk'));
+    await _shot(t, '13_your_walk');
   }, skip: skip);
 
   testWidgets('05 Adam\'s Peak start times', (t) async {
