@@ -148,7 +148,9 @@ research/component_4/results/*_quick/
 *~
 
 # Component 2: local source downloads, generated imagery and model outputs
+sajana/.venv-yolov8/
 sajana/data/raw/
+sajana/data/processed/**/*.cache
 sajana/data/processed/**/images/
 sajana/data/processed/**/orientation_review/
 sajana/data/processed/**/data.yaml

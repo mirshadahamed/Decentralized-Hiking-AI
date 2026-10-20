@@ -713,6 +713,24 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "YOLOv8: Train litter segmentation",
+      "type": "process",
+      "command": "${workspaceFolder}/sajana/.venv-yolov8/bin/python",
+      "windows": {
+        "command": "${workspaceFolder}/sajana/.venv-yolov8/Scripts/python.exe"
+      },
+      "args": [
+        "-u",
+        "-B",
+        "-m",
+        "sajana.src.train_yolov8"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     }
   ],
   "inputs": [

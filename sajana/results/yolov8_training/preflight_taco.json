@@ -1,0 +1,54 @@
+{
+  "mode": "full",
+  "passed": true,
+  "training_ready": true,
+  "training_pool_ready": false,
+  "split_policy": "official_batches",
+  "dataset_role": "official benchmark",
+  "status": "training_ready",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_litter_seg_clean",
+  "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_cleaned.json",
+  "source_coverage": {
+    "images": 1499,
+    "annotations": 4783,
+    "manifest_images": 1499,
+    "missing_images": 0,
+    "unexpected_images": 0
+  },
+  "image_checks_performed": true,
+  "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+  "splits": {
+    "train": {
+      "images": 1028,
+      "objects": 3611,
+      "present_labels": 1028,
+      "present_images": 1028,
+      "missing_images": 0,
+      "verified_images": 1028,
+      "resized_images": 0
+    },
+    "val": {
+      "images": 286,
+      "objects": 675,
+      "present_labels": 286,
+      "present_images": 286,
+      "missing_images": 0,
+      "verified_images": 286,
+      "resized_images": 0
+    },
+    "test": {
+      "images": 185,
+      "objects": 497,
+      "present_labels": 185,
+      "present_images": 185,
+      "missing_images": 0,
+      "verified_images": 185,
+      "resized_images": 0
+    }
+  },
+  "warnings": [
+    "source annotation ID 309 is repeated; all records are retained",
+    "source annotation ID 4040 is repeated; all records are retained"
+  ],
+  "issues": []
+}

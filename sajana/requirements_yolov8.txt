@@ -1,0 +1,7 @@
+# Isolated local training environment: Python 3.9, Apple Silicon.
+# YOLO model family is selected by yolov8n-seg.pt, independent of package version.
+ultralytics==8.4.183
+torch==2.8.0
+torchvision==0.23.0
+numpy==1.26.4
+opencv-python==4.11.0.86

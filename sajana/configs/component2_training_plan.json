@@ -3,10 +3,10 @@
   "purpose": "Planning profiles and acceptance gates; this JSON is not an executable training script.",
   "roadmap": "sajana/docs/COMPONENT2_TRAINING_ROADMAP.md",
   "data_status": "sajana/results/component2_preprocessing/status.json",
-  "trainer_implemented": false,
+  "trainer_implemented": true,
   "training_started": false,
   "current_priority": "verified data alignment and a reproducible first litter experiment",
-  "compute_selection": "awaiting user preference; no GPU service or training job has been provisioned",
+  "compute_selection": "Local Apple M4 Mac with 16 GB memory; YOLOv8 environment setup in progress",
   "first_experiments": [
     {
       "experiment_id": "L1",
@@ -23,7 +23,7 @@
       "initialization": "compatible published pretrained weights",
       "model_and_library_versions": null,
       "device": null,
-      "training_run_config": null
+      "training_run_config": "sajana/configs/yolov8_litter_train.json"
     },
     {
       "experiment_id": "L2",
@@ -128,5 +128,6 @@
   "independent_local_evaluation_ready": false,
   "android_application_framework": "existing Flutter project; Android Studio IDE/build/debug integration",
   "bot_behavior": "to be specified before implementation",
-  "validation_report": "sajana/results/component2_preprocessing/training_plan_audit.json"
+  "validation_report": "sajana/results/component2_preprocessing/training_plan_audit.json",
+  "runtime_status": "sajana/results/yolov8_training/status.json"
 }
