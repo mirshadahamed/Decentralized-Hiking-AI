@@ -7,6 +7,9 @@ Turns the forecast into a carrying capacity and quota per trail (Cifuentes casca
 days, start times or trails.
 Built from open data only: OpenStreetMap, Copernicus DEM, Open-Meteo weather, Sri Lankan holiday/Poya calendar.
 
+**Start here:** `docs/user_guide.md` (use, test and understand the system) · `RUN_APP.md` (run the app) ·
+`docs/evaluation_results.md` (RQ1–RQ7) · `docs/improvement_plan.md` (proposal vs built, plan).
+
 ## Pipeline
 ```
 OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weather + calendar
