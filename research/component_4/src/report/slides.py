@@ -83,13 +83,26 @@ def fig_maps():
     return out
 
 
+def bench(folder):
+    """Temporal and spatial-CV metrics of a park: the full benchmark run, overridden by the 3-seed tagged runs
+    (_p04 = temporal, _p04s = spatial) where they exist."""
+    base = latest(folder, "LATEST")
+    t = pd.read_csv(base / "metrics_temporal.csv").set_index("model")
+    s = pd.read_csv(base / "metrics_spatial.csv", header=[0, 1], index_col=0)
+    for run in sorted(folder.glob("*_benchmark_p04")):
+        t2 = pd.read_csv(run / "metrics_temporal.csv").set_index("model")
+        t = pd.concat([t.drop(t2.index, errors="ignore"), t2])
+    for run in sorted(folder.glob("*_benchmark_p04s")):
+        if (run / "metrics_spatial.csv").exists():
+            s2 = pd.read_csv(run / "metrics_spatial.csv", header=[0, 1], index_col=0)
+            s = pd.concat([s.drop(s2.index, errors="ignore"), s2])
+    return t, s
+
+
 def fig_rq1():
-    hp = latest(RES, "LATEST")
-    ap = RES_AP / "20261016_000119_benchmark" if (RES_AP / "20261016_000119_benchmark").exists() else latest(RES_AP, "LATEST")
     fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.6))
-    for ax, run, title in ((axes[0], hp, "Horton Plains"), (axes[1], ap, "Adam's Peak")):
-        t = pd.read_csv(run / "metrics_temporal.csv").set_index("model")
-        s = pd.read_csv(run / "metrics_spatial.csv", header=[0, 1], index_col=0)
+    for ax, folder, title in ((axes[0], RES, "Horton Plains"), (axes[1], RES_AP, "Adam's Peak")):
+        t, s = bench(folder)
         models = [m for m in ["HA", "ARIMA", "lstm", "gru_nograph", "stgnn"] if m in t.index]
         x = np.arange(len(models))
         ax.bar(x - 0.2, t.loc[models, "MAE"], 0.4, color=[MODEL_COLORS[m] for m in models], edgecolor="white",
@@ -215,6 +228,31 @@ def fig_rq2():
         ax.grid(axis="x", alpha=0.25)
         ax.tick_params(labelsize=8)
     return _save(fig, "rq2.png")
+
+
+def fig_rq5():
+    m = pd.read_csv(latest(RES, "LATEST_PRETRAIN_TRANSFER") / "metrics.csv")
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.5))
+    ks = ["30", "90", "365", "full"]
+    for ax, park, title in ((axes[0], "horton_plains", "Horton Plains"), (axes[1], "adams_peak", "Adam's Peak")):
+        g = m[m.park == park].set_index("model").MAE
+        x = np.arange(len(ks))
+        sc = [g[f"scratch_{k}"] for k in ks]
+        pt = [g[f"pretrained_{k}"] for k in ks]
+        ha = [g[f"HA_{k}"] if k != "full" else g["HA"] for k in ks]
+        ax.bar(x - 0.2, sc, 0.4, color="#9DB8D9", label="Trained from scratch")
+        ax.bar(x + 0.2, pt, 0.4, color=GREEN, label="Pretrained on traffic + fine-tuned")
+        ax.plot(x, ha, "k_", markersize=26, mew=2.2, label="Historical average, same days")
+        for xi, a, b in zip(x, sc, pt):
+            ax.text(xi - 0.2, a, f"{a:.2f}", ha="center", va="bottom", fontsize=7)
+            ax.text(xi + 0.2, b, f"{b:.2f}", ha="center", va="bottom", fontsize=7)
+        ax.set_xticks(x, ["30 days", "90 days", "365 days", "all (2 y)"])
+        ax.set_title(f"{title}  (zero-shot: {g['traffic_zero_shot']:.1f})", fontsize=10)
+        ax.set_ylabel("MAE (people per segment-hour)", fontsize=8.5)
+        ax.set_xlabel("Counts available from the park", fontsize=8.5)
+        _style(ax)
+    axes[0].legend(fontsize=7.5, frameon=False, loc="upper right")
+    return _save(fig, "rq5.png")
 
 
 def fig_rq4():
@@ -360,7 +398,11 @@ def build():
     maps = fig_maps()
     f_rq1, f_hc, f_ap = fig_rq1(), fig_control_horton(), fig_control_ap()
     f_day, day_stats = fig_example_day()
-    f_rq3, f_rq2, f_rq4 = fig_rq3(), fig_rq2(), fig_rq4()
+    f_rq3, f_rq2, f_rq4, f_rq5 = fig_rq3(), fig_rq2(), fig_rq4(), fig_rq5()
+    (hp_t, hp_s), (ap_t, ap_s) = bench(RES), bench(RES_AP)
+    edge = {p: json.loads((latest(f, "LATEST_EDGE") / "metrics.json").read_text(encoding="utf-8"))
+            for p, f in (("hp", RES), ("ap", RES_AP))}
+    rq5 = pd.read_csv(latest(RES, "LATEST_PRETRAIN_TRANSFER") / "metrics.csv").set_index(["park", "model"]).MAE
 
     hp_ctl = pd.read_csv(latest(RES, "LATEST_CONTROL") / "summary.csv")
     cut_quota = 100 * (1 - hp_ctl.person_hours_over_capacity[1] / hp_ctl.person_hours_over_capacity[0])
@@ -415,19 +457,21 @@ def build():
               Inches(8.6), Inches(1.8), Inches(4.2), Inches(3.6), GREEN, 15)
 
     # 3 ---------------------------------------------------------------- objectives & novelty
-    s = d.slide("Objectives, novelty and where each one stands", "Proven gap / creative solution",
-                "Walk through the table quickly; the status column is the progress claim for PP1. Novelty: ST-GNNs "
-                "are proven on city traffic with hundreds of sensors; here 48-57 nodes and no sensors. And the "
-                "forecast is evaluated by the decisions it improves, not only by accuracy. (~60 s)")
+    s = d.slide("Proposal objectives and where each one stands", "Proven gap / creative solution",
+                "These are the six objectives exactly as numbered in the proposal. Every one has working code and "
+                "results; what is still open is said in the status column - field counts (December), two more "
+                "traffic datasets, CHIRPS, and a real phone measurement. Novelty: ST-GNNs are proven on city "
+                "traffic with hundreds of sensors; here 48-57 nodes and no sensors, and the forecast is judged by "
+                "the decisions it improves. (~60 s)")
     d.table(s, [
-        ["Objective", "What was built", "Status"],
-        ["1  Trail graph + features from open data", "OSM graph, Copernicus DEM, Open-Meteo, Sri Lankan calendar; 2 parks", "Done"],
-        ["2  Synthetic occupancy target", "Group-based walking simulator (Tobler, stairs, rain, queues)", "Done – field calibration pending"],
-        ["3  ST-GNN vs baselines", "HA, ARIMA, LSTM, GRU-no-graph; spatial CV; paired t-tests", "Done (Horton 3 seeds)"],
-        ["4  Dynamic carrying capacity", "Cifuentes PCC→RCC→ECC with a forecast crowding factor", "Done"],
-        ["5  From forecast to control (extension)", "Slot tickets (LP) · start times + halfway checks", "Done, evaluated"],
-        ["6  Prototype for users", "FastAPI + Flutter app, staff roles, 2 parks", "Working prototype"],
-    ], Inches(0.6), Inches(1.6), Inches(12.1), [4.2, 5.4, 2.5], 13)
+        ["Proposal objective", "What was built", "Status"],
+        ["O1  Trail graph + terrain + weather (open data)", "OSM graph, Copernicus DEM (slope, TWI), Open-Meteo/ERA5, calendar; 2 parks", "Done – CHIRPS / NASA POWER next"],
+        ["O2  Synthetic target, validated with field counts", "Group-walking simulator; agreement criteria fixed before the visits", "Method done – counts Dec"],
+        ["O3  Pretrain on traffic, adapt to the trail", "METR-LA → PEMS-BAY pretraining, fine-tuned on both parks (RQ5)", "Done – PeMS04/08 next"],
+        ["O4  Benchmark vs HA, ARIMA, LSTM, paired t-test", "3 seeds, spatial block CV, Holm-corrected tests (RQ1)", "Done"],
+        ["O5  Cifuentes PCC → RCC → ECC with the forecast", "Daily safe limit per trail: rain, wet ground, crowding, trail condition", "Done"],
+        ["O6  Package for on-device inference", "ONNX + int8 tested; ST-GNN runs in Dart on the phone, offline (RQ6)", "Done – phone timing next"],
+    ], Inches(0.6), Inches(1.6), Inches(12.1), [4.3, 5.3, 2.5], 12)
     d.box(s, "Novelty 1\nST-GNN on a tiny (48–57 node), sensor-free trail graph – tested against baselines, not assumed",
           Inches(0.6), Inches(4.9), Inches(3.9), Inches(1.5), size=13, bold=True)
     d.box(s, "Novelty 2\nForecast judged by the decision it improves (crowd control), not only by its error",
@@ -498,6 +542,8 @@ def build():
         ["Area", "Technology", "Why"],
         ["Graph learning", "PyTorch 2 + PyTorch Geometric (DenseGCNConv)", "small dense graph: fast, exact"],
         ["Baselines", "statsmodels SARIMAX, historical average, LSTM/GRU", "mandatory comparison"],
+        ["Pretraining", "METR-LA, PEMS-BAY (h5py), same GCN+GRU core", "proposal objective O3"],
+        ["On-device", "ONNX Runtime (export, int8 test), pure-Dart forward pass", "offline, any phone"],
         ["Planning (90 d)", "scikit-learn gradient boosting, conformal P10–P90", "inputs exist weeks ahead"],
         ["Optimisation", "SciPy linprog (HiGHS)", "tickets per slot under capacity"],
         ["Geo / terrain", "OSMnx, GeoPandas, Rasterio", "graph + DEM features"],
@@ -520,22 +566,53 @@ def build():
         "Fair statistics::  paired t-test + Wilcoxon over forecast days (not hours), Holm-corrected, effect size d_z",
         "Clean ablation::  the same network with the graph removed (GRU-no-graph) isolates what the graph adds",
         "Decision-focused::  forecasts also judged by the waiting / overcrowding they prevent (RQ3)",
-        "Reproducible::  seeds logged; every run = results/<time>_<tag>/ with config + git hash; 56 Python + 16 Flutter tests",
+        "Pre-registered::  field agreement criteria (A1–A3) fixed on 20 Oct, before any counts are taken",
+        "Reproducible::  seeds logged; every run = results/<time>_<tag>/ with config + git hash; 65 Python + 24 Flutter tests",
         "Secure & ethical::  roles checked on the server, hashed passwords, lockout, audit log; no personal visitor data",
-    ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 17, 11)
+    ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 16, 9)
 
     # 8 ---------------------------------------------------------------- RQ1
-    s = d.slide("RQ1 – Does the graph help?  Yes, where there are no counts", "Proof of concept",
-                "Hatched bars are the deployment case: segments with no counts. At Horton the ST-GNN is best there "
-                "(2.48 vs 2.59 LSTM vs 4.20 historical average). With counts everywhere, the networks tie. At Adam's "
-                "Peak the graph beats the same network without it, but a plain LSTM wins – honest result, and next "
-                "step is an ST-GNN with an LSTM cell. (~60 s)")
+    def sp(df, m):
+        return df.loc[m, ("MAE", "mean")]
+
+    def p_vs(folder, glob, protocol, base):
+        for run in sorted(folder.glob(glob), reverse=True):
+            st = json.loads((run / "stats.json").read_text(encoding="utf-8")) if (run / "stats.json").exists() else {}
+            for r in st.get(protocol, {}).get("tests_vs_stgnn", []):
+                if r["baseline"] == base:
+                    return r["p_holm"], r["mean_diff_MAE"]
+        return None, None
+
+    def ptxt(p):
+        return "n/a" if p is None else ("p < 0.001" if p < 0.001 else f"p = {p:.2f}")
+
+    hp_p, _ = p_vs(RES, "*_benchmark", "spatial", "lstm")
+    ap_tp, _ = p_vs(RES_AP, "*_benchmark_p04", "temporal", "lstm")
+    hp_tp, _ = p_vs(RES, "*_benchmark_p04", "temporal", "lstm")
+    ap_sp, ap_sd = p_vs(RES_AP, "*_benchmark_p04s", "spatial", "lstm")
+    ap_word = ("better" if ap_sd is not None and ap_sd < 0 and ap_sp < 0.05 else
+               "worse" if ap_sd is not None and ap_sd > 0 and ap_sp < 0.05 else "not different")
+    s = d.slide("RQ1 – Does the graph help?  On ordinary trail without counts, yes", "Proof of concept",
+                f"Hatched bars are the deployment case: segments with no counts. At Horton Plains the ST-GNN is best "
+                f"there ({sp(hp_s, 'stgnn'):.2f} vs LSTM {sp(hp_s, 'lstm'):.2f} vs historical average "
+                f"{sp(hp_s, 'HA'):.2f}, {ptxt(hp_p)}). With counts on every segment the networks tie at both parks "
+                f"(3 seeds; {ptxt(hp_tp)} and {ptxt(ap_tp)}) - the earlier 'LSTM wins at Adam's Peak' was seed noise. "
+                f"An ST-GNN with an LSTM cell was tried and was worse, so it was dropped. At Adam's Peak on unseen "
+                f"segments the ST-GNN is {ap_word} vs the LSTM ({ptxt(ap_sp)}) overall: it is best on the two blocks "
+                f"of ordinary trail but loses on the block with the summit queue, which forms from the capacity "
+                f"of the final steps, not from what neighbouring segments look like. Next: give the model the queue "
+                f"state. (~75 s)")
     d.image(s, f_rq1, Inches(0.45), Inches(1.45), w=Inches(12.4))
     d.bullets(s, [
-        "Horton, unseen segments::  ST-GNN 2.48 · LSTM 2.59 · GRU without graph 2.69 · historical average 4.20",
-        "Adam's Peak::  the graph beats the same network without it (p < 0.001); a plain LSTM is best (3.73 vs 3.83)",
-        "Every network::  at least 40 % lower error than ARIMA and the historical average at Adam's Peak",
-    ], Inches(0.6), Inches(5.75), Inches(12.2), Inches(1.3), 14, 4)
+        f"Horton, unseen segments::  ST-GNN {sp(hp_s, 'stgnn'):.2f} · LSTM {sp(hp_s, 'lstm'):.2f} · GRU without graph "
+        f"{sp(hp_s, 'gru_nograph'):.2f} · historical average {sp(hp_s, 'HA'):.2f}  (vs LSTM {ptxt(hp_p)})",
+        f"Adam's Peak, unseen segments (3 seeds)::  ST-GNN {sp(ap_s, 'stgnn'):.2f} · LSTM {sp(ap_s, 'lstm'):.2f} · "
+        f"GRU without graph {sp(ap_s, 'gru_nograph'):.2f}  (vs LSTM {ptxt(ap_sp)}) – best on ordinary trail, "
+        f"worse at the summit queue",
+        f"Every segment counted (3 seeds)::  tie with the LSTM – Horton {hp_t.loc['stgnn', 'MAE']:.2f} vs "
+        f"{hp_t.loc['lstm', 'MAE']:.2f} ({ptxt(hp_tp)}), Adam's Peak {ap_t.loc['stgnn', 'MAE']:.2f} vs "
+        f"{ap_t.loc['lstm', 'MAE']:.2f} ({ptxt(ap_tp)})",
+    ], Inches(0.6), Inches(5.6), Inches(12.2), Inches(1.4), 13, 3)
 
     # 8b --------------------------------------------------------------- one day
     ty, bz = day_stats["A typical busy day"], day_stats["The busiest day"]
@@ -618,6 +695,89 @@ def build():
         "Most important unknown::  final-steps flow – waiting changes 26-fold between 15 and 35 people/min",
     ], Inches(0.6), Inches(4.95), Inches(12.3), Inches(1.9), 14, 6)
 
+    # 12b -------------------------------------------------------------- RQ5 pretraining
+    def gain(park, k):      # "+6 %" with no line break inside
+        v = 100 * (rq5[(park, f"pretrained_{k}")] / rq5[(park, f"scratch_{k}")] - 1)
+        return f"{v:+.0f} ".replace("-", "−")
+
+    s = d.slide("RQ5 – Does pretraining on city traffic help a tiny trail graph?", "The proposal's research gap",
+                f"Proposal objective O3. Same ST-GNN core pretrained on METR-LA (207 sensors) then PEMS-BAY (325), "
+                f"target = congestion. Then three ways to use it at each park, 3 seeds, paired tests over 365 test "
+                f"days. Answer: only at Horton Plains, only with 30-90 days of counts ({gain('horton_plains', '30')}% "
+                f"and {gain('horton_plains', '90')}% vs scratch, p < 0.001). Not at Adam's Peak - a night "
+                f"pilgrimage with a summit queue looks nothing like road traffic. Zero-shot fails everywhere. With a "
+                f"full year the pretrained start slightly hurts (negative transfer). Honest, publishable answer to "
+                f"the gap. Next: freeze layers / gradual unfreezing and PeMS04/08. (~75 s)")
+    d.image(s, f_rq5, Inches(0.45), Inches(1.45), w=Inches(8.4))
+    d.bullets(s, [
+        f"Horton Plains::  pretraining helps with 30 days ({gain('horton_plains', '30')}%) and 90 days "
+        f"({gain('horton_plains', '90')}%), p < 0.001",
+        f"Adam's Peak::  no help at any amount of data ({gain('adams_peak', '30')}% at 30 days)",
+        f"Zero-shot::  traffic weights unchanged are 4–5× worse than the historical average",
+        "But::  ≤ 90 days of counts → a historical average still wins at both parks",
+        "So::  start a new park on the average; pretraining shortens the wait only where crowds behave like traffic peaks",
+    ], Inches(9.0), Inches(1.55), Inches(4.1), Inches(5.3), 13, 9)
+    d.text(s, "METR-LA → PEMS-BAY pretraining · 3 seeds · paired t-tests over 365 test days, Holm-corrected",
+           Inches(0.6), Inches(4.85), Inches(8.2), Inches(0.4), 11, GREY)
+
+    # 12c -------------------------------------------------------------- RQ6 on-device
+    eh, ea = edge["hp"], edge["ap"]
+    s = d.slide("RQ6 – The ST-GNN runs on the phone, offline", "Edge-native (objective O6, NFR1)",
+                f"Proposal objective O6 and NFR1 (< 2 s). Exported to ONNX: {eh['latency_one_forecast_1_thread']['onnx_fp32']['median_ms']} ms "
+                f"for 24 hours x every segment on one laptop core, 13,665 parameters, about 100 KB. int8 "
+                f"quantisation was tested and rejected: it saves 2 KB and raises the error by "
+                f"{ea['mae_change_int8_pct']:.0f} % at Adam's Peak. On the phone the same network runs in plain Dart "
+                f"from a 175 KB daily pack - identical to PyTorch within 0.0001 people - so tomorrow's forecast works "
+                f"with no signal on the mountain. Next: time it on a real Android phone. (~60 s)")
+    pic = d.image(s, OUT / "screens" / "10_on_device.png", Inches(0.55), Inches(1.45), h=Inches(5.4))
+    pic.line.color.rgb = rgb("#C9D3CD")
+    flow = [("Server, every evening\ntrain · publish 175 KB\nedge pack (weights + inputs)", LIGHT),
+            ("Phone\ndownloads once a day,\nkeeps the last pack", "#E3EAF5"),
+            ("Phone, no signal\nST-GNN in Dart →\nbusiest sections tomorrow", "#DCEBE2")]
+    for i, (t_, f_) in enumerate(flow):
+        x = Inches(3.35) + i * Inches(3.25)
+        d.box(s, t_, x, Inches(1.55), Inches(2.95), Inches(1.15), fill=f_, size=12, bold=True)
+        if i:
+            d.arrow(s, x - Inches(0.3), Inches(2.12), x, Inches(2.12))
+    d.table(s, [
+        ["Measure", "Horton Plains", "Adam's Peak"],
+        ["Latency, ONNX (1 laptop core)", f"{eh['latency_one_forecast_1_thread']['onnx_fp32']['median_ms']} ms",
+         f"{ea['latency_one_forecast_1_thread']['onnx_fp32']['median_ms']} ms"],
+        ["Model file / extra memory", f"{eh['memory']['onnx_fp32']['file_kb']:.0f} KB / {eh['memory']['onnx_fp32']['process_increase_mb']} MB",
+         f"{ea['memory']['onnx_fp32']['file_kb']:.0f} KB / {ea['memory']['onnx_fp32']['process_increase_mb']} MB"],
+        ["int8 quantisation: error change", f"{eh['mae_change_int8_pct']:+.1f} %", f"{ea['mae_change_int8_pct']:+.1f} % → not used"],
+        ["Dart on the phone vs PyTorch", "≤ 0.0001 people", "same engine"],
+        ["NFR1 target", "< 2 s  ✓", "< 2 s  ✓"],
+    ], Inches(3.35), Inches(3.05), Inches(9.7), [4.1, 2.8, 2.8], 13, row_h=0.42)
+    d.text(s, "Dart forward pass ≈ 140–210 ms in the test runner (unoptimised); real-phone timing is the next step.",
+           Inches(3.35), Inches(5.75), Inches(9.7), Inches(0.5), 12, GREY)
+
+    # 12d -------------------------------------------------------------- RQ7 field validation
+    s = d.slide("RQ7 – Field validation, criteria fixed before the counts", "Proof of concept – next step",
+                "Proposal objective O2 says the agreement level is defined in the evaluation plan - it is now, and "
+                "it was fixed today, before any counting, so it cannot be tuned afterwards. Both the simulated "
+                "target and the forecast are compared. One visit day is held back: if the simulator is recalibrated "
+                "with the counts, the held-back day is the honest test. The comparison tool is built and tested; "
+                "it reads a simple counting sheet. (~45 s)")
+    d.table(s, [
+        ["#", "Criterion (pre-registered 20 Oct 2026)", "Pass if"],
+        ["A1", "MAE ÷ mean observed daily peak (typical error vs a busy moment)", "≤ 0.25"],
+        ["A2", "Spearman rank correlation of counts and predictions", "≥ 0.6"],
+        ["A3", "Hour of the highest count vs highest prediction, per place and day", "±1 h on ≥ half"],
+    ], Inches(0.6), Inches(1.6), Inches(7.6), [0.6, 5.4, 1.6], 13, row_h=0.5)
+    d.bullets(s, [
+        "Horton Plains (Dec)::  2–3 days, weekday + weekend; entrance, Mini World's End, World's End, "
+        "Baker's Falls every 30 min, 06:00–13:00",
+        "Adam's Peak (23 Dec, Unduvap Poya)::  final-steps flow every 15 min (the most important unknown, RQ4), "
+        "halfway counts, summit headcount, climb times",
+        "Then::  recalibrate the simulator on all but one day, re-run RQ1–RQ5",
+        "Tool ready::  python -m src.eval.field_validation <counting sheets> → report with A1–A3",
+        "Ethics::  counts only, no names or faces; permission from the warden and Sri Pada trust",
+    ], Inches(0.6), Inches(3.9), Inches(7.6), Inches(3.0), 13, 7)
+    d.callout(s, "Main objective:\n“significant improvement … on at least one field-validated pilot trail”\n\n"
+                 "→ the December counts turn the simulated results into that claim",
+              Inches(8.6), Inches(1.7), Inches(4.3), Inches(3.4), GREEN, 15)
+
     # 13 --------------------------------------------------------------- prototype: visitors
     screens = OUT / "screens"
 
@@ -639,7 +799,8 @@ def build():
                ("03_calendar_horton", "90-day crowd calendar"),
                ("04_day_horton", "One day: expected crowd\n+ how to avoid it")])
     d.bullets(s, [
-        "Offline::  outlook and tickets cached on the phone",
+        "Offline::  outlook and tickets cached; tomorrow's forecast computed on the phone",
+        "Safe limit::  expected / safe number per trail for the day, with “Why this limit?”",
         "Booking::  slot ticket with QR code; full slot → later slot, other trail, other day",
         "Languages::  English · සිංහල · தமிழ் (drafts under native review)",
         "Map::  OpenStreetMap trails, starts, checkpoints",
@@ -657,28 +818,32 @@ def build():
     d.bullets(s, [
         "Backend::  FastAPI per park + gateway, 25+ endpoints",
         "Security::  roles ranger < officer < admin checked on the server; hashed passwords, lockout, audit log",
-        "Quality::  56 Python tests · 16 Flutter widget tests · analyzer clean",
+        "Quality::  65 Python tests · 24 Flutter tests · analyzer clean",
     ], Inches(9.8), Inches(1.6), Inches(3.3), Inches(5.0), 13, 10)
 
     # 14 --------------------------------------------------------------- requirements
     s = d.slide("Requirements and their status", "User & functional requirements",
-                "Map each requirement to evidence. Partial items are honest: real counts and field validation come "
-                "after PP1. (~45 s)")
+                "Numbered exactly as in the proposal (section 5). Two are partial and say why: FR4 needs the data "
+                "contract agreed with Module 3, NFR1 is measured on a laptop and in the Dart engine but not yet on "
+                "a real phone. Extensions beyond the proposal are listed separately. Requirements are still "
+                "provisional until the surveys come back - say this before you are asked. (~45 s)")
     d.table(s, [
-        ["ID", "Requirement", "Status", "Evidence"],
-        ["FR1", "Build the trail graph with terrain/weather features from open data", "Done", "2 parks, 48 / 57 segments"],
-        ["FR2", "Forecast occupancy per segment for the next 24 h", "Done", "ST-GNN, RQ1"],
-        ["FR3", "Benchmark against HA, ARIMA, LSTM with significance tests", "Done", "paired t-tests, Holm"],
-        ["FR4", "Dynamic carrying capacity per trail / segment", "Done", "Cifuentes + crowding factor"],
-        ["FR5", "Visitors plan up to 90 days ahead and see alternatives", "Done", "planning model, suggestions"],
-        ["FR6", "Prevent overcrowding (tickets / advice / holds)", "Done", "−99.6 % Horton, final steps cleared AP"],
-        ["FR7", "Staff tools with roles", "Done", "ranger, officer, admin + audit"],
-        ["NFR1", "Works without trail sensors", "Done", "counts only from tickets / halfway counts"],
-        ["NFR2", "Fallback when the model is unavailable", "Done", "historical-average fallback"],
-        ["NFR3", "Other OSM-mapped parks without architectural change", "Done (pipeline)", "Adam's Peak = 1 config file; RQ2"],
-        ["NFR4", "Validated against real counts", "Pending", "field counts planned (risk R1)"],
-        ["NFR5", "No personal visitor data", "Done", "booking code only, no names"],
-    ], Inches(0.6), Inches(1.5), Inches(12.1), [0.8, 5.6, 1.6, 4.1], 12, row_h=0.4)
+        ["ID", "Requirement (proposal, section 5)", "Status", "Evidence"],
+        ["FR1", "Trail graph from OSM with terrain + weather per node", "Done", "2 parks, 48 / 57 segments"],
+        ["FR2", "Forecast occupancy per segment, next 24 h, with the ST-GNN", "Done", "server + on the phone (RQ1, RQ6)"],
+        ["FR3", "Dynamic capacity per segment with Cifuentes PCC-RCC-ECC", "Done", "daily safe limit per trail"],
+        ["FR4", "Output usable by the dashboard and Module 3", "Partly", "versioned JSON + REST; schema with M3 next"],
+        ["FR5", "Synthetic-target limitation logged with every output", "Done", "disclaimer in every forecast"],
+        ["NFR1", "On-device inference < 2 s", "Done (laptop)", "2 ms ONNX; Dart on phone; real phone next"],
+        ["NFR2", "Graceful fallback without a weather forecast", "Done", "historical average + typical weather"],
+        ["NFR3", "Other OSM parks without architectural change", "Done", "Adam's Peak = 1 config file"],
+        ["NFR4", "Actionable for a non-technical official", "Done", "safe limit + 'why', night plan, HOLD"],
+        ["NFR5", "No personally identifiable data", "Done", "booking code only, no names"],
+        ["Ext.", "Slot tickets (Horton) · start times + halfway holds (Adam's Peak)", "Done", "−99.6 % overcrowding; final steps cleared"],
+        ["Ext.", "90-day planning outlook, staff roles, Sinhala / Tamil", "Done", "P10–P90; ranger / officer / admin"],
+    ], Inches(0.6), Inches(1.5), Inches(12.1), [0.8, 5.4, 1.6, 4.3], 12, row_h=0.4)
+    d.text(s, "Requirements are provisional until the stakeholder surveys return (DWC, rangers, operators, hikers).",
+           Inches(0.6), Inches(6.75), Inches(9), Inches(0.3), 11, GREY)
 
     # 15 --------------------------------------------------------------- risks
     s = d.slide("Risks and mitigation", "Risk mitigation",
@@ -688,9 +853,9 @@ def build():
     d.table(s, [
         ["#", "Risk", "Impact", "Mitigation (status)"],
         ["R1", "No real segment-level counts: the target is synthetic", "High",
-         "Assumptions listed and parameterised; RQ4 sensitivity; field counts at World's End and one Poya night (planned)"],
-        ["R2", "ST-GNN not better than simpler models", "Medium",
-         "Mandatory baselines + ablation; result reported either way; LSTM-cell ST-GNN next (in progress)"],
+         "Assumptions listed; RQ4 sensitivity; agreement criteria fixed and tool built; counts Dec (Horton) + 23 Dec (Adam's Peak)"],
+        ["R2", "ST-GNN not better than the LSTM", "Medium",
+         "Reported either way: better on segments without counts, tie elsewhere (3 seeds); periodic inputs + tuning next"],
         ["R3", "Last part of the Adam's Peak trail missing in OSM", "Medium",
          "Approximate link flagged; replace with a GPS track"],
         ["R4", "Authorities do not adopt tickets / advice", "Medium",
@@ -698,7 +863,11 @@ def build():
         ["R5", "Holiday calendar not published for 2027", "Low", "Estimated Poya days (62/62 within 1 day); swap in gazette"],
         ["R6", "CPU-only training time", "Low", "Small graph, early stopping; seeds run overnight"],
         ["R7", "Translations inaccurate", "Low", "Marked as drafts; native-speaker review"],
-    ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.0, 1.0, 6.6], 12, row_h=0.5)
+        ["R8", "Traffic pretraining does not transfer", "Medium",
+         "Happened at Adam's Peak (RQ5) – reported as a finding; layer freezing and PeMS04/08 next"],
+        ["R9", "Module 3 integration late (FR4)", "Medium",
+         "Versioned JSON already served; agree a JSON Schema + contract tests with the Module 3 owner in Nov"],
+    ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.0, 1.0, 6.6], 11, row_h=0.47)
 
     # 16 --------------------------------------------------------------- commercialisation
     s = d.slide("Who would use it, and why they would pay", "Commercialisation",
@@ -721,18 +890,44 @@ def build():
     ], Inches(8.4), Inches(1.7), Inches(4.7), Inches(5.0), 15, 12)
 
     # 17 --------------------------------------------------------------- progress & next steps
-    s = d.slide("Progress and next steps", "Completion & plan",
-                "About 60-65 % of the research work is done, on schedule; the remaining work is validation and "
-                "depth, not new features. (~45 s)")
+    s = d.slide("Progress against the proposal's work breakdown", "Completion",
+                "The twelve WBS tasks from the proposal (section 8). Nine are done or nearly done; field validation "
+                "and team integration were always planned for later months in the Gantt chart (months 8-11). Build "
+                "is ahead of plan; validation is on plan. About 65 % of the component overall. (~45 s)")
     d.table(s, [
-        ["Done (PP1)", "Next (to PP2)"],
-        ["Graph + features for 2 parks; simulator; dataset", "Field counts: World's End (2–3 days), final-steps flow (1 Poya night)"],
-        ["ST-GNN + 4 baselines, spatial CV, tests (RQ1)", "ST-GNN with LSTM cell; 3 seeds at Adam's Peak"],
-        ["Cifuentes capacity; slot tickets; start times + holds", "Learning curve: days of counts a new park needs (RQ2)"],
-        ["Transfer, forecast value, sensitivity (RQ2–RQ4)", "Calibrate the simulator with DWC totals; re-run RQ1–RQ4"],
-        ["API, gateway, Flutter app, 3 languages", "Usability study (SUS, 10–15 users) + ranger / officer interviews"],
-        ["Planning model 2–90 days (P10–P90 ≈ 78 % coverage)", "Research paper draft; integration with the team app"],
-    ], Inches(0.6), Inches(1.6), Inches(12.1), [6.0, 6.1], 13, row_h=0.62)
+        ["#", "WBS task (proposal section 8)", "Status", "Evidence"],
+        ["1", "Literature review and gap", "Done", "proposal; RQ5 answers the gap"],
+        ["2", "Trail graph + features (OSM / DEM / weather)", "Done", "2 parks; CHIRPS / NASA POWER next"],
+        ["3", "Synthetic target + field calibration", "Target done · counts Dec", "criteria fixed, tool built"],
+        ["4", "Baselines (HA, ARIMA, LSTM)", "Done", "+ GRU without graph (ablation)"],
+        ["5", "Pretraining on public benchmarks", "Done", "METR-LA → PEMS-BAY"],
+        ["6", "Domain adaptation onto the trail", "Done (fine-tuning)", "layer freezing next"],
+        ["7", "Benchmarking (RMSE / MAE / t-test)", "Done", "3 seeds, spatial CV, Holm"],
+        ["8", "Cifuentes cascade + integration", "Done", "safe limit in API and app"],
+        ["9", "On-device quantisation + inference", "Done", "ONNX, int8 tested, Dart engine"],
+        ["10", "Cross-module integration (shared data layer)", "Started", "versioned JSON; schema with M3 in Nov"],
+        ["11", "Field validation + system / QA testing", "Planned Dec", "65 + 24 automated tests"],
+        ["12", "Thesis documentation", "Ongoing", "docs/, evaluation_results.md"],
+    ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.9, 2.6, 4.1], 12, row_h=0.4)
+
+    s = d.slide("Next steps and corrective actions", "Completion & plan",
+                "Each open item has an owner (me), a date and a 'done when'. The two that depend on other people - "
+                "the surveys and the Module 3 schema - are started first because they take elapsed time. (~45 s)")
+    d.table(s, [
+        ["When", "Work", "Done when"],
+        ["26 Oct – 8 Nov", "Beat the LSTM where it matters: daily / weekly periodic inputs, tuning; real-phone timing; CI",
+         "paired tests reported; NFR1 on a phone"],
+        ["by 1 Nov", "Send the stakeholder surveys (DWC, rangers, operators, hikers); book 2–3 interviews",
+         "responses mapped to FR / NFR"],
+        ["9 – 22 Nov", "Domain adaptation beyond fine-tuning (layer freezing, PeMS04/08); feature ablation; lead time",
+         "RQ5 and RQ1b tables"],
+        ["23 Nov – 6 Dec", "JSON Schema + contract tests with Module 3 (FR4); CHIRPS / NASA POWER (O1)",
+         "Module 3 owner signs off"],
+        ["7 – 24 Dec", "Field counts: Horton Plains 2–3 days; Adam's Peak 23 Dec (Unduvap Poya)", "RQ7 report (A1–A3)"],
+        ["28 Dec – 10 Jan", "Recalibrate the simulator; re-run RQ1–RQ5; survey summary", "results for PP2"],
+    ], Inches(0.6), Inches(1.5), Inches(12.1), [1.9, 6.9, 3.3], 13, row_h=0.62)
+    d.text(s, "Frozen until these are done: new screens, new parks, new booking features.", Inches(0.6),
+           Inches(6.15), Inches(12), Inches(0.4), 14, BROWN, bold=True)
 
     # 18 --------------------------------------------------------------- thanks
     s = d.prs.slides.add_slide(d.blank)
@@ -752,12 +947,13 @@ def build():
         "Synthetic target::  all results test the method on a simulator, not the real parks; every assumption is in "
         "docs/assumptions*.md with what would replace it",
         "Same simulator::  the control results (RQ3, RQ4) use the simulator that made the data",
-        "Seeds::  Adam's Peak and transfer results use one seed; Horton temporal uses three",
+        "Seeds::  RQ1 and RQ5 use three seeds; park-to-park transfer (RQ2) and Horton spatial CV use one",
+        "Advice model::  RQ3 / RQ4 were run before crowd-dependent climb times and evening starts were added",
         "Weather::  the day-ahead test uses observed weather (a perfect forecast) – an upper bound",
         "OSM gaps::  the last ~350 m to the Adam's Peak summit is an approximate link; minor routes not mapped",
         "Planning model::  daily totals no better than the calendar average (MAE ≈ 110 vs 108); "
         "segment-hour occupancy better (1.44 vs 1.65)",
-    ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 16, 12)
+    ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 15, 10)
 
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "PP1_Component4.pptx"

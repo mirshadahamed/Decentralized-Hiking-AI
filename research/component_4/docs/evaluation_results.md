@@ -6,7 +6,7 @@ Significance: paired tests over forecast days (or nights), Holm-corrected where 
 
 | RQ | Question | Short answer |
 |---|---|---|
-| RQ1 | Does the trail graph improve forecasts? | **On trail sections without counts, yes at Horton Plains**; with counts everywhere, no gain over a no-graph network. At Adam's Peak, the graph beats the same network without it, but an LSTM is better still |
+| RQ1 | Does the trail graph improve forecasts? | **On trail sections without counts, yes at Horton Plains** and on ordinary Adam's Peak trail; **not at the Adam's Peak summit queue**, where an LSTM is better. With counts everywhere: a tie with the LSTM at both parks (3 seeds) |
 | RQ2 | Does a model trained on one park work on another? | **Not as it is** (worse than a historical average). Pre-training **does** help a new park learn from little data, but with ≤ 90 days of counts a historical average is as good |
 | RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~20 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it |
 | RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: useful when the final steps are a real bottleneck (≤ 25 people/min), little effect above** |
@@ -143,7 +143,26 @@ Paired tests (Holm): ST-GNN (GRU) vs LSTM – no significant difference at eithe
 the LSTM-cell variant is **worse** than the GRU ST-GNN at Adam's Peak (p = 0.007) and worse than the LSTM at
 Horton Plains (p = 0.005), so it is dropped. **Reading:** the earlier single-seed "LSTM beats ST-GNN at Adam's
 Peak" was seed noise. With every segment counted the graph adds nothing measurable; its value is on segments
-*without* counts (spatial CV, Horton Plains significant). **Next:** spatial CV at Adam's Peak with 3 seeds.
+*without* counts (spatial CV, Horton Plains significant).
+
+**Adam's Peak spatial CV, 3 seeds** (run `results/adams_peak/20261020_110028_benchmark_p04s`, MAE on held-out
+segments):
+
+| Block held out | Historical avg | LSTM | GRU (no graph) | ST-GNN |
+|---|---|---|---|---|
+| 0 – summit and the final steps | 31.37 | **28.16** | 30.12 | 33.33 (seeds 26.8–42.4) |
+| 1 | 11.80 | **2.53** | 2.69 | 3.04 |
+| 2 | 12.68 | 1.37 | 1.38 | **1.30** |
+| 3 | 13.16 | 0.87 | 0.90 | **0.84** |
+| Mean | 17.25 | **8.23** | 8.77 | 9.63 |
+
+The ST-GNN is significantly worse than the LSTM overall (+1.40, p_Holm < 0.001), and still far better than the
+historical average. It is best on the two blocks of ordinary trail (2, 3). It loses on the block that holds the
+summit queue, where one seed fails badly. **Reading:** propagating counts from neighbours helps on segments that
+behave like their neighbours. It hurts at the summit: a queue there forms from the *capacity of the final steps*,
+not from what nearby segments look like, and nothing else on the mountain behaves like it. So the graph's value
+on unseen segments is confirmed at Horton Plains and on ordinary Adam's Peak trail, but not at the bottleneck
+itself. **Next:** add the queue state as an input, or give the summit its own output head (B1 in the plan).
 
 ## RQ5 – Pretraining on urban traffic (objective O3, P0-1; `src.pretrain.traffic`, `src.eval.pretrain_transfer`, 20 Oct 2026)
 
