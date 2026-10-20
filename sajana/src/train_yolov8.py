@@ -233,6 +233,7 @@ def run(args):
         import torch
         import ultralytics
         from ultralytics import YOLO, settings
+        from .yolov8_validation import CompleteSegmentationTrainer
         for key in ('sync', 'hub', 'wandb', 'mlflow', 'comet', 'clearml', 'neptune', 'raytune', 'tensorboard', 'dvc'):
             if key in settings:
                 settings.update({key: False})
@@ -317,7 +318,7 @@ def run(args):
         model.add_callback('on_train_batch_end', batch_finished)
         model.add_callback('on_fit_epoch_end', epoch_finished)
         model.train(data=str(data_yaml), name='fit', epochs=config['epochs'], patience=config['patience'],
-                    save=True, save_period=config['save_period'], **train_args)
+                    save=True, save_period=config['save_period'], trainer=CompleteSegmentationTrainer, **train_args)
         record(phase='completed', finished_at=now())
         update_public_plan(state)
     except BaseException as exc:

@@ -50,15 +50,15 @@ The current run's `console.log`, dataset hashes, environment lock, effective dat
 
 Raw initial weights, environments, label caches, run folders and model artifacts stay ignored by Git. Keep the computer powered and awake for local training; closing its lid or stopping the process can interrupt a run.
 
-To resume an interrupted checkpoint with optimizer state, use the training environment's Ultralytics CLI and the actual `last.pt` path:
+To resume an interrupted run with optimizer/EMA state and complete validation, use the project recovery runner and the original run directory:
 
 ```bash
-YOLO_CONFIG_DIR="$PWD/sajana/data/raw/ultralytics_settings" \
-PYTORCH_ENABLE_MPS_FALLBACK=1 \
-sajana/.venv-yolov8/bin/yolo segment train \
-  model="/absolute/path/to/fit/weights/last.pt" resume=True device=mps workers=0
+sajana/.venv-yolov8/bin/python -u -B -m sajana.src.resume_yolov8 \
+  --run "/absolute/path/to/sajana/runs/yolov8_litter/original_run" --device mps
 ```
 
-The direct CLI restores saved training arguments. Custom live-status callbacks belong to the Python runner and are not attached by that CLI command; monitor its `results.csv` and console output when resuming directly. Do not start a new baseline run to resume an existing one.
+The recovery runner requires the old process to be interrupted/failed and its process lock released. It rechecks frozen data hashes, archives original checkpoints/history, restores optimizer and EMA, validates the current checkpoint completely, and re-establishes checkpoint selection/early stopping before more batches run. The current model, data and original epoch budget remain fixed. Resume is recorded; it is not claimed to reproduce an uninterrupted random-number trajectory bit for bit.
+
+The pinned framework's default NMS validator can stop processing later images in a batch after a wall-clock timeout. [yolov8_validation.py](../src/yolov8_validation.py) removes only that offline-validation cutoff, preserving confidence, IoU and detection-count limits. Fresh full runs use this validator too. The health checker flags NMS warnings and records complete validation image counts after recovery. Old validation scores are provisional; original best/periodic checkpoints stay available for complete validation-only comparison before final model selection. The reserved test remains untouched. ETA after resume uses newly completed epochs because the framework's elapsed-time counter restarts.
 
 Trail erosion, roots, obstructions, passability, mobile export and the bot remain later tasks with their own data and evaluation gates.

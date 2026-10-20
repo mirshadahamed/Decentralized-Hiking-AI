@@ -80,7 +80,8 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         issues.append('Nonfinite latest training loss')
     if status.get('error'):
         issues.append(status['error'])
-    timing = epoch_timing(rows, status['planned_epochs'])
+    timing_rows = [row for row in rows if row['epoch'] > status.get('resumed_from_completed_epoch',0)]
+    timing = epoch_timing(timing_rows, status['planned_epochs'])
     age = (checked_at - datetime.fromisoformat(status['updated_at'])).total_seconds()
     stale_after = max(600, 3 * timing['recent_seconds_per_epoch_median']) if timing else 600
     if status['phase'] not in TERMINAL_PHASES and age > stale_after:
@@ -100,9 +101,19 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
     if not test_excluded:
         issues.append('Held-out test exclusion is not established by run records')
     trainer = ROOT / 'src/train_yolov8.py'
-    source_matches = hashlib.sha256(trainer.read_bytes()).hexdigest() == manifest['trainer_source_sha256']
+    original_source_matches = hashlib.sha256(trainer.read_bytes()).hexdigest() == manifest['trainer_source_sha256']
+    source_matches = original_source_matches
+    if status.get('recovery_manifest_path'):
+        recovery = json.loads(Path(status['recovery_manifest_path']).read_text())
+        source_matches = all(hashlib.sha256((ROOT/'src'/name).read_bytes()).hexdigest() == recovery[key]
+                             for name,key in [('resume_yolov8.py','resume_source_sha256'),
+                                              ('yolov8_validation.py','validator_source_sha256')])
     if not source_matches:
         issues.append('Trainer source differs from frozen run; use the recorded commit when reproducing')
+    console = Path(status.get('active_console_log') or run/'console.log')
+    timeout_count = console.read_text(errors='replace').count('NMS time limit') if console.is_file() else 0
+    if timeout_count:
+        issues.append('Validation NMS timeout detected; some batch predictions may be skipped. Scores require review.')
     trend_keys = ('train/seg_loss', 'train/cls_loss', 'val/seg_loss',
                   'metrics/mAP50(M)', 'metrics/mAP50-95(M)',
                   'metrics/precision(M)', 'metrics/recall(M)')
@@ -117,6 +128,12 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         'completed_epoch_values_finite': all_finite, 'issues': issues,
         'test_split_excluded_from_training': test_excluded,
         'trainer_source_matches_frozen_run': source_matches,
+        'original_trainer_source_matches_frozen_run': original_source_matches,
+        'validation_timeout_warning_count': timeout_count,
+        'validation_console_checked': str(console),
+        'historical_validation_provisional_through_epoch': status.get('historical_validation_provisional_through_epoch'),
+        'baseline_validation_complete': status.get('baseline_validation_complete'),
+        'complete_validation_images': status.get('complete_validation_images'),
         'checkpoints': checkpoints, 'validation_trend': trend,
         'timing': timing, 'app_model_ready': False,
         'app_readiness_not_established_by_training_health': True,
@@ -159,6 +176,10 @@ def save_report(report, output):
               'No obstacle/clear-trail or Android release readiness is claimed.', '']
     if report['issues']:
         lines += ['Issues:', ''] + ['- ' + issue for issue in report['issues']] + ['']
+    if report.get('historical_validation_provisional_through_epoch'):
+        lines += [f"Validation scores through epoch {report['historical_validation_provisional_through_epoch']} are provisional because the original validator could time out.",
+                  f"Complete recovery baseline validated: {report.get('baseline_validation_complete')}. Images processed: {report.get('complete_validation_images')}.",
+                  'Original checkpoints/history remain archived; retained historical candidates require complete validation before final model selection.', '']
     (output / 'HEALTH.md').write_text('\n'.join(lines))
 
 

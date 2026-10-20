@@ -54,6 +54,12 @@ class TrainingMonitorTests(unittest.TestCase):
             report, _ = inspect(root/'status.json', now)
             self.assertTrue(report['training_functioning_at_check'])
             self.assertFalse(report['app_model_ready'])
+            (root/'console.log').write_text('WARNING NMS time limit 2.400s exceeded\n')
+            report, _ = inspect(root/'status.json', now)
+            self.assertFalse(report['training_functioning_at_check'])
+            self.assertEqual(report['validation_timeout_warning_count'],1)
+            self.assertTrue(any('timeout' in issue for issue in report['issues']))
+            (root/'console.log').unlink()
             # A numerical failure must still produce a valid, explicitly failed JSON report.
             (root/'fit/results.csv').write_text('epoch,time,'+','.join(keys)+'\n1,100,'+','.join(['nan']*len(keys))+'\n')
             report, _ = inspect(root/'status.json', now)
