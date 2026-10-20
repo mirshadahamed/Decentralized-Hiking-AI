@@ -14,6 +14,10 @@ class OfflineKnowledgeDatabase {
 
   Database? _database;
 
+  // null: not tested; true: supported; false: unavailable for this database
+  // instance. Android SQLite builds can open the database but omit FTS5.
+  bool? _fts5Available;
+
   // ------------------------------------------------------------
   // DATABASE INSTANCE
   // ------------------------------------------------------------
@@ -98,13 +102,50 @@ class OfflineKnowledgeDatabase {
     required String category,
     int limit = 4,
   }) async {
-    final db = await database;
+    final queryWords = _normalizeQueryWords(question);
 
-    final ftsQuery = _buildFtsQuery(question);
-
-    if (ftsQuery.isEmpty) {
+    if (queryWords.isEmpty) {
       return [];
     }
+
+    final db = await database;
+
+    if (_fts5Available != false) {
+      try {
+        final results = await _retrieveWithFts5(
+          db: db,
+          queryWords: queryWords,
+          category: category,
+          limit: limit,
+        );
+        _fts5Available = true;
+        return results;
+      } on DatabaseException catch (error) {
+        if (!_isFts5UnavailableError(error)) {
+          rethrow;
+        }
+
+        _fts5Available = false;
+      }
+    }
+
+    // Adaptive SQLite retrieval fallback. This is portable and fully offline,
+    // but its deterministic Dart ranking is not equivalent to FTS5 BM25.
+    return _retrievePortable(
+      db: db,
+      queryWords: queryWords,
+      category: category,
+      limit: limit,
+    );
+  }
+
+  Future<List<RagRetrievalResult>> _retrieveWithFts5({
+    required Database db,
+    required List<String> queryWords,
+    required String category,
+    required int limit,
+  }) async {
+    final ftsQuery = _buildFtsQuery(queryWords);
 
     final rows = await db.rawQuery(
       '''
@@ -131,6 +172,95 @@ class OfflineKnowledgeDatabase {
     );
 
     return rows.map(RagRetrievalResult.fromMap).toList();
+  }
+
+  Future<List<RagRetrievalResult>> _retrievePortable({
+    required Database db,
+    required List<String> queryWords,
+    required String category,
+    required int limit,
+  }) async {
+    final wordConditions = List.filled(
+      queryWords.length,
+      'LOWER(kc.content) LIKE ?',
+    ).join(' OR ');
+
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        kc.chunk_id,
+        kc.source_id,
+        kc.source_chunk_index,
+        kc.content,
+        kc.categories,
+        d.title,
+        d.organization,
+        d.country_context
+      FROM knowledge_chunks kc
+      JOIN documents d
+        ON d.source_id = kc.source_id
+      WHERE kc.categories LIKE ?
+        AND ($wordConditions)
+      ''',
+      ['%$category%', ...queryWords.map((word) => '%$word%')],
+    );
+
+    final candidates = rows.map(RagRetrievalResult.fromMap).toList();
+
+    candidates.sort((left, right) {
+      final scoreComparison = _portableScore(
+        right,
+        queryWords,
+      ).compareTo(_portableScore(left, queryWords));
+
+      if (scoreComparison != 0) {
+        return scoreComparison;
+      }
+
+      final sourceComparison = left.sourceId.compareTo(right.sourceId);
+
+      if (sourceComparison != 0) {
+        return sourceComparison;
+      }
+
+      return left.sourceChunkIndex.compareTo(right.sourceChunkIndex);
+    });
+
+    return candidates.take(limit).toList();
+  }
+
+  int _portableScore(RagRetrievalResult result, List<String> queryWords) {
+    final title = result.title.toLowerCase();
+    final content = result.content.toLowerCase();
+    var score = 0;
+
+    for (final word in queryWords) {
+      if (title.contains(word)) {
+        score += 4;
+      }
+
+      final firstMatch = content.indexOf(word);
+
+      if (firstMatch == -1) {
+        continue;
+      }
+
+      score += 2;
+      var nextStart = firstMatch + word.length;
+
+      while (nextStart <= content.length - word.length) {
+        final nextMatch = content.indexOf(word, nextStart);
+
+        if (nextMatch == -1) {
+          break;
+        }
+
+        score += 1;
+        nextStart = nextMatch + word.length;
+      }
+    }
+
+    return score;
   }
 
   // ------------------------------------------------------------
@@ -191,23 +321,35 @@ class OfflineKnowledgeDatabase {
   }
 
   // ------------------------------------------------------------
-  // BUILD FTS5 QUERY
+  // QUERY NORMALIZATION AND FTS5 CAPABILITY
   // ------------------------------------------------------------
 
-  String _buildFtsQuery(String question) {
+  List<String> _normalizeQueryWords(String question) {
     final words = question
         .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), ' ')
         .split(RegExp(r'\s+'))
-        .where((word) => word.length >= 3)
-        .toSet()
-        .toList();
+        .map((word) => word.trim())
+        .where((word) => word.length >= 3);
 
-    if (words.isEmpty) {
-      return '';
+    final uniqueWords = <String>[];
+    final seenWords = <String>{};
+
+    for (final word in words) {
+      if (seenWords.add(word)) {
+        uniqueWords.add(word);
+      }
     }
 
+    return uniqueWords;
+  }
+
+  String _buildFtsQuery(List<String> words) {
     return words.map((word) => '"$word"').join(' OR ');
+  }
+
+  bool _isFts5UnavailableError(DatabaseException error) {
+    return error.toString().toLowerCase().contains('no such module: fts5');
   }
 
   // ------------------------------------------------------------
@@ -217,5 +359,6 @@ class OfflineKnowledgeDatabase {
   Future<void> close() async {
     await _database?.close();
     _database = null;
+    _fts5Available = null;
   }
 }
