@@ -171,6 +171,11 @@ sajana/results/**/*.pth
 sajana/results/**/*.onnx
 sajana/runs/
 
+# Live monitor output is regenerated locally from the training run.
+sajana/results/yolov8_training/health_report.json
+sajana/results/yolov8_training/HEALTH.md
+sajana/results/yolov8_training/monitor_launch.json
+
 # Downloaded reference material and unused alternate annotation taxonomy.
 # Keep the selected 4-class pLitter annotations, labels and manifests versioned.
 sajana/data/interim/rugd/*.pdf

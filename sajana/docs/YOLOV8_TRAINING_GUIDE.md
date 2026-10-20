@@ -33,6 +33,14 @@ The runner fully verifies TACO by default. `--preflight-report` can reuse a full
 
 Open `sajana/results/yolov8_training/status.json` for live phase, PID, device, completed epochs, batch progress, losses, validation metrics and checkpoint paths. The public dataset status reads this record and keeps full trail-damage readiness separate.
 
+For a read-only health check and an estimate based on the latest five complete epochs (including validation), run:
+
+```bash
+sajana/.venv-yolov8/bin/python -B -m sajana.src.check_yolov8_training --plot
+```
+
+This writes `results/yolov8_training/health_report.json`, `HEALTH.md` and a local `learning_curves.png`. Add `--watch` to refresh every minute until the trainer finishes, fails, or a health issue is found. The check reads existing logs and metadata; it performs no additional model inference or test evaluation. Its ETA extrapolates the full epoch budget; early stopping, Mac sleep and speed changes can alter the finish time. A healthy training loop does not establish app accuracy, obstacle detection or clear-trail recognition.
+
 The current run's `console.log`, dataset hashes, environment lock, effective data YAML and `run_manifest.json` are under `sajana/runs/yolov8_litter/<run>/`. Actual training results are in its `fit/` subdirectory:
 
 - `results.csv`: epoch losses and validation metrics, including box/mask AP.

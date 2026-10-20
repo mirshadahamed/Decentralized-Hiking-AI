@@ -1,6 +1,21 @@
 # Component 2: from verified datasets to the Android app
 
-The immediate deliverable is a reproducible litter-segmentation training experiment. The full concurrent litter/trail-damage model follows after genuine damage annotations are available. This roadmap records the work order; it does not start training or select a final model architecture.
+The immediate deliverable is a reproducible litter-segmentation training experiment. The YOLOv8n-seg L1 baseline is running; check [the live training status](../results/yolov8_training/status.json) and [training guide](YOLOV8_TRAINING_GUIDE.md). The full concurrent litter/trail-damage model follows after genuine damage annotations are available. This roadmap records the work order.
+
+## Required photo behavior
+
+The requested app flow is: capture a photo, locate garbage, assess the visible trail for an obstruction, and show the findings on that photo. Garbage and obstacles may occur together, so these are independent findings rather than exclusive image classes.
+
+| Finding | Evidence needed | Current model support |
+| --- | --- | --- |
+| Garbage detected | Reviewed litter masks/boxes and validation-selected confidence threshold | L1 trains this task; final/local evaluation pending. |
+| Visible trail obstruction | Reviewed trail corridor and objects that actually obstruct it, including rocks/logs/branches across the route | No trained obstruction model yet. WildScenes object masks can support a context experiment; presence alone does not establish obstruction. |
+| No visible obstruction detected | Assessable trail corridor and evaluated obstruction model, trained with reviewed clear-trail examples as well as obstructions | Not established by the litter model. |
+| Unable to assess | Trail outside the photo, poor visibility, uncertain inference, or a required model unavailable | Required result state; do not convert missing predictions/labels into clear-trail claims. |
+
+The result should retain independent litter and obstacle states, model version, confidence and overlay coordinates. The current litter model must return obstacle assessment as unavailable. A litter-free result does not establish that the trail has no obstacles. Only the visible part of the photographed trail can be assessed.
+
+Local collection must include clear trails, natural objects beside a clear route, true obstructions across the route, garbage with/without obstruction, and difficult lighting or obscured trails. Review corridor and obstruction labels together. Keep route/site/session groups separate across training, validation and final test. Start with the planned reviewed pilot, then expand based on class coverage and error analysis; a fixed image count cannot guarantee accuracy.
 
 ## 1. Finish the dataset and label alignment
 
@@ -35,7 +50,7 @@ Use [taco_litter.yaml](../configs/taco_litter.yaml) and [litter_taco_mju_aux.yam
 
 Start with compatible published pretrained weights and fine-tune for litter segmentation. Pretraining provides learned visual features; fine-tuning adapts those features to this task. Training a new model from random weights is a separate experiment, not a prerequisite. See the [PyTorch transfer-learning tutorial](https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html).
 
-Choose and pin the model, library versions and training device after confirming available compute and export support. Then:
+L1 now uses COCO-pretrained YOLOv8n-seg on Apple MPS, with its actual versions and configuration frozen in the run manifest. Continue in this order:
 
 1. Refresh the full source verifiers and freeze dataset/manifest hashes, taxonomy and split membership.
 2. Run a small training-set-only check to confirm that images, masks, losses and predictions align.

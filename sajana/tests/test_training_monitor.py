@@ -1,0 +1,67 @@
+import tempfile
+import unittest
+import hashlib
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from sajana.src.check_yolov8_training import ROOT, completed_rows, epoch_timing, inspect, save_report
+
+
+class TrainingMonitorTests(unittest.TestCase):
+    def test_partial_epoch_write_does_not_inflate_progress(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'results.csv'
+            path.write_text('epoch,time,train/seg_loss\n1,100,2.5\n2,20')
+            self.assertEqual(completed_rows(path), [{'epoch': 1.0, 'time': 100.0, 'train/seg_loss': 2.5}])
+
+    def test_eta_uses_recent_differences_not_cumulative_times(self):
+        times = [10, 30, 60, 100, 150, 210]
+        rows = [{'epoch': i+1, 'time': t} for i, t in enumerate(times)]
+        result = epoch_timing(rows, 10)
+        self.assertEqual(result['recent_seconds_per_epoch_median'], 40)
+        self.assertEqual(result['remaining_seconds_to_epoch_budget'], 160)
+        self.assertEqual(result['remaining_seconds_observed_range'], [80, 240])
+        self.assertFalse(result['early_stopping_finish_time_predictable'])
+
+    def test_invalid_or_finished_timings_never_create_negative_eta(self):
+        self.assertIsNone(epoch_timing([], 100))
+        self.assertIsNone(epoch_timing([{'epoch': 1, 'time': float('nan')}], 100))
+        self.assertIsNone(epoch_timing([{'epoch': 1, 'time': 30}, {'epoch': 2, 'time': 20}], 100))
+        self.assertEqual(epoch_timing([{'epoch': 2, 'time': 100}], 2)['remaining_seconds_to_epoch_budget'], 0)
+
+    def test_missing_checkpoints_or_stale_heartbeat_cannot_claim_healthy_training(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); (root/'fit/weights').mkdir(parents=True)
+            now = datetime.now(ZoneInfo('Asia/Colombo'))
+            state = {'run_directory': str(root), 'updated_at': (now-timedelta(hours=1)).isoformat(),
+                     'phase': 'training', 'planned_epochs': 100, 'full_run_started': True,
+                     'last_training_loss': 3.0, 'target_classes': {'0': 'litter'}}
+            (root/'status.json').write_text(json.dumps(state))
+            (root/'data.yaml').write_text('train: images/train\nval: images/val\n')
+            digest = hashlib.sha256((ROOT/'src/train_yolov8.py').read_bytes()).hexdigest()
+            (root/'run_manifest.json').write_text(json.dumps({'test_split_loaded': False, 'trainer_source_sha256': digest}))
+            keys = ['train/seg_loss', 'train/cls_loss', 'val/seg_loss', 'metrics/mAP50(M)',
+                    'metrics/mAP50-95(M)', 'metrics/precision(M)', 'metrics/recall(M)']
+            (root/'fit/results.csv').write_text('epoch,time,'+','.join(keys)+'\n1,100,'+','.join(['0.4']*len(keys))+'\n')
+            report, _ = inspect(root/'status.json', now)
+            self.assertFalse(report['training_functioning_at_check'])
+            self.assertTrue(any('heartbeat' in issue for issue in report['issues']))
+            self.assertTrue(any('checkpoint' in issue for issue in report['issues']))
+            state['updated_at'] = now.isoformat(); (root/'status.json').write_text(json.dumps(state))
+            for name in ('best', 'last'): (root/'fit/weights'/f'{name}.pt').write_bytes(b'fixture')
+            report, _ = inspect(root/'status.json', now)
+            self.assertTrue(report['training_functioning_at_check'])
+            self.assertFalse(report['app_model_ready'])
+            # A numerical failure must still produce a valid, explicitly failed JSON report.
+            (root/'fit/results.csv').write_text('epoch,time,'+','.join(keys)+'\n1,100,'+','.join(['nan']*len(keys))+'\n')
+            report, _ = inspect(root/'status.json', now)
+            self.assertFalse(report['training_functioning_at_check'])
+            save_report(report, root/'report')
+            saved = json.loads((root/'report/health_report.json').read_text())
+            self.assertIsNone(saved['validation_trend']['metrics/recall(M)']['latest'])
+
+
+if __name__ == '__main__':
+    unittest.main()
