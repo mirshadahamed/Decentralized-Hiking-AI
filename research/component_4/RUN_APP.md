@@ -99,6 +99,58 @@ switches English / සිංහල / தமிழ்.
 
 ---
 
+## Use it on your phone
+
+The app is built for phones: phone-sized screens, offline tickets and an offline forecast. The phone and the
+laptop must be on the **same Wi-Fi**. The laptop's Wi-Fi address here is `192.168.1.6`; check yours with
+`ipconfig`, line "IPv4 Address" under the Wi-Fi adapter.
+
+**Terminal 1 (both options):** start the servers so the phone can reach them:
+```powershell
+.venv\Scripts\python.exe -m src.api.serve_all --host 0.0.0.0
+```
+If Windows asks to allow Python through the firewall, tick **Private networks** → Allow. On the phone's browser,
+http://192.168.1.6:8000/parks should list both parks. If it doesn't load, the firewall is blocking port 8000.
+
+### Option A – in the phone's browser (works now, nothing to install)
+Terminal 2:
+```powershell
+cd D:\Documents\SLIIT\Research\Decentralized-Hiking-AI
+flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080 --dart-define=C4_API=http://192.168.1.6:8000
+```
+- On the phone, open **http://192.168.1.6:8080** in Chrome. Then use ⋮ → **Add to Home screen** for an app icon.
+- Everything works, including the forecast made on the phone. Exception: **QR scanning** at the ranger gate
+  needs HTTPS in a browser, so type the ticket code instead.
+
+### Option B – install the Android app (APK)
+One-time: install **Android Studio** (it brings the Android SDK), open it once and let it finish the SDK setup.
+Then run `flutter doctor` until "Android toolchain" has a ✓, and accept licences with
+`flutter doctor --android-licenses`.
+
+**Phone connected by USB** (Settings → About phone → tap *Build number* 7 times → Developer options → **USB
+debugging** on):
+```powershell
+flutter devices                                            # the phone must be listed
+flutter run -d <phone id> --dart-define=C4_API=http://192.168.1.6:8000
+```
+
+**Or build an APK file** and copy it to the phone (allow "install unknown apps" for Files / Drive):
+```powershell
+flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
+# -> build\app\outputs\flutter-apk\app-debug.apk
+```
+- Use the **debug** build: it allows plain `http://` to the laptop. A release build needs the server on HTTPS.
+- The server address is fixed into the build. If the laptop's IP changes, build again.
+- The Android emulator uses `C4_API=http://10.0.2.2:8000` instead.
+
+**Demo with no signal (the on-device forecast):**
+1. Open tomorrow's date once while connected.
+2. Turn on airplane mode, open tomorrow again.
+3. The card **"Forecast made on this phone"** still appears ("offline copy"), with the time it took on *this*
+   phone. That is the real-phone NFR1 measurement (plan item B4).
+
+---
+
 ## One-time setup (already done on this laptop – only for a new computer)
 1. Install Flutter (stable) and add its `bin` folder to the user PATH; restart VS Code.
 2. Turn on Windows **Developer Mode**: Win + R → `ms-settings:developers` → On.
@@ -145,5 +197,4 @@ switches English / සිංහල / தமிழ்.
   "estimated". Bookings are stored only on this computer (`research/component_4/data/bookings.sqlite`).
 - The demo time button only works because `api.allow_time_override: true` in `configs/default.yaml`.
   Set it to `false` for real use.
-- Android phone/emulator: needs Android Studio. Emulator: `C4_API=http://10.0.2.2:8000`. Real phone: start the
-  server with `--host 0.0.0.0` and use the PC's IP address.
+- Phone or emulator: see **Use it on your phone** above.
