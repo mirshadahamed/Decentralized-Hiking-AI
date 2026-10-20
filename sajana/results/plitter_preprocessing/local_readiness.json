@@ -6,8 +6,8 @@
     "val": "efa65ec0e6890933d82c61ecdf2734f8175fe70cbe66da9a482fc1497ade1db0",
     "test": "db84694116c6aecbac990dc544087027f30cf0f2c9e98fa6df1cbafcb67ebad4"
   },
-  "passed": true,
-  "labels_only": true,
+  "passed": false,
+  "labels_only": false,
   "training_ready": false,
   "task": "detect",
   "target_names": [
@@ -20,28 +20,48 @@
     "train": {
       "images": 12086,
       "objects": 70133,
-      "present_images": 0,
-      "missing_images": 12086,
-      "verified_images": 0
+      "present_images": 12082,
+      "missing_images": 4,
+      "verified_images": 12082
     },
     "val": {
       "images": 1511,
       "objects": 8809,
-      "present_images": 0,
-      "missing_images": 1511,
-      "verified_images": 0
+      "present_images": 1510,
+      "missing_images": 1,
+      "verified_images": 1510
     },
     "test": {
       "images": 1508,
       "objects": 8719,
-      "present_images": 0,
-      "missing_images": 1508,
-      "verified_images": 0
+      "present_images": 1508,
+      "missing_images": 0,
+      "verified_images": 1508
     }
   },
   "quarantined_images": 33,
-  "duplicate_images": [],
-  "issues": [],
+  "duplicate_images": [
+    {
+      "image": "train/plitter_538__ATT88_15815000845138764992574294229303.jpg",
+      "previous": "train/plitter_162__15815000845138764992574294229303.jpg"
+    },
+    {
+      "image": "train/plitter_69__ATT7_15827077730558065475701396371366.jpg",
+      "previous": "train/plitter_256__15827077730558065475701396371366.jpg"
+    },
+    {
+      "image": "val/plitter_487__ATT44_D1F39137-D5C8-4051-B739-D6903D4363C2.jpg",
+      "previous": "train/plitter_158__ATT38_CE45F136-BC9A-4067-AF9B-7C0333F038BE.jpg"
+    }
+  ],
+  "issues": [
+    "train/plitter_372__ATT82_9304590E-91A3-429F-B1FC-8D44377482D5.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_372__ATT82_9304590E-91A3-429F-B1FC-8D44377482D5.jpg'",
+    "train/plitter_528__ATT112_859A6070-BD32-404A-9D22-8B78A83D8430.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_528__ATT112_859A6070-BD32-404A-9D22-8B78A83D8430.jpg'",
+    "train/plitter_449__ATT157_20200304_093209.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_449__ATT157_20200304_093209.jpg'",
+    "train/plitter_651__ATT227_887D62F8-ABCC-40AC-87A3-15FF0DFE0305.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_651__ATT227_887D62F8-ABCC-40AC-87A3-15FF0DFE0305.jpg'",
+    "val/plitter_487__ATT44_D1F39137-D5C8-4051-B739-D6903D4363C2.jpg: identical decoded pixels cross official splits: train/plitter_158__ATT38_CE45F136-BC9A-4067-AF9B-7C0333F038BE.jpg",
+    "val/plitter_317__ATT109_8E872252-A274-49FC-A7FF-62D0031F252A.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/val/plitter_317__ATT109_8E872252-A274-49FC-A7FF-62D0031F252A.jpg'"
+  ],
   "independent_sequence_evaluation_supported": false,
   "role": "four-class detection auxiliary; official video frame splits may be correlated; no segmentation masks"
 }

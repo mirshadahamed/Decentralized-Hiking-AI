@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-20T18:45:48.604125+05:30",
+  "checked_at": "2026-10-20T18:46:51.592703+05:30",
   "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
   "preparation_order": [
     "source inventory and taxonomy",
@@ -388,9 +388,9 @@
       "acquisition_snapshot": {
         "complete": false,
         "phase": "download",
-        "verified_files": 14878,
-        "remaining_files": 2056,
-        "verified_bytes": 39400826526,
+        "verified_files": 14928,
+        "remaining_files": 2006,
+        "verified_bytes": 39540169938,
         "selected_files": 16934,
         "selected_bytes": 44887369710
       },
