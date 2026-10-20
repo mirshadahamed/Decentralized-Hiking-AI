@@ -58,8 +58,24 @@ class FixtureApi extends C4Api {
   @override
   Future<DayPlan> plan(DateTime d) async => DayPlan.fromPlanJson(_j(_p, 'plan'));
 
+  bool _isTomorrow(DateTime d) =>
+      File('$fixtures/$_p/tomorrow.json').existsSync() && C4Api.day(d) == (_j(_p, 'tomorrow') as Map)['forecast_date'];
+
   @override
-  Future<DaySlots> slots(DateTime d) async => DaySlots.fromJson(_j(_p, 'slots'));
+  Future<DaySlots> slots(DateTime d) async => DaySlots.fromJson(_j(_p, _isTomorrow(d) ? 'slots_tomorrow' : 'slots'));
+
+  @override
+  Future<DayCapacity> capacity(DateTime d) async {
+    final name = _isTomorrow(d) ? 'capacity_tomorrow' : 'capacity';
+    if (!File('$fixtures/$_p/$name.json').existsSync()) throw ApiException(404, 'no capacity');
+    return DayCapacity.fromJson(_j(_p, name));
+  }
+
+  @override
+  Future<Map<String, dynamic>> tomorrow() async => _j(_p, 'tomorrow') as Map<String, dynamic>;
+
+  @override
+  Future<Map<String, dynamic>> edgePack() async => _j(_p, 'edge_pack') as Map<String, dynamic>;
 
   @override
   Future<StartAdvice> advisory(DateTime d) async => StartAdvice.fromJson(_j(_p, 'advisory'));
@@ -135,6 +151,22 @@ void main() {
     await phone(t);
     await t.pumpWidget(_scoped(DayScreen(day: DateTime(2026, 11, 24)), FixtureApi()..usePark('horton_plains')));
     await _shot(t, '04_day_horton');
+  }, skip: skip);
+
+  testWidgets('10 Horton tomorrow: forecast made on this phone', (t) async {
+    await phone(t);
+    final api = FixtureApi()..usePark('horton_plains');
+    final tomorrow = DateTime.parse((await api.tomorrow())['forecast_date'] as String);
+    await t.pumpWidget(_scoped(DayScreen(day: tomorrow), api));
+    final card = find.text('Forecast made on this phone', skipOffstage: false);
+    for (var i = 0; i < 50 && card.evaluate().isEmpty; i++) {
+      await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await t.pump();
+    }
+    await t.ensureVisible(find.text('Forecast made on this phone'));
+    await t.pumpAndSettle();
+    await t.drag(find.byType(Scrollable).first, const Offset(0, 40));
+    await _shot(t, '10_on_device');
   }, skip: skip);
 
   testWidgets('05 Adam\'s Peak start times', (t) async {

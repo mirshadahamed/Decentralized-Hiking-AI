@@ -46,7 +46,7 @@ def evaluate(name, pred, data, origins, nodes, cfg, extra=None):
     return row, per_day_mae(pred, y, om, nodes)
 
 
-def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log):
+def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log, neural=None):
     te = data.origins("test")
     rows, day_err, preds = [], {}, {}
 
@@ -62,7 +62,7 @@ def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log):
         rows.append(r)
         log(f"[{tag}] ARIMA done in {time.time() - t0:.0f}s")
 
-    for kind in NEURAL:
+    for kind in neural or NEURAL:
         seed_rows, seed_days, seed_preds = [], [], []
         for s in seeds:
             model, scale = train(data, kind, sensed, cfg, s, log=log)
@@ -87,13 +87,24 @@ def main():
     ap.add_argument("--protocol", choices=["temporal", "spatial", "both"], default="both")
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--no-arima", action="store_true")
+    ap.add_argument("--models", nargs="+", default=None, choices=NEURAL + ["stgnn_lstm"],
+                    help="neural models to train (default: lstm gru_nograph stgnn)")
+    ap.add_argument("--seeds", type=int, nargs="+", default=None, help="override the config seeds (both protocols)")
+    ap.add_argument("--tag", default="", help="extra name for the run folder; tagged runs do not replace LATEST")
     args = ap.parse_args()
 
     cfg = load_config()
+    if args.seeds:
+        cfg["train"].update(seeds=args.seeds, spatial_seeds=args.seeds)
     if args.quick:
         cfg["train"].update(epochs=1, seeds=[42], spatial_seeds=[42])
     data = TrailData(cfg)
-    run = new_run_dir("benchmark" + ("_quick" if args.quick else ""), cfg)
+    run = new_run_dir("benchmark" + ("_quick" if args.quick else "") + (f"_{args.tag}" if args.tag else ""), cfg)
+    graph_models = [m for m in (args.models or NEURAL) if m.startswith("stgnn")]
+
+    def tests(day_err):
+        """Paired tests of every graph model against all other models (Holm within each)."""
+        return {f"tests_vs_{g}": paired_tests(day_err, g) for g in graph_models if g in day_err}
     (run / "models").mkdir()
     logf = open(run / "log.txt", "w", encoding="utf-8")
 
@@ -106,9 +117,9 @@ def main():
     out = {}
     if args.protocol in ("temporal", "both"):
         rows, day_err, preds = run_protocol(data, cfg, run, np.ones(data.N, bool), all_nodes,
-                                            cfg["train"]["seeds"], "temporal", not args.no_arima, log)
+                                            cfg["train"]["seeds"], "temporal", not args.no_arima, log, args.models)
         pd.DataFrame(rows).to_csv(run / "metrics_temporal.csv", index=False)
-        out["temporal"] = {"tests_vs_stgnn": paired_tests(day_err, "stgnn")}
+        out["temporal"] = tests(day_err)
         np.savez_compressed(run / "predictions_temporal.npz", origins=data.origins("test"),
                             **{k: v.astype(np.float32) for k, v in preds.items()})
 
@@ -120,7 +131,7 @@ def main():
             sensed[block] = False
             log(f"[spatial fold {f}] held-out segments: {block.tolist()}")
             rows, day_err, _ = run_protocol(data, cfg, run, sensed, block, cfg["train"]["spatial_seeds"],
-                                            f"spatial{f}", False, log)
+                                            f"spatial{f}", False, log, args.models)
             for r in rows:
                 r["fold"] = f
             fold_rows += rows
@@ -130,11 +141,10 @@ def main():
         df.to_csv(run / "metrics_spatial_folds.csv", index=False)
         df.groupby("model")[["MAE", "RMSE"]].agg(["mean", "std"]).to_csv(run / "metrics_spatial.csv")
         pooled = {k: np.concatenate(v) for k, v in fold_days.items()}   # pairs = (fold, day)
-        out["spatial"] = {"blocks": [b.tolist() for b in blocks],
-                          "tests_vs_stgnn": paired_tests(pooled, "stgnn")}
+        out["spatial"] = {"blocks": [b.tolist() for b in blocks], **tests(pooled)}
 
     (run / "stats.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
-    if not args.quick:                         # a pipeline check must not replace the model the app uses
+    if not args.quick and not args.tag:        # checks and experiments must not replace the model the app uses
         (RESULTS / "LATEST").write_text(run.name, encoding="utf-8")
     log(f"done -> {run}")
 

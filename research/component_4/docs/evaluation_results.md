@@ -6,10 +6,12 @@ Significance: paired tests over forecast days (or nights), Holm-corrected where 
 
 | RQ | Question | Short answer |
 |---|---|---|
-| RQ1 | Does the trail graph improve forecasts? | **On trail sections without counts, yes at Horton Plains**; with counts everywhere, no gain over a no-graph network. At Adam's Peak, the graph beats the same network without it, but an LSTM is better still |
+| RQ1 | Does the trail graph improve forecasts? | **On trail sections without counts, yes at Horton Plains** and on ordinary Adam's Peak trail; **not at the Adam's Peak summit queue**, where an LSTM is better. With counts everywhere: a tie with the LSTM at both parks (3 seeds) |
 | RQ2 | Does a model trained on one park work on another? | **Not as it is** (worse than a historical average). Pre-training **does** help a new park learn from little data, but with ≤ 90 days of counts a historical average is as good |
 | RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~20 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it |
 | RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: useful when the final steps are a real bottleneck (≤ 25 people/min), little effect above** |
+| RQ5 | Does pretraining on urban traffic (METR-LA, PEMS-BAY) help? | **Only at Horton Plains with 30–90 days of counts** (−5 to −12 % vs scratch); no help at Adam's Peak; zero-shot fails; a historical average still wins at ≤ 90 days |
+| RQ6 | Can the forecast run on the phone within 2 s? | **Yes**: 2 ms (ONNX, laptop core), ~140 ms in plain Dart, offline |
 
 ---
 
@@ -126,6 +128,110 @@ Cut in waiting on the final steps from **start times alone (B)**, vs no control:
   it on one Poya night is the most valuable field work.
 
 ---
+
+## RQ1 update – 3 seeds and an LSTM-cell variant (P0-4, 20 Oct 2026)
+
+Temporal protocol (every segment counted), 3 seeds, runs `results/adams_peak/20261020_002150_benchmark_p04`
+and `results/20261020_020459_benchmark_p04` (tagged runs: the app's model is unchanged).
+
+| Park | LSTM (no graph) | ST-GNN (GRU) | ST-GNN (LSTM cell) |
+|---|---|---|---|
+| Adam's Peak | 3.83 | **3.80** | 3.87 |
+| Horton Plains | **1.42** | 1.42 | 1.43 |
+
+Paired tests (Holm): ST-GNN (GRU) vs LSTM – no significant difference at either park (p = 0.09 / 0.12);
+the LSTM-cell variant is **worse** than the GRU ST-GNN at Adam's Peak (p = 0.007) and worse than the LSTM at
+Horton Plains (p = 0.005), so it is dropped. **Reading:** the earlier single-seed "LSTM beats ST-GNN at Adam's
+Peak" was seed noise. With every segment counted the graph adds nothing measurable; its value is on segments
+*without* counts (spatial CV, Horton Plains significant).
+
+**Adam's Peak spatial CV, 3 seeds** (run `results/adams_peak/20261020_110028_benchmark_p04s`, MAE on held-out
+segments):
+
+| Block held out | Historical avg | LSTM | GRU (no graph) | ST-GNN |
+|---|---|---|---|---|
+| 0 – summit and the final steps | 31.37 | **28.16** | 30.12 | 33.33 (seeds 26.8–42.4) |
+| 1 | 11.80 | **2.53** | 2.69 | 3.04 |
+| 2 | 12.68 | 1.37 | 1.38 | **1.30** |
+| 3 | 13.16 | 0.87 | 0.90 | **0.84** |
+| Mean | 17.25 | **8.23** | 8.77 | 9.63 |
+
+The ST-GNN is significantly worse than the LSTM overall (+1.40, p_Holm < 0.001), and still far better than the
+historical average. It is best on the two blocks of ordinary trail (2, 3). It loses on the block that holds the
+summit queue, where one seed fails badly. **Reading:** propagating counts from neighbours helps on segments that
+behave like their neighbours. It hurts at the summit: a queue there forms from the *capacity of the final steps*,
+not from what nearby segments look like, and nothing else on the mountain behaves like it. So the graph's value
+on unseen segments is confirmed at Horton Plains and on ordinary Adam's Peak trail, but not at the bottleneck
+itself. **Next:** add the queue state as an input, or give the summit its own output head (B1 in the plan).
+
+## RQ5 – Pretraining on urban traffic (objective O3, P0-1; `src.pretrain.traffic`, `src.eval.pretrain_transfer`, 20 Oct 2026)
+
+The ST-GNN is pretrained on METR-LA and then PEMS-BAY. The target is congestion = 1 − speed / free-flow speed,
+averaged per hour, on a road graph with Gaussian-kernel edge weights (run `20261020_050444_pretrain`). After
+pretraining, the test congestion MAE is 8.1–8.3 % on METR-LA (the hour-of-day average gets 6.4 %) and 4.2–4.4 %
+on PEMS-BAY (the average gets 4.8 %). The pretrained weights are then used at both parks:
+- **zero-shot:** no training on the park; only the output is scaled, using 30 days of counts;
+- **pretrained:** fine-tuned on the park;
+- **scratch:** trained from random weights on the same data.
+
+Same inputs and splits as RQ2, 3 seeds. Run `20261020_075237_pretrain_transfer`; MAE in people per segment per hour.
+
+| Park | HA (2 y) | Zero-shot | Scratch, full | Pretrained, full | HA 30 d | Scratch 30 d | Pretrained 30 d | HA 90 d | Scratch 90 d | Pretrained 90 d | HA 365 d | Scratch 365 d | Pretrained 365 d |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Horton Plains | 1.60 | 7.04 | **1.42** | 1.43 | **2.06** | 3.11 | 2.96 | **1.61** | 2.72 | 2.40 | **1.61** | 1.69 | 1.71 |
+| Adam's Peak | 10.89 | 36.62 | **4.23** | 4.59 | 9.99 | 9.89 | 10.47 | **9.21** | 9.59 | 9.61 | 10.63 | **6.25** | 6.69 |
+
+Paired tests against the matching scratch model (Holm-corrected, over the 365 test days):
+
+| Training data | Horton Plains | Adam's Peak |
+|---|---|---|
+| 30 days | pretraining **better** (−0.15, p < 0.001) | pretraining worse (+0.58, p < 0.001) |
+| 90 days | pretraining **better** (−0.32, p < 0.001) | no difference (p = 0.45) |
+| 365 days | pretraining slightly worse (+0.02, p < 0.001) | pretraining worse (+0.43, p < 0.001) |
+| Full training data | pretraining slightly worse (+0.01, p = 0.005) | pretraining worse (+0.36, p < 0.001) |
+
+- **Zero-shot traffic weights are useless on trails.** They are 4–5× worse than the historical average.
+- **Pretraining helps only where the park is traffic-like and data are scarce.** Horton Plains is a daytime
+  peak on a small network. There, fine-tuning beats training from scratch with 30 and 90 days of counts
+  (−5 % and −12 %).
+- **It does not help Adam's Peak.** The night pilgrimage with a summit queue has no counterpart in road traffic,
+  and pretraining is worse or no different at every amount of data.
+- **With a full year or more of data, pretraining costs a little everywhere.** This is negative transfer:
+  the network starts from a road-traffic solution and does not fully leave it.
+- **A historical average from the same few days still wins up to 90 days at both parks.** At Adam's Peak the
+  network overtakes it at 365 days (6.25 vs 10.63). At Horton Plains it does not overtake it with 365 days of
+  the target park alone (1.69 vs 1.61); it needs the full multi-year training set.
+
+**Reading:** the proposal's research gap gets a clear, mostly negative answer. Dense urban traffic is a
+useful starting point only for a new trail park with a few months of counts, and only if its crowds behave like
+traffic peaks. Pretraining on the other park (RQ2) gives similar gains. In both cases, a new park should start
+with the historical average.
+
+## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
+
+Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE
+laptop CPU thread (ONNX Runtime), median of 200 runs. Runs `results/20261020_001929_edge`,
+`results/adams_peak/20261020_002009_edge`.
+
+| | Horton Plains | Adam's Peak |
+|---|---|---|
+| Parameters | 13,665 | 13,665 |
+| ONNX file (fp32) | 103 KB | 111 KB |
+| Latency, ONNX fp32 | **1.9 ms** | **2.2 ms** |
+| Latency, PyTorch | 3.5 ms | 4.0 ms |
+| ONNX fp32 vs PyTorch, largest difference | 0.0001 people | 0.0012 people |
+| int8 (dynamic) MAE change | −0.3 % | **+24.6 %** |
+| int8 file | 101 KB | 109 KB |
+
+NFR1 (< 2 s) is met with a margin of about 1,000× on a laptop core (a phone core is a few times slower).
+**int8 quantisation is not used:** the model is already tiny, int8 saves 2 KB and at Adam's Peak, where crowds
+span a much wider range, it raises the error by a quarter.
+
+**On the phone:** the same model runs in plain Dart (`lib/features/component_4/domain/edge_forecaster.dart`) from a
+daily "edge pack" (`src/edge/pack.py`, `GET /edge/pack`, ~175 KB): the phone builds the inputs and runs the
+forecast itself, also with no connection. Parity with PyTorch: largest difference **0.00007 people** over 24 h ×
+48 segments; about 140 ms per forecast in the Dart test runner (unoptimised). Tests:
+`test/component_4/edge_forecaster_test.dart`, `tests/test_edge.py`.
 
 ## Limitations (say these before an examiner does)
 1. The target is synthetic: all RQs test the method, not the real parks. Field counts (Horton: World's End on
