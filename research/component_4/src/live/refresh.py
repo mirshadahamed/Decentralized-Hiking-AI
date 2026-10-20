@@ -114,6 +114,9 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
         week = week_forecasts(ctx.data, ctx.cfg, ctx.seg, ctx.model, ctx.scale, ctx.run, ctx.today.isoformat(),
                               ctx.planner, plan_kwargs=live_inputs)
         pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data, week)
+        # FR4 / W7: Module 3 reads the same contract offline, from the pack already on the phone
+        from src.serve.module3 import module3_feed
+        pack["module3_feed"] = module3_feed(forecast, ctx.cfg)
     (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     return True
 

@@ -53,6 +53,18 @@ def test_api_serves_the_feed():
     jsonschema.validate(r.json(), schema())
 
 
+def test_feed_travels_in_the_offline_pack():
+    """Module 3 can read the feed with no connection: it is inside the daily edge pack the phone keeps."""
+    p = PUBLISHED / "edge_pack.json"
+    if not p.exists():
+        pytest.skip("run python -m src.live.refresh first")
+    pack = json.loads(p.read_text(encoding="utf-8"))
+    if "module3_feed" not in pack:
+        pytest.skip("pack from before the feed was added: refresh again")
+    jsonschema.validate(pack["module3_feed"], schema())
+    assert pack["module3_feed"]["forecast_date"] == pack["day"]
+
+
 def test_sample_file_for_module3_is_valid():
     if not SAMPLE_PATH.exists():
         pytest.skip("python -m src.serve.module3 writes the sample")
