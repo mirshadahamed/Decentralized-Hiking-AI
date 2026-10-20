@@ -70,7 +70,7 @@
       },
       {
         "key": "fallen_tree_major_branch",
-        "scope": "proposed_obstruction_expansion",
+        "scope": "requested_obstruction_expansion_pending_reviewed_labels",
         "geometry": "instance_polygon",
         "meaning": "Visible fallen trunk or large branch; record route relation independently.",
         "exclude": [
@@ -81,7 +81,7 @@
       },
       {
         "key": "rock_boulder_rockfall",
-        "scope": "proposed_obstruction_expansion",
+        "scope": "requested_obstruction_expansion_pending_reviewed_labels",
         "geometry": "instance_or_region_polygon",
         "meaning": "Substantial visible rock/boulder or rockfall region.",
         "exclude": [
@@ -92,7 +92,7 @@
       },
       {
         "key": "landslide_rubble_debris",
-        "scope": "proposed_obstruction_expansion",
+        "scope": "requested_obstruction_expansion_pending_reviewed_labels",
         "geometry": "region_polygon",
         "meaning": "Visible rubble/debris region; origin unknown unless evidenced.",
         "exclude": [
@@ -434,6 +434,34 @@
       "role": "joint_supervision_and_local_evaluation",
       "mapping_status": "per_image_per_class_review_required",
       "class_coverage_template": "sajana/data/local_trails/class_coverage.csv"
+    },
+    {
+      "source": "WildScenes_rock_log_regions",
+      "role": "separate_YOLO_object_context_detection",
+      "mapping": [
+        {
+          "source_semantic_id": 14,
+          "target_class_id": 0,
+          "target_name": "rock_region"
+        },
+        {
+          "source_semantic_id": 15,
+          "target_class_id": 1,
+          "target_name": "log_region"
+        }
+      ],
+      "box_derivation": "8-connected semantic region bounding boxes, all positive components retained",
+      "physical_instance_labels": false,
+      "obstruction_labels": false,
+      "litter_labels": false,
+      "native_source_splits_preserved": true,
+      "report": "sajana/results/obstacle_context/readiness.json",
+      "review_queue": "sajana/data/processed/wildscenes_rock_log_detection/review_queue.csv",
+      "forbidden_inferences": [
+        "object_presence_means_blocked_trail",
+        "rock_or_log_absence_means_clear_trail",
+        "separate_numeric_class_ids_mean_same_class_across_models"
+      ]
     }
   ],
   "split_policy": {
@@ -565,5 +593,12 @@
     "sajana/results/training_readiness_recheck.json"
   ],
   "training_roadmap": "sajana/docs/COMPONENT2_TRAINING_ROADMAP.md",
-  "training_plan": "sajana/configs/component2_training_plan.json"
+  "training_plan": "sajana/configs/component2_training_plan.json",
+  "requested_photo_outputs": {
+    "litter": "independent garbage detection/segmentation",
+    "obstruction": "reviewed object relation to visible route corridor",
+    "marked_trail_alternative": "requires reviewed located blockage and versioned permitted trail graph",
+    "visible_bypass": "requires reviewed corridor, surface, clearance and return to marked trail",
+    "missing_evidence_state": "unable_to_assess"
+  }
 }

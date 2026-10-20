@@ -133,5 +133,36 @@
   "android_application_framework": "existing Flutter project; Android Studio IDE/build/debug integration",
   "bot_behavior": "to be specified before implementation",
   "validation_report": "sajana/results/component2_preprocessing/training_plan_audit.json",
-  "runtime_status": "sajana/results/yolov8_training/status.json"
+  "runtime_status": "sajana/results/yolov8_training/status.json",
+  "next_context_experiment": {
+    "experiment_id": "O1",
+    "task": "detect",
+    "role": "rock/log object context, separate from trail blockage",
+    "model_family": "YOLOv8",
+    "dataset": "sajana/data/processed/wildscenes_rock_log_detection",
+    "data_config": "sajana/configs/obstacle_objects.yaml",
+    "readiness_report": "sajana/results/obstacle_context/readiness.json",
+    "required_ready_key": "object_context_training_ready",
+    "names": {
+      "0": "rock_region",
+      "1": "log_region"
+    },
+    "training_started": false,
+    "training_runner_implemented": false,
+    "blockage_training_ready": false,
+    "compute_policy": "Do not contend with active L1 GPU training; separate recorded run after its data gate and compute are available",
+    "evaluation_limitation": "Author validation has only three rock images; independent trail evaluation and reviewed obstruction labels are required"
+  },
+  "route_advisory": {
+    "implementation": "sajana/src/route_advisory.py",
+    "status": "tested_marked_graph_candidate_prototype",
+    "live_map_and_location_configured": false,
+    "automatic_litter_to_blocked_edge": false,
+    "visible_bypass_implemented": false,
+    "required_review_templates": [
+      "sajana/data/local_trails/obstruction_review.csv",
+      "sajana/data/local_trails/visible_bypass_review.csv"
+    ],
+    "guide": "sajana/docs/OBSTACLES_AND_ROUTE_ADVISORY.md"
+  }
 }

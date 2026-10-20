@@ -29,6 +29,7 @@ Read the current counts and verification gates in [the dataset status](../result
 | pLitterStreet | Plastic, pile, face-mask and trash-bin boxes | Separate detection experiment. Five ambiguous orientation cases and one cross-split exact duplicate currently block the canonical export. Boxes do not supply segmentation masks. |
 | RUGD | Native terrain/object semantic masks | Separate context task; preserve IDs 1–24 and ignore void ID 0. Reuse terms remain unresolved in the source audit. |
 | WildScenes | Native forest terrain/object semantic masks | Separate context task; preserve IDs 1–18 and ignore unlabelled ID 0. |
+| WildScenes rock/log derivative | YOLO detection boxes from connected native rock/log regions | Separate context detector; preserves author splits and unknown litter/blockage labels. Not independent new photos. |
 | ORFD | Binary vehicle freespace mask | Auxiliary path-context experiment; it is not a hiking-safety or trail-damage label. |
 | Mawanella CSV | Geographic count observations | Mapping data; not image training annotations. |
 | Local trail photos | Reviewed litter, erosion, roots, trail and selected obstruction annotations | Still missing; needed for local adaptation and final component evaluation. |
@@ -75,6 +76,8 @@ Group local splits by route/site/session and duplicate groups before augmentatio
 After task and local evaluation pass, select the phone runtime and export a compatible model. Check exported predictions against the training model using fixed images, then benchmark accuracy, latency and memory on an actual Android device. Recheck accuracy after quantization or other optimization. Preserve the exact input preprocessing and output class mapping with the model artifact.
 
 The inference interface should return structured predictions: model/version, classes, confidence and mask/box geometry. Any severity/passability output needs its own reviewed labels and evaluation. Keep image coordinates consistent through resizing and orientation handling.
+
+The [obstacle context export and route-advisory prototype](OBSTACLES_AND_ROUTE_ADVISORY.md) prepare the next stage. Marked-trail alternatives use reviewed, located blockage observations and a supplied permitted trail graph. Visible bypass suggestions remain pending corridor/surface/clearance review. The planner does not infer either feature from litter alone.
 
 ## 5. Add the bot and app
 

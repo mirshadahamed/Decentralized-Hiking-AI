@@ -25,5 +25,6 @@ Source-specific preparation instructions:
 - [pLitterStreet and Mawanella observations](PLITTER_PREPROCESSING_GUIDE.md)
 - [RUGD](RUGD_PREPROCESSING_GUIDE.md)
 - [WildScenes](WILDSCENES_PREPROCESSING_GUIDE.md)
+- [Rock/log detection context and route advisory](OBSTACLES_AND_ROUTE_ADVISORY.md)
 
 Model training is separate and is not started by these preprocessing tasks.

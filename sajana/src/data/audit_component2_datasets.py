@@ -19,6 +19,7 @@ SOURCES=[
  ('orfd','auxiliary vehicle freespace segmentation','selected_auxiliary','data/processed/orfd_path_seg',['results/orfd_preprocessing/full_readiness.json','data/processed/orfd_path_seg/readiness.json','results/orfd_preprocessing/local_readiness.json'],'masks'),
  ('rugd','natural terrain semantic segmentation','required','data/processed/rugd_semantic',['results/rugd_preprocessing/local_readiness.json'],'masks'),
  ('wildscenes','forest terrain semantic segmentation','required','data/processed/wildscenes_terrain_semantic',['results/wildscenes_preprocessing/local_readiness.json'],'masks'),
+ ('wildscenes_objects','rock/log semantic-region object detection','derived','data/processed/wildscenes_rock_log_detection',['results/obstacle_context/readiness.json'],'labels'),
 ]
 
 def read_json(path):
