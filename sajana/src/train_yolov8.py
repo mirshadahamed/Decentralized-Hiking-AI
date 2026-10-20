@@ -224,6 +224,7 @@ def run(args):
         weights = obtain_weights(config)
         os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
         os.environ.setdefault('PYTORCH_MPS_HIGH_WATERMARK_RATIO', '1.0')
+        os.environ.setdefault('PYTORCH_MPS_LOW_WATERMARK_RATIO', '0.9')
         os.environ.setdefault('YOLO_CONFIG_DIR', str(ROOT / 'data/raw/ultralytics_settings'))
         os.environ.setdefault('MPLCONFIGDIR', str(ROOT / 'data/raw/matplotlib'))
         os.environ.setdefault('MPLBACKEND', 'Agg')
