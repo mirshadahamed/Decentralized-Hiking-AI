@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-10-21T00:12:06.553119+05:30",
+  "resumed_from_completed_epoch": 22,
+  "current_epoch": 23,
+  "phase_at_check": "training",
+  "complete_validation_images": 286,
+  "complete_baseline_metrics": {
+    "metrics/precision(B)": 0.65796,
+    "metrics/recall(B)": 0.41893,
+    "metrics/mAP50(B)": 0.46735,
+    "metrics/mAP50-95(B)": 0.3229,
+    "metrics/precision(M)": 0.66346,
+    "metrics/recall(M)": 0.41185,
+    "metrics/mAP50(M)": 0.45023,
+    "metrics/mAP50-95(M)": 0.28112,
+    "val/box_loss": 1.21335,
+    "val/seg_loss": 2.33394,
+    "val/cls_loss": 1.52818,
+    "val/dfl_loss": 1.19843,
+    "val/sem_loss": 0.0
+  },
+  "active_console_nms_warnings": 0,
+  "original_checkpoint_backup_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_000544",
+  "original_best_checkpoint_preserved": true,
+  "frozen_source_hashes_rechecked": true,
+  "tests_run": 144,
+  "tests_passed": true,
+  "test_log_sha256": "f33e1c5836287dba5abc69dd268b6d02d13b4ef2dcddcb205ec7347f357dc8fa",
+  "historical_validation_scores_provisional_through_epoch": 22,
+  "test_model_evaluation_performed": false,
+  "app_ready": false
+}

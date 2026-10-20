@@ -4,12 +4,24 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 import torch
-from ultralytics.utils import nms
-
-from sajana.src.yolov8_validation import CompleteSegmentationValidator, complete_nms
 
 
 class CompleteValidationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Ultralytics installs a process-wide Pillow HEIF fallback on import.
+        # Keep that optional-codec side effect out of unrelated corrupt-image
+        # preprocessing tests; only this test class needs the training package.
+        from PIL import Image
+        cls.image_module=Image;cls.original_open=Image.open
+        global nms, CompleteSegmentationValidator, complete_nms
+        from ultralytics.utils import nms
+        from sajana.src.yolov8_validation import CompleteSegmentationValidator, complete_nms
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.image_module.open=cls.original_open
+
     def prediction(self):
         p=torch.zeros((3,5,1))
         p[:,0,0]=100;p[:,1,0]=100;p[:,2:4,0]=10;p[:,4,0]=0.9

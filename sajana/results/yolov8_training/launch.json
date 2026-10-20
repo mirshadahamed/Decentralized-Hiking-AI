@@ -1,19 +1,20 @@
 {
-  "pid": 3394,
-  "caffeinate_pid": 3395,
+  "pid": 52417,
+  "caffeinate_pid": 52418,
   "command": [
     "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/.venv-yolov8/bin/python",
     "-u",
     "-B",
     "-m",
-    "sajana.src.train_yolov8",
+    "sajana.src.resume_yolov8",
+    "--run",
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
     "--device",
-    "mps",
-    "--preflight-report",
-    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/preflight_taco.json"
+    "mps"
   ],
-  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_20261020_213720.log",
-  "launched_at": "2026-10-20T21:37:20.807009+05:30",
+  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_resume_20261021_000544.log",
+  "launched_at": "2026-10-21T00:05:44.942838+05:30",
   "machine": "Apple M4, 16 GiB",
-  "requested_device": "mps"
+  "requested_device": "mps",
+  "recovery": "complete validation after NMS timeouts"
 }

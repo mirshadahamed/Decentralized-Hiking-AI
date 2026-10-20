@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-10-21T00:05:53.833405+05:30",
+  "code_commit": "fe8d71c796b33836f44ab93b8a9f6ca6d9940bd2",
+  "resume_source_sha256": "8f4e4fad627c69cd7b83902d80569edf25440ae584899d84840a9d59a816a279",
+  "validator_source_sha256": "3a0a41bb72625287c54acf79efdca1ab8f87e6223699ae7a139753459be0121e",
+  "original_run_manifest_sha256": "4f74296353c63ea78abe9f5c966448b2d94eaa8bb64e3ec1f36ada6d82f9c211",
+  "original_resume_checkpoint_sha256": "affffe61c084f1f766e1520905fecf21ff313ceb00fef86cf4fb2c25c74a99b0",
+  "resume_completed_epochs": 22,
+  "checkpoint_backup_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_000544",
+  "optimizer_and_ema_restored": true,
+  "frozen_data_hashes_rechecked": true,
+  "test_model_evaluation_performed": false,
+  "historical_epoch_scores_provisional": true,
+  "selection_policy": "Complete current-checkpoint validation establishes a new baseline; preserve old best/snapshots for later validation-only review."
+}

@@ -31,6 +31,14 @@ class TrainingMonitorTests(unittest.TestCase):
         self.assertIsNone(epoch_timing([{'epoch': 1, 'time': 30}, {'epoch': 2, 'time': 20}], 100))
         self.assertEqual(epoch_timing([{'epoch': 2, 'time': 100}], 2)['remaining_seconds_to_epoch_budget'], 0)
 
+    def test_resume_eta_uses_new_elapsed_timer_only(self):
+        rows=[{'epoch':1,'time':300},{'epoch':22,'time':8000},
+              {'epoch':23,'time':200},{'epoch':24,'time':450}]
+        result=epoch_timing(rows,100,resumed_after=22)
+        self.assertEqual(result['recent_seconds_per_epoch_median'],225)
+        self.assertEqual(result['remaining_seconds_to_epoch_budget'],17100)
+        self.assertIsNone(epoch_timing(rows[:2],100,resumed_after=22))
+
     def test_missing_checkpoints_or_stale_heartbeat_cannot_claim_healthy_training(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder); (root/'fit/weights').mkdir(parents=True)

@@ -40,12 +40,13 @@ def completed_rows(path):
     return rows
 
 
-def epoch_timing(rows, planned_epochs):
+def epoch_timing(rows, planned_epochs, resumed_after=0):
     """Estimate the full budget from recent epoch durations, including validation.
 
     The range is observed timing variation, not a statistical confidence interval.
     No predicted early-stopping time is claimed.
     """
+    rows=[row for row in rows if row['epoch'] > resumed_after]
     if not rows:
         return None
     times = [row['time'] for row in rows]
@@ -80,8 +81,7 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         issues.append('Nonfinite latest training loss')
     if status.get('error'):
         issues.append(status['error'])
-    timing_rows = [row for row in rows if row['epoch'] > status.get('resumed_from_completed_epoch',0)]
-    timing = epoch_timing(timing_rows, status['planned_epochs'])
+    timing = epoch_timing(rows,status['planned_epochs'],status.get('resumed_from_completed_epoch',0))
     age = (checked_at - datetime.fromisoformat(status['updated_at'])).total_seconds()
     stale_after = max(600, 3 * timing['recent_seconds_per_epoch_median']) if timing else 600
     if status['phase'] not in TERMINAL_PHASES and age > stale_after:
@@ -134,6 +134,7 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         'historical_validation_provisional_through_epoch': status.get('historical_validation_provisional_through_epoch'),
         'baseline_validation_complete': status.get('baseline_validation_complete'),
         'complete_validation_images': status.get('complete_validation_images'),
+        'current_complete_checkpoint_metrics': status.get('metrics') if status.get('baseline_validation_complete') else None,
         'checkpoints': checkpoints, 'validation_trend': trend,
         'timing': timing, 'app_model_ready': False,
         'app_readiness_not_established_by_training_health': True,
@@ -162,6 +163,12 @@ def save_report(report, output):
     lines = ['# YOLOv8 training check', '', 'Checked: ' + report['checked_at'], '',
              f"Completed epochs: {report['completed_epochs']}/{report['planned_epochs']}. Phase: {report['phase']}.",
              f"Training functioning at check: {report['training_functioning_at_check']}. App model ready: False.", '']
+    if report.get('current_complete_checkpoint_metrics'):
+        metrics=report['current_complete_checkpoint_metrics']
+        ap=metrics.get('metrics/mAP50(M)');recall=metrics.get('metrics/recall(M)')
+        ap=f'{ap:.4f}' if ap is not None else 'unavailable'
+        recall=f'{recall:.4f}' if recall is not None else 'unavailable'
+        lines += [f"Current complete validation mask mAP50: {ap}; recall: {recall}.", '']
     if timing:
         lo, hi = timing['remaining_seconds_observed_range']
         lines += [f"Observed recent pace: {timing['recent_seconds_per_epoch_median']/60:.1f} minutes/epoch.",
@@ -183,7 +190,7 @@ def save_report(report, output):
     (output / 'HEALTH.md').write_text('\n'.join(lines))
 
 
-def save_plot(rows, output):
+def save_plot(rows, output, provisional_through=None):
     if not rows:
         return
     import os
@@ -199,6 +206,9 @@ def save_plot(rows, output):
     for key, label in [('metrics/mAP50(M)', 'Mask mAP50'), ('metrics/mAP50-95(M)', 'Mask mAP50–95')]:
         axes[1].plot(epochs, [100*row[key] for row in rows], marker='o', label=label)
     axes[1].set(title='Validation masks — TACO', xlabel='Completed epoch', ylabel='AP (%)', ylim=(0, 100))
+    if provisional_through:
+        axes[1].axvspan(0.5, min(provisional_through+0.5,max(epochs)+0.5), color='grey', alpha=0.15,
+                        label='Prior scores: provisional')
     for ax in axes:
         ax.legend(); ax.grid(alpha=0.2)
     fig.suptitle('YOLOv8n-seg litter baseline — early training, app readiness pending')
@@ -222,7 +232,7 @@ def main():
         report, rows = inspect(args.status)
         save_report(report, args.output)
         if args.plot and plotted_epoch != len(rows):
-            save_plot(rows, args.output)
+            save_plot(rows, args.output,report.get('historical_validation_provisional_through_epoch'))
             plotted_epoch = len(rows)
         print(json.dumps({key: report[key] for key in ('checked_at', 'phase', 'completed_epochs',
               'training_functioning_at_check', 'issues', 'timing', 'app_model_ready')}, allow_nan=False), flush=True)
