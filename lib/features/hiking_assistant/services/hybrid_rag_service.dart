@@ -1,5 +1,6 @@
 import '../models/rag_response.dart';
 import '../models/rag_retrieval_result.dart';
+import 'local_llm_generation_service.dart';
 import 'offline_knowledge_database.dart';
 import 'rag_context_builder.dart';
 import 'rag_localization_filter.dart';
@@ -8,11 +9,13 @@ class HybridRagService {
   final OfflineKnowledgeDatabase database;
   final RagContextBuilder contextBuilder;
   final RagLocalizationFilter localizationFilter;
+  final LocalLlmGenerationService? localLlmGenerationService;
 
   HybridRagService({
     required this.database,
     RagContextBuilder? contextBuilder,
     RagLocalizationFilter? localizationFilter,
+    this.localLlmGenerationService,
   }) : contextBuilder = contextBuilder ?? RagContextBuilder(database: database),
        localizationFilter = localizationFilter ?? const RagLocalizationFilter();
 
@@ -85,7 +88,7 @@ class HybridRagService {
 
     // ----------------------------------------------------------
     // 4. Sanitize foreign localization before giving evidence
-    //    to the future local LLM.
+    //    to the local LLM.
     // ----------------------------------------------------------
 
     final sanitizedChunks = <RagRetrievalResult>[];
@@ -132,18 +135,54 @@ class HybridRagService {
     }
 
     // ----------------------------------------------------------
-    // 5. Normal RAG route.
-    //
-    // No LLM is called yet. This response represents evidence
-    // that is ready to be supplied to the Android local model.
+    // 5. Normal RAG route. The model lifecycle is owned externally;
+    //    an uninitialized or unavailable generator fails closed.
     // ----------------------------------------------------------
 
+    final generator = localLlmGenerationService;
+    if (generator == null) {
+      return _groundedGenerationFallback(
+        sources: _uniqueSources(sanitizedChunks),
+      );
+    }
+
+    try {
+      final generation = await generator.generateGroundedAnswer(
+        question: question,
+        context: sanitizedContext,
+      );
+
+      if (!generation.success || generation.answer.trim().isEmpty) {
+        return _groundedGenerationFallback(
+          sources: _uniqueSources(sanitizedChunks),
+        );
+      }
+
+      return RagResponse(
+        answerMode: RagAnswerMode.localLlmRag,
+        answer: generation.answer.trim(),
+        context: sanitizedContext,
+        sources: _uniqueSources(sanitizedChunks),
+        fallbackUsed: false,
+      );
+    } catch (_) {
+      return _groundedGenerationFallback(
+        sources: _uniqueSources(sanitizedChunks),
+      );
+    }
+  }
+
+  RagResponse _groundedGenerationFallback({
+    required List<RagRetrievalResult> sources,
+  }) {
     return RagResponse(
-      answerMode: RagAnswerMode.localLlmRag,
-      answer: '',
-      context: sanitizedContext,
-      sources: _uniqueSources(sanitizedChunks),
-      fallbackUsed: false,
+      answerMode: RagAnswerMode.safeFallback,
+      answer:
+          'Offline evidence was retrieved, but a grounded local answer '
+          'could not be generated safely.',
+      context: '',
+      sources: sources,
+      fallbackUsed: true,
     );
   }
 

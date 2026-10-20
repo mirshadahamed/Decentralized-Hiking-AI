@@ -4,7 +4,54 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:decentralized_hiking_ai/features/hiking_assistant/models/rag_response.dart';
 import 'package:decentralized_hiking_ai/features/hiking_assistant/models/rag_retrieval_result.dart';
 import 'package:decentralized_hiking_ai/features/hiking_assistant/services/hybrid_rag_service.dart';
+import 'package:decentralized_hiking_ai/features/hiking_assistant/models/local_llm_generation_result.dart';
+import 'package:decentralized_hiking_ai/features/hiking_assistant/services/local_llm_generation_service.dart';
 import 'package:decentralized_hiking_ai/features/hiking_assistant/services/offline_knowledge_database.dart';
+
+class _FakeLocalLlmGenerationService extends LocalLlmGenerationService {
+  LocalLlmGenerationResult result;
+  bool shouldThrow;
+  int callCount = 0;
+  String? receivedQuestion;
+  String? receivedContext;
+
+  _FakeLocalLlmGenerationService({
+    required this.result,
+    this.shouldThrow = false,
+  }) : super(modelPath: 'not-used-in-tests.gguf');
+
+  @override
+  Future<LocalLlmGenerationResult> generateGroundedAnswer({
+    required String question,
+    required String context,
+  }) async {
+    callCount += 1;
+    receivedQuestion = question;
+    receivedContext = context;
+    if (shouldThrow) {
+      throw StateError('Fake generation error');
+    }
+    return result;
+  }
+}
+
+LocalLlmGenerationResult _successfulGeneration([
+  String answer = 'Grounded answer.',
+]) {
+  return LocalLlmGenerationResult(
+    success: true,
+    answer: answer,
+    error: null,
+    generationDuration: Duration.zero,
+  );
+}
+
+LocalLlmGenerationResult _failedGeneration() {
+  return LocalLlmGenerationResult.failure(
+    error: 'Fake generation failure',
+    generationDuration: Duration.zero,
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -21,8 +68,14 @@ void main() {
   // ------------------------------------------------------------
   test('Sri Lanka emergency uses verified deterministic route', () async {
     final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _successfulGeneration(),
+    );
 
-    final service = HybridRagService(database: database);
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
 
     final response = await service.prepare(
       question: 'How can I request an emergency ambulance in Sri Lanka?',
@@ -40,6 +93,8 @@ void main() {
       isTrue,
     );
 
+    expect(generator.callCount, 0);
+
     await database.close();
   });
 
@@ -50,8 +105,14 @@ void main() {
   // ------------------------------------------------------------
   test('allergic reaction uses sanitized local LLM RAG route', () async {
     final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _successfulGeneration('Use the available evidence safely.'),
+    );
 
-    final service = HybridRagService(database: database);
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
 
     final response = await service.prepare(
       question:
@@ -78,6 +139,13 @@ void main() {
     // UK-specific source branding must also be removed.
     expect(response.context.toLowerCase().contains('nhs'), isFalse);
 
+    expect(generator.callCount, 1);
+    expect(generator.receivedQuestion, contains('serious allergic reaction'));
+    expect(generator.receivedContext, response.context);
+    expect(generator.receivedContext!.toLowerCase().contains('nhs'), isFalse);
+    expect(RegExp(r'\b999\b').hasMatch(generator.receivedContext!), isFalse);
+    expect(response.answer, 'Use the available evidence safely.');
+
     // Real allergic-reaction evidence must still be present.
     expect(
       response.sources.any((source) => source.sourceId == 'EXP_017'),
@@ -94,8 +162,14 @@ void main() {
   // ------------------------------------------------------------
   test('lost navigation removes foreign localization markers', () async {
     final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _successfulGeneration(),
+    );
 
-    final service = HybridRagService(database: database);
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
 
     final response = await service.prepare(
       question: 'What should I do if I become lost while hiking?',
@@ -115,6 +189,74 @@ void main() {
     expect(lower.contains('topo50'), isFalse);
 
     expect(RegExp(r'\b111\b').hasMatch(response.context), isFalse);
+
+    await database.close();
+  });
+
+  test('failed local generation returns safe fallback', () async {
+    final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _failedGeneration(),
+    );
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
+
+    final response = await service.prepare(
+      question: 'What should I do if a hiker shows signs of hypothermia?',
+      category: 'hypothermia',
+    );
+
+    expect(generator.callCount, 1);
+    expect(response.answerMode, RagAnswerMode.safeFallback);
+    expect(response.fallbackUsed, isTrue);
+    expect(response.answer, contains('could not be generated safely'));
+
+    await database.close();
+  });
+
+  test('throwing local generation returns safe fallback', () async {
+    final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _successfulGeneration(),
+      shouldThrow: true,
+    );
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
+
+    final response = await service.prepare(
+      question: 'What should I do if a hiker shows signs of hypothermia?',
+      category: 'hypothermia',
+    );
+
+    expect(generator.callCount, 1);
+    expect(response.answerMode, RagAnswerMode.safeFallback);
+    expect(response.fallbackUsed, isTrue);
+
+    await database.close();
+  });
+
+  test('empty local generation answer returns safe fallback', () async {
+    final database = OfflineKnowledgeDatabase();
+    final generator = _FakeLocalLlmGenerationService(
+      result: _successfulGeneration('   '),
+    );
+    final service = HybridRagService(
+      database: database,
+      localLlmGenerationService: generator,
+    );
+
+    final response = await service.prepare(
+      question: 'What should I do if a hiker shows signs of hypothermia?',
+      category: 'hypothermia',
+    );
+
+    expect(generator.callCount, 1);
+    expect(response.answerMode, RagAnswerMode.safeFallback);
+    expect(response.fallbackUsed, isTrue);
 
     await database.close();
   });

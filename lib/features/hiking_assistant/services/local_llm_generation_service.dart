@@ -4,11 +4,42 @@ import 'package:llama_flutter_android/llama_flutter_android.dart';
 
 import '../models/local_llm_generation_result.dart';
 
+typedef LocalLlmGenerationRunner = Future<String> Function({
+  required String prompt,
+  required int maxTokens,
+});
+
+class LocalLlmPromptPreparation {
+  final String? prompt;
+  final String evidence;
+  final String? error;
+  final int inputTokenBudget;
+  final int estimatedPromptTokens;
+  final bool evidenceWasTruncated;
+
+  const LocalLlmPromptPreparation({
+    required this.prompt,
+    required this.evidence,
+    required this.error,
+    required this.inputTokenBudget,
+    required this.estimatedPromptTokens,
+    required this.evidenceWasTruncated,
+  });
+
+  bool get canGenerate => prompt != null && error == null;
+}
+
 /// Android-only local GGUF generation service.
 ///
 /// This is deliberately independent of retrieval and HybridRagService. A
 /// future caller can supply already-localized, bounded offline evidence.
 class LocalLlmGenerationService {
+  // This is an engineering guard for a 4–6 GB Android target, not a medical
+  // threshold. Native tokenization can differ from this English-text estimate,
+  // so the margin deliberately leaves capacity beyond requested output tokens.
+  static const int _safetyMarginTokens = 192;
+  static const int _charactersPerEstimatedToken = 3;
+
   final String modelPath;
   final int threads;
   final int contextSize;
@@ -18,15 +49,28 @@ class LocalLlmGenerationService {
   bool _isInitializing = false;
   String? _initializationError;
   Duration? _modelLoadDuration;
+  final bool _testingInitialized;
+  final LocalLlmGenerationRunner? _testingGenerationRunner;
 
   LocalLlmGenerationService({
     required this.modelPath,
     this.threads = 4,
     this.contextSize = 1024,
     this.maxTokens = 128,
-  });
+  }) : _testingInitialized = false,
+       _testingGenerationRunner = null;
 
-  bool get isInitialized => _controller != null;
+  /// Test-only construction path that never creates or loads a native model.
+  LocalLlmGenerationService.forTesting({
+    required LocalLlmGenerationRunner generationRunner,
+    this.contextSize = 1024,
+    this.maxTokens = 128,
+    this.threads = 4,
+  }) : modelPath = 'test-only.gguf',
+       _testingInitialized = true,
+       _testingGenerationRunner = generationRunner;
+
+  bool get isInitialized => _controller != null || _testingInitialized;
   bool get isInitializing => _isInitializing;
   String? get initializationError => _initializationError;
   Duration? get modelLoadDuration => _modelLoadDuration;
@@ -104,14 +148,38 @@ class LocalLlmGenerationService {
     final output = StringBuffer();
 
     try {
-      await for (final token in _controller!.generate(
-        prompt: buildGroundedPrompt(question: question, context: context),
+      final preparedPrompt = prepareGroundedPrompt(
+        question: question,
+        context: context,
+        contextSize: contextSize,
         maxTokens: maxTokens,
-        temperature: 0.2,
-        topP: 0.9,
-        topK: 40,
-      )) {
-        output.write(token);
+      );
+      if (!preparedPrompt.canGenerate) {
+        stopwatch.stop();
+        return LocalLlmGenerationResult.failure(
+          error: preparedPrompt.error!,
+          generationDuration: stopwatch.elapsed,
+        );
+      }
+
+      final testRunner = _testingGenerationRunner;
+      if (testRunner != null) {
+        output.write(
+          await testRunner(
+            prompt: preparedPrompt.prompt!,
+            maxTokens: maxTokens,
+          ),
+        );
+      } else {
+        await for (final token in _controller!.generate(
+          prompt: preparedPrompt.prompt!,
+          maxTokens: maxTokens,
+          temperature: 0.2,
+          topP: 0.9,
+          topK: 40,
+        )) {
+          output.write(token);
+        }
       }
       stopwatch.stop();
 
@@ -192,6 +260,107 @@ QUESTION:
 $question
 
 FINAL ANSWER:''';
+  }
+
+  /// Builds a bounded prompt while retaining all instructions and the original
+  /// question. Only the end of the sanitized evidence is shortened.
+  static LocalLlmPromptPreparation prepareGroundedPrompt({
+    required String question,
+    required String context,
+    required int contextSize,
+    required int maxTokens,
+  }) {
+    final inputTokenBudget = contextSize - maxTokens - _safetyMarginTokens;
+    final normalizedQuestion = question.trim();
+    final originalEvidence = context.trim();
+
+    if (originalEvidence.isEmpty) {
+      return LocalLlmPromptPreparation(
+        prompt: null,
+        evidence: '',
+        error: 'Offline evidence context is empty.',
+        inputTokenBudget: inputTokenBudget,
+        estimatedPromptTokens: 0,
+        evidenceWasTruncated: false,
+      );
+    }
+
+    final promptWithoutEvidence = buildGroundedPrompt(
+      question: normalizedQuestion,
+      context: '',
+    );
+    final fixedPromptTokens = _estimateTokens(promptWithoutEvidence);
+    if (inputTokenBudget <= 0 || fixedPromptTokens >= inputTokenBudget) {
+      return LocalLlmPromptPreparation(
+        prompt: null,
+        evidence: '',
+        error: 'Question and grounding instructions exceed the mobile input budget.',
+        inputTokenBudget: inputTokenBudget,
+        estimatedPromptTokens: fixedPromptTokens,
+        evidenceWasTruncated: false,
+      );
+    }
+
+    final remainingEvidenceCharacters =
+        (inputTokenBudget - fixedPromptTokens) * _charactersPerEstimatedToken;
+    var evidence = _truncateEvidenceAtWordBoundary(
+      originalEvidence,
+      remainingEvidenceCharacters,
+    );
+    var prompt = buildGroundedPrompt(
+      question: normalizedQuestion,
+      context: evidence,
+    );
+
+    // Ceiling effects in the approximation can leave a few extra estimated
+    // tokens. Reduce only evidence until the guard is satisfied.
+    while (evidence.isNotEmpty && _estimateTokens(prompt) > inputTokenBudget) {
+      evidence = evidence.substring(0, evidence.length - 1).trimRight();
+      prompt = buildGroundedPrompt(
+        question: normalizedQuestion,
+        context: evidence,
+      );
+    }
+
+    if (evidence.isEmpty) {
+      return LocalLlmPromptPreparation(
+        prompt: null,
+        evidence: '',
+        error: 'Offline evidence cannot fit within the mobile input budget.',
+        inputTokenBudget: inputTokenBudget,
+        estimatedPromptTokens: _estimateTokens(prompt),
+        evidenceWasTruncated: true,
+      );
+    }
+
+    return LocalLlmPromptPreparation(
+      prompt: prompt,
+      evidence: evidence,
+      error: null,
+      inputTokenBudget: inputTokenBudget,
+      estimatedPromptTokens: _estimateTokens(prompt),
+      evidenceWasTruncated: evidence.length < originalEvidence.length,
+    );
+  }
+
+  static int _estimateTokens(String text) {
+    return (text.trim().length / _charactersPerEstimatedToken).ceil();
+  }
+
+  static String _truncateEvidenceAtWordBoundary(
+    String evidence,
+    int maxCharacters,
+  ) {
+    if (evidence.length <= maxCharacters) {
+      return evidence;
+    }
+    if (maxCharacters <= 0) {
+      return '';
+    }
+
+    final candidate = evidence.substring(0, maxCharacters);
+    final boundary = candidate.lastIndexOf(RegExp(r'\s'));
+    return (boundary > 0 ? candidate.substring(0, boundary) : candidate).trim();
   }
 
   /// Removes model reasoning blocks. An unterminated opening tag discards the
