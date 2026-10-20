@@ -1,0 +1,74 @@
+{
+  "temporal": {
+    "tests_vs_stgnn": [
+      {
+        "baseline": "HA",
+        "n_days": 365,
+        "mean_diff_MAE": -7.092048168182373,
+        "t": -18.719926834106445,
+        "p": 0.0,
+        "wilcoxon_p": 0.0,
+        "cohens_dz": -0.9798458218574524,
+        "p_holm": 0.0,
+        "significant_0.05": true
+      },
+      {
+        "baseline": "lstm",
+        "n_days": 365,
+        "mean_diff_MAE": -0.030933339148759842,
+        "t": -1.6840940713882446,
+        "p": 0.09302077442407608,
+        "wilcoxon_p": 1.7847702338258387e-07,
+        "cohens_dz": -0.08814951032400131,
+        "p_holm": 0.09302077442407608,
+        "significant_0.05": false
+      },
+      {
+        "baseline": "stgnn_lstm",
+        "n_days": 365,
+        "mean_diff_MAE": -0.06928374618291855,
+        "t": -2.9443583488464355,
+        "p": 0.0034440774470567703,
+        "wilcoxon_p": 0.011747715063393116,
+        "cohens_dz": -0.1541147530078888,
+        "p_holm": 0.006888154894113541,
+        "significant_0.05": true
+      }
+    ],
+    "tests_vs_stgnn_lstm": [
+      {
+        "baseline": "HA",
+        "n_days": 365,
+        "mean_diff_MAE": -7.022764682769775,
+        "t": -18.6460018157959,
+        "p": 0.0,
+        "wilcoxon_p": 0.0,
+        "cohens_dz": -0.9759763479232788,
+        "p_holm": 0.0,
+        "significant_0.05": true
+      },
+      {
+        "baseline": "lstm",
+        "n_days": 365,
+        "mean_diff_MAE": 0.038350414484739304,
+        "t": 1.7873835563659668,
+        "p": 0.07470739632844925,
+        "wilcoxon_p": 0.036367423832416534,
+        "cohens_dz": 0.09355593472719193,
+        "p_holm": 0.07470739632844925,
+        "significant_0.05": false
+      },
+      {
+        "baseline": "stgnn",
+        "n_days": 365,
+        "mean_diff_MAE": 0.06928374618291855,
+        "t": 2.9443583488464355,
+        "p": 0.0034440774470567703,
+        "wilcoxon_p": 0.011747715063393116,
+        "cohens_dz": 0.1541147530078888,
+        "p_holm": 0.006888154894113541,
+        "significant_0.05": false
+      }
+    ]
+  }
+}
