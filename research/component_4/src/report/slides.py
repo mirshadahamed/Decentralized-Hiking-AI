@@ -789,6 +789,23 @@ def build():
             pic.line.width = Pt(1)
             d.text(s, cap, x - Inches(0.05), Inches(6.05), Inches(2.25), Inches(0.9), 11, DARK, align=PP_ALIGN.CENTER)
 
+    s = d.slide("The proposal's output: bottlenecks and safe numbers per section", "Proof of concept – FR2, FR3, NFR4",
+                "This is the core of the proposal on one screen. Left: every trail section coloured by how full the "
+                "ST-GNN expects it to be at the chosen hour - forecast people divided by what the section holds at "
+                "Cifuentes spacing - computed on the phone, so it also works in airplane mode. Drag the hour slider: "
+                "at 08:00 World's End and Baker's Falls are over capacity. Right: the safe number per trail and for "
+                "the park, set by the most limiting section, instead of one fixed quota. Officers get the same view "
+                "as their first tab. (~60 s)")
+    phones(s, [("11_bottleneck_map", "Tomorrow, hour by hour:\nevery section coloured"),
+               ("12_safe_numbers", "Safe number per trail,\nset by its limiting section")])
+    d.bullets(s, [
+        "Per section::  ST-GNN forecast ÷ people it holds at once (groups of 10, 50 m apart)",
+        "Per trail::  Cifuentes PCC → RCC → ECC; the most limiting section sets the safe number",
+        "Instead of a fixed quota::  690 tomorrow (weather, wet ground, crowding) vs 719 fixed",
+        "Offline::  drawn from the forecast the phone computes itself (RQ6)",
+        "Users::  officers (first tab), rangers, visitors (map → “Tomorrow's crowding”)",
+    ], Inches(5.3), Inches(1.6), Inches(7.8), Inches(5.2), 15, 12)
+
     s = d.slide("Working prototype – visitors plan a trip", "Completion of prototype",
                 "Screens rendered from the real API output. Trip planner: any number of destinations, read from "
                 "config. Overview: week ahead and the quietest days. Calendar: 90-day crowd outlook. Day: expected "

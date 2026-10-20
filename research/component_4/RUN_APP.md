@@ -157,6 +157,19 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
 
 Don't close the app while in airplane mode: the destination list itself needs the server when the app starts.
 
+**Bottleneck map and safe numbers (the proposal's core output):**
+- **Where to find it:**
+  - visitors: Horton Plains → **Map** → **Tomorrow's crowding**;
+  - the on-device card: **Every section on the map**;
+  - officers: **Bottlenecks**, the first tab (Adam's Peak officers: the third tab).
+- **Bottleneck map:** every trail section is coloured by tomorrow's ST-GNN forecast ÷ what it holds at once: green
+  quiet, yellow filling up, orange busy, red over capacity. Drag the **hour slider**; tap a section for its hourly
+  bars and PCC / RCC / ECC.
+- **Safe numbers:** the park's safe number for tomorrow (vs the fixed Cifuentes number), and per trail the safe
+  number and the section that sets it.
+- **Offline:** opened once while connected, it works the same in airplane mode ("offline copy"), because it is
+  drawn from the forecast the phone computes itself.
+
 ---
 
 ## One-time setup (already done on this laptop – only for a new computer)
