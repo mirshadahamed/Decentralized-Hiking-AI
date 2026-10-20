@@ -1,6 +1,6 @@
 # Component 2 dataset preparation status
 
-Checked: 2026-10-20T21:41:48.039206+05:30
+Checked: 2026-10-20T22:49:35.937069+05:30
 
 | Source | Prepared pairs | State | Source release complete |
 | --- | ---: | --- | --- |
@@ -12,6 +12,7 @@ Checked: 2026-10-20T21:41:48.039206+05:30
 | orfd | 11,830 | verified_prepared | True |
 | rugd | 7,436 | verified_prepared | True |
 | wildscenes | 8,467 | verified_prepared | True |
+| wildscenes_objects | 8,467 | verified_prepared | True |
 
 Local jointly annotated trail dataset: **missing**. The annotation workspace and instructions are prepared in `sajana/data/local_trails/`.
 

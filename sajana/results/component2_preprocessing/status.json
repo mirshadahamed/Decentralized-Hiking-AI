@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-20T21:41:48.039206+05:30",
+  "checked_at": "2026-10-20T22:49:35.937069+05:30",
   "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
   "preparation_order": [
     "source inventory and taxonomy",
@@ -400,6 +400,50 @@
       },
       "issues": [],
       "warnings": []
+    },
+    {
+      "key": "wildscenes_objects",
+      "task": "rock/log semantic-region object detection",
+      "role": "derived",
+      "state": "verified_prepared",
+      "dataset": "data/processed/wildscenes_rock_log_detection",
+      "verification_report": "results/obstacle_context/readiness.json",
+      "verification_report_sha256": "86b0b7914389ccb8f2742eb0768aa3277c09b85e8df4e76b4bfcadac4fad6b3c",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
+      "current_pairs": {
+        "train": {
+          "images": 6051,
+          "labels": 6051,
+          "paired": 6051,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 283,
+          "labels": 283,
+          "paired": 283,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 2133,
+          "labels": 2133,
+          "paired": 2133,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
     }
   ],
   "geospatial_observations": {
@@ -424,10 +468,10 @@
     "device": "mps",
     "training_started": true,
     "full_run_started": true,
-    "completed_epochs": 1,
-    "main_batches_seen": 280,
+    "completed_epochs": 13,
+    "main_batches_seen": 3590,
     "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
-    "updated_at": "2026-10-20T21:41:42.565126+05:30"
+    "updated_at": "2026-10-20T22:49:10.130792+05:30"
   },
   "label_policy": "Keep source tasks/classes separate; unannotated target classes are unknown, never negative. No fabricated imagery, masks or severity labels."
 }

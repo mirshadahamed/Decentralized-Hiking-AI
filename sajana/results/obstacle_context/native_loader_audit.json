@@ -1,0 +1,24 @@
+{
+  "scope": "Native YOLO detection loader verification only; no optimizer or model inference",
+  "training_started": false,
+  "test_model_evaluation_performed": false,
+  "splits": {
+    "train": {
+      "images": 6051,
+      "class_boxes": {
+        "rock_region": 569,
+        "log_region": 8933
+      },
+      "source_and_export_counts_match": true
+    },
+    "val": {
+      "images": 283,
+      "class_boxes": {
+        "rock_region": 3,
+        "log_region": 316
+      },
+      "source_and_export_counts_match": true
+    }
+  },
+  "passed": true
+}

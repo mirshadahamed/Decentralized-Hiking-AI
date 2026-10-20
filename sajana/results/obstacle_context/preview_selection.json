@@ -1,0 +1,17 @@
+{
+  "source_split": "train",
+  "images": [
+    "K-01__1624326598-817348710.png",
+    "K-01__1624326435-202005536.png",
+    "K-01__1624325416-057621919.png",
+    "K-01__1624326058-525338439.png",
+    "K-01__1624328055-542742850.png",
+    "K-01__1624327664-996859398.png"
+  ],
+  "purpose": "Visual alignment check of native-derived rock/log boxes; no trail clearance labels",
+  "visual_review_observations": [
+    "Rock/log boxes follow visible source regions in the selected training previews.",
+    "Logs can be beside a visible track; source object presence alone must not be used as blockage supervision.",
+    "Context-absent samples remain unreviewed for litter, trail clearance, roots, erosion and other obstructions."
+  ]
+}

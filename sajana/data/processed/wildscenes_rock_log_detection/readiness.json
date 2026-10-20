@@ -1,0 +1,81 @@
+{
+  "source": "WildScenes2d opt2d",
+  "source_certificate_sha256": "6a967d7476493d24a4b420693360944a022d51d043db86d052a2fb9393fc0ed3",
+  "task": "detect",
+  "names": {
+    "0": "rock_region",
+    "1": "log_region"
+  },
+  "source_ids": {
+    "14": "rock_region",
+    "15": "log_region"
+  },
+  "licence": "CC BY-NC-SA 4.0",
+  "source_repository": "https://github.com/csiro-robotics/WildScenes",
+  "source_revision": "9eb4e10b4483a634159e2b371be0437e465fe218",
+  "box_policy": "8-connected native semantic-region bounding boxes; keep all positive pixels/components; deduplicate identical boxes only",
+  "physical_instance_labels": false,
+  "obstruction_labels": false,
+  "litter_labels": false,
+  "trail_corridor_labels": false,
+  "alternative_route_labels": false,
+  "training_ready": true,
+  "obstruction_training_ready": false,
+  "app_ready": false,
+  "splits": {
+    "train": {
+      "images": 6051,
+      "images_with_class": {
+        "rock_region": 361,
+        "log_region": 2601
+      },
+      "region_boxes_by_class": {
+        "rock_region": 569,
+        "log_region": 8933
+      },
+      "background_images": 3311
+    },
+    "val": {
+      "images": 283,
+      "images_with_class": {
+        "log_region": 102,
+        "rock_region": 3
+      },
+      "region_boxes_by_class": {
+        "log_region": 316,
+        "rock_region": 3
+      },
+      "background_images": 179
+    },
+    "test": {
+      "images": 2133,
+      "images_with_class": {
+        "log_region": 1110,
+        "rock_region": 89
+      },
+      "region_boxes_by_class": {
+        "log_region": 4226,
+        "rock_region": 138
+      },
+      "background_images": 1004
+    }
+  },
+  "issues": [],
+  "passed": true,
+  "object_context_training_ready": true,
+  "review_queue_images": 88,
+  "review_queue_split": "train",
+  "native_semantic_ids_used": [
+    14,
+    15
+  ],
+  "source_split_membership_preserved": true,
+  "numeric_class_ids_shared_with_litter": false,
+  "limitations": [
+    "Region boxes are derived context supervision, not physical instance counts",
+    "Object presence does not prove a blocked trail or a usable bypass",
+    "Water, vegetation, erosion and roots require their own reviewed task labels",
+    "Author validation contains only three rock images; report weak per-class evidence",
+    "No litter/corridor/passability labels are supplied by this export"
+  ]
+}

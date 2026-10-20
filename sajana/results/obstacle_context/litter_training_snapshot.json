@@ -1,0 +1,30 @@
+{
+  "experiment": "L1",
+  "phase": "training",
+  "model": "yolov8n-seg.pt",
+  "completed_epochs": 14,
+  "current_epoch": 15,
+  "main_batches_seen": 3650,
+  "updated_at": "2026-10-20T22:51:19.151659+05:30",
+  "device": "mps",
+  "metrics": {
+    "metrics/precision(B)": 0.59927,
+    "metrics/recall(B)": 0.44296,
+    "metrics/mAP50(B)": 0.46682,
+    "metrics/mAP50-95(B)": 0.30808,
+    "metrics/precision(M)": 0.58758,
+    "metrics/recall(M)": 0.43407,
+    "metrics/mAP50(M)": 0.44434,
+    "metrics/mAP50-95(M)": 0.26583,
+    "val/box_loss": 1.2852,
+    "val/seg_loss": 2.42458,
+    "val/cls_loss": 1.57762,
+    "val/dfl_loss": 1.21784,
+    "val/sem_loss": 0.0
+  },
+  "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/last.pt",
+  "test_split_used_for_training": false,
+  "full_trail_damage_model": false,
+  "snapshot_reason": "Verified obstacle-context data milestone; active garbage run remains unchanged"
+}
