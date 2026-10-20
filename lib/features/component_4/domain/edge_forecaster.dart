@@ -174,10 +174,16 @@ class EdgeForecaster {
     return x > 20 ? 1 : (x < -20 ? -1 : (e - 1) / (e + 1));
   }
 
+  /// Days this pack lets the phone forecast itself: the pack's day (tomorrow) and any extra days (today).
+  List<String> get forecastDays => [day, ...((pack['extra_inputs'] as Map<String, dynamic>?) ?? {}).keys];
+
   /// Tomorrow's forecast from the pack's inputs (or [occupancyPast] if the device has newer counts, scaled).
-  EdgeForecast forecast({Mat? occupancyPast}) {
+  /// [forDay]: another day the pack carries inputs for (see [forecastDays]), e.g. today.
+  EdgeForecast forecast({Mat? occupancyPast, String? forDay}) {
     final sw = Stopwatch()..start();
-    final inp = pack['inputs'] as Map<String, dynamic>;
+    final extra = forDay == null || forDay == day ? null : (pack['extra_inputs'] as Map<String, dynamic>?)?[forDay];
+    if (forDay != null && forDay != day && extra == null) throw ArgumentError('No inputs for $forDay in this pack');
+    final inp = {...pack['inputs'] as Map<String, dynamic>, ...?(extra as Map<String, dynamic>?)};
     Mat m2(String k) => [for (final r in inp[k] as List) [for (final x in r as List) (x as num).toDouble()]];
     final occ = occupancyPast ?? m2('occupancy_past');
     final covP = m2('covariates_past'), covF = m2('covariates_future'), stat = m2('static');
@@ -232,7 +238,7 @@ class EdgeForecaster {
         ],
     ];
     sw.stop();
-    return EdgeForecast(people: people, millis: sw.elapsedMilliseconds, day: day,
+    return EdgeForecast(people: people, millis: sw.elapsedMilliseconds, day: forDay ?? day,
         places: [for (var s = 0; s < n; s++) (pack['segments'] as List?)?.isNotEmpty == true ? placeOf(s) : ('', '')]);
   }
 }

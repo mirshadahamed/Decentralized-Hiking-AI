@@ -747,6 +747,15 @@ void main() {
     await open();
     expect(tab, findsOneWidget);
     expect(find.textContaining('ST-GNN on this phone'), findsOneWidget);
+    expect(find.byKey(const Key('day_picker')), findsOneWidget);              // today + 6 days
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Tomorrow'), findsOneWidget);
+    await t.tap(find.text('Sat 12 Apr'));                                    // day 3: planning model, saved
+    await t.pump();
+    expect(find.textContaining('Planning outlook'), findsOneWidget);
+    await t.tap(find.text('Today'));
+    await t.pump();
+    expect(find.textContaining('ST-GNN on this phone'), findsOneWidget);
     expect(find.byKey(const Key('hour_slider')), findsOneWidget);
     expect(find.textContaining('of 48 sections'), findsOneWidget);
     expect(find.textContaining(' people'), findsWidgets);              // the fullest sections at that hour
@@ -758,7 +767,7 @@ void main() {
 
     await t.tap(find.text('Safe numbers'));
     await t.pumpAndSettle();
-    expect(find.text('Safe number of visitors tomorrow'), findsOneWidget);
+    expect(find.text('Safe number of visitors that day'), findsOneWidget);
     expect(find.byKey(const Key('park_safe_number')), findsOneWidget);
     expect(find.text("World's End loop"), findsOneWidget);
     await t.tap(find.text("World's End loop"));

@@ -35,50 +35,74 @@ class BottleneckDay {
   final Map<String, TrailSummary> trails;
   final List<int> openHours;
   final double busyUtilisation;
-  final String source; // phone | server
+  final String source; // phone (ST-GNN on this device) | planning (planning model, saved) | server
   final int? millis; // time the ST-GNN took on this phone
   final bool offline; // computed from the stored pack, no connection
   final int? expectedVisitors, recommendedQuota, classicQuota;
   final double? rainShare;
   final String disclaimer;
 
-  /// From the edge pack (needs its "map" block) and the forecast the phone just computed from it.
-  factory BottleneckDay.fromPack(Map<String, dynamic> pack, EdgeForecast f, {bool offline = false}) {
+  /// The days a pack covers, in order: (date, source). "stgnn" = forecast on this phone, "planning" = the
+  /// planning model's forecast saved in the pack. Older packs: just the pack's own day.
+  static List<(String, String)> packDays(Map<String, dynamic> pack) {
+    final days = ((pack['map'] as Map<String, dynamic>?)?['days'] as List?) ?? [];
+    if (days.isEmpty) return [(pack['day'] as String, 'stgnn')];
+    return [for (final d in days) ((d as Map)['date'] as String, d['source'] as String)];
+  }
+
+  /// From the edge pack (needs its "map" block). [date] picks a day of the week (default: the pack's day);
+  /// [f] is the forecast the phone computed for that day (needed for "stgnn" days, ignored for "planning" days).
+  factory BottleneckDay.fromPack(Map<String, dynamic> pack, EdgeForecast? f, {bool offline = false, String? date}) {
     final m = pack['map'] as Map<String, dynamic>;
+    final day = date ?? pack['day'] as String;
+    final block = [for (final d in (m['days'] as List?) ?? []) d as Map<String, dynamic>]
+        .where((d) => d['date'] == day)
+        .firstOrNull;
+    final planned = block != null && block['source'] != 'stgnn';
+    if (!planned && f == null) throw ArgumentError('The phone forecast for $day is needed');
+    final cap = {for (final s in (block?['segments'] as List?) ?? []) (s as Map)['id'] as int: s};
+    final plannedPeople = planned
+        ? [for (final r in block['people'] as List) [for (final v in r as List) (v as num).toDouble()]]
+        : null;
+    final summary = block ?? m; // per-day totals, else the pack's day (older packs)
     final segs = [for (final s in m['segments'] as List) s as Map<String, dynamic>];
     final info = {for (final s in pack['segments'] as List) (s as Map)['id'] as int: s};
     return BottleneckDay(
-      day: pack['day'] as String,
+      day: day,
       sections: [
         for (final s in segs)
-          Section(
-            id: s['id'] as int,
-            trail: info[s['id']]?['trail'] as String? ?? '',
-            poi: info[s['id']]?['poi'] as String? ?? '',
-            lines: _lines(s['lines']),
-            people: [for (final row in f.people) row[s['id'] as int]],
-            capacityAtOnce: _d(s['capacity_at_once']),
-            pcc: _i(s['pcc_per_day']),
-            rcc: _i(s['rcc_per_day']),
-            ecc: _i(s['ecc_per_day']),
-            lengthM: _i(s['length_m']),
-            minutesFromStart: (s['minutes_from_start'] as num?)?.toDouble(),
-            minutesOnSection: (s['minutes_on_segment'] as num?)?.toDouble(),
-          ),
+          () {
+            final id = s['id'] as int;
+            final Map c = cap[id] ?? s;
+            return Section(
+              id: id,
+              trail: info[id]?['trail'] as String? ?? '',
+              poi: info[id]?['poi'] as String? ?? '',
+              lines: _lines(s['lines']),
+              people: [for (final row in plannedPeople ?? f!.people) row[id]],
+              capacityAtOnce: _d(c['capacity_at_once']),
+              pcc: _i(c['pcc_per_day']),
+              rcc: _i(c['rcc_per_day']),
+              ecc: _i(c['ecc_per_day']),
+              lengthM: _i(s['length_m']),
+              minutesFromStart: (s['minutes_from_start'] as num?)?.toDouble(),
+              minutesOnSection: (s['minutes_on_segment'] as num?)?.toDouble(),
+            );
+          }(),
       ],
-      trails: _trails(m['trails']),
+      trails: _trails(summary['trails']),
       lastEntryHour: (m['last_entry_hour'] as num?)?.toDouble(),
       reversibleTrails: [for (final t in m['reversible_trails'] as List? ?? []) t as String],
       mainTrail: m['main_trail'] as String?,
       openHours: [for (final h in m['open_hours'] as List) (h as num).toInt()],
       busyUtilisation: _d(m['busy_utilisation'], 0.8),
-      source: 'phone',
-      millis: f.millis,
+      source: planned ? 'planning' : 'phone',
+      millis: planned ? null : f!.millis,
       offline: offline,
-      expectedVisitors: (m['expected_visitors'] as num?)?.toInt(),
-      recommendedQuota: (m['recommended_daily_quota'] as num?)?.toInt(),
-      classicQuota: (m['classic_cifuentes_quota'] as num?)?.toInt(),
-      rainShare: (m['rain_share_open_hours'] as num?)?.toDouble(),
+      expectedVisitors: (summary['expected_visitors'] as num?)?.toInt(),
+      recommendedQuota: (summary['recommended_daily_quota'] as num?)?.toInt(),
+      classicQuota: (summary['classic_cifuentes_quota'] as num?)?.toInt(),
+      rainShare: (summary['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: m['disclaimer'] as String? ?? '',
     );
   }

@@ -6,15 +6,17 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/bottleneck.dart';
+import '../../domain/edge_forecaster.dart';
 import '../../domain/walk_advice.dart';
 import '../../models/models.dart';
 import '../../services/edge_store.dart';
 import '../theme/c4_theme.dart';
 import '../widgets/c4_ui.dart';
 
-/// Tomorrow's micro-spatial bottlenecks (proposal FR2-FR4, NFR4): every trail section coloured by how full the
-/// ST-GNN expects it to be at the chosen hour, and the Cifuentes safe numbers per section and trail.
-/// The forecast is computed on this phone from the daily edge pack, so this also works with no connection.
+/// Micro-spatial bottlenecks for today and the next 6 days (proposal FR2-FR4, NFR4): every trail section coloured
+/// by how full it is expected to be at the chosen hour, the Cifuentes safe numbers per section and trail, and
+/// offline walk advice. Today and tomorrow are forecast by the ST-GNN on this phone from the daily edge pack;
+/// the days after come from the planning model, saved in the same pack - so the whole week works with no signal.
 class BottleneckScreen extends StatelessWidget {
   const BottleneckScreen({super.key, this.showTiles = true});
 
@@ -22,12 +24,12 @@ class BottleneckScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text("Tomorrow's bottlenecks")),
+        appBar: AppBar(title: const Text('Crowding this week')),
         body: BottleneckView(showTiles: showTiles),
       );
 }
 
-/// The two tabs (map, safe numbers) without an app bar, so staff homes can embed them as a tab.
+/// Day picker + the three tabs (map, safe numbers, your walk) without an app bar, so homes can embed them.
 class BottleneckView extends StatefulWidget {
   const BottleneckView({super.key, this.showTiles = true});
 
@@ -40,6 +42,11 @@ class BottleneckView extends StatefulWidget {
 class _BottleneckViewState extends State<BottleneckView> {
   late Future<BottleneckDay> _future;
   int? _hour;
+  EdgeForecaster? _model; // the stored pack (null: server forecast for tomorrow only)
+  bool _offline = false;
+  List<(String, String)> _days = const []; // (date, source) the pack covers
+  String? _date;
+  final _cache = <String, BottleneckDay>{};
 
   @override
   void didChangeDependencies() {
@@ -60,14 +67,26 @@ class _BottleneckViewState extends State<BottleneckView> {
     }
   }
 
+  /// One day of the week from the pack: the ST-GNN runs on the phone for today / tomorrow (once per day shown).
+  BottleneckDay _dayFor(String date) => _cache.putIfAbsent(date, () {
+        final source = _days.firstWhere((d) => d.$1 == date, orElse: () => (date, 'stgnn')).$2;
+        final f = source == 'stgnn' ? _model!.forecast(forDay: date) : null;
+        return BottleneckDay.fromPack(_model!.pack, f, offline: _offline, date: date);
+      });
+
   Future<BottleneckDay> _load() async {
     final api = C4Scope.of(context);
     _device = await _deviceSeed();
     final loaded = await EdgeStore.load(api); // downloads today's pack, or uses the stored one offline
     if (loaded != null && loaded.$1.pack['map'] is Map) {
-      final (model, offline) = loaded;
-      return BottleneckDay.fromPack(model.pack, model.forecast(), offline: offline);
+      _model = loaded.$1;
+      _offline = loaded.$2;
+      _days = BottleneckDay.packDays(_model!.pack);
+      _cache.clear();
+      _date = _days.any((d) => d.$1 == _date) ? _date : _days.first.$1; // today first
+      return _dayFor(_date!);
     }
+    _model = null;
     final r = await Future.wait([api.tomorrow(), api.geometry()]); // no pack: the server's own forecast
     final lines = <int, List<List<List<double>>>>{};
     for (final s in r[1] as List<MapSegment>) {
@@ -76,17 +95,42 @@ class _BottleneckViewState extends State<BottleneckView> {
     return BottleneckDay.fromServer(r[0] as Map<String, dynamic>, lines);
   }
 
+  String _dayLabel(int i, String iso) => switch (i) { 0 => 'Today', 1 => 'Tomorrow', _ => _nice(iso) };
+
   @override
   Widget build(BuildContext context) => FutureBuilder<BottleneckDay>(
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(() => _future = _load()));
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          final d = snap.data!;
+          final d = _model != null && _date != null ? _dayFor(_date!) : snap.data!;
           final hour = _hour ?? d.worstHour;
           return DefaultTabController(
             length: 3,
             child: Column(children: [
+              if (_days.length > 1)
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    key: const Key('day_picker'),
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: C4Space.s, vertical: C4Space.xs),
+                    children: [
+                      for (var i = 0; i < _days.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: ChoiceChip(
+                            label: Text(_dayLabel(i, _days[i].$1)),
+                            selected: _days[i].$1 == d.day,
+                            onSelected: (_) => setState(() {
+                              _date = _days[i].$1;
+                              _hour = null; // jump to that day's worst hour
+                            }),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               _SourceBar(day: d),
               const TabBar(tabs: [
                 Tab(key: Key('tab_bottleneck_map'), icon: Icon(Icons.map_outlined), text: 'Map'),
@@ -105,7 +149,6 @@ class _BottleneckViewState extends State<BottleneckView> {
         },
       );
 }
-
 // ---------- shared ----------
 const _levelColor = {
   Crowding.quiet: Color(0xFF2E7D32),
@@ -145,8 +188,12 @@ class _SourceBar extends StatelessWidget {
       child: Wrap(spacing: C4Space.s, runSpacing: C4Space.xs, crossAxisAlignment: WrapCrossAlignment.center, children: [
         Text(_nice(day.day), style: text.titleSmall),
         Chip(
-          avatar: Icon(phone ? Icons.phone_android : Icons.cloud_outlined, size: 16),
-          label: Text(phone ? 'ST-GNN on this phone · ${day.millis} ms' : 'Server forecast'),
+          avatar: Icon(phone ? Icons.phone_android : day.source == 'planning' ? Icons.date_range : Icons.cloud_outlined, size: 16),
+          label: Text(phone
+              ? 'ST-GNN on this phone · ${day.millis} ms'
+              : day.source == 'planning'
+                  ? 'Planning outlook · saved on this phone'
+                  : 'Server forecast'),
           visualDensity: VisualDensity.compact,
         ),
         if (day.offline)
@@ -385,7 +432,7 @@ class _CapacityTab extends StatelessWidget {
         child: Padding(
           padding: C4Space.page,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Safe number of visitors tomorrow', style: text.titleMedium),
+            Text('Safe number of visitors that day', style: text.titleMedium),
             const SizedBox(height: C4Space.s),
             if (day.recommendedQuota != null)
               Text('${day.recommendedQuota}', key: const Key('park_safe_number'), style: text.displaySmall),
@@ -553,7 +600,7 @@ class _WalkTab extends StatelessWidget {
           ),
       ],
       const SizedBox(height: C4Space.s),
-      const BasisNote('Worked out on this phone from tomorrow\'s forecast, also with no signal. Each phone suggests '
+      const BasisNote('Worked out on this phone from this day\'s forecast, also with no signal. Each phone suggests '
           'one of the good options at random, weighted by the room left, so people who follow the advice spread '
           'out instead of all moving to the same quiet place. The same options are offered to the safety assistant '
           '(Module 3).'),

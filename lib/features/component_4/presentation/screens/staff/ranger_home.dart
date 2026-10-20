@@ -60,14 +60,14 @@ class _RangerHomeState extends State<RangerHome> {
             Tab(icon: Icon(Icons.qr_code_scanner), text: 'Check in'),
             Tab(icon: Icon(Icons.point_of_sale), text: 'Walk-ins'),
             Tab(icon: Icon(Icons.traffic), text: 'Live'),
-            Tab(icon: Icon(Icons.groups_outlined), text: 'Tomorrow'),
+            Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
           _CheckInTab(at: () => _demo),
           _WalkInTab(day: _day, at: () => _demo),
           _LiveTab(day: _day, now: _now, demo: _demo != null),
-          const BottleneckView(), // where to send rangers tomorrow, also offline on the trail
+          const BottleneckView(), // where and when sections get crowded this week, also offline
         ]),
       ),
     );

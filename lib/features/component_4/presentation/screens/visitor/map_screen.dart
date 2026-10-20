@@ -109,7 +109,7 @@ class _MapScreenState extends State<MapScreen> {
                         onPressed: () => Navigator.of(context)
                             .push(c4Route(context, BottleneckScreen(showTiles: widget.showTiles))),
                         icon: const Icon(Icons.groups_outlined),
-                        label: const Text("Tomorrow's crowding"),
+                        label: const Text('Crowding this week'),
                       ),
                     ),
                   ),

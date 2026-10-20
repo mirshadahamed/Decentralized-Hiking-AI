@@ -2,6 +2,7 @@
 // Fixture: research/component_4 -> python -m src.edge.pack --fixture ../../test/component_4/fixtures/edge_pack.json
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:decentralized_hiking_ai/features/component_4/domain/bottleneck.dart';
 import 'package:decentralized_hiking_ai/features/component_4/domain/edge_forecaster.dart';
@@ -61,6 +62,34 @@ void main() {
     expect(d.sections.where((x) => x.trail == 'main').map((x) => x.ecc).reduce((a, b) => a < b ? a : b),
         main.recommended); // the trail's safe number is its most limiting section
     expect(d.nameOf(d.sections.firstWhere((x) => x.poi == 'worlds_end')), "World's End");
+  });
+
+  test('a week: today is also forecast on the phone (= PyTorch), later days come from the planning model', () {
+    final m = EdgeForecaster.fromPack(pack);
+    final days = BottleneckDay.packDays(pack);
+    expect(days.length, 7);
+    expect(days.take(2).map((d) => d.$2), everyElement('stgnn'));          // today + tomorrow: ST-GNN on the phone
+    expect(days.skip(2).map((d) => d.$2), everyElement('planning'));
+    final today = days.first.$1;
+    expect(m.forecastDays, containsAll([today, pack['day']]));
+    final f = m.forecast(forDay: today);
+    final exp = [for (final r in pack['expected_people_today'] as List) [for (final x in r as List) (x as num).toDouble()]];
+    var maxDiff = 0.0;
+    for (var t = 0; t < exp.length; t++) {
+      for (var s = 0; s < exp[t].length; s++) {
+        maxDiff = math.max(maxDiff, (f.people[t][s] - exp[t][s]).abs());
+      }
+    }
+    expect(maxDiff, lessThan(0.01));
+    expect(() => m.forecast(forDay: '1999-01-01'), throwsArgumentError);
+    // every day has its own capacity and safe numbers
+    final d0 = BottleneckDay.fromPack(pack, f, date: today);
+    final d5 = BottleneckDay.fromPack(pack, null, date: days[5].$1);
+    expect(d0.source, 'phone');
+    expect(d5.source, 'planning');
+    expect(d5.sections.length, d0.sections.length);
+    expect(d5.sections.every((s) => s.people.length == 24 && s.lines.isNotEmpty), isTrue);
+    expect(d5.recommendedQuota, isNot(d0.recommendedQuota));                // the safe number changes with the day
   });
 
   test('walk advice: avoids busy sections, uses the other direction of the loop, and spreads people out', () {
