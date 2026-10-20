@@ -168,6 +168,13 @@ def forecast_tomorrow():
     return published("forecast_tomorrow.json")
 
 
+@app.get("/edge/pack", tags=["public"])
+def edge_pack():
+    """Trained model + inputs for tomorrow (schema c4-edge-1): phones download it once and run the ST-GNN
+    themselves, offline (src/edge/pack.py)."""
+    return published("edge_pack.json")
+
+
 def live_inputs(c: LiveContext, day: date) -> dict:
     """What the safe limit of a day depends on, today: rain (forecast or typical), ground wetness, conditions."""
     rain, rain_basis = c.rain_share(day)

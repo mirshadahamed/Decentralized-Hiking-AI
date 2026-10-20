@@ -92,6 +92,22 @@ def publish_slots(ctx: LiveContext, db=None) -> list:
     return alerts
 
 
+def publish_edge_pack(ctx: LiveContext) -> bool:
+    """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py).
+    Not published when only the historical-average fallback is available (no trained model)."""
+    from src.edge.pack import build_pack
+    if ctx.model is None:
+        return False
+    tomorrow = pd.Timestamp(ctx.today + timedelta(days=1))
+    origin = int(np.searchsorted(ctx.data.times, tomorrow))
+    if origin >= ctx.data.T or origin < ctx.data.L:
+        return False
+    ctx.model.eval()
+    pack = build_pack(ctx.data, ctx.model, ctx.scale, origin, ctx.cfg, run=ctx.run)
+    (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
+    return True
+
+
 def publish_advisory(outlook: dict) -> dict:
     """Recommended start times for every day of the outlook, from the expected climbers per route (likely case).
     Officers also get a high case (P90 climbers: 1 night in 10 is busier) to plan the halfway checks for."""
@@ -122,6 +138,7 @@ def refresh(today: date | None = None, db=None) -> dict:
     alerts = [] if advisory_mode else publish_slots(ctx, db)
     if advisory_mode:                                       # pilgrimage site: recommended start times, no tickets
         publish_advisory(outlook)
+    edge = publish_edge_pack(ctx)
 
     last30 = ctx.day_source[max(0, int((pd.Timestamp(today) - ctx.data.times[0]).days) - 29):
                             int((pd.Timestamp(today) - ctx.data.times[0]).days) + 1]
@@ -129,7 +146,7 @@ def refresh(today: date | None = None, db=None) -> dict:
         "park": ctx.cfg["park"], "site": ctx.cfg["area"]["name"],
         "booking_mode": ctx.cfg["control"].get("booking_mode", "required"),
         "today": today.isoformat(), "refreshed_at": datetime.now().isoformat(timespec="seconds"),
-        "forecast_model": tomorrow["source"]["model"], "model_run": ctx.run,
+        "forecast_model": tomorrow["source"]["model"], "model_run": ctx.run, "edge_pack": edge,
         "visitor_history_last_30_days": pd.Series(last30).value_counts().to_dict(),
         "weather_next_90_days": pd.Series(
             [ctx.rain_share(today + timedelta(days=k))[1] for k in range(1, ctx.cfg["live"]["horizon_days"] + 1)]

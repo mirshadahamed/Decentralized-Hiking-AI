@@ -1,0 +1,66 @@
+{
+  "park": "adams_peak",
+  "model_run": "20261016_000119_benchmark",
+  "segments": 57,
+  "test_days": 365,
+  "input_shapes": {
+    "x_past": [
+      1,
+      24,
+      57,
+      33
+    ],
+    "x_fut": [
+      1,
+      24,
+      57,
+      31
+    ]
+  },
+  "parameters": 13729,
+  "accuracy": {
+    "pytorch_fp32": {
+      "MAE": 3.8280093669891357,
+      "RMSE": 32.46170425415039
+    },
+    "onnx_fp32": {
+      "MAE": 3.8280093669891357,
+      "RMSE": 32.46170425415039
+    },
+    "onnx_int8": {
+      "MAE": 4.77051305770874,
+      "RMSE": 32.49247360229492
+    }
+  },
+  "max_abs_diff_people": {
+    "onnx_fp32_vs_pytorch": 0.0012,
+    "onnx_int8_vs_pytorch": 163.651
+  },
+  "mae_change_int8_pct": 24.62,
+  "latency_one_forecast_1_thread": {
+    "onnx_fp32": {
+      "median_ms": 2.22,
+      "p95_ms": 2.95
+    },
+    "onnx_int8": {
+      "median_ms": 2.31,
+      "p95_ms": 3.46
+    },
+    "pytorch_fp32": {
+      "median_ms": 4.02,
+      "p95_ms": 5.94
+    }
+  },
+  "memory": {
+    "onnx_fp32": {
+      "file_kb": 110.5,
+      "process_increase_mb": 2.2
+    },
+    "onnx_int8": {
+      "file_kb": 108.6,
+      "process_increase_mb": 1.7
+    }
+  },
+  "nfr1_target_ms": 2000,
+  "cpu": "4 logical cores (laptop); 1 thread used for latency"
+}

@@ -22,3 +22,11 @@ fastapi==0.143.2
 uvicorn==0.54.0
 httpx==0.28.1
 pytest==9.1.1
+# edge inference (ONNX export, int8 quantisation, latency)
+onnx==1.23.2
+onnxruntime==1.31.0
+onnxscript==0.7.2
+psutil==7.2.2
+python-pptx==1.0.2
+# pre-training on METR-LA / PEMS-BAY (.h5)
+h5py==3.16.0
