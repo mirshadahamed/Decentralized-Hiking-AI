@@ -1,0 +1,19 @@
+{
+  "pid": 3394,
+  "caffeinate_pid": 3395,
+  "command": [
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/.venv-yolov8/bin/python",
+    "-u",
+    "-B",
+    "-m",
+    "sajana.src.train_yolov8",
+    "--device",
+    "mps",
+    "--preflight-report",
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/preflight_taco.json"
+  ],
+  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_20261020_213720.log",
+  "launched_at": "2026-10-20T21:37:20.807009+05:30",
+  "machine": "Apple M4, 16 GiB",
+  "requested_device": "mps"
+}

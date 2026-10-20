@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-20T20:07:12.417936+05:30",
+  "checked_at": "2026-10-20T21:41:48.039206+05:30",
   "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
   "preparation_order": [
     "source inventory and taxonomy",
@@ -417,6 +417,17 @@
   "all_component_datasets_preprocessed": false,
   "litter_baseline_data_ready": true,
   "full_concurrent_model_data_ready": false,
-  "model_training_started": false,
+  "model_training_started": true,
+  "model_training": {
+    "phase": "training",
+    "model": "yolov8n-seg.pt",
+    "device": "mps",
+    "training_started": true,
+    "full_run_started": true,
+    "completed_epochs": 1,
+    "main_batches_seen": 280,
+    "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
+    "updated_at": "2026-10-20T21:41:42.565126+05:30"
+  },
   "label_policy": "Keep source tasks/classes separate; unannotated target classes are unknown, never negative. No fabricated imagery, masks or severity labels."
 }

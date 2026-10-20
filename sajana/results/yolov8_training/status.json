@@ -1,0 +1,81 @@
+{
+  "experiment": "L1",
+  "phase": "training",
+  "training_started": true,
+  "full_run_started": true,
+  "started_at": "2026-10-20T21:37:20.843324+05:30",
+  "pid": 3394,
+  "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
+  "model": "yolov8n-seg.pt",
+  "target_classes": {
+    "0": "litter"
+  },
+  "planned_epochs": 100,
+  "batch": 4,
+  "imgsz": 640,
+  "test_split_used_for_training": false,
+  "full_trail_damage_model": false,
+  "completed_epochs": 1,
+  "main_batches_seen": 320,
+  "updated_at": "2026-10-20T21:42:05.924790+05:30",
+  "device": "mps",
+  "versions": {
+    "python": "3.9.6",
+    "torch": "2.8.0",
+    "ultralytics": "8.4.183"
+  },
+  "dataset_counts": {
+    "train": {
+      "images": 1028,
+      "objects": 3611,
+      "present_labels": 1028,
+      "present_images": 1028,
+      "missing_images": 0,
+      "verified_images": 1028,
+      "resized_images": 0
+    },
+    "val": {
+      "images": 286,
+      "objects": 675,
+      "present_labels": 286,
+      "present_images": 286,
+      "missing_images": 0,
+      "verified_images": 286,
+      "resized_images": 0
+    },
+    "test": {
+      "images": 185,
+      "objects": 497,
+      "present_labels": 185,
+      "present_images": 185,
+      "missing_images": 0,
+      "verified_images": 185,
+      "resized_images": 0
+    }
+  },
+  "smoke_training_images": 8,
+  "smoke_batches_seen": 4,
+  "last_smoke_loss": 27.233154296875,
+  "smoke_passed": true,
+  "save_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit",
+  "effective_batch": 4,
+  "current_epoch": 2,
+  "last_training_loss": 33.73551940917969,
+  "metrics": {
+    "metrics/precision(B)": 0.4754,
+    "metrics/recall(B)": 0.36148,
+    "metrics/mAP50(B)": 0.34494,
+    "metrics/mAP50-95(B)": 0.21858,
+    "metrics/precision(M)": 0.48446,
+    "metrics/recall(M)": 0.36444,
+    "metrics/mAP50(M)": 0.33642,
+    "metrics/mAP50-95(M)": 0.18958,
+    "val/box_loss": 1.41803,
+    "val/seg_loss": 2.82618,
+    "val/cls_loss": 1.91516,
+    "val/dfl_loss": 1.26919,
+    "val/sem_loss": 0.0
+  },
+  "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/last.pt"
+}

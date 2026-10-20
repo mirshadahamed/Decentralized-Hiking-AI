@@ -1,6 +1,6 @@
 # Component 2 dataset preparation status
 
-Checked: 2026-10-20T20:07:12.417936+05:30
+Checked: 2026-10-20T21:41:48.039206+05:30
 
 | Source | Prepared pairs | State | Source release complete |
 | --- | ---: | --- | --- |
@@ -17,4 +17,4 @@ Local jointly annotated trail dataset: **missing**. The annotation workspace and
 
 The full concurrent component cannot be certified until real local damage/path/passability annotations and independent local holdouts exist.
 
-Binary litter baseline data ready: **True**. No model training was started.
+Binary litter baseline data ready: **True**. YOLOv8 training status: **training**; see `sajana/results/yolov8_training/status.json`.

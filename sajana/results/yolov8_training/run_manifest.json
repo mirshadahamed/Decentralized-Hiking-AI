@@ -1,0 +1,38 @@
+{
+  "configuration": {
+    "model": "yolov8n-seg.pt",
+    "weights_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.pt",
+    "experiment": "L1",
+    "dataset": "data/processed/taco_litter_seg_clean",
+    "annotations": "data/interim/taco/annotations_official_cleaned.json",
+    "epochs": 100,
+    "patience": 20,
+    "imgsz": 640,
+    "batch": 4,
+    "device": "mps",
+    "workers": 0,
+    "seed": 42,
+    "deterministic": true,
+    "amp": false,
+    "cache": false,
+    "save_period": 5,
+    "smoke_images": 8,
+    "smoke_epochs": 1,
+    "pretrained": true,
+    "notes": "YOLOv8 nano instance segmentation; binary litter; TACO fixed holdouts. Test is excluded from training YAML. MJU comparison is a later separate run."
+  },
+  "effective_device": "mps",
+  "versions": {
+    "python": "3.9.6",
+    "torch": "2.8.0",
+    "ultralytics": "8.4.183"
+  },
+  "initial_weights_sha256": "a7cd8f929e1903d78a12a48efecab430209f18dc46cb96c3599a5980c63c423c",
+  "annotations_sha256": "a74f436d8d6df10ab55f533b5d7831128ae604cdf6376ed0834a7fd34e48cc87",
+  "data_yaml_sha256": "4d14f48ee70bfccab6fa7ac8297d6f2caca24ae0558b451e68fa25c86fe2980e",
+  "dataset_hashes_sha256": "62eaac5dacc61eeb1bcebb5c11b7ffacb56f95a060215477cdcee1b0036486db",
+  "trainer_source_sha256": "f1c27c7fd5dd2748df3f044251288b7b55dbdf76f0a9c781ff6e653c34c75677",
+  "code_commit": "d072c68e031e0d8931305af95ab0cdaa203757de",
+  "seed": 42,
+  "test_split_loaded": false
+}

@@ -338,6 +338,8 @@
     "all_component_datasets_preprocessed": false,
     "litter_baseline_data_ready": true,
     "full_concurrent_model_data_ready": false,
-    "local_ground_truth_missing": true
+    "local_ground_truth_missing": true,
+    "model_training_started": true,
+    "training_status": "sajana/results/yolov8_training/status.json"
   }
 }
