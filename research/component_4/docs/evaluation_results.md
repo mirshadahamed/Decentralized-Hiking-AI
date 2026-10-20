@@ -11,6 +11,7 @@ Significance: paired tests over forecast days (or nights), Holm-corrected where 
 | RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~20 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it |
 | RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: useful when the final steps are a real bottleneck (≤ 25 people/min), little effect above** |
 | RQ5 | Does pretraining on urban traffic (METR-LA, PEMS-BAY) help? | **Only at Horton Plains with 30–90 days of counts** (−5 to −12 % vs scratch); no help at Adam's Peak; zero-shot fails; a historical average still wins at ≤ 90 days |
+| RQ8 | Can offline advice to hikers prevent overcrowding? | **Yes, if it is spread:** up to −73 % with nobody turned away (as much as the daily limit). Identical advice on every phone backfires at high compliance (+12 % worse). Limit + spread advice: −95 % |
 | RQ6 | Can the forecast run on the phone within 2 s? | **Yes**: 2 ms (ONNX, laptop core), ~140 ms in plain Dart, offline |
 
 ---
@@ -206,6 +207,45 @@ Paired tests against the matching scratch model (Holm-corrected, over the 365 te
 useful starting point only for a new trail park with a few months of counts, and only if its crowds behave like
 traffic peaks. Pretraining on the other park (RQ2) gives similar gains. In both cases, a new park should start
 with the historical average.
+
+## RQ8 – Offline walk advice vs entry limits (`src.control.evaluate_advice`, run `20261020_234527_advice`)
+
+Horton Plains, 2025 test year (simulation), the same groups each day as the entry-control test.
+- **The advice.** Every phone has tomorrow's ST-GNN forecast, from the benchmark's day-ahead predictions. For
+  each trail, direction (the World's End loop either way) and start hour, it works out how full the sections will
+  be when the hiker is on them.
+- **When it applies.** A plan that meets a section at ≥ 80 % of what it holds is "crowded". Hikers with a crowded
+  plan follow the advice with probability *c*.
+- **Herd:** every phone gives the single best option.
+- **Spread:** each phone draws one of the good options, weighted by room left (as the app does,
+  `domain/walk_advice.dart`).
+
+| Policy | Overcrowding removed | Days overcrowded | Turned away | Changed plan |
+|---|---|---|---|---|
+| No control (159,330 person-h over capacity) | – | 365 | 0 % | 0 % |
+| Daily Cifuentes limit | 72.8 % | 356 | 43.6 % | 0 % |
+| Slot tickets + moving | 99.6 % | 250 | 35.3 % | 0 % |
+| Herd advice, 25 / 50 / 75 / 100 % follow | 34.9 / 40.7 / 22.5 / **−12.4** % | 364–365 | 0 % | 19–76 % |
+| **Spread advice**, 25 / 50 / 75 / 100 % follow | 42.6 / 68.0 / **73.0** / 61.1 % | 364 / 335 / 276 / 310 | **0 %** | 19–76 % |
+| Daily limit + spread advice (50 %) | **95.0 %** | 331 | 43.6 % | 20 % |
+
+Wilcoxon over days: every policy differs from no control (p < 10⁻¹⁷). Spread beats herd at every compliance level
+(p < 10⁻²⁶; e.g. −321 person-h per day at full compliance).
+
+- **Advice works only if it is spread.** Identical advice moves the crowd together: at full compliance it is worse
+  than no advice. This is the same herding found at Adam's Peak (naive start times made the queue 22 % worse).
+- **Spread advice at 75 % compliance removes as much as the daily limit, without turning anyone away.** Above
+  that it loses ground (61 % at 100 %): the phones do not know what other hikers chose, so the good options fill up.
+- **Advice does not replace the limit:**
+  - a limit plus spread advice removes 95 %;
+  - only slot tickets (a booking that knows every choice) remove almost all overcrowding.
+- **Answer to "can offline alternative-route suggestions solve overcrowding?":** they solve a large part of it,
+  cheaply and with no signal, if each phone spreads its suggestion. The dynamic limit is still needed on the
+  busiest days.
+- **Limitations:**
+  - it is simulation;
+  - compliance is assumed;
+  - the forecast is the ST-GNN's day-ahead forecast with observed weather (as in RQ1).
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
