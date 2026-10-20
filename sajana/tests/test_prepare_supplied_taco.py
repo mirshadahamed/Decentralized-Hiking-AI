@@ -158,5 +158,20 @@ class PrepareSuppliedTests(unittest.TestCase):
         self.assertFalse((self.interim / "annotations_unofficial_validated.json").exists())
 
 
+    def test_full_preparation_verifies_downloaded_unofficial_images(self):
+        from PIL import Image
+        for image_id,path in self.image_paths.items():
+            Image.new('RGB',(100,100),{0:'red',1:'red',2:'yellow',3:'purple'}[image_id]).save(path,format='JPEG')
+        prepare(self.root,verify_images=False)
+        pool=self.root/'data/processed/taco_unofficial_litter_seg'
+        for image_id,color in [(10,'blue'),(13,'green')]:
+            Image.new('RGB',(100,100),color).save(pool/'images/train'/f'unofficial__{image_id:06d}.jpg')
+        status=prepare(self.root,verify_images=True)
+        self.assertTrue(status['unofficial']['training_pool_ready'])
+        self.assertFalse(status['unofficial']['labels_only'])
+        self.assertEqual(self.report('unofficial_full_readiness.json')['mode'],'full')
+        self.assertEqual(self.report('unofficial_labels_audit.json')['mode'],'labels_only')
+
+
 if __name__ == "__main__":
     unittest.main()

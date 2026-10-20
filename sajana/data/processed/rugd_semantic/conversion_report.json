@@ -1,0 +1,363 @@
+{
+  "preprocessed": true,
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/rugd_semantic",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/rugd/extracted",
+  "task": "source_24_class_semantic_context",
+  "classes": [
+    {
+      "id": 0,
+      "name": "void",
+      "rgb": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 1,
+      "name": "dirt",
+      "rgb": [
+        108,
+        64,
+        20
+      ]
+    },
+    {
+      "id": 2,
+      "name": "sand",
+      "rgb": [
+        255,
+        229,
+        204
+      ]
+    },
+    {
+      "id": 3,
+      "name": "grass",
+      "rgb": [
+        0,
+        102,
+        0
+      ]
+    },
+    {
+      "id": 4,
+      "name": "tree",
+      "rgb": [
+        0,
+        255,
+        0
+      ]
+    },
+    {
+      "id": 5,
+      "name": "pole",
+      "rgb": [
+        0,
+        153,
+        153
+      ]
+    },
+    {
+      "id": 6,
+      "name": "water",
+      "rgb": [
+        0,
+        128,
+        255
+      ]
+    },
+    {
+      "id": 7,
+      "name": "sky",
+      "rgb": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "id": 8,
+      "name": "vehicle",
+      "rgb": [
+        255,
+        255,
+        0
+      ]
+    },
+    {
+      "id": 9,
+      "name": "container/generic-object",
+      "rgb": [
+        255,
+        0,
+        127
+      ]
+    },
+    {
+      "id": 10,
+      "name": "asphalt",
+      "rgb": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "id": 11,
+      "name": "gravel",
+      "rgb": [
+        255,
+        128,
+        0
+      ]
+    },
+    {
+      "id": 12,
+      "name": "building",
+      "rgb": [
+        255,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 13,
+      "name": "mulch",
+      "rgb": [
+        153,
+        76,
+        0
+      ]
+    },
+    {
+      "id": 14,
+      "name": "rock-bed",
+      "rgb": [
+        102,
+        102,
+        0
+      ]
+    },
+    {
+      "id": 15,
+      "name": "log",
+      "rgb": [
+        102,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 16,
+      "name": "bicycle",
+      "rgb": [
+        0,
+        255,
+        128
+      ]
+    },
+    {
+      "id": 17,
+      "name": "person",
+      "rgb": [
+        204,
+        153,
+        255
+      ]
+    },
+    {
+      "id": 18,
+      "name": "fence",
+      "rgb": [
+        102,
+        0,
+        204
+      ]
+    },
+    {
+      "id": 19,
+      "name": "bush",
+      "rgb": [
+        255,
+        153,
+        204
+      ]
+    },
+    {
+      "id": 20,
+      "name": "sign",
+      "rgb": [
+        0,
+        102,
+        102
+      ]
+    },
+    {
+      "id": 21,
+      "name": "rock",
+      "rgb": [
+        153,
+        204,
+        255
+      ]
+    },
+    {
+      "id": 22,
+      "name": "bridge",
+      "rgb": [
+        102,
+        255,
+        255
+      ]
+    },
+    {
+      "id": 23,
+      "name": "concrete",
+      "rgb": [
+        101,
+        101,
+        11
+      ]
+    },
+    {
+      "id": 24,
+      "name": "picnic-table",
+      "rgb": [
+        114,
+        85,
+        47
+      ]
+    }
+  ],
+  "void_id": 0,
+  "source_class_ids_preserved": true,
+  "final_damage_labels_supplied": false,
+  "split_policy": "official_paper_Table_I_sequence_membership",
+  "split_source": "http://rugd.vision/pdfs/RUGD_IROS2019.pdf",
+  "sequences": {
+    "train": [
+      "park-2",
+      "trail",
+      "trail-3",
+      "trail-4",
+      "trail-6",
+      "trail-9",
+      "trail-10",
+      "trail-11",
+      "trail-12",
+      "trail-14",
+      "trail-15",
+      "village"
+    ],
+    "val": [
+      "park-8",
+      "trail-5"
+    ],
+    "test": [
+      "creek",
+      "park-1",
+      "trail-7",
+      "trail-13"
+    ]
+  },
+  "splits": {
+    "train": {
+      "images": 4779,
+      "class_pixel_counts": {
+        "0": 393899,
+        "3": 431214037,
+        "4": 711145352,
+        "5": 1958646,
+        "7": 148580291,
+        "10": 28635561,
+        "11": 162167742,
+        "12": 29045487,
+        "18": 7530015,
+        "21": 1882694,
+        "23": 7246726,
+        "20": 111437,
+        "13": 204436793,
+        "15": 9225444,
+        "8": 9024295,
+        "9": 2839140,
+        "24": 780214,
+        "1": 2389483,
+        "19": 42925877,
+        "2": 3320173,
+        "17": 212589,
+        "6": 1909150,
+        "14": 1267310,
+        "16": 131245
+      }
+    },
+    "val": {
+      "images": 733,
+      "class_pixel_counts": {
+        "3": 59322369,
+        "4": 119274410,
+        "5": 229159,
+        "7": 17528365,
+        "8": 790182,
+        "9": 41224,
+        "10": 10629992,
+        "12": 996788,
+        "13": 43613398,
+        "18": 2664957,
+        "23": 219103,
+        "24": 423724,
+        "0": 161447,
+        "15": 2084525,
+        "19": 2969700,
+        "1": 374314,
+        "20": 9246,
+        "21": 604762,
+        "17": 4019,
+        "11": 15249455,
+        "6": 176061
+      }
+    },
+    "test": {
+      "images": 1924,
+      "class_pixel_counts": {
+        "1": 2178959,
+        "2": 1286528,
+        "3": 146858269,
+        "4": 259782138,
+        "6": 6805703,
+        "7": 51793222,
+        "8": 7621499,
+        "9": 130330,
+        "14": 57912248,
+        "19": 84211921,
+        "21": 609544,
+        "22": 4634144,
+        "0": 81080,
+        "5": 708099,
+        "15": 6128521,
+        "11": 17280060,
+        "13": 48764685,
+        "20": 82710,
+        "18": 10075908,
+        "12": 10249317,
+        "23": 9169826,
+        "24": 1085769,
+        "10": 586633,
+        "17": 4487
+      }
+    }
+  },
+  "colormap_sha256": "137336c9b2c5b74ac7d4c6f51597a9daf85d75df53f771d6e25df9e1973b0308",
+  "published_split_counts": {
+    "train": 4759,
+    "val": 733,
+    "test": 1964
+  },
+  "official_release_split_counts": {
+    "train": 4779,
+    "val": 733,
+    "test": 1924
+  },
+  "license_status": "dataset_license_not_stated_in_reviewed_primary_page_or_paper; website_template_license_is_not_dataset_license",
+  "issues": []
+}

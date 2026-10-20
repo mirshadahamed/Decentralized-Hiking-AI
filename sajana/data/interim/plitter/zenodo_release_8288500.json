@@ -1,0 +1,146 @@
+{
+  "created": "2023-09-04T05:03:01.025885+00:00",
+  "modified": "2023-09-04T14:26:53.915589+00:00",
+  "id": 8288500,
+  "conceptrecid": "8288499",
+  "doi": "10.5281/zenodo.8288500",
+  "conceptdoi": "10.5281/zenodo.8288499",
+  "doi_url": "https://doi.org/10.5281/zenodo.8288500",
+  "metadata": {
+    "title": "pLitterStreet - Street Level Plastic Litter Detection Dataset",
+    "doi": "10.5281/zenodo.8288500",
+    "publication_date": "2022-03-31",
+    "description": "<p><strong>pLitterStreet</strong> dataset comprises of more than <em>13,000 images</em>. These images were captured using <em>vehicle-mounted cameras</em> that were strategically positioned to focus on the sides of streets. The primary objective of this dataset is to facilitate research related to street litter and its impact on the environment.</p>\n\n<p>Annotations for the images are provided in the widely-used Microsoft COCO JSON format. Image in the dataset is fully annotated, enabling the identification and categorization of various types of litter found along urban and rural streets. These annotations include precise labeling of litter items, making the dataset an invaluable resource for developing and evaluating object detection and image recognition models.</p>",
+    "access_right": "open",
+    "creators": [
+      {
+        "name": "Sriram Reddy Mandhati",
+        "affiliation": "Asian Institute of Technology",
+        "orcid": "0009-0000-1536-2782"
+      },
+      {
+        "name": "Lakmal Deshapriya",
+        "affiliation": "Asian Institute of Technology"
+      },
+      {
+        "name": "Chatura Lavanga Mendis",
+        "affiliation": "Asian Institute of Technology"
+      },
+      {
+        "name": "Kavinda Gunasekara",
+        "affiliation": "Asian Institute of Technology"
+      },
+      {
+        "name": "Frank Yrle",
+        "affiliation": "Asian Institute of Technology"
+      },
+      {
+        "name": "Angsana Chaksan",
+        "affiliation": "Asian Institute of Technology"
+      }
+    ],
+    "keywords": [
+      "Litter detection",
+      "Object detection",
+      "street level imagery",
+      "Macro Plastic litter",
+      "Vehicle mounted cameras",
+      "Deep learning"
+    ],
+    "version": "1.0.0",
+    "resource_type": {
+      "title": "Dataset",
+      "type": "dataset"
+    },
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "relations": {
+      "version": [
+        {
+          "index": 0,
+          "is_last": true,
+          "parent": {
+            "pid_type": "recid",
+            "pid_value": "8288499"
+          }
+        }
+      ]
+    }
+  },
+  "title": "pLitterStreet - Street Level Plastic Litter Detection Dataset",
+  "links": {
+    "self": "https://zenodo.org/api/records/8288500",
+    "self_html": "https://zenodo.org/records/8288500",
+    "preview_html": "https://zenodo.org/records/8288500?preview=1",
+    "doi": "https://doi.org/10.5281/zenodo.8288500",
+    "self_doi": "https://doi.org/10.5281/zenodo.8288500",
+    "self_doi_html": "https://zenodo.org/doi/10.5281/zenodo.8288500",
+    "reserve_doi": "https://zenodo.org/api/records/8288500/draft/pids/doi",
+    "parent": "https://zenodo.org/api/records/8288499",
+    "parent_html": "https://zenodo.org/records/8288499",
+    "parent_doi": "https://doi.org/10.5281/zenodo.8288499",
+    "parent_doi_html": "https://zenodo.org/doi/10.5281/zenodo.8288499",
+    "self_iiif_manifest": "https://zenodo.org/api/iiif/record:8288500/manifest",
+    "self_iiif_sequence": "https://zenodo.org/api/iiif/record:8288500/sequence/default",
+    "files": "https://zenodo.org/api/records/8288500/files",
+    "media_files": "https://zenodo.org/api/records/8288500/media-files",
+    "latest": "https://zenodo.org/api/records/8288500/versions/latest",
+    "latest_html": "https://zenodo.org/records/8288500/latest",
+    "versions": "https://zenodo.org/api/records/8288500/versions",
+    "draft": "https://zenodo.org/api/records/8288500/draft",
+    "access_links": "https://zenodo.org/api/records/8288500/access/links",
+    "access_grants": "https://zenodo.org/api/records/8288500/access/grants",
+    "access_users": "https://zenodo.org/api/records/8288500/access/users",
+    "access_request": "https://zenodo.org/api/records/8288500/access/request",
+    "access": "https://zenodo.org/api/records/8288500/access",
+    "communities": "https://zenodo.org/api/records/8288500/communities",
+    "communities-suggestions": "https://zenodo.org/api/records/8288500/communities-suggestions",
+    "request_deletion": "https://zenodo.org/api/records/8288500/request-deletion",
+    "file_modification": "https://zenodo.org/api/records/8288500/file-modification",
+    "quota_increase": "https://zenodo.org/api/records/8288500/quota-increase",
+    "requests": "https://zenodo.org/api/records/8288500/requests"
+  },
+  "updated": "2023-09-04T14:26:53.915589+00:00",
+  "recid": "8288500",
+  "revision": 2,
+  "files": [
+    {
+      "id": "945ec809-259a-46cd-bca9-7842d5991262",
+      "key": "images.zip",
+      "size": 13728630001,
+      "checksum": "md5:02382a3b9620ae7b086ff4c7fd11891d",
+      "links": {
+        "self": "https://zenodo.org/api/records/8288500/files/images.zip/content"
+      }
+    },
+    {
+      "id": "44f9bd1f-fc96-44eb-842d-66865c7823c6",
+      "key": "annotations.zip",
+      "size": 8764662,
+      "checksum": "md5:2484e076b1e9d66036b0a15e9928692f",
+      "links": {
+        "self": "https://zenodo.org/api/records/8288500/files/annotations.zip/content"
+      }
+    }
+  ],
+  "swh": {},
+  "owners": [
+    {
+      "id": "601037"
+    }
+  ],
+  "status": "published",
+  "stats": {
+    "downloads": 7763,
+    "unique_downloads": 2588,
+    "views": 3213,
+    "unique_views": 2843,
+    "version_downloads": 7761,
+    "version_unique_downloads": 2586,
+    "version_unique_views": 2841,
+    "version_views": 3211
+  },
+  "state": "done",
+  "submitted": true
+}

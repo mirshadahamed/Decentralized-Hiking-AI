@@ -1,0 +1,477 @@
+{
+  "schema_version": 1,
+  "plan_version": "2026-10-20",
+  "component": "Ground-Level Vision for Concurrent Litter Detection & Trail Damage Segmentation",
+  "purpose": "Dataset and annotation planning; not a model training configuration or a readiness certificate.",
+  "reference": {
+    "master_document": "Component 2 Research Component Master Document, October 2026, pages 4-11",
+    "local_plan": "sajana/docs/COMPONENT2_DATASET_PLAN.md"
+  },
+  "local_data": {
+    "user_confirmed_no_annotated_local_trails": true,
+    "confirmation_date": "2026-10-20",
+    "workspace": "sajana/data/local_trails",
+    "templates_contain_sample_records": false,
+    "full_component_training_ready": false,
+    "collection_targets_only": {
+      "pilot_images": [
+        50,
+        100
+      ],
+      "overall_images": [
+        1000,
+        2000
+      ]
+    }
+  },
+  "taxonomy": {
+    "status": "working_annotation_keys_pending_source_sample_audit_and_scope_review",
+    "current_litter_export": {
+      "task": "instance_segmentation",
+      "names": {
+        "0": "litter"
+      }
+    },
+    "concurrent_numeric_export_ids_assigned": false,
+    "classes": [
+      {
+        "key": "litter",
+        "scope": "core",
+        "geometry": "instance_polygon",
+        "meaning": "Visible artificial waste; distinguish individual items from mixed piles.",
+        "exclude": [
+          "natural leaves",
+          "flowers",
+          "ordinary branches",
+          "ambiguous unreviewed objects"
+        ]
+      },
+      {
+        "key": "erosion_washout",
+        "scope": "core",
+        "geometry": "region_polygon",
+        "meaning": "Visible displaced/lost trail surface, rills/gullies or washout.",
+        "exclude": [
+          "generic dirt",
+          "mud alone",
+          "color change alone"
+        ]
+      },
+      {
+        "key": "exposed_roots",
+        "scope": "core",
+        "geometry": "region_polygon",
+        "meaning": "Visible exposed root network on or at trail.",
+        "exclude": [
+          "generic vegetation",
+          "inferred hidden roots"
+        ],
+        "severity_from_presence": false
+      },
+      {
+        "key": "fallen_tree_major_branch",
+        "scope": "proposed_obstruction_expansion",
+        "geometry": "instance_polygon",
+        "meaning": "Visible fallen trunk or large branch; record route relation independently.",
+        "exclude": [
+          "upright trees",
+          "small twigs"
+        ],
+        "blockage_from_presence": false
+      },
+      {
+        "key": "rock_boulder_rockfall",
+        "scope": "proposed_obstruction_expansion",
+        "geometry": "instance_or_region_polygon",
+        "meaning": "Substantial visible rock/boulder or rockfall region.",
+        "exclude": [
+          "ordinary small gravel"
+        ],
+        "cause_from_appearance": false,
+        "blockage_from_presence": false
+      },
+      {
+        "key": "landslide_rubble_debris",
+        "scope": "proposed_obstruction_expansion",
+        "geometry": "region_polygon",
+        "meaning": "Visible rubble/debris region; origin unknown unless evidenced.",
+        "exclude": [
+          "all muddy or rocky surfaces"
+        ],
+        "default_origin": "unknown"
+      },
+      {
+        "key": "traversable_trail",
+        "scope": "route_context",
+        "geometry": "semantic_region_polygon",
+        "meaning": "Visible usable trail/access-route surface under a versioned local rule.",
+        "exclude": [
+          "all vehicle freespace",
+          "all soil",
+          "imagined occluded trail pixels"
+        ]
+      }
+    ],
+    "litter_subtype_attribute": {
+      "values": [
+        "rigid_plastic",
+        "soft_plastic_paper",
+        "metal_glass",
+        "mixed_waste_pile",
+        "other",
+        "unknown"
+      ],
+      "unknown_default": true,
+      "derive_from_binary_class_only": false
+    },
+    "passability_attribute": {
+      "values": [
+        "clear",
+        "partly_restricted",
+        "substantially_blocked",
+        "uncertain"
+      ],
+      "level": "reviewed_image_or_route",
+      "requires_visible_evidence_and_review": true,
+      "unreviewed_has_label": false,
+      "automatic_orfd_labels_allowed": false
+    },
+    "route_overlap_policy": {
+      "reference_geometry_must_be_defined_before_evaluation": true,
+      "visible_usable_surface_equals_route_corridor": false,
+      "hidden_route_ground_truth_may_be_invented": false,
+      "separate_corridor_annotation_requires_review": true
+    }
+  },
+  "coverage_policy": {
+    "missing_coverage_row_means": "unreviewed",
+    "states": {
+      "unreviewed": {
+        "positive_supervision": false,
+        "negative_supervision": false,
+        "meaning": "No exhaustive class review."
+      },
+      "positive_partial": {
+        "positive_supervision": true,
+        "negative_supervision": false,
+        "meaning": "Known positives exist; other instances or regions may be missing."
+      },
+      "positive_complete": {
+        "positive_supervision": true,
+        "negative_supervision": true,
+        "minimum_positive_count": 1,
+        "meaning": "All visible class instances/regions reviewed and annotated."
+      },
+      "negative_reviewed": {
+        "positive_supervision": false,
+        "negative_supervision": true,
+        "positive_count": 0,
+        "meaning": "Class explicitly reviewed and absent."
+      },
+      "uncertain": {
+        "positive_supervision": false,
+        "negative_supervision": false,
+        "meaning": "Await adjudication or use explicit ignored region/class support."
+      }
+    },
+    "empty_yolo_file_is_full_scene_negative_only_if": "Every exported target class has negative_reviewed coverage.",
+    "positive_partial_requires_class_region_ignore_support": true,
+    "standard_yolo_txt_encodes_coverage_states": false,
+    "naive_merge_of_incomplete_task_labels_allowed": false,
+    "supported_planning_options": [
+      "staged_task_specific_training",
+      "fully_reviewed_joint_subset",
+      "implemented_and_tested_missing_label_aware_trainer"
+    ],
+    "missing_label_aware_trainer_implemented_by_this_plan": false
+  },
+  "source_mappings": [
+    {
+      "source": "TACO_official_clean",
+      "role": "main_litter_segmentation",
+      "source_annotation": "COCO_instance_polygons",
+      "mapping": [
+        {
+          "source_category_id": 0,
+          "source_name": "litter",
+          "target_key": "litter"
+        }
+      ],
+      "retain": [
+        "image_id",
+        "annotation_id",
+        "raw_source_annotation_index",
+        "original_category_id",
+        "original_category_catalog",
+        "original_split"
+      ],
+      "unknown_keys": [
+        "erosion_washout",
+        "exposed_roots",
+        "fallen_tree_major_branch",
+        "rock_boulder_rockfall",
+        "landslide_rubble_debris",
+        "traversable_trail"
+      ],
+      "report": "sajana/results/taco_preprocessing/official_clean_readiness.json"
+    },
+    {
+      "source": "TACO_unofficial_validated",
+      "role": "optional_litter_train_only_pool",
+      "source_annotation": "COCO_instance_polygons",
+      "mapping": [
+        {
+          "source_category_id": 0,
+          "source_name": "litter",
+          "target_key": "litter"
+        }
+      ],
+      "requires": [
+        "verified_photo_label_correspondence",
+        "cross_source_duplicate_audit",
+        "all_unreviewed_non_litter_classes_remain_unknown"
+      ],
+      "report": "sajana/results/taco_preprocessing/unofficial_labels_audit.json"
+    },
+    {
+      "source": "MJU_Waste",
+      "role": "auxiliary_litter_training",
+      "mapping": [
+        {
+          "source_category_id": 0,
+          "source_name": "Rubbish",
+          "target_key": "litter"
+        }
+      ],
+      "negative_empty_labels_cover": [
+        "litter"
+      ],
+      "unknown_keys": [
+        "erosion_washout",
+        "exposed_roots",
+        "fallen_tree_major_branch",
+        "rock_boulder_rockfall",
+        "landslide_rubble_debris",
+        "traversable_trail"
+      ],
+      "combined_export_splits": [
+        "train"
+      ],
+      "independent_local_evaluation_supported": false,
+      "report": "sajana/results/mju_preprocessing/local_readiness.json"
+    },
+    {
+      "source": "ORFD",
+      "role": "separate_auxiliary_vehicle_freespace_segmentation",
+      "mapping": [
+        {
+          "source_rule": "RGB_blue_channel > 200",
+          "auxiliary_class_id": 1,
+          "auxiliary_name": "vehicle_freespace_proxy",
+          "final_target_key": null
+        },
+        {
+          "source_rule": "RGB_blue_channel <= 200",
+          "auxiliary_class_id": 0,
+          "auxiliary_name": "non_freespace",
+          "final_target_key": null
+        }
+      ],
+      "forbidden_inferences": [
+        "non_freespace_is_damage",
+        "freespace_is_hiking_safety",
+        "freespace_provides_erosion_or_root_masks"
+      ],
+      "preserve_source_splits": true,
+      "report": "sajana/results/orfd_preprocessing/local_readiness.json"
+    },
+    {
+      "source": "pLitter_Mawanella_supplied_CSV",
+      "role": "geospatial_observation_mapping_only",
+      "source_columns": [
+        "lon",
+        "lat",
+        "plastic_c",
+        "bin_c"
+      ],
+      "image_training_labels": false,
+      "target_class_mapping": [],
+      "derive_unique_physical_item_counts_from_repeated_observations": false
+    },
+    {
+      "source": "pLitterStreet_actual_release_if_acquired",
+      "role": "supplementary_detection_domain_study",
+      "mapping_status": "audit_actual_released_category_catalog_and_annotation_geometry_first",
+      "source_category_ids_invented": false,
+      "box_to_segmentation_ground_truth_allowed": false,
+      "segmentation_subset_requires_reviewed_polygons": true
+    },
+    {
+      "source": "WildScenes_or_RUGD_if_acquired",
+      "role": "separate_natural_scene_context",
+      "mapping_status": "verify_actual_catalog_ids_and_names_first",
+      "potential_context_classes_from_master_document": [
+        "dirt",
+        "mud",
+        "vegetation",
+        "log",
+        "rock"
+      ],
+      "final_hazard_class_mapping": [],
+      "forbidden_inferences": [
+        "dirt_is_erosion",
+        "vegetation_is_exposed_roots",
+        "log_is_trail_blockage",
+        "rock_is_rockfall_or_blockage"
+      ]
+    },
+    {
+      "source": "RELLIS_3D_if_acquired",
+      "role": "optional_terrain_context",
+      "mapping_status": "suitability_and_actual_label_catalog_audit_required",
+      "final_hazard_class_mapping": []
+    },
+    {
+      "source": "RoadObstacle21_or_LostAndFound_if_acquired",
+      "role": "separate_obstacle_freespace_benchmark",
+      "automatic_training_merge_allowed": false,
+      "requires": [
+        "released_benchmark_terms",
+        "original_test_membership_preserved"
+      ]
+    },
+    {
+      "source": "local_trails",
+      "role": "joint_supervision_and_local_evaluation",
+      "mapping_status": "per_image_per_class_review_required",
+      "class_coverage_template": "sajana/data/local_trails/class_coverage.csv"
+    }
+  ],
+  "split_policy": {
+    "local_initial_split": "unassigned",
+    "prefer_holdout_unit": [
+      "site_id",
+      "route_id"
+    ],
+    "fallback_holdout_unit": [
+      "session_id",
+      "sequence_id"
+    ],
+    "must_not_cross_splits": [
+      "same_capture_session_or_sequence",
+      "near_duplicate_group_id",
+      "connected_group_membership"
+    ],
+    "if_sites_shared_between_splits": "Report weaker independence explicitly.",
+    "random_neighbor_frame_split_allowed": false,
+    "final_local_test_for_threshold_tuning": false,
+    "augmentation_scope": "train_only_after_group_assignment",
+    "public_holdouts": "Preserve existing TACO official held-out batches and every source benchmark membership."
+  },
+  "ordered_stages": [
+    {
+      "order": 1,
+      "name": "source_inventory_and_taxonomy",
+      "acceptance": [
+        "original_source_hashes",
+        "source_ids",
+        "source_version_and_licence",
+        "task_role"
+      ]
+    },
+    {
+      "order": 2,
+      "name": "verify_official_taco_and_mju",
+      "acceptance": [
+        "decoded_pairs",
+        "source_label_correspondence",
+        "duplicate_audit",
+        "fixed_taco_holdouts"
+      ]
+    },
+    {
+      "order": 3,
+      "name": "optional_unofficial_taco_recovery",
+      "acceptance": [
+        "matching_photos",
+        "explicit_unrecoverable_records",
+        "no_holdout_duplicate_leakage"
+      ]
+    },
+    {
+      "order": 4,
+      "name": "complete_available_orfd_release",
+      "acceptance": [
+        "lossless_mask_conversion",
+        "rgb_mask_geometry",
+        "source_hashes_crc",
+        "honest_mirror_vs_published_coverage"
+      ]
+    },
+    {
+      "order": 5,
+      "name": "audit_relevant_public_support",
+      "acceptance": [
+        "representative_visual_sample",
+        "actual_source_class_mapping",
+        "no_invented_segmentation_or_damage_labels"
+      ]
+    },
+    {
+      "order": 6,
+      "name": "real_local_collection_and_annotation",
+      "acceptance": [
+        "real_images",
+        "coverage_states",
+        "reviewed_polygons",
+        "uncertainty_adjudication",
+        "annotation_agreement"
+      ]
+    },
+    {
+      "order": 7,
+      "name": "grouped_holdouts_and_version_freeze",
+      "acceptance": [
+        "group_leakage_checks",
+        "untouched_local_test",
+        "class_counts_and_coverage_report",
+        "versioned_data_card"
+      ]
+    },
+    {
+      "order": 8,
+      "name": "task_export_and_model_input_gate",
+      "acceptance": [
+        "task_specific_readiness",
+        "complete_joint_labels_or_missing_label_aware_training",
+        "no_training_started_by_preprocessing"
+      ]
+    }
+  ],
+  "readiness_gates": {
+    "litter_baseline": [
+      "complete_verified_selected_image_label_pairs",
+      "unchanged_taco_holdouts",
+      "valid_binary_litter_polygons",
+      "cross_split_duplicate_check"
+    ],
+    "auxiliary_path_baseline": [
+      "verified_selected_rgb_mask_pairs",
+      "preserved_source_splits",
+      "explicit_release_coverage",
+      "vehicle_proxy_limitation_recorded"
+    ],
+    "concurrent_component": [
+      "genuine_damage_and_selected_obstruction_ground_truth",
+      "reviewed_local_trail_context",
+      "valid_per_class_coverage",
+      "grouped_local_holdouts",
+      "compatible_joint_export_or_missing_label_aware_loader"
+    ],
+    "optional_source_failures_block_verified_litter_baseline": false
+  },
+  "live_status_references": [
+    "sajana/results/taco_preprocessing/supplied_preprocessing_status.json",
+    "sajana/results/training_readiness_recheck.json"
+  ]
+}

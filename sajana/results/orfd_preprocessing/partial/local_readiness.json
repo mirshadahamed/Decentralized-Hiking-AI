@@ -40,6 +40,7 @@
   "phase": "partial_preprocessed_download_quota_exceeded",
   "download_complete": false,
   "full_mirror_ready": false,
+  "expected_mirror_pairs": 11830,
   "download": {
     "complete": false,
     "phase": "download_failed",
@@ -51,6 +52,5 @@
     "source_url": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
     "error": "Drive refused range: HTTP 200; Google Drive - Quota exceeded",
     "resume_supported": true
-  },
-  "expected_mirror_pairs": 11830
+  }
 }

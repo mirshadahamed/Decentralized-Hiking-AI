@@ -1,0 +1,47 @@
+{
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/plitter/annotations/4_class_splits",
+  "source_sha256": {
+    "train": "7ff8b49460d76b4b8fca6bf5a40faeb27558d18e94ded8dd76a6a0d8f7da5d3a",
+    "val": "efa65ec0e6890933d82c61ecdf2734f8175fe70cbe66da9a482fc1497ade1db0",
+    "test": "db84694116c6aecbac990dc544087027f30cf0f2c9e98fa6df1cbafcb67ebad4"
+  },
+  "passed": true,
+  "labels_only": true,
+  "training_ready": false,
+  "task": "detect",
+  "target_names": [
+    "plastic_litter",
+    "litter_pile",
+    "face_mask",
+    "trash_bin"
+  ],
+  "splits": {
+    "train": {
+      "images": 12086,
+      "objects": 70133,
+      "present_images": 0,
+      "missing_images": 12086,
+      "verified_images": 0
+    },
+    "val": {
+      "images": 1511,
+      "objects": 8809,
+      "present_images": 0,
+      "missing_images": 1511,
+      "verified_images": 0
+    },
+    "test": {
+      "images": 1508,
+      "objects": 8719,
+      "present_images": 0,
+      "missing_images": 1508,
+      "verified_images": 0
+    }
+  },
+  "quarantined_images": 33,
+  "duplicate_images": [],
+  "issues": [],
+  "independent_sequence_evaluation_supported": false,
+  "role": "four-class detection auxiliary; official video frame splits may be correlated; no segmentation masks"
+}

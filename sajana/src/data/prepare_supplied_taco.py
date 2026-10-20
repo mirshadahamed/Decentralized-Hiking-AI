@@ -216,9 +216,13 @@ def prepare(component_root: Path = ROOT, verify_images: bool = True) -> dict:
     image_import = _populate_official_images(official_cleaned, paths, official_out)
     unofficial_conversion = preprocess(unofficial_derived_path, unofficial_out, split_policy="train_only")
     official_audit = verify(official_out, labels_only=not verify_images, annotations=official_derived_path)
-    unofficial_audit = verify(unofficial_out, labels_only=True, annotations=unofficial_derived_path, split_policy="train_only")
+    unofficial_labels = verify(unofficial_out, labels_only=True, annotations=unofficial_derived_path, split_policy="train_only")
+    unofficial_audit = (verify(unofficial_out, labels_only=False, annotations=unofficial_derived_path, split_policy="train_only")
+                        if verify_images else unofficial_labels)
     _write_json(results / "official_clean_readiness.json", official_audit)
-    _write_json(results / "unofficial_labels_audit.json", unofficial_audit)
+    _write_json(results / "unofficial_labels_audit.json", unofficial_labels)
+    if verify_images:
+        _write_json(results / "unofficial_full_readiness.json", unofficial_audit)
     # Protect immutable inputs even when another process edits them mid-run.
     if _sha256(official_path) != official_hash or _sha256(unofficial_path) != unofficial_hash:
         raise ValueError("Source annotation files changed during preparation; review and rerun")
@@ -236,7 +240,7 @@ def prepare(component_root: Path = ROOT, verify_images: bool = True) -> dict:
         "unofficial": {"dataset": str(unofficial_out), "source": str(unofficial_derived_path),
                        "images": unofficial_conversion["images_total"], "annotations": unofficial_conversion["annotations_total"],
                        "training_ready": unofficial_audit["training_ready"], "training_pool_ready": unofficial_audit.get("training_pool_ready", False),
-                       "labels_only": True,
+                       "labels_only": not verify_images, "labels_preprocessed": unofficial_labels["passed"],
                        "verification": unofficial_audit, "role": "optional train-only pool; never an evaluation benchmark",
                        "quarantined_images": quarantine["quarantined_images"], "quarantined_annotations": quarantine["quarantined_annotations"]},
         "raw_sources": {str(official_path): official_hash, str(unofficial_path): unofficial_hash},

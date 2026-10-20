@@ -1,0 +1,55 @@
+{
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/plitter/annotations/4_class_splits",
+  "source_sha256": {
+    "train": "7ff8b49460d76b4b8fca6bf5a40faeb27558d18e94ded8dd76a6a0d8f7da5d3a",
+    "val": "efa65ec0e6890933d82c61ecdf2734f8175fe70cbe66da9a482fc1497ade1db0",
+    "test": "db84694116c6aecbac990dc544087027f30cf0f2c9e98fa6df1cbafcb67ebad4"
+  },
+  "role": "auxiliary four-class object detection; no instance segmentation targets",
+  "passed": true,
+  "labels_ready": true,
+  "training_ready": false,
+  "splits": {
+    "train": {
+      "images": 12086,
+      "objects": 70133
+    },
+    "val": {
+      "images": 1511,
+      "objects": 8809
+    },
+    "test": {
+      "images": 1508,
+      "objects": 8719
+    }
+  },
+  "source_categories": {
+    "1": "Plastic",
+    "2": "Pile",
+    "3": "Face mask",
+    "4": "Trash bin"
+  },
+  "target_names": [
+    "plastic_litter",
+    "litter_pile",
+    "face_mask",
+    "trash_bin"
+  ],
+  "category_mapping": {
+    "1": 0,
+    "2": 1,
+    "3": 2,
+    "4": 3
+  },
+  "quarantined_images": 33,
+  "quarantined_annotations": 399,
+  "invalid_annotations": 64,
+  "source_sequences_shared_across_splits": 173,
+  "independent_sequence_evaluation_supported": false,
+  "warnings": [
+    "Official source split membership is retained. Source video/city groups occur across splits; neighboring frames may be correlated.",
+    "Trash bins retain a separate class. Bounding rectangles are not object segmentation masks.",
+    "Source metadata/path fields are preserved. The Mawanella GPS/count sample cannot be paired to these frames without frame identifiers."
+  ]
+}

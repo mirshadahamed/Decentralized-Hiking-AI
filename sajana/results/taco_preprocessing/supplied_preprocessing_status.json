@@ -319,6 +319,7 @@
     "phase": "partial_preprocessed_download_quota_exceeded",
     "download_complete": false,
     "full_mirror_ready": false,
+    "expected_mirror_pairs": 11830,
     "download": {
       "complete": false,
       "phase": "download_failed",
@@ -330,7 +331,29 @@
       "source_url": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
       "error": "Drive refused range: HTTP 200; Google Drive - Quota exceeded",
       "resume_supported": true
-    },
-    "expected_mirror_pairs": 11830
+    }
+  },
+  "readiness_recheck": {
+    "checked_at": "2026-10-20T12:33:03.678122+05:30",
+    "litter_baseline_data_ready": true,
+    "all_supplied_data_ready": false,
+    "project_training_environment_ready": false,
+    "full_concurrent_component_ready": false,
+    "preprocessing_tests_passed": 77,
+    "report": "sajana/results/training_readiness_recheck.json",
+    "blockers": [
+      "Optional unofficial TACO pool lacks 3808 photos.",
+      "ORFD is partial: 3806 train, 0 validation, 2193 test pairs.",
+      "Project .venv lacks torch, ultralytics, numpy and yaml.",
+      "Dedicated trail-damage annotations and a concurrent training pipeline are not present."
+    ]
+  },
+  "component2_dataset_preparation": {
+    "report": "sajana/results/component2_preprocessing/status.json",
+    "all_selected_public_sources_preprocessed": false,
+    "all_component_datasets_preprocessed": false,
+    "litter_baseline_data_ready": true,
+    "full_concurrent_model_data_ready": false,
+    "local_ground_truth_missing": true
   }
 }

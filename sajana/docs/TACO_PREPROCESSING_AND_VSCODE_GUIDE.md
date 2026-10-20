@@ -1,6 +1,6 @@
 # Ground-Level Vision for Concurrent Litter Detection & Trail Damage Segmentation
 
-This workspace prepares the TACO data already supplied for the component's litter baseline. The other component datasets can be added when uploaded. Current training labels use **`0 = litter`**; original TACO category IDs remain available for a later taxonomy mapping.
+This workspace prepares the component's litter baseline and separate auxiliary datasets. Current TACO/MJU training labels use **`0 = litter`**; original TACO category IDs remain available for a later taxonomy mapping. See [the Component 2 dataset plan](COMPONENT2_DATASET_PLAN.md) for the full preparation order and local annotation requirements. Read `results/component2_preprocessing/status.json` for the current source-specific readiness; the tables below describe source annotation counts.
 
 ## Prepared data
 
@@ -22,7 +22,7 @@ One exact duplicate was removed from the cleaned official training split: image 
 
 The unofficial source contains 3,831 image references and 8,334 annotations. Strict validation identifies 32 invalid annotations across 23 images, including empty polygons and coordinates outside image bounds. Those **whole images**, containing 200 annotations in total, are excluded from the validated extension. Removing only the invalid objects would leave partially annotated images and teach false background. Every exclusion is recorded for later review; no polygons are invented or severely out-of-bounds regions silently clamped.
 
-The unofficial labels are preprocessed, but the corresponding photographs are absent. This is a separate pool with no validation/test split, and it is not merged with the official benchmark. Its source URLs are retained for future acquisition.
+The unofficial labels are preprocessed. Its separate photo-acquisition process records missing or ambiguous photographs; only verified available pairs may enter the derived `taco_unofficial_litter_seg_available` auxiliary pool. This pool has no validation/test split and is not merged with the official benchmark. Its source URLs and exclusion evidence are retained.
 
 ## Run preprocessing in VS Code
 

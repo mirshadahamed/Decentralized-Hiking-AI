@@ -1,0 +1,32 @@
+# Official WildScenes opt2d terrain/object semantic masks.
+# Generate and verify the dataset with sajana.src.data.preprocess_wildscenes.
+path: sajana/data/processed/wildscenes_terrain_semantic
+task: semantic_segmentation
+mask_format: class_id_png
+ignore_index: 0
+train_images: images/train
+train_masks: masks/train
+val_images: images/val
+val_masks: masks/val
+test_images: images/test
+test_masks: masks/test
+names:
+  0: unlabelled
+  1: asphalt/concrete
+  2: dirt
+  3: mud
+  4: water
+  5: gravel
+  6: other-terrain
+  7: tree-trunk
+  8: tree-foliage
+  9: bush
+  10: fence
+  11: other-structure
+  12: pole
+  13: vehicle
+  14: rock
+  15: log
+  16: other-object
+  17: sky
+  18: grass

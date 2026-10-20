@@ -1,0 +1,5 @@
+# Preserve source annotation bytes and manifest hashes across operating systems.
+sajana/data/** -text
+
+# CSV writers and supplied CSV sources use valid CRLF record endings.
+sajana/**/*.csv whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

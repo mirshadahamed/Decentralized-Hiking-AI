@@ -1,0 +1,411 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-20T17:58:37.293467+05:30",
+  "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
+  "preparation_order": [
+    "source inventory and taxonomy",
+    "retain immutable source and verify acquisition checksums",
+    "source-specific label conversion and source-aware splits",
+    "full pair/geometry/label/duplicate verification",
+    "review overlays and freeze source data cards",
+    "collect and review joint local trail annotations before full component training"
+  ],
+  "datasets": [
+    {
+      "key": "taco",
+      "task": "litter instance segmentation",
+      "role": "required",
+      "state": "verified_prepared",
+      "dataset": "data/processed/taco_litter_seg_clean",
+      "verification_report": "results/taco_preprocessing/official_clean_readiness.json",
+      "verification_report_sha256": "38ac36db9c62ec98d66589bfb06980983503d3c8a139455fec1b4ad4ca2962c5",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 1028,
+        "val": 286,
+        "test": 185
+      },
+      "current_pairs": {
+        "train": {
+          "images": 1028,
+          "labels": 1028,
+          "paired": 1028,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 286,
+          "labels": 286,
+          "paired": 286,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 185,
+          "labels": 185,
+          "paired": 185,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": [
+        "source annotation ID 309 is repeated; all records are retained",
+        "source annotation ID 4040 is repeated; all records are retained"
+      ]
+    },
+    {
+      "key": "mju",
+      "task": "auxiliary litter instance segmentation",
+      "role": "selected_auxiliary",
+      "state": "verified_prepared",
+      "dataset": "data/processed/mju_waste_litter_seg",
+      "verification_report": "results/mju_preprocessing/local_readiness.json",
+      "verification_report_sha256": "815fb8e4078d6f3af66e1282661ec37e272f293ed3044a3ba778183fa66a4ffe",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 1485,
+        "val": 248,
+        "test": 742
+      },
+      "current_pairs": {
+        "train": {
+          "images": 1485,
+          "labels": 1485,
+          "paired": 1485,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 248,
+          "labels": 248,
+          "paired": 248,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 742,
+          "labels": 742,
+          "paired": 742,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": [
+        "MJU official splits contain temporally adjacent frames; use TACO/local held-out data for the component evaluation."
+      ]
+    },
+    {
+      "key": "taco_mju",
+      "task": "combined binary litter baseline",
+      "role": "derived",
+      "state": "verified_prepared",
+      "dataset": "data/processed/litter_taco_mju_aux",
+      "verification_report": "data/processed/litter_taco_mju_aux/readiness.json",
+      "verification_report_sha256": "0ad2d96a6b10bbd59fd9c3d18463648f0904717bbcee681166e52ca5ac10b4a2",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 2513,
+        "val": 286,
+        "test": 185
+      },
+      "current_pairs": {
+        "train": {
+          "images": 2513,
+          "labels": 2513,
+          "paired": 2513,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 286,
+          "labels": 286,
+          "paired": 286,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 185,
+          "labels": 185,
+          "paired": 185,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "unofficial_taco",
+      "task": "unreviewed litter auxiliary pool",
+      "role": "optional",
+      "state": "verified_auxiliary_pool",
+      "dataset": "data/processed/taco_unofficial_litter_seg_available",
+      "verification_report": "results/taco_preprocessing/unofficial_available_readiness.json",
+      "verification_report_sha256": "646ec826ce39c451625bc45c9b5c302f9a78c0b0f9d9791dec418e24d5ff44e8",
+      "available_data_ready": true,
+      "source_release_complete": false,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 3762,
+        "val": 0,
+        "test": 0
+      },
+      "current_pairs": {
+        "train": {
+          "images": 3762,
+          "labels": 3762,
+          "paired": 3762,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "plitter",
+      "task": "litter and trash-bin object detection",
+      "role": "required",
+      "state": "labels_prepared_images_pending",
+      "dataset": "data/processed/plitter_street_det",
+      "verification_report": "results/plitter_preprocessing/local_readiness.json",
+      "verification_report_sha256": "2a97e3034b682ea4a088d5b34d78bc4dd1b2a55668170ad42e5b6529409d2de0",
+      "available_data_ready": false,
+      "source_release_complete": false,
+      "published_count_complete": null,
+      "labels_only": true,
+      "expected_splits": {
+        "train": 12086,
+        "val": 1511,
+        "test": 1508
+      },
+      "current_pairs": {
+        "train": {
+          "images": 0,
+          "labels": 12086,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 12086
+        },
+        "val": {
+          "images": 0,
+          "labels": 1511,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 1511
+        },
+        "test": {
+          "images": 0,
+          "labels": 1508,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 1508
+        }
+      },
+      "acquisition_snapshot": {
+        "status": "downloading",
+        "downloaded_bytes": 3107717120,
+        "expected_bytes": 13728630001
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "orfd",
+      "task": "auxiliary vehicle freespace segmentation",
+      "role": "selected_auxiliary",
+      "state": "verified_auxiliary_pool",
+      "dataset": "data/processed/orfd_path_seg_partial",
+      "verification_report": "results/orfd_preprocessing/local_readiness.json",
+      "verification_report_sha256": "8218cf5dbbaadd40f7a018349a436980141c15cd7ce1ed5576de5fdadc6d42ac",
+      "available_data_ready": true,
+      "source_release_complete": false,
+      "published_count_complete": false,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 3806,
+        "val": 0,
+        "test": 2193
+      },
+      "current_pairs": {
+        "train": {
+          "images": 3806,
+          "labels": 3806,
+          "paired": 3806,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 2193,
+          "labels": 2193,
+          "paired": 2193,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": true,
+        "phase": "extracted",
+        "available_image_pairs": 11830
+      },
+      "issues": [],
+      "warnings": [
+        "Author-linked mirror may omit source frames; available counts are not the full published dataset.",
+        "Freespace is an auxiliary vehicle traversability proxy, not hiking safety or damage ground truth.",
+        "Flattened mirror lacks original sequence names; do not claim verified sequence independence."
+      ]
+    },
+    {
+      "key": "rugd",
+      "task": "natural terrain semantic segmentation",
+      "role": "required",
+      "state": "verified_prepared",
+      "dataset": "data/processed/rugd_semantic",
+      "verification_report": "results/rugd_preprocessing/local_readiness.json",
+      "verification_report_sha256": "46b580951097d7118f9404896534b9d43c426e8edb33ad70f4d85a3e58cfbeac",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": false,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 4779,
+        "val": 733,
+        "test": 1924
+      },
+      "current_pairs": {
+        "train": {
+          "images": 4779,
+          "labels": 4779,
+          "paired": 4779,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 733,
+          "labels": 733,
+          "paired": 733,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 1924,
+          "labels": 1924,
+          "paired": 1924,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": true
+      },
+      "issues": [],
+      "warnings": [
+        "Official release has 7436 pairs (4779/733/1924) using published sequence membership; paper Table I states 7456 (4759/733/1964). No records or splits are invented to reconcile this discrepancy.",
+        "Natural terrain/object classes are context, not erosion, exposed-root, route-obstruction or hiking-safety ground truth.",
+        "The website footer CC BY 3.0 statement applies to the Colorlib template, not the dataset. Dataset reuse terms remain unverified."
+      ]
+    },
+    {
+      "key": "wildscenes",
+      "task": "forest terrain semantic segmentation",
+      "role": "required",
+      "state": "acquisition_incomplete",
+      "dataset": "data/processed/wildscenes_terrain_semantic",
+      "verification_report": null,
+      "verification_report_sha256": null,
+      "available_data_ready": false,
+      "source_release_complete": false,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {},
+      "current_pairs": {
+        "train": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": false,
+        "phase": "download",
+        "verified_files": 12978,
+        "remaining_files": 3956,
+        "verified_bytes": 34333008015,
+        "selected_files": 16934,
+        "selected_bytes": 44887369710
+      },
+      "issues": [],
+      "warnings": []
+    }
+  ],
+  "geospatial_observations": {
+    "ready": true,
+    "rows": 31489,
+    "image_training_labels": false
+  },
+  "local_trails": {
+    "photos": 0,
+    "manifest_rows": 0,
+    "joint_ground_truth_ready": false,
+    "reason": "User confirmed no annotated local trail dataset; reviewed erosion, roots, obstruction, route-corridor and passability labels are still required."
+  },
+  "all_selected_public_sources_preprocessed": false,
+  "all_component_datasets_preprocessed": false,
+  "litter_baseline_data_ready": true,
+  "full_concurrent_model_data_ready": false,
+  "model_training_started": false,
+  "label_policy": "Keep source tasks/classes separate; unannotated target classes are unknown, never negative. No fabricated imagery, masks or severity labels."
+}

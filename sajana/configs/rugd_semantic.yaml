@@ -1,0 +1,49 @@
+# Source semantic context task; these are not hiking damage/path ground truths.
+dataset: RUGD_official_release
+task: multiclass_semantic_segmentation
+processed_root: ../data/processed/rugd_semantic
+images: images/{train,val,test}
+masks: masks/{train,val,test}
+manifests: manifests/{train,val,test}.csv
+mask_format: PNG_L_source_class_ids_0_to_24
+ignore_index: 0
+mask_resize_interpolation: nearest
+split_policy: official_paper_Table_I_sequence_membership
+official_release_pairs: 7436
+official_release_split_counts:
+  train: 4779
+  val: 733
+  test: 1924
+paper_Table_I_split_counts:
+  train: 4759
+  val: 733
+  test: 1964
+classes:
+  0: void
+  1: dirt
+  2: sand
+  3: grass
+  4: tree
+  5: pole
+  6: water
+  7: sky
+  8: vehicle
+  9: container/generic-object
+  10: asphalt
+  11: gravel
+  12: building
+  13: mulch
+  14: rock-bed
+  15: log
+  16: bicycle
+  17: person
+  18: fence
+  19: bush
+  20: sign
+  21: rock
+  22: bridge
+  23: concrete
+  24: picnic-table
+final_component_damage_labels: false
+independent_hiking_evaluation: false
+license_status: unspecified_in_reviewed_primary_dataset_material
