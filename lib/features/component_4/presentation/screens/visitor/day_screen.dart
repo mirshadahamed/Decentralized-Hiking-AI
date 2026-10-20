@@ -6,6 +6,7 @@ import '../../../domain/edge_forecaster.dart';
 import '../../../services/edge_store.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
+import '../bottleneck_screen.dart';
 import 'ticket_screen.dart';
 
 /// Step 2: how busy the day will be, suggestions to avoid the crowd, then pick a trail and a time.
@@ -306,6 +307,14 @@ class OnDeviceCard extends StatelessWidget {
             ),
           const BasisNote('Runs without internet from the forecast pack downloaded with the daily update. '
               'Trained on a simulated visitor history.'),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).push(c4Route(context, const BottleneckScreen())),
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Every section on the map'),
+            ),
+          ),
         ]),
       ),
     );

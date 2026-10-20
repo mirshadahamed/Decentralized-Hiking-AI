@@ -6,6 +6,7 @@ import 'package:decentralized_hiking_ai/app/app.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
@@ -724,6 +725,55 @@ void main() {
       await t.pump();
     }
     expect(card, findsNothing);
+  });
+
+  testWidgets('bottleneck map: every section coloured by tomorrow\'s forecast, safe numbers per section, offline',
+      (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final api = _EdgeApi();
+    final tab = find.text('Bottleneck map');
+    Future<void> open() async {
+      await t.pumpWidget(wrap(BottleneckScreen(key: UniqueKey(), showTiles: false), api));
+      for (var i = 0; i < 40 && tab.evaluate().isEmpty; i++) {       // real time: read the pack, run the ST-GNN
+        await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        await t.pump();
+      }
+    }
+
+    await open();
+    expect(tab, findsOneWidget);
+    expect(find.textContaining('ST-GNN on this phone'), findsOneWidget);
+    expect(find.byKey(const Key('hour_slider')), findsOneWidget);
+    expect(find.textContaining('of 48 sections'), findsOneWidget);
+    expect(find.textContaining(' people'), findsWidgets);              // the fullest sections at that hour
+    final before = find.textContaining('of 48 sections').evaluate().single.widget as Text;
+    await t.drag(find.byKey(const Key('hour_slider')), const Offset(-400, 0)); // early morning: quieter
+    await t.pump();
+    final after = find.textContaining('of 48 sections').evaluate().single.widget as Text;
+    expect(after.data, isNot(before.data));
+
+    await t.tap(find.text('Safe numbers'));
+    await t.pumpAndSettle();
+    expect(find.text('Safe number of visitors tomorrow'), findsOneWidget);
+    expect(find.byKey(const Key('park_safe_number')), findsOneWidget);
+    expect(find.text("World's End loop"), findsOneWidget);
+    await t.tap(find.text("World's End loop"));
+    await t.pumpAndSettle();
+    expect(find.text('ECC/day'), findsOneWidget);
+    final row = find.descendant(of: find.byType(ExpansionTile), matching: find.text("World's End"));
+    await t.ensureVisible(row);
+    await t.pumpAndSettle();
+    await t.tap(row);                                                    // one section: hourly bars + PCC/RCC/ECC
+    await t.pumpAndSettle();
+    expect(find.text('Effective (ECC)'), findsOneWidget);
+    expect(find.textContaining('Holds safely at once'), findsOneWidget);
+
+    api.online = false;                                                  // airplane mode: the stored pack
+    await open();
+    expect(tab, findsOneWidget);
+    expect(find.text('offline copy'), findsOneWidget);
   });
 
   testWidgets('app home lists the modules', (t) async {

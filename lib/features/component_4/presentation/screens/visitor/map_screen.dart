@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../models/models.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
+import '../bottleneck_screen.dart';
 
 /// Trails of the selected park on an OpenStreetMap background, one colour per route, with the trail heads,
 /// halfway checkpoints and the summit / viewpoints marked.
@@ -100,6 +101,18 @@ class _MapScreenState extends State<MapScreen> {
                   ]),
                   MarkerLayer(markers: markers),
                   if (widget.showTiles) const SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(C4Space.m),
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.of(context)
+                            .push(c4Route(context, BottleneckScreen(showTiles: widget.showTiles))),
+                        icon: const Icon(Icons.groups_outlined),
+                        label: const Text("Tomorrow's crowding"),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

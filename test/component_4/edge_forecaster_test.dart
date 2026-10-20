@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:decentralized_hiking_ai/features/component_4/domain/bottleneck.dart';
 import 'package:decentralized_hiking_ai/features/component_4/domain/edge_forecaster.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -35,5 +36,29 @@ void main() {
 
   test('rejects an unknown pack format', () {
     expect(() => EdgeForecaster.fromPack({...pack, 'schema': 'other'}), throwsFormatException);
+  });
+
+  test('bottleneck day: every section has its line, forecast and Cifuentes capacity from the pack', () {
+    final f = EdgeForecaster.fromPack(pack).forecast();
+    final d = BottleneckDay.fromPack(pack, f, offline: true);
+    final map = pack['map'] as Map<String, dynamic>;
+    expect(d.sections.length, (map['segments'] as List).length);
+    expect(d.sections.every((s) => s.lines.isNotEmpty && s.capacityAtOnce > 0), isTrue);
+    expect(d.sections.every((s) => s.ecc <= s.rcc && s.rcc <= s.pcc), isTrue); // the cascade only removes
+    final s = d.sections[5];
+    expect(s.peopleAt(9), closeTo(expected[9][s.id], 0.01)); // the phone's own forecast, per section
+    expect(d.openHours, contains(d.worstHour));
+    expect(d.recommendedQuota, map['recommended_daily_quota']);
+    // crowding levels follow forecast people / people the section holds at once
+    for (final x in d.sections) {
+      final u = x.utilisation(d.worstHour);
+      expect(d.level(x, d.worstHour) == Crowding.over, u > 1);
+    }
+    expect(d.rankedAt(d.worstHour).first.utilisation(d.worstHour),
+        greaterThanOrEqualTo(d.rankedAt(d.worstHour).last.utilisation(d.worstHour)));
+    final main = d.trails['main']!;
+    expect(d.sections.where((x) => x.trail == 'main').map((x) => x.ecc).reduce((a, b) => a < b ? a : b),
+        main.recommended); // the trail's safe number is its most limiting section
+    expect(d.nameOf(d.sections.firstWhere((x) => x.poi == 'worlds_end')), "World's End");
   });
 }

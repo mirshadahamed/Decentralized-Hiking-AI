@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/advisory_officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
@@ -167,6 +168,21 @@ void main() {
     await t.pumpAndSettle();
     await t.drag(find.byType(Scrollable).first, const Offset(0, 40));
     await _shot(t, '10_on_device');
+  }, skip: skip);
+
+  testWidgets('11 bottleneck map and 12 safe numbers per section', (t) async {
+    await phone(t);
+    final api = FixtureApi()..usePark('horton_plains');
+    await t.pumpWidget(_scoped(const BottleneckScreen(showTiles: false), api));
+    for (var i = 0; i < 50 && find.text('Bottleneck map').evaluate().isEmpty; i++) {
+      await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await t.pump();
+    }
+    await _shot(t, '11_bottleneck_map');
+    await t.tap(find.text('Safe numbers'));
+    await t.pumpAndSettle();
+    await t.tap(find.text("World's End loop"));
+    await _shot(t, '12_safe_numbers');
   }, skip: skip);
 
   testWidgets('05 Adam\'s Peak start times', (t) async {

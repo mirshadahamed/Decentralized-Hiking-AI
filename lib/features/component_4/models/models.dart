@@ -769,8 +769,9 @@ class CheckpointStatus {
 
 /// One trail segment for the map (from /trails/geometry).
 class MapSegment {
-  MapSegment({required this.trail, required this.poi, required this.points});
+  MapSegment({required this.trail, required this.poi, required this.points, this.id = -1});
 
+  final int id; // seg_id (-1 if the server did not send it)
   final String trail, poi;
   final List<List<double>> points; // [lon, lat]
 
@@ -787,6 +788,7 @@ class MapSegment {
       };
       for (final l in lines) {
         out.add(MapSegment(
+          id: (p['seg_id'] as num?)?.toInt() ?? -1,
           trail: p['trail'] as String? ?? '',
           poi: p['poi'] as String? ?? '',
           points: [for (final c in l) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]],

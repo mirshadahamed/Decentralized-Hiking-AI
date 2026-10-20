@@ -6,6 +6,7 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
+import '../bottleneck_screen.dart';
 import 'halfway_screen.dart';
 
 /// Officer console for a pilgrim site (Adam's Peak):
@@ -53,7 +54,7 @@ class _AdvisoryOfficerHomeState extends State<AdvisoryOfficerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Officer · ${api.session?.username ?? ''}'),
@@ -81,11 +82,13 @@ class _AdvisoryOfficerHomeState extends State<AdvisoryOfficerHome> {
           bottom: const TabBar(tabs: [
             Tab(icon: Icon(Icons.nightlight_outlined), text: 'Tonight'),
             Tab(icon: Icon(Icons.date_range), text: 'Season'),
+            Tab(icon: Icon(Icons.groups_outlined), text: 'Bottlenecks'),
           ]),
         ),
-        body: TabBarView(children: [
+        body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
           _TonightTab(key: ValueKey('t$_refreshes${_demo ?? ''}'), demo: _demo),
           _SeasonTab(key: ValueKey('s$_refreshes')),
+          BottleneckView(key: ValueKey('b$_refreshes')),
         ]),
       ),
     );
