@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-20T18:46:51.592703+05:30",
+  "checked_at": "2026-10-20T20:07:12.417936+05:30",
   "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
   "preparation_order": [
     "source inventory and taxonomy",
@@ -353,44 +353,48 @@
       "key": "wildscenes",
       "task": "forest terrain semantic segmentation",
       "role": "required",
-      "state": "acquisition_incomplete",
+      "state": "verified_prepared",
       "dataset": "data/processed/wildscenes_terrain_semantic",
-      "verification_report": null,
-      "verification_report_sha256": null,
-      "available_data_ready": false,
-      "source_release_complete": false,
+      "verification_report": "results/wildscenes_preprocessing/local_readiness.json",
+      "verification_report_sha256": "6a967d7476493d24a4b420693360944a022d51d043db86d052a2fb9393fc0ed3",
+      "available_data_ready": true,
+      "source_release_complete": true,
       "published_count_complete": null,
       "labels_only": false,
-      "expected_splits": {},
+      "expected_splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
       "current_pairs": {
         "train": {
-          "images": 0,
-          "labels": 0,
-          "paired": 0,
+          "images": 6051,
+          "labels": 6051,
+          "paired": 6051,
           "unpaired_images": 0,
           "orphan_labels": 0
         },
         "val": {
-          "images": 0,
-          "labels": 0,
-          "paired": 0,
+          "images": 283,
+          "labels": 283,
+          "paired": 283,
           "unpaired_images": 0,
           "orphan_labels": 0
         },
         "test": {
-          "images": 0,
-          "labels": 0,
-          "paired": 0,
+          "images": 2133,
+          "labels": 2133,
+          "paired": 2133,
           "unpaired_images": 0,
           "orphan_labels": 0
         }
       },
       "acquisition_snapshot": {
-        "complete": false,
-        "phase": "download",
-        "verified_files": 14928,
-        "remaining_files": 2006,
-        "verified_bytes": 39540169938,
+        "complete": true,
+        "phase": "complete",
+        "verified_files": 16934,
+        "remaining_files": 0,
+        "verified_bytes": 44887369710,
         "selected_files": 16934,
         "selected_bytes": 44887369710
       },

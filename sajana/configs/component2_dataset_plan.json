@@ -192,8 +192,8 @@
       "source_annotation": "COCO_instance_polygons",
       "mapping": [
         {
-          "source_category_id": 0,
-          "source_name": "litter",
+          "source_rule": "All validated original waste-category IDs in the retained TACO category catalog",
+          "prepared_target_class_id": 0,
           "target_key": "litter"
         }
       ],
@@ -213,16 +213,17 @@
         "landslide_rubble_debris",
         "traversable_trail"
       ],
-      "report": "sajana/results/taco_preprocessing/official_clean_readiness.json"
+      "report": "sajana/results/taco_preprocessing/official_clean_readiness.json",
+      "source_category_catalog": "sajana/data/interim/taco/annotations_official_cleaned.json#categories"
     },
     {
-      "source": "TACO_unofficial_validated",
+      "source": "TACO_unofficial_available",
       "role": "optional_litter_train_only_pool",
       "source_annotation": "COCO_instance_polygons",
       "mapping": [
         {
-          "source_category_id": 0,
-          "source_name": "litter",
+          "source_rule": "All validated original waste-category IDs in the retained unofficial TACO catalog",
+          "prepared_target_class_id": 0,
           "target_key": "litter"
         }
       ],
@@ -231,7 +232,8 @@
         "cross_source_duplicate_audit",
         "all_unreviewed_non_litter_classes_remain_unknown"
       ],
-      "report": "sajana/results/taco_preprocessing/unofficial_labels_audit.json"
+      "report": "sajana/results/taco_preprocessing/unofficial_available_readiness.json",
+      "source_category_catalog": "sajana/data/interim/taco/annotations_unofficial_available.json#categories"
     },
     {
       "source": "MJU_Waste",
@@ -299,31 +301,118 @@
       "derive_unique_physical_item_counts_from_repeated_observations": false
     },
     {
-      "source": "pLitterStreet_actual_release_if_acquired",
+      "source": "pLitterStreet_4_class_release",
       "role": "supplementary_detection_domain_study",
-      "mapping_status": "audit_actual_released_category_catalog_and_annotation_geometry_first",
+      "mapping_status": "native_catalog_and_box_geometry_audited_full_readiness_blocked_by_photo_review_and_duplicate",
       "source_category_ids_invented": false,
       "box_to_segmentation_ground_truth_allowed": false,
-      "segmentation_subset_requires_reviewed_polygons": true
+      "segmentation_subset_requires_reviewed_polygons": true,
+      "mapping": [
+        {
+          "source_category_id": 1,
+          "source_name": "Plastic",
+          "prepared_target_class_id": 0,
+          "prepared_target_name": "plastic_litter"
+        },
+        {
+          "source_category_id": 2,
+          "source_name": "Pile",
+          "prepared_target_class_id": 1,
+          "prepared_target_name": "litter_pile"
+        },
+        {
+          "source_category_id": 3,
+          "source_name": "Face mask",
+          "prepared_target_class_id": 2,
+          "prepared_target_name": "face_mask"
+        },
+        {
+          "source_category_id": 4,
+          "source_name": "Trash bin",
+          "prepared_target_class_id": 3,
+          "prepared_target_name": "trash_bin"
+        }
+      ],
+      "report": "sajana/results/plitter_preprocessing/local_readiness.json",
+      "trash_bins_are_litter": false
     },
     {
-      "source": "WildScenes_or_RUGD_if_acquired",
+      "source": "WildScenes",
       "role": "separate_natural_scene_context",
-      "mapping_status": "verify_actual_catalog_ids_and_names_first",
-      "potential_context_classes_from_master_document": [
-        "dirt",
-        "mud",
-        "vegetation",
-        "log",
-        "rock"
-      ],
+      "mapping_status": "native_semantic_catalog_and_pixel_alignment_verified",
+      "native_semantic_ids": {
+        "0": "unlabelled",
+        "1": "asphalt/concrete",
+        "2": "dirt",
+        "3": "mud",
+        "4": "water",
+        "5": "gravel",
+        "6": "other-terrain",
+        "7": "tree-trunk",
+        "8": "tree-foliage",
+        "9": "bush",
+        "10": "fence",
+        "11": "other-structure",
+        "12": "pole",
+        "13": "vehicle",
+        "14": "rock",
+        "15": "log",
+        "16": "other-object",
+        "17": "sky",
+        "18": "grass"
+      },
+      "ignore_id": 0,
       "final_hazard_class_mapping": [],
       "forbidden_inferences": [
         "dirt_is_erosion",
         "vegetation_is_exposed_roots",
         "log_is_trail_blockage",
         "rock_is_rockfall_or_blockage"
-      ]
+      ],
+      "cross_dataset_numeric_ids_interchangeable": false,
+      "report": "sajana/results/wildscenes_preprocessing/local_readiness.json"
+    },
+    {
+      "source": "RUGD",
+      "role": "separate_natural_scene_context",
+      "mapping_status": "native_semantic_catalog_and_pixel_alignment_verified",
+      "native_semantic_ids": {
+        "0": "void",
+        "1": "dirt",
+        "2": "sand",
+        "3": "grass",
+        "4": "tree",
+        "5": "pole",
+        "6": "water",
+        "7": "sky",
+        "8": "vehicle",
+        "9": "container/generic-object",
+        "10": "asphalt",
+        "11": "gravel",
+        "12": "building",
+        "13": "mulch",
+        "14": "rock-bed",
+        "15": "log",
+        "16": "bicycle",
+        "17": "person",
+        "18": "fence",
+        "19": "bush",
+        "20": "sign",
+        "21": "rock",
+        "22": "bridge",
+        "23": "concrete",
+        "24": "picnic-table"
+      },
+      "ignore_id": 0,
+      "final_hazard_class_mapping": [],
+      "forbidden_inferences": [
+        "dirt_is_erosion",
+        "vegetation_is_exposed_roots",
+        "log_is_trail_blockage",
+        "rock_is_rockfall_or_blockage"
+      ],
+      "cross_dataset_numeric_ids_interchangeable": false,
+      "report": "sajana/results/rugd_preprocessing/local_readiness.json"
     },
     {
       "source": "RELLIS_3D_if_acquired",
@@ -471,7 +560,10 @@
     "optional_source_failures_block_verified_litter_baseline": false
   },
   "live_status_references": [
+    "sajana/results/component2_preprocessing/status.json",
     "sajana/results/taco_preprocessing/supplied_preprocessing_status.json",
     "sajana/results/training_readiness_recheck.json"
-  ]
+  ],
+  "training_roadmap": "sajana/docs/COMPONENT2_TRAINING_ROADMAP.md",
+  "training_plan": "sajana/configs/component2_training_plan.json"
 }

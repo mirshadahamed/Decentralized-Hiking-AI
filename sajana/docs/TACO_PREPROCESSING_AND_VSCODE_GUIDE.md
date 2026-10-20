@@ -1,5 +1,7 @@
 # Ground-Level Vision for Concurrent Litter Detection & Trail Damage Segmentation
 
+For the order from verified data through pretraining/fine-tuning and Android integration, follow [the Component 2 training roadmap](COMPONENT2_TRAINING_ROADMAP.md). Its first experiment uses the verified litter data; the full trail-damage model still needs genuine damage annotations.
+
 This workspace prepares the component's litter baseline and separate auxiliary datasets. Current TACO/MJU training labels use **`0 = litter`**; original TACO category IDs remain available for a later taxonomy mapping. See [the Component 2 dataset plan](COMPONENT2_DATASET_PLAN.md) for the full preparation order and local annotation requirements. Read `results/component2_preprocessing/status.json` for the current source-specific readiness; the tables below describe source annotation counts.
 
 ## Prepared data

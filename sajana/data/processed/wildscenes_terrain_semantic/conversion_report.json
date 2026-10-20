@@ -1,0 +1,233 @@
+{
+  "dataset": "WildScenes2d",
+  "task": "auxiliary_terrain_semantic_segmentation",
+  "source_url": "https://data.csiro.au/collection/csiro:61541",
+  "repository": "https://github.com/csiro-robotics/WildScenes",
+  "source_revision": "9eb4e10b4483a634159e2b371be0437e465fe218",
+  "split_policy": "author_opt2d",
+  "resize": false,
+  "class_names": [
+    "unlabelled",
+    "asphalt/concrete",
+    "dirt",
+    "mud",
+    "water",
+    "gravel",
+    "other-terrain",
+    "tree-trunk",
+    "tree-foliage",
+    "bush",
+    "fence",
+    "other-structure",
+    "pole",
+    "vehicle",
+    "rock",
+    "log",
+    "other-object",
+    "sky",
+    "grass"
+  ],
+  "palette": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      255,
+      165,
+      0
+    ],
+    [
+      60,
+      180,
+      75
+    ],
+    [
+      255,
+      225,
+      25
+    ],
+    [
+      0,
+      130,
+      200
+    ],
+    [
+      145,
+      30,
+      180
+    ],
+    [
+      70,
+      240,
+      240
+    ],
+    [
+      240,
+      50,
+      230
+    ],
+    [
+      210,
+      245,
+      60
+    ],
+    [
+      230,
+      25,
+      75
+    ],
+    [
+      0,
+      128,
+      128
+    ],
+    [
+      170,
+      110,
+      40
+    ],
+    [
+      255,
+      250,
+      200
+    ],
+    [
+      128,
+      0,
+      0
+    ],
+    [
+      170,
+      255,
+      195
+    ],
+    [
+      128,
+      128,
+      0
+    ],
+    [
+      250,
+      190,
+      190
+    ],
+    [
+      0,
+      0,
+      128
+    ],
+    [
+      128,
+      128,
+      128
+    ]
+  ],
+  "ignore_index": 0,
+  "source_id_mapping": {
+    "0": "unlabelled",
+    "1": "asphalt/concrete",
+    "2": "dirt",
+    "3": "mud",
+    "4": "water",
+    "5": "gravel",
+    "6": "other-terrain",
+    "7": "tree-trunk",
+    "8": "tree-foliage",
+    "9": "bush",
+    "10": "fence",
+    "11": "other-structure",
+    "12": "pole",
+    "13": "vehicle",
+    "14": "rock",
+    "15": "log",
+    "16": "other-object",
+    "17": "sky",
+    "18": "grass"
+  },
+  "source_rgb_images": 9306,
+  "selected_pairs": 8467,
+  "author_unassigned_rgb_count": 839,
+  "author_unassigned_reason": "Not assigned to the author opt2d train/val/test split; not missing downloads",
+  "licence": "CC BY-NC-SA 4.0",
+  "scope_note": "Terrain/object semantic classes provide auxiliary scene context; they are not hiking passability or trail-damage annotations.",
+  "preprocessed": true,
+  "training_ready": false,
+  "split_counts": {
+    "train": 6051,
+    "val": 283,
+    "test": 2133
+  },
+  "class_pixel_counts": {
+    "train": {
+      "1": 1794,
+      "2": 1600840094,
+      "3": 6857813,
+      "4": 48116742,
+      "5": 103405446,
+      "6": 860988,
+      "7": 2639454701,
+      "8": 10507673624,
+      "9": 203633644,
+      "10": 1620768,
+      "11": 60550301,
+      "12": 3377421,
+      "13": 118755,
+      "14": 14315444,
+      "15": 65429710,
+      "16": 15645583,
+      "17": 1350206976,
+      "18": 1822499988
+    },
+    "val": {
+      "2": 54003856,
+      "3": 4,
+      "5": 77682,
+      "6": 38,
+      "7": 127289271,
+      "8": 526837849,
+      "9": 8275366,
+      "11": 673571,
+      "14": 13457,
+      "15": 2196348,
+      "16": 46635,
+      "17": 63117882,
+      "18": 80106377
+    },
+    "test": {
+      "1": 125654,
+      "2": 615612940,
+      "3": 7072191,
+      "4": 9586356,
+      "5": 450086,
+      "6": 3140242,
+      "7": 827004331,
+      "8": 3646752449,
+      "9": 112779424,
+      "10": 8568745,
+      "11": 30956063,
+      "12": 30580,
+      "13": 116173,
+      "14": 1787474,
+      "15": 45599035,
+      "16": 10540041,
+      "17": 372336254,
+      "18": 809335498
+    }
+  },
+  "issues": [],
+  "source_metadata_sha256": {
+    "repository_tree.json": "36e375472a66cb06b90ccf9ef28f7f09d1004257e3fd055a0b784f07e7763a52",
+    "README.md": "1e27d78a0f7a7419390f05d9126a0575f0a9934f960e41a50cf6bfd71508b16d",
+    "wildscenes/tools/wildscenes_converter.py": "57c23967e4f402d2a7c1b70a144bbba679ccb320c9b8389188f80fd7811cb5b7",
+    "wildscenes/tools/utils2d.py": "4e7c8188df062733436c10846e96021a5c23f575e5621bc2e3870d2bc8e10ca5",
+    "wildscenes/mmseg_wildscenes/dataset/wildscenes.py": "d79c60e1890b718c50626abd4abfcd4fb6af5cc45de633b901271c44627780f3",
+    "wildscenes/configs/benchmark_palette_remap.py": "4474edb65f240d62c0c06eab9fa755f277feba0969b4f672a8c87f44518133ba",
+    "wildscenes/configs/_base_/datasets/wildscenes.py": "1b23b66035322eec3e17f838221b819343229a0180b99d37867d2bfe1b6716ec",
+    "scripts/visualisation/view_image.py": "0255a173a40dd3f79f366618be60dc5570ce41ce346adfbdd89639f185e42bc8",
+    "data/splits/opt2d/val.csv": "196a67270856ccf52f14f86f0120003206175b1fe19a482d931d5865715e23dc",
+    "data/splits/opt2d/test.csv": "a74316c2fe894cf9bb0d794e49a6e680b828f320cdd01a919918b61e5a27af5c",
+    "data/splits/opt2d/train.csv": "4b5514d5f741d15f56f0853de13608b01f65de32360bfd8b03a3f1834291258b"
+  }
+}

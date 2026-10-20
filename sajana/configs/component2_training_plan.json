@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "purpose": "Planning profiles and acceptance gates; this JSON is not an executable training script.",
+  "roadmap": "sajana/docs/COMPONENT2_TRAINING_ROADMAP.md",
+  "data_status": "sajana/results/component2_preprocessing/status.json",
+  "trainer_implemented": false,
+  "training_started": false,
+  "current_priority": "verified data alignment and a reproducible first litter experiment",
+  "compute_selection": "awaiting user preference; no GPU service or training job has been provisioned",
+  "first_experiments": [
+    {
+      "experiment_id": "L1",
+      "task": "instance_segmentation",
+      "role": "first litter segmentation baseline",
+      "dataset": "sajana/data/processed/taco_litter_seg_clean",
+      "data_config": "sajana/configs/taco_litter.yaml",
+      "readiness_report": "sajana/results/taco_preprocessing/official_clean_readiness.json",
+      "required_ready_key": "training_ready",
+      "names": {
+        "0": "litter"
+      },
+      "validation_and_test_source": "clean official TACO held-out batches",
+      "initialization": "compatible published pretrained weights",
+      "model_and_library_versions": null,
+      "device": null,
+      "training_run_config": null
+    },
+    {
+      "experiment_id": "L2",
+      "task": "instance_segmentation",
+      "role": "controlled auxiliary-data comparison",
+      "dataset": "sajana/data/processed/litter_taco_mju_aux",
+      "data_config": "sajana/configs/litter_taco_mju_aux.yaml",
+      "readiness_report": "sajana/data/processed/litter_taco_mju_aux/readiness.json",
+      "required_ready_key": "training_ready",
+      "names": {
+        "0": "litter"
+      },
+      "validation_and_test_source": "clean official TACO held-out batches",
+      "initialization": "compatible published pretrained weights",
+      "model_and_library_versions": null,
+      "device": null,
+      "training_run_config": null
+    }
+  ],
+  "initial_experiment_exclusions": [
+    "optional unreviewed unofficial TACO pool",
+    "pLitter bounding-box detection dataset",
+    "terrain semantic datasets",
+    "unreviewed local trail templates"
+  ],
+  "pretraining_strategy": {
+    "first_litter_run": "fine-tune compatible pretrained segmentation weights",
+    "training_from_random_weights_required": false,
+    "optional_context_adaptation": [
+      "WildScenes native semantic task",
+      "RUGD native semantic task after reuse-term review",
+      "ORFD vehicle freespace task"
+    ],
+    "context_models_provide_final_damage_ground_truth": false,
+    "shared_encoder_transfer_requires_architecture_compatibility": true
+  },
+  "required_training_run_records": [
+    "dataset and split manifest hashes",
+    "class mapping and code commit",
+    "model and initial checkpoint hash",
+    "pinned environment and device",
+    "seed and input preprocessing",
+    "batch size and optimizer schedule",
+    "train-only augmentations and epoch limit",
+    "checkpoint selection and threshold rules",
+    "learning curves and validation metrics",
+    "final held-out evaluation and failure-case overlays"
+  ],
+  "acceptance_stages": [
+    {
+      "stage": 1,
+      "name": "data_freeze",
+      "requires": [
+        "full per-source verification",
+        "reviewed source-to-task mapping",
+        "no cross-split duplicate leakage",
+        "fixed validation/test membership"
+      ]
+    },
+    {
+      "stage": 2,
+      "name": "training_smoke_check",
+      "requires": [
+        "training-set-only learning check",
+        "finite losses and aligned predictions",
+        "no validation/test optimization"
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "litter_baselines",
+      "requires": [
+        "reproducible L1 run",
+        "controlled L2 comparison",
+        "selection on validation only",
+        "untuned held-out test evaluation"
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "local_joint_component",
+      "requires": [
+        "real reviewed erosion/root and selected obstruction labels",
+        "per-class annotation coverage",
+        "grouped local holdouts",
+        "joint labels or tested missing-label-aware trainer"
+      ]
+    },
+    {
+      "stage": 5,
+      "name": "export_and_app",
+      "requires": [
+        "exported-model accuracy comparison",
+        "Android-device latency and memory measurements",
+        "versioned preprocessing and output contract",
+        "defined bot behavior connected to actual predictions"
+      ]
+    }
+  ],
+  "local_annotation_review_ledger": "sajana/data/local_trails/class_coverage.csv",
+  "missing_annotation_is_negative": false,
+  "independent_local_evaluation_ready": false,
+  "android_application_framework": "existing Flutter project; Android Studio IDE/build/debug integration",
+  "bot_behavior": "to be specified before implementation",
+  "validation_report": "sajana/results/component2_preprocessing/training_plan_audit.json"
+}
