@@ -6,74 +6,47 @@ import '../services/hybrid_rag_service.dart';
 
 typedef HikingAssistantQuery = Future<RagResponse> Function({
   required String question,
-  required String category,
 });
 
 class HikingAssistantScreen extends StatefulWidget {
   final HikingAssistantQuery _query;
-
   factory HikingAssistantScreen({
     Key? key,
     required HybridRagService ragService,
-  }) {
-    return HikingAssistantScreen._(key: key, query: ragService.prepare);
-  }
-
-  /// Narrow presentation seam used by widget tests; production callers inject
-  /// an already configured [HybridRagService] through the main constructor.
+  }) => HikingAssistantScreen._(key: key, query: ragService.ask);
   factory HikingAssistantScreen.forTesting({
     Key? key,
     required HikingAssistantQuery query,
-  }) {
-    return HikingAssistantScreen._(key: key, query: query);
-  }
-
+  }) => HikingAssistantScreen._(key: key, query: query);
   const HikingAssistantScreen._({super.key, required this._query});
-
   @override
   State<HikingAssistantScreen> createState() => _HikingAssistantScreenState();
 }
 
 class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
-  static const _topics = <_SafetyTopic>[
-    _SafetyTopic(
-      label: 'General first aid',
-      category: 'general_first_aid',
-      question:
-          'What basic first aid steps should I follow when a hiker is injured?',
+  static const _examples = <_ExampleQuestion>[
+    _ExampleQuestion(
+      'Hypothermia',
+      'What should I do if someone shows signs of hypothermia while hiking?',
     ),
-    _SafetyTopic(
-      label: 'Hypothermia',
-      category: 'hypothermia',
-      question: 'What should I do if a hiker shows signs of hypothermia?',
+    _ExampleQuestion(
+      'Snake bite',
+      'What should I do if someone is bitten by a snake while hiking?',
     ),
-    _SafetyTopic(
-      label: 'Severe allergic reaction',
-      category: 'allergic_reaction',
-      question: 'What should I do if a hiker has a severe allergic reaction?',
+    _ExampleQuestion(
+      "I'm lost",
+      'What should I do if I become lost while hiking?',
     ),
-    _SafetyTopic(
-      label: 'Lost or disoriented',
-      category: 'lost_navigation',
-      question: 'What should I do if I am lost on a hiking trail?',
-    ),
-    _SafetyTopic(
-      label: 'Heat illness',
-      category: 'heat_illness',
-      question: 'What should I do if a hiker develops heat illness?',
-    ),
-    _SafetyTopic(
-      label: 'Sri Lanka emergency',
-      category: 'sri_lanka_emergency',
-      question: 'How can I request an emergency ambulance in Sri Lanka?',
+    _ExampleQuestion(
+      'Allergic reaction',
+      'What should I do if someone has a severe allergic reaction while hiking?',
     ),
   ];
-
   final _questionController = TextEditingController();
-  String _selectedCategory = _topics.first.category;
   bool _isLoading = false;
   String? _validationMessage;
   String? _errorMessage;
+  String? _askedQuestion;
   RagResponse? _response;
 
   @override
@@ -83,10 +56,7 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
   }
 
   Future<void> _ask() async {
-    if (_isLoading) {
-      return;
-    }
-
+    if (_isLoading) return;
     final question = _questionController.text.trim();
     if (question.isEmpty) {
       setState(
@@ -94,45 +64,35 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
       );
       return;
     }
-
     setState(() {
       _isLoading = true;
       _validationMessage = null;
       _errorMessage = null;
       _response = null;
     });
-
     try {
-      final response = await widget._query(
-        question: question,
-        category: _selectedCategory,
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() => _response = response);
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
+      final response = await widget._query(question: question);
+      if (!mounted) return;
       setState(() {
-        _errorMessage =
-            'Offline guidance is temporarily unavailable. Please try again.';
+        _askedQuestion = question;
+        _response = response;
       });
-    } finally {
+    } catch (_) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(
+          () => _errorMessage =
+              'Offline guidance is temporarily unavailable. Please try again.',
+        );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _selectTopic(_SafetyTopic topic) {
-    if (_isLoading) {
-      return;
-    }
+  void _selectExample(_ExampleQuestion example) {
+    if (_isLoading) return;
     setState(() {
-      _selectedCategory = topic.category;
-      _questionController.text = topic.question;
+      _questionController.text = example.question;
       _validationMessage = null;
     });
   }
@@ -140,7 +100,6 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Offline Hiking Assistant')),
       body: SafeArea(
@@ -158,47 +117,27 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Guidance is generated from downloaded offline hiking knowledge.',
+                'Ask about hiking safety, first aid, weather hazards, navigation and emergencies.',
               ),
               const SizedBox(height: 20),
               Text(
-                'Safety topic',
+                'Example questions',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                key: const Key('topic-selector'),
-                initialValue: _selectedCategory,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Select a topic',
-                ),
-                items: _topics
-                    .map(
-                      (topic) => DropdownMenuItem(
-                        value: topic.category,
-                        child: Text(topic.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _isLoading
-                    ? null
-                    : (category) {
-                        if (category != null) {
-                          setState(() => _selectedCategory = category);
-                        }
-                      },
-              ),
-              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _topics.skip(1).map((topic) {
-                  return ActionChip(
-                    label: Text(topic.label),
-                    onPressed: _isLoading ? null : () => _selectTopic(topic),
-                  );
-                }).toList(),
+                children: _examples
+                    .map(
+                      (example) => ActionChip(
+                        label: Text(example.label),
+                        onPressed: _isLoading
+                            ? null
+                            : () => _selectExample(example),
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 20),
               TextField(
@@ -209,7 +148,7 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
                 maxLines: 6,
                 textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
-                  labelText: 'Your hiking safety question',
+                  labelText: 'Ask any hiking safety question',
                   hintText: 'Describe what you need help with while hiking.',
                   border: const OutlineInputBorder(),
                   errorText: _validationMessage,
@@ -234,11 +173,11 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
-                _NoticeCard(message: _errorMessage!, isError: true),
+                _NoticeCard(message: _errorMessage!),
               ],
               if (_response != null) ...[
                 const SizedBox(height: 20),
-                _AnswerCard(response: _response!),
+                _AnswerCard(response: _response!, question: _askedQuestion!),
               ],
               const SizedBox(height: 20),
               Text(
@@ -255,15 +194,12 @@ class _HikingAssistantScreenState extends State<HikingAssistantScreen> {
 
 class _AnswerCard extends StatelessWidget {
   final RagResponse response;
-
-  const _AnswerCard({required this.response});
-
+  final String question;
+  const _AnswerCard({required this.response, required this.question});
   @override
   Widget build(BuildContext context) {
     final isFallback = response.answerMode == RagAnswerMode.safeFallback;
     final title = isFallback ? 'Limited offline guidance' : 'Offline guidance';
-    final displayAnswer = _removeLightweightMarkdown(response.answer);
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -278,7 +214,16 @@ class _AnswerCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            SelectableText(displayAnswer),
+            Text('You', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Text(question),
+            const SizedBox(height: 12),
+            Text(
+              'Offline Assistant',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            SelectableText(_removeLightweightMarkdown(response.answer)),
             if (response.sources.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text('Sources', style: Theme.of(context).textTheme.titleSmall),
@@ -291,56 +236,35 @@ class _AnswerCard extends StatelessWidget {
     );
   }
 
-  /// Presentation-only cleanup for emphasis markers that a local model may
-  /// emit. The underlying RAG response remains unchanged.
-  static String _removeLightweightMarkdown(String answer) {
-    return answer.replaceAllMapped(
-      RegExp(r'(\*\*|__)(.+?)\1'),
-      (match) => match.group(2)!,
-    );
-  }
+  static String _removeLightweightMarkdown(String answer) =>
+      answer.replaceAllMapped(
+        RegExp(r'(\*\*|__)(.+?)\1'),
+        (match) => match.group(2)!,
+      );
 }
 
 class _SourceTile extends StatelessWidget {
   final RagRetrievalResult source;
-
   const _SourceTile(this.source);
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text('${source.organization} — ${source.title}'),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text('${source.organization} — ${source.title}'),
+  );
 }
 
 class _NoticeCard extends StatelessWidget {
   final String message;
-  final bool isError;
-
-  const _NoticeCard({required this.message, required this.isError});
-
+  const _NoticeCard({required this.message});
   @override
-  Widget build(BuildContext context) {
-    final color = isError
-        ? Theme.of(context).colorScheme.errorContainer
-        : Theme.of(context).colorScheme.surfaceContainerHighest;
-    return Card(
-      color: color,
-      child: Padding(padding: const EdgeInsets.all(12), child: Text(message)),
-    );
-  }
+  Widget build(BuildContext context) => Card(
+    color: Theme.of(context).colorScheme.errorContainer,
+    child: Padding(padding: const EdgeInsets.all(12), child: Text(message)),
+  );
 }
 
-class _SafetyTopic {
+class _ExampleQuestion {
   final String label;
-  final String category;
   final String question;
-
-  const _SafetyTopic({
-    required this.label,
-    required this.category,
-    required this.question,
-  });
+  const _ExampleQuestion(this.label, this.question);
 }

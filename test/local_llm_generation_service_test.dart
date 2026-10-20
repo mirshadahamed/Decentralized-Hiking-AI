@@ -48,6 +48,40 @@ void main() {
         isEmpty,
       );
     });
+
+    test('rejects incomplete local-model fragments', () {
+      expect(
+        LocalLlmGenerationService.validateGeneratedAnswer(
+          'The following is the final',
+        ),
+        isNotNull,
+      );
+      expect(
+        LocalLlmGenerationService.validateGeneratedAnswer('Heading'),
+        isNotNull,
+      );
+      expect(
+        LocalLlmGenerationService.validateGeneratedAnswer(
+          'Move away from danger and keep the person still while seeking help.',
+        ),
+        isNull,
+      );
+    });
+
+    test('removes echoed internal prompt text before returning an answer', () {
+      expect(
+        LocalLlmGenerationService.sanitizeGeneratedOutput(
+          'You are an offline hiking-safety assistant. OFFLINE EVIDENCE: hidden QUESTION: hidden FINAL ANSWER: Move to shelter.',
+        ),
+        'Move to shelter.',
+      );
+      expect(
+        LocalLlmGenerationService.sanitizeGeneratedOutput(
+          'OFFLINE EVIDENCE: hidden instructions',
+        ),
+        isEmpty,
+      );
+    });
   });
 
   group('LocalLlmGenerationService input validation', () {
@@ -173,27 +207,27 @@ void main() {
       },
     );
 
-    test(
-      'uses bounded prompt and sanitizes a successful test generation',
-      () async {
-        String? receivedPrompt;
-        final service = LocalLlmGenerationService.forTesting(
-          generationRunner: ({required prompt, required maxTokens}) async {
-            receivedPrompt = prompt;
-            return '<think>private reasoning</think>Move to shelter.';
-          },
-        );
+    test('uses bounded prompt and sanitizes a successful test generation', () async {
+      String? receivedPrompt;
+      final service = LocalLlmGenerationService.forTesting(
+        generationRunner: ({required prompt, required maxTokens}) async {
+          receivedPrompt = prompt;
+          return '<think>private reasoning</think>Move to shelter and keep the person warm and dry.';
+        },
+      );
 
-        final result = await service.generateGroundedAnswer(
-          question: 'What should I do?',
-          context: 'Move to shelter and keep dry.',
-        );
+      final result = await service.generateGroundedAnswer(
+        question: 'What should I do?',
+        context: 'Move to shelter and keep dry.',
+      );
 
-        expect(result.success, isTrue);
-        expect(result.answer, 'Move to shelter.');
-        expect(receivedPrompt, contains('OFFLINE EVIDENCE:'));
-        expect(receivedPrompt, contains('QUESTION:'));
-      },
-    );
+      expect(result.success, isTrue);
+      expect(
+        result.answer,
+        'Move to shelter and keep the person warm and dry.',
+      );
+      expect(receivedPrompt, contains('OFFLINE EVIDENCE:'));
+      expect(receivedPrompt, contains('QUESTION:'));
+    });
   });
 }

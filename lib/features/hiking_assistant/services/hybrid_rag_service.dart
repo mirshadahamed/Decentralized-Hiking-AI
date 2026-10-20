@@ -2,6 +2,7 @@ import '../models/rag_response.dart';
 import '../models/rag_retrieval_result.dart';
 import 'local_llm_generation_service.dart';
 import 'offline_knowledge_database.dart';
+import 'offline_question_router.dart';
 import 'rag_context_builder.dart';
 import 'rag_localization_filter.dart';
 
@@ -10,14 +11,50 @@ class HybridRagService {
   final RagContextBuilder contextBuilder;
   final RagLocalizationFilter localizationFilter;
   final LocalLlmGenerationService? localLlmGenerationService;
+  final OfflineQuestionRouter questionRouter;
 
   HybridRagService({
     required this.database,
     RagContextBuilder? contextBuilder,
     RagLocalizationFilter? localizationFilter,
     this.localLlmGenerationService,
+    OfflineQuestionRouter? questionRouter,
   }) : contextBuilder = contextBuilder ?? RagContextBuilder(database: database),
-       localizationFilter = localizationFilter ?? const RagLocalizationFilter();
+       localizationFilter = localizationFilter ?? const RagLocalizationFilter(),
+       questionRouter =
+           questionRouter ?? OfflineQuestionRouter(database: database);
+
+  /// Primary category-free offline assistant API for natural-language queries.
+  Future<RagResponse> ask({required String question}) async {
+    final route = await questionRouter.route(question);
+    if (!route.hasSufficientEvidence || route.categories.isEmpty) {
+      return _safeFallback();
+    }
+
+    // The verified emergency route remains isolated and evidence-gated.
+    if (route.categories.contains('sri_lanka_emergency')) {
+      return prepare(question: question, category: 'sri_lanka_emergency');
+    }
+
+    final retrievedByCategory = await Future.wait(
+      route.categories.map(
+        (category) => database.retrieve(
+          question: question,
+          category: category,
+          // Multi-category routing keeps the total seed set mobile-friendly.
+          limit: 2,
+        ),
+      ),
+    );
+    final seeds = <String, RagRetrievalResult>{};
+    for (final results in retrievedByCategory) {
+      for (final result in results) {
+        seeds.putIfAbsent(result.chunkId, () => result);
+      }
+    }
+    if (seeds.isEmpty) return _safeFallback();
+    return _prepareFromSeeds(question: question, seeds: seeds.values.toList());
+  }
 
   Future<RagResponse> prepare({
     required String question,
@@ -33,9 +70,19 @@ class HybridRagService {
       limit: 4,
     );
 
-    if (seeds.isEmpty) {
-      return _safeFallback();
-    }
+    return _prepareFromSeeds(
+      question: question,
+      seeds: seeds,
+      isSriLankaEmergency: category == 'sri_lanka_emergency',
+    );
+  }
+
+  Future<RagResponse> _prepareFromSeeds({
+    required String question,
+    required List<RagRetrievalResult> seeds,
+    bool isSriLankaEmergency = false,
+  }) async {
+    if (seeds.isEmpty) return _safeFallback();
 
     // ----------------------------------------------------------
     // 2. Bounded adjacent-chunk continuity.
@@ -58,7 +105,7 @@ class HybridRagService {
     // satisfies the verification conditions below.
     // ----------------------------------------------------------
 
-    if (category == 'sri_lanka_emergency') {
+    if (isSriLankaEmergency) {
       final verified = verifySriLanka1990Evidence(
         boundedContext.contextResults,
       );

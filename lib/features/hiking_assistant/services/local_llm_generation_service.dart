@@ -184,9 +184,10 @@ class LocalLlmGenerationService {
       stopwatch.stop();
 
       final answer = sanitizeGeneratedOutput(output.toString());
-      if (answer.isEmpty) {
+      final qualityError = validateGeneratedAnswer(answer);
+      if (qualityError != null) {
         return LocalLlmGenerationResult.failure(
-          error: 'Generation produced no usable answer from offline evidence.',
+          error: qualityError,
           generationDuration: stopwatch.elapsed,
         );
       }
@@ -236,6 +237,26 @@ class LocalLlmGenerationService {
     }
     if (context.trim().isEmpty) {
       return 'Offline evidence context is empty.';
+    }
+    return null;
+  }
+
+  /// Rejects incomplete local-model output rather than presenting a fragment
+  /// as grounded hiking guidance. This is a format guard, not medical logic.
+  static String? validateGeneratedAnswer(String answer) {
+    final normalized = answer.trim();
+    if (normalized.length < 24 || normalized.split(RegExp(r'\s+')).length < 5) {
+      return 'Generation produced no usable answer from offline evidence.';
+    }
+    if (RegExp(
+          r'^(the following is|here is|final answer|answer\s*:)',
+          caseSensitive: false,
+        ).hasMatch(normalized) ||
+        RegExp(
+          r'\b(final|answer)\.?$',
+          caseSensitive: false,
+        ).hasMatch(normalized)) {
+      return 'Generation produced an incomplete answer from offline evidence.';
     }
     return null;
   }
@@ -381,6 +402,21 @@ FINAL ANSWER:''';
     ).firstMatch(cleaned);
     if (unterminatedThink != null) {
       cleaned = cleaned.substring(0, unterminatedThink.start);
+    }
+
+    // A local model can occasionally echo the prompt instead of answering.
+    // Prompt labels are reserved by this service, so never expose such an echo.
+    final finalAnswer = RegExp(
+      r'FINAL ANSWER\s*:',
+      caseSensitive: false,
+    ).allMatches(cleaned).toList();
+    if (finalAnswer.isNotEmpty) {
+      cleaned = cleaned.substring(finalAnswer.last.end);
+    } else if (RegExp(
+      r'(OFFLINE EVIDENCE\s*:|QUESTION\s*:|You are an offline hiking-safety assistant)',
+      caseSensitive: false,
+    ).hasMatch(cleaned)) {
+      return '';
     }
 
     return cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();

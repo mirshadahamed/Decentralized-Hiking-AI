@@ -39,27 +39,27 @@ Future<void> _tapAskButton(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('renders offline status, topic selector, and question input', (
+  testWidgets('renders offline status and natural-language question input', (
     tester,
   ) async {
     await tester.pumpWidget(
       _screen(
-        ({required question, required category}) async =>
+        ({required question}) async =>
             _response(RagAnswerMode.localLlmRag, 'Answer'),
       ),
     );
 
     expect(find.text('Offline Hiking Assistant'), findsOneWidget);
     expect(find.text('Offline knowledge and local AI'), findsOneWidget);
-    expect(find.byKey(const Key('topic-selector')), findsOneWidget);
+    expect(find.byKey(const Key('topic-selector')), findsNothing);
     expect(find.byKey(const Key('question-input')), findsOneWidget);
-    expect(find.text('Sri Lanka emergency'), findsWidgets);
+    expect(find.text('Snake bite'), findsOneWidget);
   });
 
   testWidgets('validates an empty question', (tester) async {
     await tester.pumpWidget(
       _screen(
-        ({required question, required category}) async =>
+        ({required question}) async =>
             _response(RagAnswerMode.localLlmRag, 'Answer'),
       ),
     );
@@ -76,7 +76,7 @@ void main() {
     final completer = Completer<RagResponse>();
     var calls = 0;
     await tester.pumpWidget(
-      _screen(({required question, required category}) {
+      _screen(({required question}) {
         calls += 1;
         return completer.future;
       }),
@@ -98,10 +98,10 @@ void main() {
   testWidgets('renders a successful local answer and human-readable sources', (
     tester,
   ) async {
-    String? receivedCategory;
+    String? receivedQuestion;
     await tester.pumpWidget(
-      _screen(({required question, required category}) async {
-        receivedCategory = category;
+      _screen(({required question}) async {
+        receivedQuestion = question;
         return _response(RagAnswerMode.localLlmRag, 'Move to shelter.');
       }),
     );
@@ -110,7 +110,7 @@ void main() {
     await _tapAskButton(tester);
     await tester.pumpAndSettle();
 
-    expect(receivedCategory, 'general_first_aid');
+    expect(receivedQuestion, 'Help me');
     expect(find.text('Move to shelter.'), findsOneWidget);
     expect(
       find.text('Downloaded Hiking Knowledge — Cold weather safety'),
@@ -121,12 +121,12 @@ void main() {
   });
 
   testWidgets(
-    'uses Sri Lanka emergency category and renders verified deterministic answers',
+    'example question uses the automatic API and renders verified deterministic answers',
     (tester) async {
-      String? receivedCategory;
+      String? receivedQuestion;
       await tester.pumpWidget(
-        _screen(({required question, required category}) async {
-          receivedCategory = category;
+        _screen(({required question}) async {
+          receivedQuestion = question;
           return _response(
             RagAnswerMode.verifiedDeterministic,
             '**Verified answer.**',
@@ -134,12 +134,12 @@ void main() {
         }),
       );
 
-      await tester.tap(find.widgetWithText(ActionChip, 'Sri Lanka emergency'));
+      await tester.tap(find.widgetWithText(ActionChip, 'Snake bite'));
       await tester.pump();
       await _tapAskButton(tester);
       await tester.pumpAndSettle();
 
-      expect(receivedCategory, 'sri_lanka_emergency');
+      expect(receivedQuestion, contains('snake'));
       expect(find.text('Verified answer.'), findsOneWidget);
       expect(find.text('**Verified answer.**'), findsNothing);
       expect(find.text('Offline guidance'), findsOneWidget);
@@ -149,7 +149,7 @@ void main() {
   testWidgets('renders safe fallback calmly', (tester) async {
     await tester.pumpWidget(
       _screen(
-        ({required question, required category}) async => _response(
+        ({required question}) async => _response(
           RagAnswerMode.safeFallback,
           'I do not have enough verified offline evidence to provide this guidance safely.',
         ),
