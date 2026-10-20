@@ -40,11 +40,16 @@ def load_weights(model, state: dict):
     return model
 
 
-def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None):
+FREEZE_CORE = ("g1.", "g2.", "rnn.", "g_out.")   # graph + recurrent core; inp / fut / head stay trainable
+
+
+def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=()):
     """sensed: bool [N]; unsensed nodes give no input history and no training loss.
     init_state: start from these weights (fine-tuning a model trained on another park).
     select_on_val=False: no early stopping on the validation year; train `epochs` and keep the last weights
-    (few-shot: a new park does not have a year of counts to choose the model with)."""
+    (few-shot: a new park does not have a year of counts to choose the model with).
+    freeze: parameter-name prefixes kept fixed (domain adaptation: e.g. FREEZE_CORE keeps the pretrained
+    spatio-temporal core and adapts only the input and output layers to the new domain)."""
     tc = cfg["train"]
     set_seed(seed)
     rng = np.random.default_rng(seed)
@@ -52,7 +57,10 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
     model = build_model(data, kind, tc["hidden"])
     if init_state is not None:
         load_weights(model, init_state)
-    opt = torch.optim.Adam(model.parameters(), lr=tc["lr"])
+    for n, p in model.named_parameters():
+        if n.startswith(tuple(freeze)):
+            p.requires_grad_(False)
+    opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=tc["lr"])
     tr_o, va_o = data.origins("train", tc["train_origin_stride"]), data.origins("val")
     node_mask = torch.from_numpy(sensed)
 
