@@ -1,0 +1,50 @@
+# Component 4 (crowd forecasting): tests on every push / pull request that touches its files.
+# Python tests that need the built dataset or a trained model skip themselves (data/ is not in git).
+name: component-4
+
+on:
+  push:
+    paths:
+      - "research/component_4/**"
+      - "lib/features/component_4/**"
+      - "test/component_4/**"
+      - ".github/workflows/component4.yml"
+  pull_request:
+    paths:
+      - "research/component_4/**"
+      - "lib/features/component_4/**"
+      - "test/component_4/**"
+      - ".github/workflows/component4.yml"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/component_4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: research/component_4/requirements.txt
+      - name: Install (CPU PyTorch)
+        run: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+      - name: Tests (shapes, leakage, seeds, capacity, control, API, contracts)
+        run: python -m pytest -q
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.7"
+          cache: true
+      - run: flutter pub get
+      - name: Analyze Component 4
+        run: flutter analyze lib/features/component_4 test/component_4
+      - name: Component 4 tests (widgets, on-device ST-GNN parity, offline, records)
+        run: flutter test test/component_4
