@@ -1,4 +1,7 @@
 // Widget tests for Component 4 with a fake API (no server needed).
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:decentralized_hiking_ai/app/app.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
@@ -326,6 +329,27 @@ class FakeApi extends C4Api {
 
   @override
   Future<List<LiveSegment>> live(DateTime d, {String? at}) async => [];
+}
+
+/// Serves the edge-pack fixture (a pack for 2025-04-11) and "today" = the day before; can go offline.
+class _EdgeApi extends FakeApi {
+  bool online = true;
+
+  @override
+  Future<ServerStatus> status() async => ServerStatus(today: DateTime(2025, 4, 10), refreshedAt: '', note: '');
+
+  @override
+  Future<Map<String, dynamic>> tomorrow() async => {
+        'forecast_date': '2025-04-11',
+        'expected_visitors': 900,
+        'trails': (planJson['capacity'] as Map)['trails'],
+      };
+
+  @override
+  Future<Map<String, dynamic>> edgePack() async {
+    if (!online) throw ApiException(0, 'Cannot reach the park server.');
+    return jsonDecode(File('test/component_4/fixtures/edge_pack.json').readAsStringSync()) as Map<String, dynamic>;
+  }
 }
 
 class _AdvisoryApi extends FakeApi {
@@ -662,6 +686,28 @@ void main() {
     await t.dragUntilVisible(find.textContaining('now over the limit'), find.byType(ListView).first, const Offset(0, -200));
     expect(find.textContaining('291 expected / 107 safe'), findsOneWidget);
     expect(find.textContaining('1 booked slot(s) now over the limit'), findsOneWidget);
+  });
+
+  testWidgets('tomorrow: the ST-GNN runs on the device, and keeps working offline from the stored pack', (t) async {
+    final api = _EdgeApi();
+    final card = find.text('Forecast made on this phone', skipOffstage: false);
+    Future<void> open() async {
+      await t.pumpWidget(wrap(DayScreen(key: UniqueKey(), day: DateTime(2025, 4, 11)), api));
+      for (var i = 0; i < 40 && card.evaluate().isEmpty; i++) {     // real time for file reading + the forecast
+        await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        await t.pump();
+      }
+    }
+
+    await open();
+    expect(card, findsOneWidget);
+    expect(find.textContaining('ms on this device', skipOffstage: false), findsOneWidget);
+    expect(find.textContaining('people at', skipOffstage: false), findsWidgets);
+    expect(find.text('offline copy', skipOffstage: false), findsNothing);
+    api.online = false;                                    // no connection: the stored pack is used
+    await open();
+    expect(card, findsOneWidget);
+    expect(find.text('offline copy', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('app home lists the modules', (t) async {

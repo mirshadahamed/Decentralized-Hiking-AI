@@ -91,6 +91,9 @@ class C4Api {
 
   Future<List<MapSegment>> geometry() async => MapSegment.fromGeoJson(await _send('GET', '/trails/geometry') as Map<String, dynamic>);
 
+  /// Trained model + tomorrow's inputs, so the phone can run the forecast itself (domain/edge_forecaster.dart).
+  Future<Map<String, dynamic>> edgePack() async => await _send('GET', '/edge/pack') as Map<String, dynamic>;
+
   /// Safe limit per trail for a day (tomorrow up to 90 days ahead) and what lowered it.
   Future<DayCapacity> capacity(DateTime d) async =>
       DayCapacity.fromJson(await _send('GET', '/capacity/${day(d)}') as Map<String, dynamic>);

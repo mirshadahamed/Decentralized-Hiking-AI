@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../data/api_client.dart';
 import '../../../models/models.dart';
+import '../../../domain/edge_forecaster.dart';
+import '../../../services/edge_store.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
 import 'ticket_screen.dart';
@@ -19,6 +21,7 @@ class DayScreen extends StatefulWidget {
 
 class _DayScreenState extends State<DayScreen> {
   late Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _future;
+  Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
   String _trail = 'main';
   String? _slot;
   int _size = 2;
@@ -34,6 +37,7 @@ class _DayScreenState extends State<DayScreen> {
     final api = C4Scope.of(context);
     final status = await api.status();
     final isTomorrow = widget.day.difference(status.today).inDays <= 1;
+    if (isTomorrow) _edge = _runOnDevice(api);
     final plan = isTomorrow
         ? DayPlan.fromTomorrowJson(await api.tomorrow(), widget.outlookDay?.crowdLevel ?? 3)
         : await api.plan(widget.day);
@@ -44,6 +48,15 @@ class _DayScreenState extends State<DayScreen> {
       cap = null; // older server: the screen still works without the safe limit
     }
     return (plan, await api.slots(widget.day), await api.trails(), cap);
+  }
+
+  /// Tomorrow's ST-GNN forecast computed on this device from the daily edge pack (works offline).
+  Future<(EdgeForecast, bool)?> _runOnDevice(C4Api api) async {
+    final loaded = await EdgeStore.load(api);
+    if (loaded == null) return null;
+    final (model, offline) = loaded;
+    if (model.day != C4Api.day(widget.day)) return null; // pack is for another day
+    return (model.forecast(), offline);
   }
 
   Future<void> _book(DateTime day, String trail, String slot) async {
@@ -105,6 +118,16 @@ class _DayScreenState extends State<DayScreen> {
             return ListView(padding: const EdgeInsets.all(16), children: [
               _Summary(plan: plan),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
+              if (_edge != null)
+                FutureBuilder<(EdgeForecast, bool)?>(
+                  future: _edge,
+                  builder: (context, e) => e.data == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: OnDeviceCard(forecast: e.data!.$1, offline: e.data!.$2, trails: trails),
+                        ),
+                ),
               if (plan.suggestions.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text('Want a quieter visit?', style: Theme.of(context).textTheme.titleMedium),
@@ -223,6 +246,56 @@ class _TrailCard extends StatelessWidget {
           if (cond != null && !cond.isGood) 'Trail condition: ${cond.label}${cond.note.isEmpty ? '' : ' – ${cond.note}'}',
         ].join('\n')),
         isThreeLine: true,
+      ),
+    );
+  }
+}
+
+/// Tomorrow's busiest places, forecast by the ST-GNN running on this device (no server needed once the daily
+/// pack is downloaded).
+class OnDeviceCard extends StatelessWidget {
+  const OnDeviceCard({super.key, required this.forecast, required this.offline, required this.trails});
+
+  final EdgeForecast forecast;
+  final bool offline;
+  final List<TrailInfo> trails;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final n = forecast.people.isEmpty ? 0 : forecast.people.first.length;
+    final peaks = [for (var s = 0; s < n; s++) (s, forecast.peakOf(s))]..sort((a, b) => b.$2.$2.compareTo(a.$2.$2));
+    final names = {for (final t in trails) t.id: t.name};
+    String label(int s) {
+      final (trail, poi) = s < forecast.places.length ? forecast.places[s] : ('', '');
+      if (poi.isNotEmpty) return poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase());
+      return '${names[trail] ?? 'Trail'} · section ${s + 1}';
+    }
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.phone_android),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Forecast made on this phone', style: text.titleMedium)),
+            if (offline) const Chip(label: Text('offline copy'), visualDensity: VisualDensity.compact),
+          ]),
+          const SizedBox(height: 4),
+          Text('Busiest trail sections tomorrow, hour by hour (ST-GNN, ${forecast.millis} ms on this device):',
+              style: text.bodySmall),
+          const SizedBox(height: 4),
+          for (final (s, (hour, people)) in peaks.take(3))
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(radius: 14, child: Text('${s + 1}', style: text.labelSmall)),
+              title: Text(label(s)),
+              trailing: Text('about ${people.round()} people at ${hour.toString().padLeft(2, '0')}:00'),
+            ),
+          const BasisNote('Runs without internet from the forecast pack downloaded with the daily update. '
+              'Trained on a simulated visitor history.'),
+        ]),
       ),
     );
   }
