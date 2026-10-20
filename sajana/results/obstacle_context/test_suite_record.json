@@ -1,0 +1,11 @@
+{
+  "checked_at": "2026-10-20T22:53:45.123929+05:30",
+  "command": "sajana/.venv-yolov8/bin/python -B -m unittest discover -s sajana/tests",
+  "tests_run": 140,
+  "passed": true,
+  "test_log_sha256": "991b3e2b8535ed8e2361de935fc72bf805e3836cacb6fb7c78194687a941482c",
+  "route_advisory_source_sha256": "42cf1b4f647195851ecc375846c56449e6722f3a1f04f24ea0b123e90f8cdd11",
+  "context_preparation_source_sha256": "20e01a5a508437d970cd8d9c123a8bbcd65369fa51ece7b3603c08736c668d62",
+  "runtime_model_accuracy_certified": false,
+  "live_route_service_configured": false
+}

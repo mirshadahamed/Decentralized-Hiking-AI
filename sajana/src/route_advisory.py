@@ -101,8 +101,23 @@ def suggest_alternative(graph, current_route, start, goal, observations, now=Non
 
     adjacency = {node: [] for node in nodes}
     excluded = blocked | unresolved_edges
+
+    def usable_geometry(edge):
+        points = edge.get('geometry')
+        if not isinstance(points,list) or len(points) < 2:
+            return False
+        for point in points:
+            if not isinstance(point,dict): return False
+            lat, lon = point.get('lat'), point.get('lon')
+            if not (isinstance(lat,(int,float)) and isinstance(lon,(int,float)) and
+                    math.isfinite(lat) and math.isfinite(lon) and -90<=lat<=90 and -180<=lon<=180):
+                return False
+        return all(abs(points[i][key]-nodes[edge[end]][key]) <= 1e-7
+                   for i,end in [(0,'from'),(-1,'to')] for key in ('lat','lon'))
+
     for edge_id, edge in edges.items():
-        if edge_id in excluded or edge.get('permitted') is not True or edge.get('geometry_reviewed') is not True:
+        if (edge_id in excluded or edge.get('permitted') is not True or
+                edge.get('geometry_reviewed') is not True or not usable_geometry(edge)):
             continue
         adjacency[edge['from']].append((edge['to'],edge['length_m'],edge_id))
         if edge.get('bidirectional') is True:
@@ -124,9 +139,14 @@ def suggest_alternative(graph, current_route, start, goal, observations, now=Non
     while cursor != start:
         cursor, edge_id = predecessors[cursor]; node_ids.append(cursor); edge_ids.append(edge_id)
     node_ids.reverse();edge_ids.reverse()
+    coordinates = []
+    for i, edge_id in enumerate(edge_ids):
+        edge = edges[edge_id];points = edge['geometry']
+        if edge['from'] != node_ids[i]: points = list(reversed(points))
+        coordinates.extend(points if not coordinates else points[1:])
     route = {'graph_id':graph['graph_id'], 'source_reference':graph['source_reference'],
              'node_ids':node_ids, 'edge_ids':edge_ids, 'distance_m':costs[goal],
-             'coordinates':[{'lat':nodes[n]['lat'],'lon':nodes[n]['lon']} for n in node_ids]}
+             'coordinates':coordinates}
     return result('candidate_marked_alternative', 'A mapped alternative is available; confirm current trail conditions.',
                   route=route, excluded_edge_ids=sorted(excluded), evidence_observation_ids=evidence,
                   requires_current_condition_check=True, pending_observation_ids=pending)

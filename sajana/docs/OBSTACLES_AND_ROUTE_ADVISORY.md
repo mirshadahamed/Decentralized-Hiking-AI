@@ -40,7 +40,7 @@ sajana/.venv/bin/python -B -m sajana.src.route_advisory \
 
 The empty template returns `insufficient_route_context`. To obtain a candidate, supply:
 
-1. A versioned `graph_id` and `source_reference`; string node IDs with finite `lat`/`lon`; edges with string IDs, `from`, `to`, positive `length_m`, explicit `permitted: true`, `geometry_reviewed: true`, and optional `bidirectional: true`.
+1. A versioned `graph_id` and `source_reference`; string node IDs with finite `lat`/`lon`; edges with string IDs, `from`, `to`, positive `length_m`, explicit `permitted: true`, `geometry_reviewed: true`, actual `geometry` coordinate lists oriented from source node to destination node, and optional `bidirectional: true`. Missing/mismatched geometry is excluded. Returned polylines preserve the supplied trail curves instead of drawing straight shortcuts between junctions.
 2. Current map-matched start/destination node IDs and an ordered, connected `current_route` edge list.
 3. Current observations with `observation_id`, stable `hazard_id`, reviewed `edge_id` match, `review_state: reviewed`, `reviewer_id`, timezone-qualified `reviewed_at` and `expires_at`, `route_relation: on_trail` and `blockage: blocked`.
 

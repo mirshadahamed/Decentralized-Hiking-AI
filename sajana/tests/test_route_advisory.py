@@ -14,6 +14,9 @@ class RouteAdvisoryTests(unittest.TestCase):
                     'edges':[{'id':name,'from':a,'to':b,'length_m':length,'bidirectional':True,
                               'permitted':True,'geometry_reviewed':True}
                              for name,a,b,length in [('ab','A','B',10),('bd','B','D',10),('ac','A','C',20),('cd','C','D',20)]]}
+        nodes={n['id']:n for n in self.graph['nodes']}
+        for edge in self.graph['edges']:
+            edge['geometry']=[{k:nodes[n][k] for k in ('lat','lon')} for n in (edge['from'],edge['to'])]
         self.obs={'observation_id':'obs','hazard_id':'hazard','edge_id':'bd','kind':'rock',
                   'review_state':'reviewed','reviewer_id':'test-reviewer','edge_match_reviewed':True,
                   'reviewed_at':'2026-10-20T11:00:00+00:00','expires_at':'2026-10-20T13:00:00+00:00',
@@ -62,6 +65,13 @@ class RouteAdvisoryTests(unittest.TestCase):
         self.assertEqual(self.call([self.obs,cleared])['status'],'no_confirmed_blockage')
         other=dict(self.obs,hazard_id='other',observation_id='other')
         self.assertEqual(self.call([self.obs,cleared,other])['status'],'candidate_marked_alternative')
+
+    def test_returned_shape_preserves_marked_trail_curves_and_requires_geometry(self):
+        middle={'lat':0.01,'lon':0.03}
+        self.graph['edges'][2]['geometry'].insert(1,middle)
+        self.assertIn(middle,self.call()['route']['coordinates'])
+        del self.graph['edges'][2]['geometry']
+        self.assertEqual(self.call()['status'],'no_mapped_alternative')
 
 
 if __name__=='__main__':unittest.main()
