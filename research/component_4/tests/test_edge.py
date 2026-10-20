@@ -45,6 +45,29 @@ def test_pack_rebuilds_the_exact_model_inputs(trained):
     assert np.abs(torch_forecast(clone.eval(), data, origin, scale) - torch_forecast(model, data, origin, scale)).max() < 0.01
 
 
+def test_pack_map_has_every_segment_with_its_line_and_capacity(trained):
+    """The bottleneck map on the phone: one line + the server's Cifuentes numbers per segment, same order as the
+    model's output, and each trail's safe number = its most limiting segment."""
+    import geopandas as gpd
+    from src.edge.pack import map_extras
+    from src.serve.predict import build_forecast
+    cfg, data, model, scale, run = trained
+    seg = gpd.read_file(PROCESSED / "segments.geojson")
+    seg["poi"] = seg["poi"].fillna("")
+    day = str(data.times[int(data.origins("test")[5])].date())
+    f = build_forecast(data, cfg, seg, day, model, scale, run)
+    m = json.loads(json.dumps(map_extras(f, seg, cfg)))
+    assert [s["id"] for s in m["segments"]] == list(range(data.N))
+    assert all(s["lines"] and len(s["lines"][0]) >= 2 for s in m["segments"])
+    by_id = {s["seg_id"]: s for s in f["segments"]}
+    assert all(s["ecc_per_day"] == by_id[s["id"]]["ecc_per_day"] for s in m["segments"])
+    for t, v in m["trails"].items():
+        assert v["recommended_daily_quota"] == min(s["ecc_per_day"] for s in m["segments"]
+                                                   if by_id[s["id"]]["trail"] == t)
+    assert m["open_hours"] == list(range(6, 18))
+    assert len(json.dumps(m)) < 40_000                     # keeps the daily pack small
+
+
 def test_api_serves_the_pack(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
     from src.api import app as api

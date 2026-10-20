@@ -92,10 +92,11 @@ def publish_slots(ctx: LiveContext, db=None) -> list:
     return alerts
 
 
-def publish_edge_pack(ctx: LiveContext) -> bool:
-    """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py).
+def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
+    """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py), plus
+    the segment lines and capacities for the bottleneck map (from tomorrow's server forecast, if given).
     Not published when only the historical-average fallback is available (no trained model)."""
-    from src.edge.pack import build_pack
+    from src.edge.pack import build_pack, map_extras
     if ctx.model is None:
         return False
     tomorrow = pd.Timestamp(ctx.today + timedelta(days=1))
@@ -104,6 +105,8 @@ def publish_edge_pack(ctx: LiveContext) -> bool:
         return False
     ctx.model.eval()
     pack = build_pack(ctx.data, ctx.model, ctx.scale, origin, ctx.cfg, run=ctx.run)
+    if forecast is not None:
+        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg)
     (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     return True
 
@@ -138,7 +141,7 @@ def refresh(today: date | None = None, db=None) -> dict:
     alerts = [] if advisory_mode else publish_slots(ctx, db)
     if advisory_mode:                                       # pilgrimage site: recommended start times, no tickets
         publish_advisory(outlook)
-    edge = publish_edge_pack(ctx)
+    edge = publish_edge_pack(ctx, tomorrow)
 
     last30 = ctx.day_source[max(0, int((pd.Timestamp(today) - ctx.data.times[0]).days) - 29):
                             int((pd.Timestamp(today) - ctx.data.times[0]).days) + 1]

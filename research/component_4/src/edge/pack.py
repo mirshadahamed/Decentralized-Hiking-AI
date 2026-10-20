@@ -12,6 +12,8 @@ Contents (schema "c4-edge-1"):
              x_fut [H, N, Fc+Fs] exactly like TrailData.batch
   scale    : people per model unit (output x scale = people)
   segments : id, trail, POI of each segment (for display)
+  map      : (optional) segment lines + Cifuentes capacity + trail summaries, so the phone can draw the bottleneck
+             map and the capacity table offline (map_extras)
 
     python -m src.edge.pack --fixture ../../test/component_4/fixtures/edge_pack.json
 writes a pack for the first test day plus PyTorch's own output for it (the Dart parity test).
@@ -61,6 +63,39 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
     }
 
 
+def map_extras(forecast: dict, seg, cfg: dict) -> dict:
+    """What the phone needs to draw the bottleneck map and the capacity table offline (optional "map" key):
+    each segment's line (simplified, lon/lat), Cifuentes capacity (people at once, PCC / RCC / ECC per day),
+    the trail summaries (recommended daily number, limiting segment) and the open hours.
+    `forecast` is build_forecast()'s output for the pack's day (the server's capacity answer)."""
+    by_id = {s["seg_id"]: s for s in forecast["segments"]}
+    c = cfg["capacity"]
+    lines = []
+    for _, r in seg.sort_values("seg_id").iterrows():
+        g = r.geometry.simplify(0.00002)                       # ~2 m: invisible on a phone map, 3x smaller
+        parts = list(g.geoms) if g.geom_type == "MultiLineString" else [g]
+        s = by_id[int(r.seg_id)]
+        lines.append({
+            "id": int(r.seg_id), "lines": [[[round(x, 5), round(y, 5)] for x, y in p.coords] for p in parts],
+            "length_m": round(float(r.length_m)), "capacity_at_once": s["capacity_at_once"],
+            "pcc_per_day": s["pcc_per_day"], "rcc_per_day": s["rcc_per_day"], "ecc_per_day": s["ecc_per_day"],
+            "status": s["status"],
+        })
+    return {
+        "open_hours": [int((c.get("open_from_h", 6) + k) % 24) for k in range(c["open_hours"])],
+        "busy_utilisation": c["busy_utilisation"],
+        "segments": lines,
+        "trails": {t: {k: v[k] for k in ("name", "expected_visitors", "recommended_daily_quota",
+                                         "classic_cifuentes_quota", "limiting_segment", "factors")}
+                   for t, v in forecast["trails"].items()},
+        "expected_visitors": forecast.get("expected_visitors"),
+        "recommended_daily_quota": forecast.get("recommended_daily_quota"),
+        "classic_cifuentes_quota": forecast.get("classic_cifuentes_quota"),
+        "rain_share_open_hours": forecast.get("rain_share_open_hours"),
+        "disclaimer": forecast.get("disclaimer", ""),
+    }
+
+
 def torch_forecast(model, data, origin: int, scale: float) -> np.ndarray:
     """[H, N] people from PyTorch (the reference the Dart engine must match)."""
     xp, xf, _, _ = data.batch(np.array([origin]), np.ones(data.N, bool), scale)
@@ -69,9 +104,11 @@ def torch_forecast(model, data, origin: int, scale: float) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    from src.config import load_config
+    import geopandas as gpd
+
+    from src.config import PROCESSED, load_config
     from src.eval.data import TrailData
-    from src.serve.predict import load_model
+    from src.serve.predict import build_forecast, load_model
     ap = argparse.ArgumentParser()
     ap.add_argument("--fixture", required=True, help="where to write the pack + PyTorch output for the Dart test")
     a = ap.parse_args()
@@ -81,6 +118,9 @@ if __name__ == "__main__":
     model.eval()
     origin = int(data.origins("test")[100])
     pack = build_pack(data, model, scale, origin, cfg, run=run)
+    seg = gpd.read_file(PROCESSED / "segments.geojson")
+    seg["poi"] = seg["poi"].fillna("")
+    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg)
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
     Path(a.fixture).parent.mkdir(parents=True, exist_ok=True)
     Path(a.fixture).write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
