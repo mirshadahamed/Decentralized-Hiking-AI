@@ -93,6 +93,9 @@ presented as extensions. No new app features until the open items are done.
 **D. Product (after B and C)**: Knuckles as 3rd destination; rest halls from OSM; usability study (SUS,
 10–15 users); Sinhala / Tamil review.
 
+**App vs proposal** (bottleneck map, per-segment capacity screen, offline-first, offline hiker guidance, RQ8):
+see `proposal_alignment_plan.md`. Those items replace D above as the next app work.
+
 **Stop list until B1–B6 and C1–C2 are done:** no new screens, no new parks, no new booking features.
 
 ---
