@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-10-21T13:49:41.470321+05:30",
+  "tag": "baseline_litter_416",
+  "task": "litter",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "checkpoint_sha256": "f7397314c0587098e87d2e5bced8bec259a1698060d966222965fa059a334a55",
+  "imgsz": 416,
+  "split": "val",
+  "images": 286,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.6898224754520748,
+    "metrics/recall(B)": 0.4874074074074074,
+    "metrics/mAP50(B)": 0.5173423950732088,
+    "metrics/mAP50-95(B)": 0.3602758187053471,
+    "metrics/precision(M)": 0.6880620285396084,
+    "metrics/recall(M)": 0.4651851851851852,
+    "metrics/mAP50(M)": 0.49281282029996165,
+    "metrics/mAP50-95(M)": 0.2931495927557932,
+    "fitness": 0.6534254114611403
+  },
+  "threshold": 0.2552552552552553,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "litter",
+      "labelled_images": 286,
+      "labelled_regions": 675,
+      "AP50": 0.49281282029996165,
+      "AP50_95": 0.2931495927557932,
+      "precision_at_threshold": 0.6880620285396084,
+      "recall_at_threshold": 0.4651851851851852,
+      "f1_at_threshold": 0.5550869897726434
+    }
+  ],
+  "AP50": 0.49281282029996165,
+  "AP50_95": 0.2931495927557932,
+  "mean_precision_at_threshold": 0.6880620285396084,
+  "mean_recall_at_threshold": 0.4651851851851852,
+  "mean_f1_at_threshold": 0.5550869897726434,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.963091066433512,
+    "inference": 6.7569547027972545,
+    "loss": 0.0002834999999791719,
+    "postprocess": 24.146923104895144
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

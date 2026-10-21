@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "dataset_profile": "configs/component2_compact_2000.json",
+  "total_unique_photos_including_holdouts": 2000,
+  "selection_split": "val",
+  "test_policy": "Freeze checkpoint, size and confidence on validation before one final reserved-test evaluation; never retrain from test results in this cycle.",
+  "training": {
+    "imgsz": 640,
+    "batch": 2,
+    "workers": 0,
+    "cache": false,
+    "amp": false,
+    "plots": false,
+    "save_period": -1,
+    "optimizer": "AdamW",
+    "lr0": 0.0005,
+    "cos_lr": true,
+    "warmup_epochs": 1,
+    "freeze": 10,
+    "mosaic": 0.0,
+    "scale": 0.15,
+    "seed": 42,
+    "deterministic": true
+  },
+  "experiments": {
+    "obstacle_detail": {
+      "task_key": "obstacle",
+      "initial_status": "runs/component2_compact_2000/O1/status.json",
+      "epochs": 45,
+      "patience": 15,
+      "reason": "Warm-start the existing two-class model, retain spatial detail and reduce augmentation distortion on the small source-aligned set."
+    },
+    "litter_detail": {
+      "task_key": "litter",
+      "initial_status": "results/yolov8_training/status.json",
+      "epochs": 15,
+      "patience": 8,
+      "reason": "Adapt the completed TACO-only model to the compact image copies using a short low-learning-rate run."
+    }
+  },
+  "provisional_quality_checks_not_release_guarantees": {
+    "per_class_precision": 0.8,
+    "per_class_recall": 0.7,
+    "minimum_validation_images_per_class": 20,
+    "require_local_trail_evaluation_for_release": true,
+    "expected_current_limitation": "Only three source validation photos contain rocks. These experiments cannot certify local trail blockage or Android-device performance."
+  }
+}
