@@ -64,3 +64,5 @@ The pinned framework's default NMS validator can stop processing later images in
 Trail erosion, roots, obstructions, passability, mobile export and the bot remain later tasks with their own data and evaluation gates.
 
 The [4 GB Android deployment guide](MOBILE_MODEL_SIZE_AND_MEMORY.md) separates training RAM from model/APK storage and phone inference memory. It includes the inference-copy tool and validation requirements for a smaller 416-pixel/INT8 deployment candidate.
+
+The authorized [remaining training queue](COMPONENT2_REMAINING_TRAINING.md) waits for L1, then runs compact TACO+MJU litter and WildScenes rock/log YOLOv8 jobs sequentially. Their live dashboard is `results/component2_training/HEALTH.md`; this L1 health report does not imply those jobs have completed.

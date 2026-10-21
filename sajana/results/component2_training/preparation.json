@@ -1,0 +1,113 @@
+{
+  "prepared_at": "2026-10-21T07:30:55.220671+05:30",
+  "configuration_sha256": "b82a54cafc2d0e4dd98877a8946c164d8cb55cd3b2a729e716c0ca8e70ff186b",
+  "jobs": {
+    "L2": {
+      "weights": {
+        "checked_at": "2026-10-21T07:30:55.227496+05:30",
+        "job": "L2",
+        "model": "yolov8n-seg.pt",
+        "source_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.pt",
+        "sha256": "a7cd8f929e1903d78a12a48efecab430209f18dc46cb96c3599a5980c63c423c",
+        "bytes": 7071756
+      },
+      "preflight": {
+        "checked_at": "2026-10-21T07:33:08.312657+05:30",
+        "job": "L2",
+        "passed": true,
+        "training_ready": true,
+        "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/litter_taco_mju_aux",
+        "splits": {
+          "train": {
+            "images": 2513,
+            "objects": 5138
+          },
+          "val": {
+            "images": 286,
+            "objects": 675
+          },
+          "test": {
+            "images": 185,
+            "objects": 497
+          }
+        },
+        "manifest_sha256": {
+          "train": "ee351eb846b8d9cc5d99de76191c7c8c529897d538df110c4a439325267d6916",
+          "val": "796918d996d247366c93d24d1d387f3d084836dc7d6a9f6f22f72d331874f70a",
+          "test": "4efbbedfe2a7ab0de2f0640266124daf84bf5a985a68a9f565f8b17ff4a8c79b"
+        },
+        "readiness_sha256": "0ad2d96a6b10bbd59fd9c3d18463648f0904717bbcee681166e52ca5ac10b4a2",
+        "source_tasks_kept_separate": true,
+        "frozen_current_pairs": true,
+        "test_model_evaluation_performed": false,
+        "image_policy": "Fresh RGB geometry/orientation and cross-split decoded-pixel checks",
+        "limitations": []
+      }
+    },
+    "O1": {
+      "weights": {
+        "checked_at": "2026-10-21T07:33:09.811102+05:30",
+        "job": "O1",
+        "model": "yolov8n.pt",
+        "source_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt",
+        "sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36",
+        "bytes": 6549796
+      },
+      "preflight": {
+        "checked_at": "2026-10-21T07:33:58.044445+05:30",
+        "job": "O1",
+        "passed": true,
+        "training_ready": true,
+        "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/wildscenes_rock_log_detection",
+        "splits": {
+          "train": {
+            "images": 6051,
+            "objects": 9502
+          },
+          "val": {
+            "images": 283,
+            "objects": 319
+          },
+          "test": {
+            "images": 2133,
+            "objects": 4364
+          }
+        },
+        "manifest_sha256": {
+          "train": "ef6726b5782dce2b25d12110ddcfc80f957c05d17bb45797c51e82a956af5c9b",
+          "val": "ca76e0f92b25c9b67ad693dcfdcb5f03d9e6cbbf86319ea81f72d4a851bba83c",
+          "test": "335cc6f44e0e540ae4aaff30e924576b70c54b9a62de0c4f804a4ec561d29bf2"
+        },
+        "readiness_sha256": "86b0b7914389ccb8f2742eb0768aa3277c09b85e8df4e76b4bfcadac4fad6b3c",
+        "source_tasks_kept_separate": true,
+        "frozen_current_pairs": true,
+        "test_model_evaluation_performed": false,
+        "image_policy": "All current image/label bytes match the saved full source/derived certificates; certified pixel hashes and author membership retained",
+        "limitations": [
+          "Only three rock validation images",
+          "No litter, corridor, obstruction or clear-trail labels"
+        ]
+      }
+    }
+  },
+  "training_started_by_preparation": false,
+  "test_model_evaluation_performed": false,
+  "full_component_ready": false,
+  "remaining_data_gaps": [
+    "Reviewed local trail obstruction versus clear-trail assessment",
+    "Reviewed erosion and exposed-root detection",
+    "Independent local trail evaluation",
+    "Validated on-device export and physical 4 GB Android benchmark"
+  ],
+  "source_sha256": {
+    "train_component2_yolov8.py": "c0e671bd81e6359c183efdf6ecc5a3964d2165029a55ad811b7dce9e73678b26",
+    "component2_training_data.py": "bb5071f9d88fd07edc6cc8221504ead6b1dd9a5fe7f4192cb0eba0ffd4c3e51e",
+    "yolov8_detection_validation.py": "e2aca5f575161cb229f2d6d1146c2099b7982c9dc546f67f3befe3231a13ac59",
+    "yolov8_validation.py": "3a0a41bb72625287c54acf79efdca1ab8f87e6223699ae7a139753459be0121e",
+    "run_component2_training_queue.py": "800ab7a2951d909b22bba3b949cabd055acb9d0ca4b71a646fc18e7ef32523e0",
+    "finalize_component2_training.py": "680f55ab99e9c80015f9793a1c5fcd5b6d8d69e3f0fe1fe3420c6ba3c5e55598"
+  },
+  "refreshed_at": "2026-10-21T07:42:20.570406+05:30",
+  "all_frozen_input_bytes_rechecked": true,
+  "selection_policy_sha256": "deeedce74f10a61610a2873824ccd1ec553a81edef9f910d1ae31381fb83433c"
+}

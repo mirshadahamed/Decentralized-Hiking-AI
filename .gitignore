@@ -175,6 +175,8 @@ sajana/runs/
 sajana/results/yolov8_training/health_report.json
 sajana/results/yolov8_training/HEALTH.md
 sajana/results/yolov8_training/monitor_launch.json
+sajana/results/component2_training/queue_status.json
+sajana/results/component2_training/HEALTH.md
 
 # Downloaded reference material and unused alternate annotation taxonomy.
 # Keep the selected 4-class pLitter annotations, labels and manifests versioned.

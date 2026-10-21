@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "predecessor_status": "results/yolov8_training/status.json",
+  "predecessor_experiment": "L1",
+  "job_order": ["L2", "O1"],
+  "device": "mps",
+  "jobs": {
+    "L2": {
+      "task": "segment",
+      "model": "yolov8n-seg.pt",
+      "weights_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.pt",
+      "dataset": "data/processed/litter_taco_mju_aux",
+      "readiness": "data/processed/litter_taco_mju_aux/readiness.json",
+      "names": {"0": "litter"},
+      "expected": {"train": [2513, 5138], "val": [286, 675], "test": [185, 497]},
+      "role": "Compact TACO+MJU litter candidate; differs from L1 in resolution and training budget, so not a data-only ablation"
+    },
+    "O1": {
+      "task": "detect",
+      "model": "yolov8n.pt",
+      "weights_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt",
+      "dataset": "data/processed/wildscenes_rock_log_detection",
+      "readiness": "results/obstacle_context/readiness.json",
+      "names": {"0": "rock_region", "1": "log_region"},
+      "expected": {"train": [6051, 9502], "val": [283, 319], "test": [2133, 4364]},
+      "role": "WildScenes rock/log semantic-region context detector; object presence does not establish trail blockage",
+      "limitations": ["Only three rock validation images", "No litter, corridor, obstruction or clear-trail labels"]
+    }
+  },
+  "training": {
+    "epochs": 50,
+    "patience": 15,
+    "imgsz": 416,
+    "batch": 2,
+    "workers": 0,
+    "cache": false,
+    "amp": false,
+    "plots": false,
+    "save_period": -1,
+    "seed": 42,
+    "deterministic": true
+  },
+  "unavailable_capabilities": [
+    "Reviewed local trail obstruction versus clear-trail assessment",
+    "Reviewed erosion and exposed-root detection",
+    "Independent local trail evaluation",
+    "Validated on-device export and physical 4 GB Android benchmark"
+  ],
+  "full_component_can_be_certified_from_these_jobs": false
+}

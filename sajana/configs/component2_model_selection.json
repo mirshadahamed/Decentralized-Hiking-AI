@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "purpose": "Predeclared public-model selection, separate from full component/mobile acceptance",
+  "litter_resolution_candidates": [640, 416],
+  "ranking_metric": "metrics/mAP50-95(M)",
+  "prefer_416_when_mask_map_drop_at_most": 0.02,
+  "prefer_416_when_mask_recall_drop_at_most": 0.03,
+  "threshold_rule": "Confidence maximizing the smoothed mean validation F1 curve; mask curve for litter, box curve for context",
+  "include_archived_pre_timeout_best_and_periodic_checkpoints": true,
+  "test_policy": "Freeze selection and validation-derived threshold before one public test evaluation; no test-based tuning",
+  "full_component_release_ready": false
+}

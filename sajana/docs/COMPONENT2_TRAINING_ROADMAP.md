@@ -53,6 +53,8 @@ Start with compatible published pretrained weights and fine-tune for litter segm
 
 L1 now uses COCO-pretrained YOLOv8n-seg on Apple MPS, with its actual versions and configuration frozen in the run manifest. Continue in this order:
 
+The user has now authorized the remaining compact public-data jobs. See the [executable queue and completion gates](COMPONENT2_REMAINING_TRAINING.md). Its 416-pixel L2 candidate changes resolution/budget from L1 and is therefore a practical model comparison rather than the original data-only ablation described above.
+
 1. Refresh the full source verifiers and freeze dataset/manifest hashes, taxonomy and split membership.
 2. Run a small training-set-only check to confirm that images, masks, losses and predictions align.
 3. Train L1 with recorded seed, initial-weight hash, input resolution, normalization, batch size, optimizer, learning rate, schedule, augmentation, epoch limit and checkpoint-selection rule.

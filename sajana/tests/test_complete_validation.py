@@ -14,9 +14,10 @@ class CompleteValidationTests(unittest.TestCase):
         # preprocessing tests; only this test class needs the training package.
         from PIL import Image
         cls.image_module=Image;cls.original_open=Image.open
-        global nms, CompleteSegmentationValidator, complete_nms
+        global nms, CompleteSegmentationValidator, CompleteDetectionValidator, complete_nms
         from ultralytics.utils import nms
         from sajana.src.yolov8_validation import CompleteSegmentationValidator, complete_nms
+        from sajana.src.yolov8_detection_validation import CompleteDetectionValidator
 
     @classmethod
     def tearDownClass(cls):
@@ -53,6 +54,17 @@ class CompleteValidationTests(unittest.TestCase):
         self.assertEqual(validator.complete_nms_images,3)
         self.assertEqual([r['masks'].shape for r in outputs],[(1,32,32)]*3)
         self.assertTrue(all(set(r)=={'bboxes','conf','cls','masks'} for r in outputs))
+
+    def test_detection_validator_keeps_every_image_when_clock_budget_is_exceeded(self):
+        validator=object.__new__(CompleteDetectionValidator)
+        validator.args=SimpleNamespace(conf=0.1,iou=0.7,single_cls=False,agnostic_nms=False,max_det=300,task='detect')
+        validator.nc=1;validator.end2end=False
+        clock=itertools.count(0,100)
+        with patch('ultralytics.utils.nms.time.time',side_effect=lambda:next(clock)):
+            outputs=validator.postprocess(self.prediction())
+        self.assertEqual(validator.complete_nms_images,3)
+        self.assertEqual([len(r['bboxes']) for r in outputs],[1,1,1])
+        self.assertTrue(all(set(r)=={'bboxes','conf','cls','extra'} for r in outputs))
 
 
 if __name__=='__main__':unittest.main()

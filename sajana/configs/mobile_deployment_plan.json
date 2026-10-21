@@ -13,9 +13,17 @@
   "model": {
     "family": "YOLOv8",
     "variant": "nano instance segmentation",
-    "classes_currently_supported": {"0": "litter"},
-    "input_size_candidates": [640, 416],
-    "precision_candidates": ["FP32 baseline", "static INT8 candidate"],
+    "classes_currently_supported": {
+      "0": "litter"
+    },
+    "input_size_candidates": [
+      640,
+      416
+    ],
+    "precision_candidates": [
+      "FP32 baseline",
+      "static INT8 candidate"
+    ],
     "quantization_calibration_split": "train",
     "calibration_may_use_validation_or_test": false,
     "quantization_requires_export_parity_and_validation": true,
@@ -24,7 +32,9 @@
   "pinned_export_api": {
     "ultralytics": "8.4.183",
     "format": "litert",
-    "static_int8_argument": {"quantize": 8},
+    "static_int8_argument": {
+      "quantize": 8
+    },
     "fp16_note": "This pinned LiteRT exporter uses FP16 through the GPU delegate at runtime; it does not support a separate half=True LiteRT export.",
     "export_environment": "Separate from the active training environment; export dependencies not installed by the preview tool"
   },
@@ -39,7 +49,7 @@
     "amp": false,
     "plots": false,
     "save_period": -1,
-    "status": "Not launched; a separate recorded experiment if validation justifies retraining",
+    "status": "Authorized for the queued L2 and O1 runs after L1; see the recorded queue configuration",
     "does_not_resume_or_modify_L1": true
   },
   "design_targets_not_measurements": {
@@ -62,5 +72,6 @@
     "physical_phone_benchmark_complete": false,
     "full_obstruction_model_available": false,
     "app_release_ready": false
-  }
+  },
+  "scheduled_training_queue": "sajana/configs/component2_training_queue.json"
 }
