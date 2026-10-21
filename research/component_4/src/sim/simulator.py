@@ -28,8 +28,46 @@ def daily_demand(cal: pd.DataFrame, precip_day: np.ndarray, p: dict, rng) -> np.
         mult = mult * np.where(cal.is_season, p.get("season_multiplier", 1.0), p.get("off_season_multiplier", 1.0))
     morning_rain = precip_day[:, 5:10].sum(axis=1)
     rain = np.maximum(p["min_rain_multiplier"], np.exp(-p["morning_rain_k"] * morning_rain))
-    noise = rng.lognormal(0.0, p["daily_noise_sd"], len(cal))
+    r = realism(p)
+    if r:                                                    # S1: persistent swings (AR(1) on log demand)
+        phi, sd = r["demand_ar_phi"], r["demand_sd"]
+        z, e = rng.normal(0.0, 1.0, len(cal)), np.zeros(len(cal))
+        for i in range(len(cal)):
+            e[i] = (phi * e[i - 1] if i else 0.0) + np.sqrt(1 - phi ** 2) * sd * z[i]
+        noise = np.exp(e - sd ** 2 / 2)
+    else:
+        noise = rng.lognormal(0.0, p["daily_noise_sd"], len(cal))
     return p["base_daily_visitors"] * mult * rain * noise
+
+
+def realism(p: dict) -> dict | None:
+    """The S1 'realistic world' parameters if switched on (configs: simulator.realism.enabled), else None."""
+    r = p.get("realism") or {}
+    return r if r.get("enabled") else None
+
+
+def day_events(p: dict, rng, n_segments: int, main_trail: str) -> dict:
+    """What makes one day different from what the calendar and weather say (S1), drawn once per day:
+    shift of the arrival peak, route shares, tour-bus bursts and an incident slowing one segment."""
+    r = realism(p)
+    if not r:
+        return {}
+    share = dict(p["route_share"])
+    keys = list(share)
+    w = rng.dirichlet(np.array([share[k] for k in keys]) * r["route_share_concentration"])
+    ev = {"arrival_shift_min": float(rng.normal(0.0, r["arrival_shift_sd_min"])),
+          "route_share": dict(zip(keys, w)), "bursts": [], "slow": None}
+    for _ in range(rng.poisson(r["bursts_per_day"])):
+        ev["bursts"].append({"people": int(rng.integers(*r["burst_people"])),
+                             "time_min": float(rng.uniform(*r["burst_window_h"]) * 60),
+                             "trail": main_trail if rng.random() < r["burst_main_share"] else
+                             str(rng.choice([k for k in keys if k != main_trail] or [main_trail]))})
+    if rng.random() < r["incident_prob"]:
+        slow = np.ones((n_segments, 24))
+        s, h = int(rng.integers(n_segments)), int(rng.integers(*r["incident_start_h"]))
+        slow[s, h:h + int(rng.integers(*r["incident_hours"]))] = r["incident_speed"]
+        ev["slow"] = slow
+    return ev
 
 
 def sample_groups(n_visitors: int, p: dict, rng) -> np.ndarray:
@@ -187,22 +225,31 @@ class TrailSimulator:
         self.last_wait = wait
         return finish
 
-    def sample_day(self, n_visitors: int, rng, route_share=None):
-        """The groups that *want* to come: size, gate time (minutes) and route option of each group."""
-        p = self.p
+    def sample_day(self, n_visitors: int, rng, route_share=None, events: dict | None = None):
+        """The groups that *want* to come: size, gate time (minutes) and route option of each group.
+        events (S1, day_events): the day's arrival shift, route shares and tour-bus bursts."""
+        p, ev = self.p, events or {}
         size = sample_groups(n_visitors, p, rng).astype(float)
         arrive = arrival_minutes(len(size), p, rng)
-        option = rng.choice(len(self.options), size=len(size), p=self.option_probs(route_share))
+        if ev:
+            arrive = np.clip(arrive + ev["arrival_shift_min"], p["gate_open_h"] * 60, p["gate_last_entry_h"] * 60)
+        option = rng.choice(len(self.options), size=len(size), p=self.option_probs(route_share or ev.get("route_share")))
+        for b in ev.get("bursts", []):                     # a bus: groups of ~10 through the gate within 15 min
+            g = sample_groups(b["people"], p | {"group_size_poisson_mean": 9.0}, rng).astype(float)
+            size = np.concatenate([size, g])
+            arrive = np.concatenate([arrive, b["time_min"] + rng.uniform(0, 15, len(g))])
+            option = np.concatenate([option, np.full(len(g), self.option_of_trail(b["trail"]))])
         return size, arrive, option
 
     def option_of_trail(self, trail: str, reverse: bool = False) -> int:
         return next(k for k, ((t, _), rev) in enumerate(zip(self.options, self.reverse))
                     if t == trail and rev == (reverse and trail in self.p.get("reversible_routes", [])))
 
-    def simulate_groups(self, size, gate_min, option, precip_h, rng, hold: bool | None = None):
+    def simulate_groups(self, size, gate_min, option, precip_h, rng, hold: bool | None = None, slow=None):
         """Walk the given groups. Returns hourly occupancy [24, S], per-minute occupancy [S, 1440],
         and the time each group spent (minutes).
-        hold: halfway checks on/off (parks with a bottleneck; default from config `bottleneck.hold`)."""
+        hold: halfway checks on/off (parks with a bottleneck; default from config `bottleneck.hold`).
+        slow: [S, 24] speed factor of an incident (S1), e.g. 0.3 on one segment for two hours."""
         p = self.p
         size, option = np.asarray(size, float), np.asarray(option)
         arrive = np.array(gate_min, dtype=float)
@@ -218,7 +265,7 @@ class TrailSimulator:
         if hold is None:
             hold = bool((p.get("bottleneck") or {}).get("hold", False))
         stay_seed = int(rng.integers(2 ** 31)) if getattr(self, "bottleneck", None) else 0   # same stays in both passes
-        crowd = np.ones((self.S, 24))
+        crowd = np.ones((self.S, 24)) if slow is None else np.array(slow, float)
         for _ in range(2):
             diff = np.zeros((self.S, MIN_PER_DAY + 1))
             finish = np.empty(G)
@@ -235,13 +282,17 @@ class TrailSimulator:
             hourly = per_min.reshape(self.S, 24, 60).mean(axis=2)
             density = hourly / self.length[:, None]
             crowd = np.maximum(p["crowd_min_speed"], 1.0 / (1.0 + (density / p["crowd_rho0_per_m"]) ** 2))
+            if slow is not None:
+                crowd = crowd * slow
         return hourly.T, per_min, finish - arrive
 
     def simulate_day(self, n_visitors: int, precip_h: np.ndarray, rng, route_share=None):
         """One day. Returns hourly occupancy [24, S], main-loop durations (min), visitors per trail (dict).
-        route_share overrides the config split (used for what-if diversion experiments)."""
-        size, gate, option = self.sample_day(n_visitors, rng, route_share)
-        hourly, _, duration = self.simulate_groups(size, gate, option, precip_h, rng)
+        route_share overrides the config split (used for what-if diversion experiments).
+        With simulator.realism on (S1), the day also gets its own events (day_events)."""
+        ev = day_events(self.p, rng, self.S, self.trails[0]) if realism(self.p) else {}
+        size, gate, option = self.sample_day(n_visitors, rng, route_share, ev)
+        hourly, _, duration = self.simulate_groups(size, gate, option, precip_h, rng, slow=ev.get("slow"))
         trail_of = np.array([self.options[k][0] for k in option])
         per_trail = {t: int(size[trail_of == t].sum()) for t in self.trails}
         return hourly, duration[trail_of == self.trails[0]], per_trail   # durations on the first (main) trail

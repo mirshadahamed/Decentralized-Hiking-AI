@@ -32,28 +32,44 @@ from src.utils import new_run_dir
 NEURAL = ["lstm", "gru_nograph", "stgnn"]
 
 
+INTRADAY_HOURS = (8, 10, 12)       # forecasts issued during the day (gate counts so far), for the rest of the day
+
+
 def settings(data):
     gate = np.isin(data.segment_poi, list(access_points(data.cfg)))
-    return {"gate": gate, "zero": np.zeros(data.N, bool)}
+    return {"gate": gate, "zero": np.zeros(data.N, bool), "all": np.ones(data.N, bool)}
+
+
+def intraday_mae(model, data, sensed, scale, nodes, hour):
+    """MAE on `nodes` for the rest of the day (open hours), forecasts issued at `hour` on every test day."""
+    o = np.arange(data.val_end, data.T - data.H)
+    o = o[np.asarray(data.times[o].hour) == hour]
+    y, om = data.targets(o)
+    same = (np.arange(data.H)[None] < 24 - hour) & om
+    p = predict(model, data, o, sensed, scale)
+    return float(np.abs(p - y)[:, :, nodes][same].mean())
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--settings", nargs="+", default=["gate", "zero"])
+    ap.add_argument("--settings", nargs="+", default=["gate", "zero"], choices=["gate", "zero", "all"])
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
+    ap.add_argument("--world", choices=["default", "s1"], default="default",
+                    help="s1: the realistic world (data/processed/dataset_s1.npz, src.data.build_dataset --world s1)")
     a = ap.parse_args()
     cfg = load_config()
     if a.quick:
         cfg["train"].update(epochs=1)
         a.seeds = a.seeds[:1]
-    from src.config import PARK
-    data = TrailData(cfg)
+    from src.config import PARK, PROCESSED
+    data = TrailData(cfg, path=PROCESSED / ("dataset_s1.npz" if a.world == "s1" else "dataset.npz"))
     te = data.origins("test")
     y, open_ = data.targets(te)
     cap = capacity_at_once(cfg, PARK)
     every = np.ones(data.N, bool)
-    run = new_run_dir("sparse" + ("_quick" if a.quick else ""), cfg)
+    tag = "sparse" + ("_s1" if a.world == "s1" else "") + ("_quick" if a.quick else "")
+    run = new_run_dir(tag, cfg)
     (run / "models").mkdir()
     logf = open(run / "log.txt", "w", encoding="utf-8")
 
@@ -78,6 +94,8 @@ def main():
                 model, scale = train(data, kind, sensed, cfg, s, log=log, loss_nodes=every)
                 p = predict(model, data, te, sensed, scale)
                 r, de = evaluate(kind, p, data, te, interior, cfg, {"setting": name, "seed": s})
+                for h in INTRADAY_HOURS:
+                    r[f"MAE_from_{h:02d}h"] = intraday_mae(model, data, sensed, scale, interior, h)
                 rows.append(r)
                 ps.append(p), des.append(de)
                 torch.save({"state_dict": model.state_dict(), "scale": scale, "kind": kind, "sensed": sensed,
@@ -97,8 +115,9 @@ def main():
     (run / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     np.savez_compressed(run / "predictions.npz", origins=te, interior=interior, HA=ha.astype(np.float32), **saved)
     if not a.quick:
-        (RESULTS / "LATEST_SPARSE").write_text(run.name, encoding="utf-8")
-    log(df.groupby(["setting", "model"])[["MAE", "RMSE"]].agg(["mean", "std"]).round(3).to_string())
+        (RESULTS / ("LATEST_SPARSE_S1" if a.world == "s1" else "LATEST_SPARSE")).write_text(run.name, encoding="utf-8")
+    cols = ["MAE", "RMSE"] + [c for c in df.columns if c.startswith("MAE_from_")]
+    log(df.groupby(["setting", "model"])[cols].mean().round(3).to_string())
     ev = pd.DataFrame(events)
     log(ev[ev.event == "over"][["setting", "model", "precision", "recall", "F1"]].to_string(index=False))
     log(json.dumps(stats, indent=1))
