@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "training_ready": true,
+  "source_context_training_ready": true,
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/rugd_semantic",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/rugd/extracted",
+  "available_pairs": 7436,
+  "published_split_counts": {
+    "train": 4759,
+    "val": 733,
+    "test": 1964
+  },
+  "published_count_complete": false,
+  "official_release_split_counts": {
+    "train": 4779,
+    "val": 733,
+    "test": 1924
+  },
+  "available_source_complete": true,
+  "splits": {
+    "train": {
+      "images": 4779,
+      "verified_pairs": 4779,
+      "source_sequences": [
+        "park-2",
+        "trail",
+        "trail-10",
+        "trail-11",
+        "trail-12",
+        "trail-14",
+        "trail-15",
+        "trail-3",
+        "trail-4",
+        "trail-6",
+        "trail-9",
+        "village"
+      ]
+    },
+    "val": {
+      "images": 733,
+      "verified_pairs": 733,
+      "source_sequences": [
+        "park-8",
+        "trail-5"
+      ]
+    },
+    "test": {
+      "images": 1924,
+      "verified_pairs": 1924,
+      "source_sequences": [
+        "creek",
+        "park-1",
+        "trail-13",
+        "trail-7"
+      ]
+    }
+  },
+  "split_policy": "official_paper_Table_I_sequence_membership",
+  "split_source": "http://rugd.vision/pdfs/RUGD_IROS2019.pdf",
+  "source_class_ids_preserved": true,
+  "semantic_class_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "void_ignore_id": 0,
+  "independent_hiking_evaluation_supported": false,
+  "final_damage_labels_supplied": false,
+  "license_status": "unspecified_in_reviewed_primary_dataset_material",
+  "issue_count": 0,
+  "issues": [],
+  "warnings": [
+    "Official release has 7436 pairs (4779/733/1924) using published sequence membership; paper Table I states 7456 (4759/733/1964). No records or splits are invented to reconcile this discrepancy.",
+    "Natural terrain/object classes are context, not erosion, exposed-root, route-obstruction or hiking-safety ground truth.",
+    "The website footer CC BY 3.0 statement applies to the Colorlib template, not the dataset. Dataset reuse terms remain unverified."
+  ]
+}

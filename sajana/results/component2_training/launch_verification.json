@@ -1,0 +1,90 @@
+{
+  "checked_at": "2026-10-21T07:44:53.867554+05:30",
+  "pipeline_code_commit": "e25b6675a45598fed0b16713f4c3da225a6fea5a",
+  "supervisor_pid": 6573,
+  "queue_phase": "waiting_for_L1",
+  "current_L1": {
+    "phase": "training",
+    "completed_epochs": 72,
+    "current_epoch": 72,
+    "updated_at": "2026-10-21T07:44:46.361336+05:30"
+  },
+  "frozen_source_hashes_match": true,
+  "source_sha256": {
+    "train_component2_yolov8.py": "c0e671bd81e6359c183efdf6ecc5a3964d2165029a55ad811b7dce9e73678b26",
+    "component2_training_data.py": "bb5071f9d88fd07edc6cc8221504ead6b1dd9a5fe7f4192cb0eba0ffd4c3e51e",
+    "yolov8_detection_validation.py": "e2aca5f575161cb229f2d6d1146c2099b7982c9dc546f67f3befe3231a13ac59",
+    "yolov8_validation.py": "3a0a41bb72625287c54acf79efdca1ab8f87e6223699ae7a139753459be0121e",
+    "run_component2_training_queue.py": "800ab7a2951d909b22bba3b949cabd055acb9d0ca4b71a646fc18e7ef32523e0",
+    "finalize_component2_training.py": "680f55ab99e9c80015f9793a1c5fcd5b6d8d69e3f0fe1fe3420c6ba3c5e55598"
+  },
+  "preflight_splits": {
+    "L2": {
+      "train": {
+        "images": 2513,
+        "objects": 5138
+      },
+      "val": {
+        "images": 286,
+        "objects": 675
+      },
+      "test": {
+        "images": 185,
+        "objects": 497
+      }
+    },
+    "O1": {
+      "train": {
+        "images": 6051,
+        "objects": 9502
+      },
+      "val": {
+        "images": 283,
+        "objects": 319
+      },
+      "test": {
+        "images": 2133,
+        "objects": 4364
+      }
+    }
+  },
+  "smoke_checks": {
+    "L2": {
+      "phase": "completed",
+      "train_images": 8,
+      "validation_images": 8,
+      "validation_source": "Same eight training-only photos",
+      "batches_seen": 4,
+      "device": "cpu",
+      "smoke_scores_are_generalization_metrics": false,
+      "full_training_phase": "queued"
+    },
+    "O1": {
+      "phase": "completed",
+      "train_images": 8,
+      "validation_images": 8,
+      "validation_source": "Same eight training-only photos",
+      "batches_seen": 4,
+      "device": "cpu",
+      "smoke_scores_are_generalization_metrics": false,
+      "full_training_phase": "queued"
+    }
+  },
+  "evaluation_api_training_only_smoke_passed": true,
+  "sequential_gpu_lock_test_passed": true,
+  "predecessor_wait_and_failure_stop_tests_passed": true,
+  "tests": {
+    "run": 161,
+    "passed": true,
+    "log_sha256": "e31cf46485d10a230dc4ed38697d82ae14c98070a3a5d33ab76830b7aa83a025"
+  },
+  "test_model_evaluation_performed_at_launch": false,
+  "full_component_ready": false,
+  "remaining_data_gaps": [
+    "Reviewed local trail obstruction versus clear-trail assessment",
+    "Reviewed erosion and exposed-root detection",
+    "Independent local trail evaluation",
+    "Validated on-device export and physical 4 GB Android benchmark"
+  ],
+  "android_runtime_exported": false
+}

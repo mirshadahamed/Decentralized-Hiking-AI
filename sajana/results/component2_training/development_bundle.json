@@ -1,0 +1,12 @@
+{
+  "packaged_at": "2026-10-21T14:55:00.428809+05:30",
+  "bundle": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_quality/component2_development_bundle.zip",
+  "bundle_bytes": 5749119,
+  "sha256": "9fb0f4b884c8b3d819dedb49d1671e2045c60194211416506a49ee11ce3c6332",
+  "models_bytes": 6960686,
+  "contains_training_photos": false,
+  "contains_python_environment": false,
+  "use": "development_only",
+  "quality_accepted_for_app": false,
+  "full_component_ready": false
+}

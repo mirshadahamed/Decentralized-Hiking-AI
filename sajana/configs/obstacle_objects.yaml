@@ -1,0 +1,9 @@
+# Separate YOLOv8 detection context task; class IDs are not litter class IDs.
+# Source semantic connected regions provide derived boxes, not hiking blockage labels.
+path: sajana/data/processed/wildscenes_rock_log_detection
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: rock_region
+  1: log_region

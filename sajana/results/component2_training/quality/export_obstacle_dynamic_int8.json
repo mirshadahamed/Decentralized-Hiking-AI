@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-10-21T14:17:43.837624+05:30",
+  "tag": "export_obstacle_dynamic_int8",
+  "task": "obstacle",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+  "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+  "imgsz": 416,
+  "split": "val",
+  "images": 50,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.41126419936582514,
+    "metrics/recall(B)": 0.16666666666666666,
+    "metrics/mAP50(B)": 0.1968629031759407,
+    "metrics/mAP50-95(B)": 0.14112943740028655,
+    "fitness": 0.14112943740028655
+  },
+  "threshold": 0.3483483483483483,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "rock_region",
+      "labelled_images": 3,
+      "labelled_regions": 3,
+      "AP50": 0.33774999999999994,
+      "AP50_95": 0.2691,
+      "precision_at_threshold": 0.8225283987316503,
+      "recall_at_threshold": 0.3333333333333333,
+      "f1_at_threshold": 0.47440991479270755
+    },
+    {
+      "class_id": 1,
+      "class_name": "log_region",
+      "labelled_images": 33,
+      "labelled_regions": 100,
+      "AP50": 0.05597580635188149,
+      "AP50_95": 0.01315887480057317,
+      "precision_at_threshold": 0.0,
+      "recall_at_threshold": 0.0,
+      "f1_at_threshold": 0.0
+    }
+  ],
+  "AP50": 0.1968629031759407,
+  "AP50_95": 0.14112943740028655,
+  "mean_precision_at_threshold": 0.41126419936582514,
+  "mean_recall_at_threshold": 0.16666666666666666,
+  "mean_f1_at_threshold": 0.23720495739635378,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.14955506005208008,
+    "inference": 11.368288340017898,
+    "loss": 0.0009584199870005249,
+    "postprocess": 0.3482483603147557
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

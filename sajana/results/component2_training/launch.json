@@ -1,0 +1,25 @@
+{
+  "launched_at": "2026-10-21T07:43:18.719860+05:30",
+  "pid": 6573,
+  "caffeinate_pid": 6574,
+  "command": [
+    "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/.venv-yolov8/bin/python",
+    "-u",
+    "-B",
+    "-m",
+    "sajana.src.run_component2_training_queue",
+    "--interval",
+    "30"
+  ],
+  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/component2_training/queue_20261021_074318.log",
+  "code_commit": "e25b6675a45598fed0b16713f4c3da225a6fea5a",
+  "order": [
+    "L1 existing run finishes",
+    "L2 compact TACO+MJU",
+    "O1 rock/log context",
+    "validation selection",
+    "frozen public test evaluation"
+  ],
+  "full_component_ready": false,
+  "physical_device_target_ram_gb": 4
+}

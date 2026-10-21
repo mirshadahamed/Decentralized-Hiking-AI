@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-10-21T13:50:05.610198+05:30",
+  "tag": "baseline_litter_640",
+  "task": "litter",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "checkpoint_sha256": "f7397314c0587098e87d2e5bced8bec259a1698060d966222965fa059a334a55",
+  "imgsz": 640,
+  "split": "val",
+  "images": 286,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.6785803771506932,
+    "metrics/recall(B)": 0.4910497056874188,
+    "metrics/mAP50(B)": 0.5295547481084955,
+    "metrics/mAP50-95(B)": 0.3792379858783453,
+    "metrics/precision(M)": 0.6777188458917426,
+    "metrics/recall(M)": 0.4888888888888889,
+    "metrics/mAP50(M)": 0.5241965299443238,
+    "metrics/mAP50-95(M)": 0.32240037270651994,
+    "fitness": 0.7016383585848652
+  },
+  "threshold": 0.4084084084084084,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "litter",
+      "labelled_images": 286,
+      "labelled_regions": 675,
+      "AP50": 0.5241965299443238,
+      "AP50_95": 0.32240037270651994,
+      "precision_at_threshold": 0.6777188458917426,
+      "recall_at_threshold": 0.4888888888888889,
+      "f1_at_threshold": 0.568021630011526
+    }
+  ],
+  "AP50": 0.5241965299443238,
+  "AP50_95": 0.32240037270651994,
+  "mean_precision_at_threshold": 0.6777188458917426,
+  "mean_recall_at_threshold": 0.4888888888888889,
+  "mean_f1_at_threshold": 0.568021630011526,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 1.1811388181817337,
+    "inference": 10.072297776223783,
+    "loss": 0.0004623986013852177,
+    "postprocess": 37.98557604195799
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

@@ -1,0 +1,198 @@
+{
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_official_cleaned.json",
+  "source_sha256": "a74f436d8d6df10ab55f533b5d7831128ae604cdf6376ed0834a7fd34e48cc87",
+  "source_info": {
+    "year": 2019,
+    "version": null,
+    "description": "TACO - Component 2 one-class litter",
+    "contributor": null,
+    "url": null,
+    "date_created": "2019-12-19T16:11:15.258399+00:00"
+  },
+  "source_licenses": [],
+  "source_categories": [
+    {
+      "id": 0,
+      "name": "litter",
+      "supercategory": "litter"
+    }
+  ],
+  "source_scene_categories": [
+    {
+      "id": 0,
+      "name": "Clean"
+    },
+    {
+      "id": 1,
+      "name": "Indoor, Man-made"
+    },
+    {
+      "id": 2,
+      "name": "Pavement"
+    },
+    {
+      "id": 3,
+      "name": "Sand, Dirt, Pebbles"
+    },
+    {
+      "id": 4,
+      "name": "Trash"
+    },
+    {
+      "id": 5,
+      "name": "Vegetation"
+    },
+    {
+      "id": 6,
+      "name": "Water"
+    }
+  ],
+  "class_mapping": {
+    "0": 0
+  },
+  "target_names": {
+    "0": "litter"
+  },
+  "original_category_instance_counts": {
+    "0": 62,
+    "1": 2,
+    "2": 6,
+    "3": 1,
+    "4": 50,
+    "5": 285,
+    "6": 104,
+    "7": 209,
+    "8": 80,
+    "9": 138,
+    "10": 34,
+    "11": 10,
+    "12": 229,
+    "13": 5,
+    "14": 93,
+    "15": 11,
+    "16": 45,
+    "17": 64,
+    "18": 30,
+    "19": 3,
+    "20": 67,
+    "21": 104,
+    "22": 13,
+    "23": 6,
+    "24": 2,
+    "25": 8,
+    "26": 6,
+    "27": 77,
+    "28": 10,
+    "29": 273,
+    "30": 12,
+    "31": 42,
+    "32": 12,
+    "33": 82,
+    "34": 27,
+    "36": 451,
+    "37": 5,
+    "38": 31,
+    "39": 259,
+    "40": 61,
+    "41": 3,
+    "42": 39,
+    "43": 9,
+    "44": 4,
+    "45": 38,
+    "46": 15,
+    "47": 6,
+    "48": 4,
+    "49": 37,
+    "50": 99,
+    "51": 29,
+    "52": 20,
+    "53": 7,
+    "54": 7,
+    "55": 157,
+    "56": 4,
+    "57": 112,
+    "58": 517,
+    "59": 667
+  },
+  "images_total": 1499,
+  "annotations_total": 4783,
+  "duplicate_source_annotation_ids": {
+    "309": [
+      {
+        "source_index": 308,
+        "image_id": 93
+      },
+      {
+        "source_index": 309,
+        "image_id": 101
+      }
+    ],
+    "4040": [
+      {
+        "source_index": 4038,
+        "image_id": 1281
+      },
+      {
+        "source_index": 4039,
+        "image_id": 1300
+      }
+    ]
+  },
+  "source_warnings": [
+    "Source annotation IDs repeat; every source record is retained and indexed by its zero-based source position.",
+    "Undeclared scene background IDs are preserved as unknown_ID; no missing scene name is invented."
+  ],
+  "unknown_scene_id_counts": {
+    "7": 114
+  },
+  "multi_polygon_annotations": 114,
+  "invalid_annotations": 0,
+  "boundary_tolerance_pixels": 1.0,
+  "clipped_vertices": 63,
+  "annotations_with_clipped_vertices": 41,
+  "multipart_strategy": "nearest contour vertices joined by duplicated bridge endpoints",
+  "normalization": "clip <=1px boundary overshoot to pixel bounds [0,width-1]x[0,height-1]; x / width; y / height",
+  "split_policy": "official_batches",
+  "split_strategy": "batch holdout",
+  "dataset_role": "official benchmark",
+  "train_batches": [
+    "batch_1",
+    "batch_10",
+    "batch_12",
+    "batch_13",
+    "batch_2",
+    "batch_5",
+    "batch_6",
+    "batch_7",
+    "batch_8",
+    "batch_9"
+  ],
+  "val_batches": [
+    "batch_11",
+    "batch_3",
+    "batch_4"
+  ],
+  "test_batches": [
+    "batch_14",
+    "batch_15"
+  ],
+  "splits": {
+    "train": {
+      "images": 1028,
+      "objects": 3611,
+      "natural_focus_images": 782
+    },
+    "val": {
+      "images": 286,
+      "objects": 675,
+      "natural_focus_images": 209
+    },
+    "test": {
+      "images": 185,
+      "objects": 497,
+      "natural_focus_images": 185
+    }
+  },
+  "images_verified": false,
+  "scope": "Litter instance segmentation only; TACO contains no trail-damage masks."
+}

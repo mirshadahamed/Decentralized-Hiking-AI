@@ -1,0 +1,330 @@
+{
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_validated.json",
+  "source_sha256": "aa9b389ed9923a9015781c774ca01163d51a937f520235c4e7298f499d0acc56",
+  "retained_images": 3762,
+  "retained_annotations": 8053,
+  "excluded": [
+    {
+      "image_id": 10,
+      "file_name": "unofficial/000010.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2018/10/11/XpRiaN9C1vVaBlwXUtpgfTNsMSXZWd60IHWsI18o.jpeg: Image size (2048, 1536) does not match source aspect ratio 1824x4000"
+    },
+    {
+      "image_id": 60,
+      "file_name": "unofficial/000060.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/20/10VCgrcJv7prcaqmnkt8w7xKiRwSB0rYkcrP8O7d.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 96,
+      "file_name": "unofficial/000096.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://farm66.staticflickr.com/65535/49578163733_8312e5b303_o.png: Image size (3000, 4000) does not match source aspect ratio 4208x2368 | https://farm66.staticflickr.com/65535/49578163733_86d8279097_z.jpg: Image size (480, 640) does not match source aspect ratio 4208x2368"
+    },
+    {
+      "image_id": 250,
+      "file_name": "unofficial/000250.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/uHQc4qmyI3XnarIxtCtuiO5GeucZXwoYSIhDkjcx.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 284,
+      "file_name": "unofficial/000284.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/19/6QL8IGgd1Rssvxu1TxDRphCqeMRbfIpZAxvaKKog.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 302,
+      "file_name": "unofficial/000302.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/hSJ6q5GnwiDcvyHlMtXnRI6P5xJsdHzY8l9cnbdQ.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 323,
+      "file_name": "unofficial/000323.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2018/09/26/chLMaxm169cmTNxFnQSYRugRjZznuY6GhPWLOfvw.jpeg: EXIF rotation has ambiguous or incompatible annotation geometry"
+    },
+    {
+      "image_id": 468,
+      "file_name": "unofficial/000468.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/09/02/fTNWUTGKUmUg2EsIcGUmPjoR02pTR6Kqsw348Cl3.jpeg: EXIF rotation has ambiguous or incompatible annotation geometry"
+    },
+    {
+      "image_id": 510,
+      "file_name": "unofficial/000510.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/02/Bd9U3sg2rYmQxqY01WuneGKtDw8p6ea2jvC4wvE7.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 698,
+      "file_name": "unofficial/000698.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/18/WwqHeVI1dTQ8fIyT9chNL6tXmTjoX5FUVppSEkpm.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 865,
+      "file_name": "unofficial/000865.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/19/CvJRvJpt3Xdo8wsDQmv2yr13XPTnpyiLqCFKX8rV.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 904,
+      "file_name": "unofficial/000904.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/20/32BxLXxkGqKxbH59K1XndKNb3RsxelpRY4WtcGMR.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1047,
+      "file_name": "unofficial/001047.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2018/08/04/OGEsCdz4rjjmijfCzYUkDGEVZDrrvNKnCphOyyTz.jpeg: EXIF rotation has ambiguous or incompatible annotation geometry"
+    },
+    {
+      "image_id": 1051,
+      "file_name": "unofficial/001051.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/01/26/UtZRrambLNfq0M9Cq859Uu9yXhISx8jTnXgbArLW.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1108,
+      "file_name": "unofficial/001108.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/02/Z9NUehaGQLsWipeJ4Hs14uhFR7g7yJdsZeiHs4np.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1446,
+      "file_name": "unofficial/001446.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/ewdEgBwuWqJVzxEXFI4Eq6MeYiMgOW4Av4HDUbfM.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1519,
+      "file_name": "unofficial/001519.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/16/6iUrWrBj7MaherS0F5rdo8AdHRwR5JhwuStS9uVK.jpeg: Image size (4160, 3120) does not match source aspect ratio 3000x4000"
+    },
+    {
+      "image_id": 1650,
+      "file_name": "unofficial/001650.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/21/xwOV4KAzadKIvN7lqdGJXX14Aiw8e9cFyxIxIoNJ.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1720,
+      "file_name": "unofficial/001720.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/21/zUzVx16lVfzC6CEFKx1cIn6L0QaXscCNqfxJTt9t.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1823,
+      "file_name": "unofficial/001823.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/01/26/12AsFi04yAph3UiQXsnzPXKfDfVPgiUUEwJGhzOX.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 1970,
+      "file_name": "unofficial/001970.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2018/10/09/G38SPiULTZrYBvveOXX4MQthTQqBLnVHWiqbL2Q2.jpeg: EXIF rotation has ambiguous or incompatible annotation geometry"
+    },
+    {
+      "image_id": 2040,
+      "file_name": "unofficial/002040.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/c4J9HKpFTfRuj8G0Ue05ChBHbycDgtWdtwdL75tZ.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2055,
+      "file_name": "unofficial/002055.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://farm66.staticflickr.com/65535/49042858187_f37f7da906_o.png: HTTPSConnectionPool(host='farm66.staticflickr.com', port=443): Max retries exceeded with url: /65535/49042858187_f37f7da906_o.png (Caused by ResponseError('too many 429 error responses')) | https://farm66.staticflickr.com/65535/49042858187_bf8203ffd0_z.jpg: Image size (640, 480) does not match source aspect ratio 3024x4032"
+    },
+    {
+      "image_id": 2244,
+      "file_name": "unofficial/002244.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2017/08/12/EYdIL6OzJ7QZYW5BNwoC5q6kwm6KeCyWpHKa4a8K.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2444,
+      "file_name": "unofficial/002444.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/19/IHunQ2nfqKi7l5PrQqAihFZE3AbZRnnygIPFhkdW.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2633,
+      "file_name": "unofficial/002633.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/21/g2lYTPGXu0iYgE6P15oFdtP5gwHOyXp08yv5Fxp3.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2665,
+      "file_name": "unofficial/002665.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/Lu2wypJyd4ia6vQCxW0nn0qbJ9haX3GBuIrmxukC.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2687,
+      "file_name": "unofficial/002687.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/19/HG8wwRimdYb0Tnm3Vc0jmfxPC0rhwI30XanVdraD.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2789,
+      "file_name": "unofficial/002789.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/02/EF3mLtb3IuWVKCA6K3L1gykMAFpPonvHJVFexGLJ.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2889,
+      "file_name": "unofficial/002889.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/19/FqgSH1AYNsf85gtwCdrxm7Wenp9oYzLNxMpbZIZe.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2937,
+      "file_name": "unofficial/002937.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/20/iAZE6AEPwZTXFkkXoYz8sZelD2iM24D0aWwXhv7s.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 2985,
+      "file_name": "unofficial/002985.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/21/AiV4CaJx5CMmgAPOtGBbO8wCKm4eoJcdCC6e3xiR.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3120,
+      "file_name": "unofficial/003120.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://farm66.staticflickr.com/65535/50834014476_40c2759295_o.png: HTTPSConnectionPool(host='farm66.staticflickr.com', port=443): Max retries exceeded with url: /65535/50834014476_40c2759295_o.png (Caused by ResponseError('too many 429 error responses')) | https://farm66.staticflickr.com/65535/50834014476_39cece49a1_z.jpg: Image size (600, 300) does not match source aspect ratio 3024x4032"
+    },
+    {
+      "image_id": 3275,
+      "file_name": "unofficial/003275.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/19/wMbaNghcW42EP5TeLETdhCr2g2mBlW1pxkn3vYRw.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3405,
+      "file_name": "unofficial/003405.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/21/m1dM62SgPaAnGxkaOKxd3rAcCQXWfbM5QX03xfe2.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3469,
+      "file_name": "unofficial/003469.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/zy1R3Itollzmr4VSxBE2vp6DYF0bicvxLoddR1nx.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3525,
+      "file_name": "unofficial/003525.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/06/02/LS31f9UmcodSSkXyGtDngeElzuV7jIKkmcsFLAcf.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3587,
+      "file_name": "unofficial/003587.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/B0aCK9t19seuRcGaSj06igEnZIltm9nPCcs498gr.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 3823,
+      "file_name": "unofficial/003823.jpg",
+      "reason": "missing_or_invalid_photo",
+      "detail": "photo unavailable",
+      "acquisition_error": "https://olm-s3.s3.eu-west-1.amazonaws.com/2019/04/26/mBeY98ci0mJvSWokikCinF35aTKyciL8ar21TcWW.jpeg: EXIF orientation 3 needs manual annotation alignment"
+    },
+    {
+      "image_id": 442,
+      "file_name": "unofficial/000442.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 1619,
+      "pixel_sha256": "e0e50c27e41780a96dcb7ff97000a7ecf999f75d71b463d7c61d2b895edfc7aa"
+    },
+    {
+      "image_id": 2782,
+      "file_name": "unofficial/002782.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 595,
+      "pixel_sha256": "019f5265608cf2944d6c3c79cb0ffd6bfb7d3c9f02a260fb6e4fc961f21a93af"
+    },
+    {
+      "image_id": 3181,
+      "file_name": "unofficial/003181.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 1291,
+      "pixel_sha256": "d568e4c27452fe40aecbed59f249d912ad70816afd313574750a5a52786b5a31"
+    },
+    {
+      "image_id": 2277,
+      "file_name": "unofficial/002277.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 1357,
+      "pixel_sha256": "f82232a3d8338879c616e0971795191256f43581c196169baa8c25d4e6bc6530"
+    },
+    {
+      "image_id": 1390,
+      "file_name": "unofficial/001390.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 3177,
+      "pixel_sha256": "8f6685c28bd19e743ada29580f34857874453ecb7cbceba968b3c475f63b7140"
+    },
+    {
+      "image_id": 3461,
+      "file_name": "unofficial/003461.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 2952,
+      "pixel_sha256": "b18bd69721b9d640a4f2c83b4d0ee4db9f0ded15865c86e5fd932b59bb8c6ddf"
+    },
+    {
+      "image_id": 3135,
+      "file_name": "unofficial/003135.jpg",
+      "reason": "exact_duplicate_in_auxiliary_pool",
+      "kept_image_id": 3562,
+      "pixel_sha256": "cced821a0748c149672d0039264ba4c1904e93e36fb2f8684f61622ccac88451"
+    }
+  ]
+}

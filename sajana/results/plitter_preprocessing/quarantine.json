@@ -1,0 +1,946 @@
+{
+  "source_sha256": {
+    "train": "7ff8b49460d76b4b8fca6bf5a40faeb27558d18e94ded8dd76a6a0d8f7da5d3a",
+    "val": "efa65ec0e6890933d82c61ecdf2734f8175fe70cbe66da9a482fc1497ade1db0",
+    "test": "db84694116c6aecbac990dc544087027f30cf0f2c9e98fa6df1cbafcb67ebad4"
+  },
+  "excluded_images": [
+    {
+      "split": "train",
+      "image_id": 6035,
+      "file_name": "Taladthai_2021_GX034430_276.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 9110,
+          "bbox": [
+            1159,
+            1209,
+            14,
+            9
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 12,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4415,
+      "file_name": "Taladthai_2021_GX014429_232.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4585,
+          "bbox": [
+            761,
+            862,
+            8,
+            11
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 4586,
+          "bbox": [
+            649,
+            867,
+            8,
+            5
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 5,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4615,
+      "file_name": "Taladthai_2021_GX014429_150.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4201,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 11,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4579,
+      "file_name": "Taladthai_2021_GX014429_082.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4754,
+          "bbox": [
+            1271,
+            949,
+            28,
+            29
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 4755,
+          "bbox": [
+            839,
+            1303,
+            16,
+            21
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 8,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 6004,
+      "file_name": "Taladthai_2021_GX034430_035.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 10787,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 17,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5185,
+      "file_name": "Taladthai_2021_GX014430_005.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 6396,
+          "bbox": [
+            1280,
+            1291,
+            33,
+            79
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 6397,
+          "bbox": [
+            1131,
+            807,
+            36,
+            26
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 6398,
+          "bbox": [
+            590,
+            1116,
+            33,
+            13
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 6,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4650,
+      "file_name": "Taladthai_2021_GX014429_016.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5951,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 21,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5800,
+      "file_name": "Taladthai_2021_GX034430_001.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 10233,
+          "bbox": [
+            899,
+            694,
+            32,
+            27
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10234,
+          "bbox": [
+            701,
+            791,
+            87,
+            55
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10235,
+          "bbox": [
+            800,
+            755,
+            35,
+            26
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10236,
+          "bbox": [
+            843,
+            755,
+            14,
+            7
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10237,
+          "bbox": [
+            856,
+            761,
+            13,
+            6
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10238,
+          "bbox": [
+            851,
+            737,
+            23,
+            19
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10239,
+          "bbox": [
+            744,
+            866,
+            26,
+            14
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10240,
+          "bbox": [
+            402,
+            993,
+            31,
+            30
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10241,
+          "bbox": [
+            446,
+            991,
+            33,
+            30
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10242,
+          "bbox": [
+            442,
+            1021,
+            79,
+            49
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10243,
+          "bbox": [
+            244,
+            1023,
+            165,
+            105
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10244,
+          "bbox": [
+            266,
+            1074,
+            84,
+            23
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10245,
+          "bbox": [
+            0,
+            1164,
+            284,
+            145
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 10246,
+          "bbox": [
+            788,
+            1117,
+            15,
+            15
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 15,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5276,
+      "file_name": "Taladthai_2021_GX064430_179.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 16535,
+          "bbox": [
+            1278,
+            887,
+            19,
+            17
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 16536,
+          "bbox": [
+            1124,
+            929,
+            40,
+            51
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 16537,
+          "bbox": [
+            1201,
+            955,
+            20,
+            12
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 16538,
+          "bbox": [
+            1228,
+            969,
+            32,
+            17
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 10,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5949,
+      "file_name": "Taladthai_2021_GX034430_002.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 9247,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 27,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4956,
+      "file_name": "Taladthai_2021_GX014430_199.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 6631,
+          "bbox": [
+            571,
+            559,
+            60,
+            166
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 5,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5394,
+      "file_name": "Taladthai_2021_GX064430_021.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 16257,
+          "bbox": [
+            65,
+            711,
+            25,
+            14
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 16258,
+          "bbox": [
+            1102,
+            946,
+            23,
+            25
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 16259,
+          "bbox": [
+            1238,
+            933,
+            12,
+            18
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 6,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4506,
+      "file_name": "Taladthai_2021_GX014429_226.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4326,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 12,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4951,
+      "file_name": "Taladthai_2021_GX014430_046.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7216,
+          "bbox": [
+            938,
+            575,
+            64,
+            147
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 7217,
+          "bbox": [
+            1058,
+            559,
+            100,
+            191
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 26,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5847,
+      "file_name": "Taladthai_2021_GX034430_273.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 10554,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 7,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 45707,
+      "file_name": "Chiangrai_2021_GH020103_103_12578.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 130875,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 7,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4652,
+      "file_name": "Taladthai_2021_GX014429_202.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4982,
+          "bbox": [
+            1280,
+            967,
+            6,
+            15
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 4983,
+          "bbox": [
+            1208,
+            834,
+            11,
+            16
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 4984,
+          "bbox": [
+            1003,
+            1230,
+            20,
+            17
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 4985,
+          "bbox": [
+            1242,
+            899,
+            29,
+            37
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 14,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 3929,
+      "file_name": "Taladthai_2021_GX044430_216.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 11717,
+          "bbox": [
+            287.1111111111111,
+            711.3333333333334,
+            14.666666666666666,
+            9.333333333333334
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 5,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5922,
+      "file_name": "Taladthai_2021_GX034430_291.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 9344,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 8,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 5673,
+      "file_name": "Taladthai_2021_GX064430_181.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 16041,
+          "bbox": [
+            671,
+            703,
+            22,
+            19
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 6,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4405,
+      "file_name": "Taladthai_2021_GX014429_237.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5477,
+          "bbox": [
+            1271,
+            669,
+            51,
+            109
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 5,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 3311,
+      "file_name": "Taladthai_2021_GX024429_015.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7669,
+          "bbox": [
+            845.7777777777778,
+            716.6666666666666,
+            5.333333333333333,
+            4.666666666666667
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 7670,
+          "bbox": [
+            860.8888888888889,
+            755.3333333333334,
+            8.0,
+            4.666666666666667
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 7671,
+          "bbox": [
+            776.0,
+            720.6666666666666,
+            19.555555555555557,
+            16.666666666666668
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 11,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 6076,
+      "file_name": "Taladthai_2021_GX034430_307.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 10247,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 12,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 4674,
+      "file_name": "Taladthai_2021_GX014429_028.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5895,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        },
+        {
+          "annotation_id": 5898,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        },
+        {
+          "annotation_id": 5899,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 21,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "train",
+      "image_id": 6293,
+      "file_name": "Taladthai_2021_GX054430_072.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 12725,
+          "bbox": [
+            1279,
+            761,
+            15,
+            9
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 16,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "val",
+      "image_id": 3239,
+      "file_name": "Taladthai_2021_GX024429_058.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 7488,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 14,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "val",
+      "image_id": 5533,
+      "file_name": "Taladthai_2021_GX064430_106.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 15997,
+          "bbox": [
+            1277,
+            1096,
+            22,
+            30
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        },
+        {
+          "annotation_id": 15998,
+          "bbox": [
+            1251,
+            1038,
+            16,
+            12
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 5,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "val",
+      "image_id": 4399,
+      "file_name": "Taladthai_2021_GX014429_006.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5653,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 24,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "test",
+      "image_id": 4456,
+      "file_name": "Taladthai_2021_GX014429_026.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5577,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 20,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "test",
+      "image_id": 6363,
+      "file_name": "Taladthai_2021_GX054430_022.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 13801,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 22,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "test",
+      "image_id": 4828,
+      "file_name": "Taladthai_2021_GX014429_198.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 4650,
+          "bbox": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "reason": "Zero/negative bounding-box area"
+        }
+      ],
+      "excluded_annotations": 4,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "test",
+      "image_id": 6085,
+      "file_name": "Taladthai_2021_GX034430_280.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 9330,
+          "bbox": [
+            612,
+            709,
+            34,
+            12
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 2,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    },
+    {
+      "split": "test",
+      "image_id": 4810,
+      "file_name": "Taladthai_2021_GX014429_011.jpg",
+      "invalid_annotations": [
+        {
+          "annotation_id": 5698,
+          "bbox": [
+            1280,
+            838,
+            18,
+            5
+          ],
+          "reason": "Bounding box extends outside source image dimensions; no broad clipping"
+        }
+      ],
+      "excluded_annotations": 15,
+      "reason": "Whole image excluded to preserve complete object annotations"
+    }
+  ]
+}

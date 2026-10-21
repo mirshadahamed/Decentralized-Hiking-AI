@@ -1,0 +1,92 @@
+{
+  "acquired_at": "2026-10-21T15:19:02.501285+05:30",
+  "goose": {
+    "homepage": "https://goose-dataset.de/",
+    "licence": "CC BY-SA 4.0",
+    "archives": {
+      "train": {
+        "url": "https://goose-dataset.de/storage/goose_2d_train.zip",
+        "archive_bytes": 22466451989,
+        "etag": "\"67d9cad6-53b1ada15\"",
+        "local_index_sha256": "a6c17b83fb9ea55561fe06c92ef6bec9d83bb9afb0753261ae5facad9f6f8ec5"
+      },
+      "val": {
+        "url": "https://goose-dataset.de/storage/goose_2d_val.zip",
+        "archive_bytes": 2857251081,
+        "etag": "\"67d9a658-aa4e3109\"",
+        "local_index_sha256": "dc4a8b3497ac333b47f0312889924b0d6ec0d67a0c3bb5d47748d48d86aa15d5"
+      },
+      "ex_train": {
+        "url": "https://goose-dataset.de/storage/gooseEx_2d_train.zip",
+        "archive_bytes": 15355998963,
+        "etag": "\"671b842b-39349f2f3\"",
+        "local_index_sha256": "a04ea18eb9b92d0a991feca8b941d897b532442d9de9bdad878e3be852caec7a"
+      },
+      "ex_val": {
+        "url": "https://goose-dataset.de/storage/gooseEx_2d_val.zip",
+        "archive_bytes": 1461287553,
+        "etag": "\"671b83ad-57197a81\"",
+        "local_index_sha256": "033609d50aadf7e8a16e678bf806f09feb92d6e28dbd1ff06e19f54541517b44"
+      }
+    },
+    "policy": "Download selected native semantic/instance masks and RGB records only; never the full archives",
+    "target_ids": {
+      "4": "obstacle_region",
+      "28": "tree_trunk",
+      "29": "debris_region",
+      "40": "rock",
+      "62": "tree_root_region"
+    },
+    "void_ids": [
+      0,
+      8,
+      56
+    ],
+    "blockage_ground_truth": false,
+    "erosion_ground_truth": false,
+    "included_in_cycle2_trail_training": true
+  },
+  "urban_waste": {
+    "homepage": "https://zenodo.org/records/17025661",
+    "citation": "Mahmood, I. (2025). Garbage Detection Dataset for Pakistan. DOI:10.5281/zenodo.17025661",
+    "licence": "CC BY 4.0",
+    "archive_md5": "0784035419d611de391a4244e04900fd",
+    "archive_sha256": "632fadd26ddc791dc38251bdbf12c6ed79c26735d27c46136d4e3e9b3539c267",
+    "metadata_sha256": "783f63329cc49e8203034995cdd4c7bf8a474f9ee8909905319ce0b22541f47d",
+    "policy": "Coarse classification labels; source-labelled negatives require explicit visual review before empty segmentation labels",
+    "included_in_cycle2_training": false
+  },
+  "mobima": {
+    "homepage": "https://publikationen.bibliothek.kit.edu/1000162515",
+    "doi": "10.35097/1750",
+    "licence": "CC BY-SA 4.0",
+    "archive_md5": "5ed4d87b70ca10d00f6ef8ad5f0abef7",
+    "archive_sha256": "90bc55c4ac99f8c71a877e9cb04478e5ff0b00fb0049ed916f15742a1bdc82b2",
+    "photos": 293,
+    "classes": [
+      "stem",
+      "tree",
+      "stump",
+      "obstacle",
+      "person"
+    ],
+    "policy": "Annotated photos used in the supplemental seven-class trail-object detector; non-passable-obstacle has limited validation and no independent test positives.",
+    "included_in_current_training": false,
+    "included_in_cycle2_trail_training": true
+  },
+  "previous_public_test_reuse_for_tuning": false,
+  "target_active_profile_photos": 2059,
+  "full_component_ready": false,
+  "cycle2_trail_profile": {
+    "photos": 560,
+    "train": 391,
+    "validation": 118,
+    "test": 51,
+    "dataset_manifest": "results/component2_cycle2/trail_manifest.csv",
+    "dataset_manifest_sha256": "5b058ae9ff2002c3c3e7f5fe626c400e3b0ca24395d8a7c06e1681dc6a964bd6",
+    "model": "YOLOv8n",
+    "accuracy_accepted": false,
+    "test_input": "GOOSE extension real camera RGB",
+    "test_used_for_tuning": false
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "completed_at": "2026-10-21T14:09:52.413942+05:30",
+  "task": "litter",
+  "imgsz": 640,
+  "source_checkpoint": "sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "source_sha256": "f7397314c0587098e87d2e5bced8bec259a1698060d966222965fa059a334a55",
+  "artifacts": {
+    "fp32": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_fp32.tflite",
+      "bytes": 13704469,
+      "sha256": "d63d91416eb0a1c2a381cf831b896b0f0fa19101ed7500251580cb53fbbb1527",
+      "inputs": [
+        {
+          "name": "images",
+          "shape": [
+            1,
+            640,
+            640,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Identity",
+          "shape": [
+            1,
+            37,
+            8400
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        },
+        {
+          "name": "Identity_1",
+          "shape": [
+            1,
+            160,
+            160,
+            32
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    },
+    "dynamic_int8": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_dynamic_int8.tflite",
+      "bytes": 3643497,
+      "sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+      "inputs": [
+        {
+          "name": "serving_default_images:0",
+          "shape": [
+            1,
+            640,
+            640,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PartitionedCall:1",
+          "shape": [
+            1,
+            160,
+            160,
+            32
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        },
+        {
+          "name": "PartitionedCall:0",
+          "shape": [
+            1,
+            37,
+            8400
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    },
+    "int8": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_int8.tflite",
+      "bytes": 3651297,
+      "sha256": "cd8be0745cf00302cefe09ff7c009b21cd6dd9fe2002b1d1c775da80ae218821",
+      "inputs": [
+        {
+          "name": "serving_default_images:0",
+          "shape": [
+            1,
+            640,
+            640,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PartitionedCall:1",
+          "shape": [
+            1,
+            160,
+            160,
+            32
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        },
+        {
+          "name": "PartitionedCall:0",
+          "shape": [
+            1,
+            37,
+            8400
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    }
+  },
+  "conversion_route": "Pinned ONNX opset17 -> onnx2tf 1.26.3 -> TensorFlow 2.19 LiteRT",
+  "calibration_images": 64,
+  "calibration_split": "train",
+  "calibration_manifest_sha256": "087ef42045815c37fcccff8e6d0c2e1224d2bde36f5d4f7d8e941a31073d4a20",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "coordinates": "First four dense output channels are xywh normalized to square input; prototypes are NHWC.",
+  "accuracy_validated_after_export": false,
+  "physical_phone_benchmarked": false,
+  "full_component_ready": false
+}

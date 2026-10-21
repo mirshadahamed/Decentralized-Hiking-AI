@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TACO: Debug preprocessing",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sajana.src.data.prepare_supplied_taco",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "TACO: Debug label audit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sajana.src.data.verify_taco_ready",
+      "args": [
+        "--labels-only",
+        "--dataset",
+        "sajana/data/processed/taco_litter_seg_clean",
+        "--annotations",
+        "sajana/data/interim/taco/annotations_official_cleaned.json"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "TACO: Debug complete verification",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sajana.src.data.verify_taco_ready",
+      "args": [
+        "--dataset",
+        "sajana/data/processed/taco_litter_seg_clean",
+        "--annotations",
+        "sajana/data/interim/taco/annotations_official_cleaned.json"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

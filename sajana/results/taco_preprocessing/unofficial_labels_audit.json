@@ -1,0 +1,51 @@
+{
+  "mode": "labels_only",
+  "passed": true,
+  "training_ready": false,
+  "training_pool_ready": false,
+  "split_policy": "train_only",
+  "dataset_role": "optional train-only pool",
+  "status": "labels_verified_images_not_checked",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_unofficial_litter_seg",
+  "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_validated.json",
+  "source_coverage": {
+    "images": 3808,
+    "annotations": 8134,
+    "manifest_images": 3808,
+    "missing_images": 0,
+    "unexpected_images": 0
+  },
+  "image_checks_performed": false,
+  "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+  "splits": {
+    "train": {
+      "images": 3808,
+      "objects": 8134,
+      "present_labels": 3808,
+      "present_images": 0,
+      "missing_images": 3808,
+      "verified_images": 0,
+      "resized_images": 0
+    },
+    "val": {
+      "images": 0,
+      "objects": 0,
+      "present_labels": 0,
+      "present_images": 0,
+      "missing_images": 0,
+      "verified_images": 0,
+      "resized_images": 0
+    },
+    "test": {
+      "images": 0,
+      "objects": 0,
+      "present_labels": 0,
+      "present_images": 0,
+      "missing_images": 0,
+      "verified_images": 0,
+      "resized_images": 0
+    }
+  },
+  "warnings": [],
+  "issues": []
+}

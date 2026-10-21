@@ -1,0 +1,175 @@
+{
+  "dataset": "WildScenes2d",
+  "task": "auxiliary_terrain_semantic_segmentation",
+  "source_url": "https://data.csiro.au/collection/csiro:61541",
+  "repository": "https://github.com/csiro-robotics/WildScenes",
+  "source_revision": "9eb4e10b4483a634159e2b371be0437e465fe218",
+  "split_policy": "author_opt2d",
+  "resize": false,
+  "class_names": [
+    "unlabelled",
+    "asphalt/concrete",
+    "dirt",
+    "mud",
+    "water",
+    "gravel",
+    "other-terrain",
+    "tree-trunk",
+    "tree-foliage",
+    "bush",
+    "fence",
+    "other-structure",
+    "pole",
+    "vehicle",
+    "rock",
+    "log",
+    "other-object",
+    "sky",
+    "grass"
+  ],
+  "palette": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      255,
+      165,
+      0
+    ],
+    [
+      60,
+      180,
+      75
+    ],
+    [
+      255,
+      225,
+      25
+    ],
+    [
+      0,
+      130,
+      200
+    ],
+    [
+      145,
+      30,
+      180
+    ],
+    [
+      70,
+      240,
+      240
+    ],
+    [
+      240,
+      50,
+      230
+    ],
+    [
+      210,
+      245,
+      60
+    ],
+    [
+      230,
+      25,
+      75
+    ],
+    [
+      0,
+      128,
+      128
+    ],
+    [
+      170,
+      110,
+      40
+    ],
+    [
+      255,
+      250,
+      200
+    ],
+    [
+      128,
+      0,
+      0
+    ],
+    [
+      170,
+      255,
+      195
+    ],
+    [
+      128,
+      128,
+      0
+    ],
+    [
+      250,
+      190,
+      190
+    ],
+    [
+      0,
+      0,
+      128
+    ],
+    [
+      128,
+      128,
+      128
+    ]
+  ],
+  "ignore_index": 0,
+  "source_id_mapping": {
+    "0": "unlabelled",
+    "1": "asphalt/concrete",
+    "2": "dirt",
+    "3": "mud",
+    "4": "water",
+    "5": "gravel",
+    "6": "other-terrain",
+    "7": "tree-trunk",
+    "8": "tree-foliage",
+    "9": "bush",
+    "10": "fence",
+    "11": "other-structure",
+    "12": "pole",
+    "13": "vehicle",
+    "14": "rock",
+    "15": "log",
+    "16": "other-object",
+    "17": "sky",
+    "18": "grass"
+  },
+  "source_rgb_images": 9306,
+  "selected_pairs": 8467,
+  "author_unassigned_rgb_count": 839,
+  "author_unassigned_reason": "Not assigned to the author opt2d train/val/test split; not missing downloads",
+  "licence": "CC BY-NC-SA 4.0",
+  "scope_note": "Terrain/object semantic classes provide auxiliary scene context; they are not hiking passability or trail-damage annotations.",
+  "passed": true,
+  "training_ready": true,
+  "splits": {
+    "train": {
+      "expected_pairs": 6051,
+      "verified_pairs": 6051
+    },
+    "val": {
+      "expected_pairs": 283,
+      "verified_pairs": 283
+    },
+    "test": {
+      "expected_pairs": 2133,
+      "verified_pairs": 2133
+    }
+  },
+  "issues": [],
+  "exact_duplicate_check": "decoded RGB SHA256 across author splits",
+  "complete_author_split_coverage": true,
+  "model_trained": false
+}

@@ -1,0 +1,8 @@
+{
+  "batch_14/000058.jpg": {
+    "orientation": "exif",
+    "source_sha256": "057d75eaaf82d98fc4a79bd424ecc1887cd1bc01c049386268d29aa6e142dd4f",
+    "reason": "Reviewed raw and EXIF-rotated polygon overlays. Applying EXIF orientation 3 (180 degrees) aligns the polygon with the wrapper. Raw pixels do not align.",
+    "review_artifact": "sajana/results/taco_preprocessing/orientation_review.jpg"
+  }
+}

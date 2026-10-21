@@ -1,0 +1,278 @@
+{
+  "changed_at": "2026-10-21T12:47:06.463891+05:30",
+  "reason": "User requests around 2000 images total and reduced storage/memory",
+  "image_budget_total": 2000,
+  "previous_queue": {
+    "started_at": "2026-10-21T07:43:18.769028+05:30",
+    "pid": 6573,
+    "phase": "running_O1",
+    "jobs": {
+      "L2": {
+        "job": "L2",
+        "task": "segment",
+        "model": "yolov8n-seg.pt",
+        "names": {
+          "0": "litter"
+        },
+        "device": "mps",
+        "pid": 14801,
+        "role": "Compact TACO+MJU litter candidate; differs from L1 in resolution and training budget, so not a data-only ablation",
+        "test_split_used_for_training": false,
+        "full_component_ready": false,
+        "phase": "completed",
+        "configuration": {
+          "epochs": 50,
+          "patience": 15,
+          "imgsz": 416,
+          "batch": 2,
+          "workers": 0,
+          "cache": false,
+          "amp": false,
+          "plots": false,
+          "save_period": -1,
+          "seed": 42,
+          "deterministic": true
+        },
+        "updated_at": "2026-10-21T12:28:52.977053+05:30",
+        "versions": {
+          "python": "3.9.6",
+          "torch": "2.8.0",
+          "ultralytics": "8.4.183"
+        },
+        "batches_seen": 62850,
+        "planned_epochs": 50,
+        "train_loader_images": 2513,
+        "train_loader_objects": 5138,
+        "val_loader_images": 286,
+        "val_loader_objects": 675,
+        "optimizer_resume": false,
+        "current_epoch": 50,
+        "latest_loss": 6.966858863830566,
+        "completed_epochs": 50,
+        "validation_images": 286,
+        "metrics": {
+          "metrics/precision(B)": 0.7080073425862583,
+          "metrics/recall(B)": 0.4651851851851852,
+          "metrics/mAP50(B)": 0.5085284475542584,
+          "metrics/mAP50-95(B)": 0.3439776474930524,
+          "metrics/precision(M)": 0.6997612402491794,
+          "metrics/recall(M)": 0.4350615292069441,
+          "metrics/mAP50(M)": 0.4742116612491667,
+          "metrics/mAP50-95(M)": 0.27732857347320505
+        },
+        "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/L2/fit/weights/best.pt",
+        "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/L2/fit/weights/last.pt",
+        "finished_at": "2026-10-21T12:28:52.977040+05:30"
+      },
+      "O1": {
+        "job": "O1",
+        "task": "detect",
+        "model": "yolov8n.pt",
+        "names": {
+          "0": "rock_region",
+          "1": "log_region"
+        },
+        "device": "mps",
+        "pid": 26703,
+        "role": "WildScenes rock/log semantic-region context detector; object presence does not establish trail blockage",
+        "test_split_used_for_training": false,
+        "full_component_ready": false,
+        "phase": "training",
+        "configuration": {
+          "epochs": 50,
+          "patience": 15,
+          "imgsz": 416,
+          "batch": 2,
+          "workers": 0,
+          "cache": false,
+          "amp": false,
+          "plots": false,
+          "save_period": -1,
+          "seed": 42,
+          "deterministic": true
+        },
+        "updated_at": "2026-10-21T12:46:58.925555+05:30",
+        "versions": {
+          "python": "3.9.6",
+          "torch": "2.8.0",
+          "ultralytics": "8.4.183"
+        },
+        "batches_seen": 5900,
+        "planned_epochs": 50,
+        "train_loader_images": 6051,
+        "train_loader_objects": 9502,
+        "val_loader_images": 283,
+        "val_loader_objects": 319,
+        "optimizer_resume": false,
+        "current_epoch": 2,
+        "latest_loss": 2.0498759746551514,
+        "completed_epochs": 1,
+        "validation_images": 283,
+        "metrics": {
+          "metrics/precision(B)": 0.53674,
+          "metrics/recall(B)": 0.04589,
+          "metrics/mAP50(B)": 0.0109,
+          "metrics/mAP50-95(B)": 0.00286,
+          "val/box_loss": 2.11159,
+          "val/cls_loss": 2.57439,
+          "val/dfl_loss": 1.10327
+        },
+        "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/O1/fit/weights/best.pt",
+        "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/O1/fit/weights/last.pt"
+      }
+    },
+    "remaining_data_gaps": [
+      "Reviewed local trail obstruction versus clear-trail assessment",
+      "Reviewed erosion and exposed-root detection",
+      "Independent local trail evaluation",
+      "Validated on-device export and physical 4 GB Android benchmark"
+    ],
+    "full_component_ready": false,
+    "L1": {
+      "experiment": "L1",
+      "phase": "completed",
+      "training_started": true,
+      "full_run_started": true,
+      "started_at": "2026-10-20T21:37:20.843324+05:30",
+      "pid": 2214,
+      "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
+      "model": "yolov8n-seg.pt",
+      "target_classes": {
+        "0": "litter"
+      },
+      "planned_epochs": 100,
+      "batch": 4,
+      "imgsz": 640,
+      "test_split_used_for_training": false,
+      "full_trail_damage_model": false,
+      "completed_epochs": 100,
+      "main_batches_seen": 25891,
+      "updated_at": "2026-10-21T09:37:00.929004+05:30",
+      "device": "mps",
+      "versions": {
+        "python": "3.9.6",
+        "torch": "2.8.0",
+        "ultralytics": "8.4.183"
+      },
+      "dataset_counts": {
+        "train": {
+          "images": 1028,
+          "objects": 3611,
+          "present_labels": 1028,
+          "present_images": 1028,
+          "missing_images": 0,
+          "verified_images": 1028,
+          "resized_images": 0
+        },
+        "val": {
+          "images": 286,
+          "objects": 675,
+          "present_labels": 286,
+          "present_images": 286,
+          "missing_images": 0,
+          "verified_images": 286,
+          "resized_images": 0
+        },
+        "test": {
+          "images": 185,
+          "objects": 497,
+          "present_labels": 185,
+          "present_images": 185,
+          "missing_images": 0,
+          "verified_images": 185,
+          "resized_images": 0
+        }
+      },
+      "smoke_training_images": 8,
+      "smoke_batches_seen": 4,
+      "last_smoke_loss": 27.233154296875,
+      "smoke_passed": true,
+      "save_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit",
+      "effective_batch": 4,
+      "current_epoch": 100,
+      "last_training_loss": 17.00581932067871,
+      "metrics": {
+        "metrics/precision(B)": 0.7713829625678806,
+        "metrics/recall(B)": 0.45488249445184503,
+        "metrics/mAP50(B)": 0.5328871640412862,
+        "metrics/mAP50-95(B)": 0.38346582023299763,
+        "metrics/precision(M)": 0.7866340329009237,
+        "metrics/recall(M)": 0.4488888888888889,
+        "metrics/mAP50(M)": 0.5162648507280598,
+        "metrics/mAP50-95(M)": 0.32072811611323776
+      },
+      "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+      "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/last.pt",
+      "active_console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_resume_20261021_065303.log",
+      "validation_policy": "complete_nms_no_wall_clock_cutoff",
+      "historical_validation_provisional_through_epoch": 22,
+      "recovery_manifest_path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_065303/manifest.json",
+      "resumed_from_completed_epoch": 57,
+      "baseline_validation_complete": true,
+      "complete_validation_images": 286,
+      "interruption_evidence_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/reboot_interruption_20261021_065303",
+      "finished_at": "2026-10-21T09:37:00.928994+05:30"
+    },
+    "updated_at": "2026-10-21T12:46:59.610518+05:30",
+    "active_console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/component2_training/O1_20261021_123059.log"
+  },
+  "previous_obstacle_job": {
+    "job": "O1",
+    "task": "detect",
+    "model": "yolov8n.pt",
+    "names": {
+      "0": "rock_region",
+      "1": "log_region"
+    },
+    "device": "mps",
+    "pid": 26703,
+    "role": "WildScenes rock/log semantic-region context detector; object presence does not establish trail blockage",
+    "test_split_used_for_training": false,
+    "full_component_ready": false,
+    "phase": "training",
+    "configuration": {
+      "epochs": 50,
+      "patience": 15,
+      "imgsz": 416,
+      "batch": 2,
+      "workers": 0,
+      "cache": false,
+      "amp": false,
+      "plots": false,
+      "save_period": -1,
+      "seed": 42,
+      "deterministic": true
+    },
+    "updated_at": "2026-10-21T12:47:05.267660+05:30",
+    "versions": {
+      "python": "3.9.6",
+      "torch": "2.8.0",
+      "ultralytics": "8.4.183"
+    },
+    "batches_seen": 5940,
+    "planned_epochs": 50,
+    "train_loader_images": 6051,
+    "train_loader_objects": 9502,
+    "val_loader_images": 283,
+    "val_loader_objects": 319,
+    "optimizer_resume": false,
+    "current_epoch": 2,
+    "latest_loss": 16.31979751586914,
+    "completed_epochs": 1,
+    "validation_images": 283,
+    "metrics": {
+      "metrics/precision(B)": 0.53674,
+      "metrics/recall(B)": 0.04589,
+      "metrics/mAP50(B)": 0.0109,
+      "metrics/mAP50-95(B)": 0.00286,
+      "val/box_loss": 2.11159,
+      "val/cls_loss": 2.57439,
+      "val/dfl_loss": 1.10327
+    },
+    "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/O1/fit/weights/best.pt",
+    "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/O1/fit/weights/last.pt"
+  },
+  "saved_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_training/jobs/O1/fit/weights/last.pt",
+  "saved_checkpoint_bytes": 31739239,
+  "datasets_deleted": false
+}

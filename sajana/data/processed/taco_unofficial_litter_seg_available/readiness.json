@@ -1,0 +1,62 @@
+{
+  "mode": "full",
+  "passed": true,
+  "training_ready": false,
+  "training_pool_ready": true,
+  "split_policy": "train_only",
+  "dataset_role": "optional train-only pool",
+  "status": "training_pool_verified_no_evaluation_split",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/taco_unofficial_litter_seg_available",
+  "annotations": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/taco/annotations_unofficial_available.json",
+  "source_coverage": {
+    "images": 3762,
+    "annotations": 8053,
+    "manifest_images": 3762,
+    "missing_images": 0,
+    "unexpected_images": 0
+  },
+  "image_checks_performed": true,
+  "source_polygon_check": "ordered single polygons; vertex coverage for bridged multipart polygons",
+  "splits": {
+    "train": {
+      "images": 3762,
+      "objects": 8053,
+      "present_labels": 3762,
+      "present_images": 3762,
+      "missing_images": 0,
+      "verified_images": 3762,
+      "resized_images": 2240
+    },
+    "val": {
+      "images": 0,
+      "objects": 0,
+      "present_labels": 0,
+      "present_images": 0,
+      "missing_images": 0,
+      "verified_images": 0,
+      "resized_images": 0
+    },
+    "test": {
+      "images": 0,
+      "objects": 0,
+      "present_labels": 0,
+      "present_images": 0,
+      "missing_images": 0,
+      "verified_images": 0,
+      "resized_images": 0
+    }
+  },
+  "warnings": [],
+  "issues": [],
+  "expected_source_images": 3808,
+  "available_subset": true,
+  "canonical_source_complete": false,
+  "source_sha256": "aa9b389ed9923a9015781c774ca01163d51a937f520235c4e7298f499d0acc56",
+  "excluded_images": 46,
+  "exclusion_reason_counts": {
+    "missing_or_invalid_photo": 39,
+    "exact_duplicate_in_auxiliary_pool": 7
+  },
+  "originals_preserved": true,
+  "annotation_review_status": "unofficial source annotations remain unreviewed; optional auxiliary training only"
+}

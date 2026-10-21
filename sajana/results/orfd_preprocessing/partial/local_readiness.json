@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "training_ready": false,
+  "training_pool_ready": true,
+  "train_only": false,
+  "partial_available_source": true,
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/orfd_path_seg_partial",
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/raw/orfd/partial/ORFD",
+  "splits": {
+    "train": {
+      "images": 3806,
+      "verified_pairs": 3806
+    },
+    "val": {
+      "images": 0,
+      "verified_pairs": 0
+    },
+    "test": {
+      "images": 2193,
+      "verified_pairs": 2193
+    }
+  },
+  "issue_count": 0,
+  "issues": [],
+  "published_image_count": 12198,
+  "available_image_count": 5999,
+  "published_split_counts": {
+    "train": 8398,
+    "val": 1245,
+    "test": 2555
+  },
+  "published_count_complete": false,
+  "independent_hiking_evaluation_supported": false,
+  "source_sequence_metadata_available": false,
+  "warnings": [
+    "Author-linked mirror may omit source frames; available counts are not the full published dataset.",
+    "Freespace is an auxiliary vehicle traversability proxy, not hiking safety or damage ground truth.",
+    "Flattened mirror lacks original sequence names; do not claim verified sequence independence."
+  ],
+  "phase": "partial_preprocessed_download_quota_exceeded",
+  "download_complete": false,
+  "full_mirror_ready": false,
+  "expected_mirror_pairs": 11830,
+  "download": {
+    "complete": false,
+    "phase": "download_failed",
+    "completed_ranges": 229,
+    "expected_ranges": 507,
+    "downloaded_bytes": 7482522514,
+    "expected_bytes": 16547561726,
+    "elapsed_seconds": 811,
+    "source_url": "https://github.com/chaytonmin/Off-Road-Freespace-Detection/issues/6#issuecomment-1347324143",
+    "error": "Drive refused range: HTTP 200; Google Drive - Quota exceeded",
+    "resume_supported": true
+  }
+}

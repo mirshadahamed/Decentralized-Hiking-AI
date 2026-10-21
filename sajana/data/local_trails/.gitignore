@@ -1,0 +1,7 @@
+# Local photographs and annotation payloads stay local by default.
+images/*
+!images/.gitkeep
+annotations/*
+!annotations/.gitkeep
+review/*
+!review/.gitkeep

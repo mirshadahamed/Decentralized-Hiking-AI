@@ -1,0 +1,9 @@
+# Cleaned official TACO data. Regenerate with TACO: Preprocess supplied data.
+# All original categories map to litter; the duplicate image is excluded.
+# Use the generated dataset data.yaml for absolute paths during training.
+train: ../data/processed/taco_litter_seg_clean/images/train
+val: ../data/processed/taco_litter_seg_clean/images/val
+test: ../data/processed/taco_litter_seg_clean/images/test
+
+names:
+  0: litter

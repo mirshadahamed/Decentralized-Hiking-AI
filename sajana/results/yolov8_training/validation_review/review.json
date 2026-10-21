@@ -1,0 +1,64 @@
+{
+  "checked_at": "2026-10-20T22:23:13.452887+05:30",
+  "scope": "Four evenly spaced validation images, visual geometry/error review only; not a representative accuracy estimate or held-out test.",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "checkpoint_sha256": "b35a7d9ef88c35fd3aee108a09dfdf3da1c37e58774a30cf35f2fa2babcdc2e0",
+  "completed_epochs_at_review": 8,
+  "confidence": 0.25,
+  "threshold_status": "Provisional review threshold, not selected for app use",
+  "device": "cpu",
+  "test_images_used": false,
+  "cases": [
+    {
+      "image": "batch_11__000000.jpg",
+      "source_image_id": "201",
+      "ground_truth_objects": 3,
+      "predicted_objects": 2,
+      "confidences": [
+        0.43873313069343567,
+        0.2503160536289215
+      ],
+      "overlay": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/validation_review/batch_11__000000_review.jpg"
+    },
+    {
+      "image": "batch_11__000095.jpg",
+      "source_image_id": "296",
+      "ground_truth_objects": 8,
+      "predicted_objects": 1,
+      "confidences": [
+        0.8470545411109924
+      ],
+      "overlay": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/validation_review/batch_11__000095_review.jpg"
+    },
+    {
+      "image": "batch_3__IMG_5061.jpg",
+      "source_image_id": "868",
+      "ground_truth_objects": 2,
+      "predicted_objects": 1,
+      "confidences": [
+        0.5108696818351746
+      ],
+      "overlay": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/validation_review/batch_3__IMG_5061_review.jpg"
+    },
+    {
+      "image": "batch_4__000098.jpg",
+      "source_image_id": "963",
+      "ground_truth_objects": 2,
+      "predicted_objects": 1,
+      "confidences": [
+        0.5089700818061829
+      ],
+      "overlay": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/validation_review/batch_4__000098_review.jpg"
+    }
+  ],
+  "visual_review": {
+    "review_scope": "Visual inspection of all four diagnostic panels; not independent annotation or a statistical evaluation.",
+    "observations": [
+      "The bottle in batch_11__000095 is located, while several smaller annotated items are not detected at the provisional threshold.",
+      "The large bag in batch_3__IMG_5061 is located, while the small item on the step is missed.",
+      "Some foam-container mask contours in batch_11__000000 extend into background regions.",
+      "Transparent material in batch_4__000098 is incompletely segmented."
+    ],
+    "decision": "Continue scheduled training; reassess errors on validation after model selection. App readiness is not established."
+  }
+}

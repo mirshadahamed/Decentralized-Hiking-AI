@@ -1,0 +1,9 @@
+{
+  "verified_at": "2026-10-21T14:55:00.222543+05:30",
+  "passed": true,
+  "total_images": 2000,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "all_selected_image_and_label_hashes_rechecked": true,
+  "role": "Post-training input integrity; does not establish model accuracy"
+}

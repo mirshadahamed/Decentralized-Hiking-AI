@@ -1,0 +1,18 @@
+{
+  "created_at": "2026-10-21T06:53:09.709739+05:30",
+  "code_commit": "6374bdd7e23b0cd8e610f4dc9ee53ad0adf3dba7",
+  "resume_source_sha256": "d9e401d679d565830b71d26b8b774e574c14fc15c7adc27f4d95fada7e261856",
+  "validator_source_sha256": "3a0a41bb72625287c54acf79efdca1ab8f87e6223699ae7a139753459be0121e",
+  "original_run_manifest_sha256": "4f74296353c63ea78abe9f5c966448b2d94eaa8bb64e3ec1f36ada6d82f9c211",
+  "original_resume_checkpoint_sha256": "0b4aa40c39f858010f7eb034e1989a8519a76a7818346cb774364f7020c1434d",
+  "resume_completed_epochs": 57,
+  "checkpoint_backup_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_065303",
+  "optimizer_and_ema_restored": true,
+  "frozen_data_hashes_rechecked": true,
+  "test_model_evaluation_performed": false,
+  "historical_epoch_scores_provisional": true,
+  "historical_validation_provisional_through_epoch": 22,
+  "selection_state_reset": false,
+  "previous_recovery_manifest": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_000544/manifest.json",
+  "selection_policy": "Revalidate the current checkpoint while retaining saved best fitness, best checkpoint and early-stopping state."
+}

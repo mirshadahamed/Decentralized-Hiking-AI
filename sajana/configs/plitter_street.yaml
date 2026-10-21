@@ -1,0 +1,11 @@
+# pLitterStreet provides detection boxes, not litter instance masks.
+# Check results/plitter_preprocessing/local_readiness.json first.
+# Prefer the generated absolute data.yaml; it is created only after full checks pass.
+train: ../data/processed/plitter_street_det/images/train
+val: ../data/processed/plitter_street_det/images/val
+test: ../data/processed/plitter_street_det/images/test
+names:
+  0: plastic_litter
+  1: litter_pile
+  2: face_mask
+  3: trash_bin

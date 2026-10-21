@@ -1,0 +1,69 @@
+{
+  "platform": "macOS-26.0-arm64-arm-64bit",
+  "runtime": "ai-edge-litert 2.1.4 CPU, two threads",
+  "python_torch_stack_used": false,
+  "physical_android_test": false,
+  "process_rss_before_models_bytes": 79347712,
+  "process_peak_rss_bytes": 180781056,
+  "models": {
+    "litter": {
+      "cold_interpreter_ms": 37.52900000108639,
+      "warm_median_ms": 65.4709170012211,
+      "warm_p95_ms": 84.78279170049062,
+      "repeated_photos": 40,
+      "all_outputs_finite_and_repeatable": true,
+      "steady_state_rss_change_bytes": -13500416,
+      "memory_samples_after_warmup": [
+        {
+          "repeat": 10,
+          "rss_bytes": 180568064
+        },
+        {
+          "repeat": 20,
+          "rss_bytes": 176685056
+        },
+        {
+          "repeat": 30,
+          "rss_bytes": 163430400
+        },
+        {
+          "repeat": 40,
+          "rss_bytes": 163430400
+        }
+      ],
+      "artifact_bytes": 3643497,
+      "artifact_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012"
+    },
+    "obstacle": {
+      "cold_interpreter_ms": 12.041250000038417,
+      "warm_median_ms": 21.99520799877064,
+      "warm_p95_ms": 25.817010749233305,
+      "repeated_photos": 40,
+      "all_outputs_finite_and_repeatable": true,
+      "steady_state_rss_change_bytes": -1146880,
+      "memory_samples_after_warmup": [
+        {
+          "repeat": 10,
+          "rss_bytes": 170590208
+        },
+        {
+          "repeat": 20,
+          "rss_bytes": 169443328
+        },
+        {
+          "repeat": 30,
+          "rss_bytes": 169443328
+        },
+        {
+          "repeat": 40,
+          "rss_bytes": 169443328
+        }
+      ],
+      "artifact_bytes": 3317189,
+      "artifact_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539"
+    }
+  },
+  "app_release_ready": false,
+  "note": "Mac Python process measurements include Python, NumPy, image decoding and interpreter overhead; they do not establish Android PSS, RAM, latency or battery behavior.",
+  "verified_against_final_asset_manifest": true
+}

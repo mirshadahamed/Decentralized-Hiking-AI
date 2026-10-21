@@ -1,0 +1,8 @@
+# MJU original splits; auxiliary litter source, not independent evaluation.
+# Prefer the generated dataset data.yaml with absolute paths for training.
+train: ../data/processed/mju_waste_litter_seg/images/train
+val: ../data/processed/mju_waste_litter_seg/images/val
+test: ../data/processed/mju_waste_litter_seg/images/test
+
+names:
+  0: litter

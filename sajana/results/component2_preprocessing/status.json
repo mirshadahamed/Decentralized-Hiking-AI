@@ -1,0 +1,488 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-21T09:37:02.760075+05:30",
+  "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
+  "preparation_order": [
+    "source inventory and taxonomy",
+    "retain immutable source and verify acquisition checksums",
+    "source-specific label conversion and source-aware splits",
+    "full pair/geometry/label/duplicate verification",
+    "review overlays and freeze source data cards",
+    "collect and review joint local trail annotations before full component training"
+  ],
+  "datasets": [
+    {
+      "key": "taco",
+      "task": "litter instance segmentation",
+      "role": "required",
+      "state": "verified_prepared",
+      "dataset": "data/processed/taco_litter_seg_clean",
+      "verification_report": "results/taco_preprocessing/official_clean_readiness.json",
+      "verification_report_sha256": "38ac36db9c62ec98d66589bfb06980983503d3c8a139455fec1b4ad4ca2962c5",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 1028,
+        "val": 286,
+        "test": 185
+      },
+      "current_pairs": {
+        "train": {
+          "images": 1028,
+          "labels": 1028,
+          "paired": 1028,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 286,
+          "labels": 286,
+          "paired": 286,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 185,
+          "labels": 185,
+          "paired": 185,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": [
+        "source annotation ID 309 is repeated; all records are retained",
+        "source annotation ID 4040 is repeated; all records are retained"
+      ]
+    },
+    {
+      "key": "mju",
+      "task": "auxiliary litter instance segmentation",
+      "role": "selected_auxiliary",
+      "state": "verified_prepared",
+      "dataset": "data/processed/mju_waste_litter_seg",
+      "verification_report": "results/mju_preprocessing/local_readiness.json",
+      "verification_report_sha256": "815fb8e4078d6f3af66e1282661ec37e272f293ed3044a3ba778183fa66a4ffe",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 1485,
+        "val": 248,
+        "test": 742
+      },
+      "current_pairs": {
+        "train": {
+          "images": 1485,
+          "labels": 1485,
+          "paired": 1485,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 248,
+          "labels": 248,
+          "paired": 248,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 742,
+          "labels": 742,
+          "paired": 742,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": [
+        "MJU official splits contain temporally adjacent frames; use TACO/local held-out data for the component evaluation."
+      ]
+    },
+    {
+      "key": "taco_mju",
+      "task": "combined binary litter baseline",
+      "role": "derived",
+      "state": "verified_prepared",
+      "dataset": "data/processed/litter_taco_mju_aux",
+      "verification_report": "data/processed/litter_taco_mju_aux/readiness.json",
+      "verification_report_sha256": "0ad2d96a6b10bbd59fd9c3d18463648f0904717bbcee681166e52ca5ac10b4a2",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 2513,
+        "val": 286,
+        "test": 185
+      },
+      "current_pairs": {
+        "train": {
+          "images": 2513,
+          "labels": 2513,
+          "paired": 2513,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 286,
+          "labels": 286,
+          "paired": 286,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 185,
+          "labels": 185,
+          "paired": 185,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "unofficial_taco",
+      "task": "unreviewed litter auxiliary pool",
+      "role": "optional",
+      "state": "verified_auxiliary_pool",
+      "dataset": "data/processed/taco_unofficial_litter_seg_available",
+      "verification_report": "results/taco_preprocessing/unofficial_available_readiness.json",
+      "verification_report_sha256": "646ec826ce39c451625bc45c9b5c302f9a78c0b0f9d9791dec418e24d5ff44e8",
+      "available_data_ready": true,
+      "source_release_complete": false,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 3762,
+        "val": 0,
+        "test": 0
+      },
+      "current_pairs": {
+        "train": {
+          "images": 3762,
+          "labels": 3762,
+          "paired": 3762,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 0,
+          "labels": 0,
+          "paired": 0,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "plitter",
+      "task": "litter and trash-bin object detection",
+      "role": "required",
+      "state": "not_ready",
+      "dataset": "data/processed/plitter_street_det",
+      "verification_report": "results/plitter_preprocessing/local_readiness.json",
+      "verification_report_sha256": "1753e7de7275bd46525f99bad8f66420006481b86b6ad546c3847ccb98e0ff5a",
+      "available_data_ready": false,
+      "source_release_complete": false,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 12086,
+        "val": 1511,
+        "test": 1508
+      },
+      "current_pairs": {
+        "train": {
+          "images": 12082,
+          "labels": 12086,
+          "paired": 12082,
+          "unpaired_images": 0,
+          "orphan_labels": 4
+        },
+        "val": {
+          "images": 1510,
+          "labels": 1511,
+          "paired": 1510,
+          "unpaired_images": 0,
+          "orphan_labels": 1
+        },
+        "test": {
+          "images": 1508,
+          "labels": 1508,
+          "paired": 1508,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "status": "archive_verified",
+        "downloaded_bytes": 13728630001,
+        "expected_bytes": 13728630001
+      },
+      "issues": [
+        "train/plitter_372__ATT82_9304590E-91A3-429F-B1FC-8D44377482D5.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_372__ATT82_9304590E-91A3-429F-B1FC-8D44377482D5.jpg'",
+        "train/plitter_528__ATT112_859A6070-BD32-404A-9D22-8B78A83D8430.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_528__ATT112_859A6070-BD32-404A-9D22-8B78A83D8430.jpg'",
+        "train/plitter_449__ATT157_20200304_093209.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_449__ATT157_20200304_093209.jpg'",
+        "train/plitter_651__ATT227_887D62F8-ABCC-40AC-87A3-15FF0DFE0305.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/train/plitter_651__ATT227_887D62F8-ABCC-40AC-87A3-15FF0DFE0305.jpg'",
+        "val/plitter_487__ATT44_D1F39137-D5C8-4051-B739-D6903D4363C2.jpg: identical decoded pixels cross official splits: train/plitter_158__ATT38_CE45F136-BC9A-4067-AF9B-7C0333F038BE.jpg",
+        "val/plitter_317__ATT109_8E872252-A274-49FC-A7FF-62D0031F252A.jpg: image verification: [Errno 2] No such file or directory: '/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_street_det/images/val/plitter_317__ATT109_8E872252-A274-49FC-A7FF-62D0031F252A.jpg'"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "orfd",
+      "task": "auxiliary vehicle freespace segmentation",
+      "role": "selected_auxiliary",
+      "state": "verified_prepared",
+      "dataset": "data/processed/orfd_path_seg",
+      "verification_report": "data/processed/orfd_path_seg/readiness.json",
+      "verification_report_sha256": "0b6f810b4a9b9d7a5cca1fe49a941470378e7fb55113b3e3b0fccaa31ef9ae10",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": false,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 8392,
+        "val": 1245,
+        "test": 2193
+      },
+      "current_pairs": {
+        "train": {
+          "images": 8392,
+          "labels": 8392,
+          "paired": 8392,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 1245,
+          "labels": 1245,
+          "paired": 1245,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 2193,
+          "labels": 2193,
+          "paired": 2193,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": true,
+        "phase": "extracted",
+        "available_image_pairs": 11830
+      },
+      "issues": [],
+      "warnings": [
+        "Author-linked mirror may omit source frames; available counts are not the full published dataset.",
+        "Freespace is an auxiliary vehicle traversability proxy, not hiking safety or damage ground truth.",
+        "Flattened mirror lacks original sequence names; do not claim verified sequence independence."
+      ]
+    },
+    {
+      "key": "rugd",
+      "task": "natural terrain semantic segmentation",
+      "role": "required",
+      "state": "verified_prepared",
+      "dataset": "data/processed/rugd_semantic",
+      "verification_report": "results/rugd_preprocessing/local_readiness.json",
+      "verification_report_sha256": "46b580951097d7118f9404896534b9d43c426e8edb33ad70f4d85a3e58cfbeac",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": false,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 4779,
+        "val": 733,
+        "test": 1924
+      },
+      "current_pairs": {
+        "train": {
+          "images": 4779,
+          "labels": 4779,
+          "paired": 4779,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 733,
+          "labels": 733,
+          "paired": 733,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 1924,
+          "labels": 1924,
+          "paired": 1924,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": true
+      },
+      "issues": [],
+      "warnings": [
+        "Official release has 7436 pairs (4779/733/1924) using published sequence membership; paper Table I states 7456 (4759/733/1964). No records or splits are invented to reconcile this discrepancy.",
+        "Natural terrain/object classes are context, not erosion, exposed-root, route-obstruction or hiking-safety ground truth.",
+        "The website footer CC BY 3.0 statement applies to the Colorlib template, not the dataset. Dataset reuse terms remain unverified."
+      ]
+    },
+    {
+      "key": "wildscenes",
+      "task": "forest terrain semantic segmentation",
+      "role": "required",
+      "state": "verified_prepared",
+      "dataset": "data/processed/wildscenes_terrain_semantic",
+      "verification_report": "results/wildscenes_preprocessing/local_readiness.json",
+      "verification_report_sha256": "6a967d7476493d24a4b420693360944a022d51d043db86d052a2fb9393fc0ed3",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
+      "current_pairs": {
+        "train": {
+          "images": 6051,
+          "labels": 6051,
+          "paired": 6051,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 283,
+          "labels": 283,
+          "paired": 283,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 2133,
+          "labels": 2133,
+          "paired": 2133,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {
+        "complete": true,
+        "phase": "complete",
+        "verified_files": 16934,
+        "remaining_files": 0,
+        "verified_bytes": 44887369710,
+        "selected_files": 16934,
+        "selected_bytes": 44887369710
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "key": "wildscenes_objects",
+      "task": "rock/log semantic-region object detection",
+      "role": "derived",
+      "state": "verified_prepared",
+      "dataset": "data/processed/wildscenes_rock_log_detection",
+      "verification_report": "results/obstacle_context/readiness.json",
+      "verification_report_sha256": "86b0b7914389ccb8f2742eb0768aa3277c09b85e8df4e76b4bfcadac4fad6b3c",
+      "available_data_ready": true,
+      "source_release_complete": true,
+      "published_count_complete": null,
+      "labels_only": false,
+      "expected_splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
+      "current_pairs": {
+        "train": {
+          "images": 6051,
+          "labels": 6051,
+          "paired": 6051,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "val": {
+          "images": 283,
+          "labels": 283,
+          "paired": 283,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        },
+        "test": {
+          "images": 2133,
+          "labels": 2133,
+          "paired": 2133,
+          "unpaired_images": 0,
+          "orphan_labels": 0
+        }
+      },
+      "acquisition_snapshot": {},
+      "issues": [],
+      "warnings": []
+    }
+  ],
+  "geospatial_observations": {
+    "ready": true,
+    "rows": 31489,
+    "image_training_labels": false
+  },
+  "local_trails": {
+    "photos": 0,
+    "manifest_rows": 0,
+    "joint_ground_truth_ready": false,
+    "reason": "User confirmed no annotated local trail dataset; reviewed erosion, roots, obstruction, route-corridor and passability labels are still required."
+  },
+  "all_selected_public_sources_preprocessed": false,
+  "all_component_datasets_preprocessed": false,
+  "litter_baseline_data_ready": true,
+  "full_concurrent_model_data_ready": false,
+  "model_training_started": true,
+  "model_training": {
+    "phase": "completed",
+    "model": "yolov8n-seg.pt",
+    "device": "mps",
+    "training_started": true,
+    "full_run_started": true,
+    "completed_epochs": 100,
+    "main_batches_seen": 25891,
+    "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
+    "updated_at": "2026-10-21T09:37:00.929004+05:30"
+  },
+  "label_policy": "Keep source tasks/classes separate; unannotated target classes are unknown, never negative. No fabricated imagery, masks or severity labels.",
+  "selected_working_profile": {
+    "checked_at": "2026-10-21T13:04:58.824604+05:30",
+    "configuration": "configs/component2_compact_2000.json",
+    "total_images_including_holdouts": 2000,
+    "train": 1378,
+    "validation": 336,
+    "test": 286,
+    "live_training_status": "results/component2_training/queue_status.json",
+    "readiness": "results/component2_training/compact_readiness.json",
+    "source_inventory_counts_are_not_selected_training_counts": true
+  }
+}

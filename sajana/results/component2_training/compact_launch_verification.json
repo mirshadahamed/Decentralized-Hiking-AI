@@ -1,0 +1,71 @@
+{
+  "checked_at": "2026-10-21T12:57:16.281214+05:30",
+  "launch": {
+    "launched_at": "2026-10-21T12:56:24.303118+05:30",
+    "pid": 28815,
+    "awake_helper_pid": 28816,
+    "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/component2_training/compact_O1_20261021_125624.log",
+    "code_commit": "b3b2a4ce7e0c0f73842409989b9cdc5e0e7babfd",
+    "total_dataset_images_including_holdouts": 2000,
+    "litter_model": "Completed TACO-only L1 baseline retained",
+    "obstacle_training_images": 350,
+    "obstacle_validation_images": 50,
+    "obstacle_reserved_test_images": 101,
+    "larger_O1_stopped": true,
+    "original_source_files_deleted": false,
+    "full_component_ready": false
+  },
+  "full_run": {
+    "job": "O1_compact",
+    "task": "detect",
+    "model": "yolov8n.pt",
+    "names": {
+      "0": "rock_region",
+      "1": "log_region"
+    },
+    "pid": 28815,
+    "device": "mps",
+    "test_split_used_for_training": false,
+    "full_component_ready": false,
+    "total_profile_images": 2000,
+    "phase": "training",
+    "updated_at": "2026-10-21T12:57:16.218714+05:30",
+    "batches_seen": 525,
+    "planned_epochs": 50,
+    "train_loader_images": 350,
+    "train_loader_objects": 1081,
+    "val_loader_images": 50,
+    "val_loader_objects": 103,
+    "current_epoch": 3,
+    "latest_loss": 15.417034149169922,
+    "completed_epochs": 3,
+    "metrics": {
+      "metrics/precision(B)": 0.06193,
+      "metrics/recall(B)": 0.045,
+      "metrics/mAP50(B)": 0.01514,
+      "metrics/mAP50-95(B)": 0.00497,
+      "val/box_loss": 3.1274,
+      "val/cls_loss": 3.31285,
+      "val/dfl_loss": 1.74426
+    },
+    "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/best.pt",
+    "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/last.pt"
+  },
+  "test_split_loaded": false,
+  "training_only_smoke": {
+    "phase": "completed",
+    "train_images": 8,
+    "validation_images_from_same_training_subset": 8,
+    "batches": 4
+  },
+  "unit_tests": {
+    "passed": 164,
+    "command": "YOLO_CONFIG_DIR=\"$PWD/sajana/data/raw/ultralytics_settings\" sajana/.venv-yolov8/bin/python -B -m unittest discover -s sajana/tests"
+  },
+  "checkpoint_tensor_parity_verified": true,
+  "compact_image_and_label_payload_bytes": 256507757,
+  "original_source_data_deleted": false,
+  "android_export_completed": false,
+  "physical_android_memory_measured": false,
+  "full_component_ready": false
+}

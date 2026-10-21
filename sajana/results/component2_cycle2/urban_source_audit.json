@@ -1,0 +1,25 @@
+{
+  "checked_at": "2026-10-21T15:18:01.002307+05:30",
+  "source": "Urban Waste Dataset for Pakistan",
+  "official_record": "https://zenodo.org/records/17025661",
+  "licence": "CC BY 4.0",
+  "actual_metadata_and_archive_photos": 3675,
+  "description_claims_photos": 3693,
+  "description_count_differs_from_verified_archive": true,
+  "source_split_counts": {
+    "test": 367,
+    "train": 2573,
+    "val": 735
+  },
+  "conflicting_label_cluster_photos": 0,
+  "cross_split_cluster_photos": 1024,
+  "review_eligible_negatives": {
+    "test": 55,
+    "train": 792,
+    "val": 140
+  },
+  "negative_labels_are_exhaustive_litter_masks": false,
+  "coarse_negative_cannot_enter_segmentation_without_visual_review": true,
+  "training_ready": false,
+  "full_component_ready": false
+}

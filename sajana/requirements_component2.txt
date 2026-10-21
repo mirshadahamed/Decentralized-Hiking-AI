@@ -1,0 +1,3 @@
+# Dataset preparation only; model/training libraries are a separate stage.
+-r requirements_rugd.txt
+gdown>=5,<6

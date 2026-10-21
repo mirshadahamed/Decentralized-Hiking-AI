@@ -1,0 +1,19 @@
+{
+  "recorded_at": "2026-10-20T22:51:24.398506+05:30",
+  "dataset": "sajana/data/processed/wildscenes_rock_log_detection",
+  "implementation_commit": "f16a2b9d",
+  "preparation_source_sha256": "20e01a5a508437d970cd8d9c123a8bbcd65369fa51ece7b3603c08736c668d62",
+  "manifest_sha256": {
+    "train": "ef6726b5782dce2b25d12110ddcfc80f957c05d17bb45797c51e82a956af5c9b",
+    "val": "ca76e0f92b25c9b67ad693dcfdcb5f03d9e6cbbf86319ea81f72d4a851bba83c",
+    "test": "335cc6f44e0e540ae4aaff30e924576b70c54b9a62de0c4f804a4ec561d29bf2"
+  },
+  "readiness_sha256": "86b0b7914389ccb8f2742eb0768aa3277c09b85e8df4e76b4bfcadac4fad6b3c",
+  "native_loader_audit_sha256": "70810a960ca75d23a17d921ca69f042d551ef549bab3d356954b4e96b045709a",
+  "full_source_hash_and_box_geometry_checks_passed": true,
+  "source_images_are_existing_WildScenes_photos_not_additional_independent_examples": true,
+  "model_trained_for_this_export": false,
+  "obstruction_labels_available": false,
+  "map_graph_and_live_location_configured": false,
+  "tests_passed_before_data_record": 139
+}

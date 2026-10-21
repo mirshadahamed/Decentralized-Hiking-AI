@@ -1,0 +1,22 @@
+{
+  "built": true,
+  "training_ready": true,
+  "splits": {
+    "train": {
+      "images": 2513,
+      "instances": 5138
+    },
+    "val": {
+      "images": 286,
+      "instances": 675
+    },
+    "test": {
+      "images": 185,
+      "instances": 497
+    }
+  },
+  "split_policy": "train=TACO clean train+MJU train; val/test=TACO clean only",
+  "evaluation_source": "TACO official held-out batches; future local trail test remains separate",
+  "source_label_audits_passed": true,
+  "issues": []
+}

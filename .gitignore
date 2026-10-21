@@ -146,3 +146,55 @@ research/component_4/results/*_quick/
 *.tmp
 *.temp
 *~
+
+# Component 2: local source downloads, generated imagery and model outputs
+sajana/.venv-yolov8/
+sajana/data/raw/
+sajana/data/processed/**/*.cache
+sajana/data/processed/**/images/
+sajana/data/processed/**/orientation_review/
+sajana/data/processed/**/data.yaml
+sajana/data/processed/**/masks/
+sajana/data/**/*.part
+sajana/data/**/*.tmp
+sajana/data/**/*.lock
+sajana/data/**/*.zip
+sajana/data/**/*.tar
+sajana/data/**/*.tar.gz
+sajana/data/**/*.tgz
+sajana/data/**/*.7z
+sajana/data/**/*.torrent
+sajana/results/**/*.jpg
+sajana/results/**/*.png
+sajana/results/**/*.pt
+sajana/results/**/*.pth
+sajana/results/**/*.onnx
+sajana/runs/
+
+# Live monitor output is regenerated locally from the training run.
+sajana/results/yolov8_training/health_report.json
+sajana/results/yolov8_training/HEALTH.md
+sajana/results/yolov8_training/monitor_launch.json
+sajana/results/component2_training/queue_status.json
+sajana/results/component2_training/HEALTH.md
+sajana/results/component2_training/refinement_status.json
+
+# Reproducible 2,000-photo working set: version configuration and selection only.
+/sajana/data/processed/component2_compact_2000/
+/sajana/data/processed/component2_cycle2_trail*/
+/sajana/.tools/
+/sajana/.venv-export/
+/assets/models/component2_*.tflite
+
+# Downloaded reference material and unused alternate annotation taxonomy.
+# Keep the selected 4-class pLitter annotations, labels and manifests versioned.
+sajana/data/interim/rugd/*.pdf
+sajana/data/interim/rugd/RUGD_IROS2019.txt
+sajana/data/interim/rugd/rugd_home.html
+sajana/data/interim/rugd/mirror_colormap_reference.txt
+sajana/data/interim/plitter/annotations/10_class_splits/
+
+# Resumable acquisition history is local; curated readiness/exclusion reports remain tracked.
+sajana/data/processed/taco_unofficial_litter_seg/download_failures.csv
+sajana/data/processed/taco_unofficial_litter_seg/image_acquisition.csv
+sajana/data/processed/taco_unofficial_litter_seg/image_acquisition_scope.json

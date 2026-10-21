@@ -1,0 +1,130 @@
+{
+  "completed_at": "2026-10-21T14:12:19.156688+05:30",
+  "task": "obstacle",
+  "imgsz": 416,
+  "source_checkpoint": "sajana/runs/component2_compact_2000/O1/fit/weights/best.pt",
+  "source_sha256": "4370c708ac3bbd821668f8cbfed27c796210ca45d9391698e70172c0e1986f7e",
+  "artifacts": {
+    "fp32": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp32.tflite",
+      "bytes": 12629057,
+      "sha256": "1c4ed0bf301feb083a6ed8f9ba8987571e26a79701f9827219fe819ae8d643c1",
+      "inputs": [
+        {
+          "name": "images",
+          "shape": [
+            1,
+            416,
+            416,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Identity",
+          "shape": [
+            1,
+            6,
+            3549
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    },
+    "fp16": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp16.tflite",
+      "bytes": 6357609,
+      "sha256": "06b8a52898f607c3e2aed857917b5eb7315a05a134565a5b00c38f7533e93394",
+      "inputs": [
+        {
+          "name": "serving_default_images:0",
+          "shape": [
+            1,
+            416,
+            416,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PartitionedCall:0",
+          "shape": [
+            1,
+            6,
+            3549
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    },
+    "dynamic_int8": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+      "bytes": 3317189,
+      "sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+      "inputs": [
+        {
+          "name": "serving_default_images:0",
+          "shape": [
+            1,
+            416,
+            416,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PartitionedCall:0",
+          "shape": [
+            1,
+            6,
+            3549
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    },
+    "int8": {
+      "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_int8.tflite",
+      "bytes": 3360309,
+      "sha256": "046f865f6e6b4203301d2244de5e98d10a52a01dbf2af430037543bfb8117951",
+      "inputs": [
+        {
+          "name": "serving_default_images:0",
+          "shape": [
+            1,
+            416,
+            416,
+            3
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PartitionedCall:0",
+          "shape": [
+            1,
+            6,
+            3549
+          ],
+          "dtype": "<class 'numpy.float32'>"
+        }
+      ]
+    }
+  },
+  "conversion_route": "Pinned ONNX opset17 -> onnx2tf 1.26.3 -> TensorFlow 2.19 LiteRT",
+  "calibration_images": 64,
+  "calibration_split": "train",
+  "calibration_manifest_sha256": "43a73b89ebcd83e11ca24c91373810c333e9ec6c7b6766e8369276f5b51b64c4",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "coordinates": "First four dense output channels are xywh normalized to square input; prototypes are NHWC.",
+  "accuracy_validated_after_export": false,
+  "physical_phone_benchmarked": false,
+  "full_component_ready": false
+}

@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-10-21T07:09:10.780305+05:30",
+  "target_physical_device_ram_gb": 4,
+  "emulator_role": "Functional app testing, not physical-device performance acceptance",
+  "plan": "sajana/configs/mobile_deployment_plan.json",
+  "guide": "sajana/docs/MOBILE_MODEL_SIZE_AND_MEMORY.md",
+  "preview": {
+    "checked_at": "2026-10-21T07:08:09.200516+05:30",
+    "source_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+    "source_snapshot_sha256": "03c2d6fbc1e7ec3a2cc872e2b6c74330c93a3248f0c7b7a5e352f710b8ef37eb",
+    "source_checkpoint_epoch": 59,
+    "source_training_checkpoint_bytes": 34339620,
+    "preview_artifact": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/mobile_litter_preview/20261021_070807_636071/litter_inference_preview.pt",
+    "preview_sha256": "ef0552cb674d198a50c89aa2c11b8761a637aa86e12588c5a382f497b8e6443c",
+    "preview_bytes": 7043067,
+    "size_reduction_percent": 79.48996814757997,
+    "parameter_count": 3390771,
+    "class_mapping": {
+      "0": "litter"
+    },
+    "saved_inference_tensors_identical": true,
+    "source_checkpoint_written_by_tool": false,
+    "training_resume_supported_by_preview": false,
+    "dataset_images_loaded": 0,
+    "test_model_evaluation_performed": false,
+    "device_used_by_tool": "cpu",
+    "android_runtime_exported": false,
+    "physical_phone_memory_measured": false,
+    "app_release_ready": false,
+    "note": "Intermediate PyTorch snapshot from ongoing model development; not an Android release model. File-size savings do not measure inference RAM."
+  },
+  "current_training_at_check": {
+    "model": "yolov8n-seg.pt",
+    "completed_epochs": 61,
+    "current_epoch": 62,
+    "phase": "training",
+    "configuration_changed_for_mobile_work": false,
+    "active_resume_and_validator_source_hashes_preserved": true
+  },
+  "tests": {
+    "run": 151,
+    "passed": true,
+    "log_sha256": "0857a81429d1a130c6a57ee430acd8a3f040a7be9626d62a6a48af438f032681"
+  },
+  "android_runtime_export_completed": false,
+  "phone_ram_latency_measured": false,
+  "release_ready": false,
+  "remaining": [
+    "Finish model validation and selection",
+    "Create pinned separate LiteRT export environment",
+    "Compare 640/416 and FP32/INT8 on validation with training-only quantization calibration",
+    "Benchmark the selected export on a physical 4 GB Android phone",
+    "Complete obstacle/clear-trail data and model gates"
+  ],
+  "sources": [
+    "https://docs.ultralytics.com/integrations/litert/",
+    "https://docs.ultralytics.com/modes/export/"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-10-21T13:07:00.951458+05:30",
+  "finished_at": "2026-10-21T13:04:50.594613+05:30",
+  "phase": "completed",
+  "model": "yolov8n.pt",
+  "task": "detect",
+  "class_names": {
+    "0": "rock_region",
+    "1": "log_region"
+  },
+  "configured_epoch_limit": 50,
+  "completed_epochs": 34,
+  "stopping_reason": "No validation fitness improvement for 15 epochs; framework EarlyStopping",
+  "best_validation_epoch": 19,
+  "training_images": 350,
+  "training_region_boxes": 1081,
+  "validation_images": 50,
+  "validation_region_boxes": 103,
+  "reserved_test_images": 101,
+  "reserved_test_evaluated": false,
+  "reported_best_checkpoint_validation_metrics": {
+    "metrics/precision(B)": 0.4158161527352812,
+    "metrics/recall(B)": 0.16666666666666666,
+    "metrics/mAP50(B)": 0.19598676649987756,
+    "metrics/mAP50-95(B)": 0.14114958179848902
+  },
+  "metrics_are_not_classification_accuracy": true,
+  "best_checkpoint": {
+    "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/best.pt",
+    "bytes": 6470058,
+    "sha256": "4370c708ac3bbd821668f8cbfed27c796210ca45d9391698e70172c0e1986f7e",
+    "class_count_checked": 2,
+    "floating_parameter_dtype": "torch.float16",
+    "optimizer_stripped": true
+  },
+  "last_checkpoint": {
+    "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/last.pt",
+    "bytes": 6470058,
+    "sha256": "54fe659cf320943e936ad228c988f2ebd8a0dd18c955a1991629b113681d9fbe"
+  },
+  "garbage_checkpoint_bytes": 7021108,
+  "combined_pytorch_checkpoint_bytes": 13491166,
+  "artifact_bytes_do_not_measure_android_ram": true,
+  "quality_accepted_for_app": false,
+  "full_component_ready": false,
+  "android_export_completed": false,
+  "physical_4GB_phone_benchmark_complete": false,
+  "limitations": [
+    "Weak validation recall; review missed objects and false alarms before accepting this model.",
+    "Only three validation photos contain rocks.",
+    "No reviewed actual blockage, clear-trail, erosion or root labels.",
+    "Final held-out model evaluation has not been run."
+  ]
+}

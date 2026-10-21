@@ -1,0 +1,10 @@
+{
+  "images": 3831,
+  "annotations": 8334,
+  "categories": 60,
+  "licenses": {
+    "CC": 2399,
+    "ODBL (c) OpenLitterMap & Contributors": 1432
+  },
+  "recommendation": "Do not mix into PP1 official baseline until provenance/licence and image quality are reviewed. Keep as optional expansion."
+}

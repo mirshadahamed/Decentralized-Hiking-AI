@@ -1,0 +1,22 @@
+{
+  "source": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/interim/plitter/Mawanella_January_2022_Sample.csv",
+  "source_sha256": "c22aab96c94be468c598390cc61e13c097feaf0ca0586e80624550ae55812f6b",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/plitter_mawanella",
+  "role": "geospatial mapping observations; not image training annotations",
+  "passed": true,
+  "preprocessing_complete": true,
+  "image_training_ready": false,
+  "rows": 31489,
+  "valid_rows": 31489,
+  "excluded_rows": 0,
+  "exact_duplicate_rows": 217,
+  "unique_coordinates": 31230,
+  "plastic_observation_sum": 85484,
+  "bin_observation_sum": 58,
+  "coordinate_reference": "Longitude/latitude degrees retained; WGS84 assumed from mapping usage, CRS not declared in CSV",
+  "warnings": [
+    "All valid source observations are retained with source line numbers. Repeated counts may describe the same physical litter.",
+    "Observation sums are not verified counts of unique physical litter objects.",
+    "The CSV contains no image/frame identifiers, bounding boxes or segmentation masks."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-10-21T06:54:54.860371+05:30",
+  "cause_observed": "System boot time 2026-10-21T06:09:25+05:30 follows last training log update; prior trainer PID absent and lock available.",
+  "prior_last_update": "2026-10-21T06:08:56.669287+05:30",
+  "saved_completed_epochs": 57,
+  "completed_epochs_at_check": 57,
+  "resumed_current_epoch": 58,
+  "phase_at_check": "training",
+  "resume_code_commit": "6374bdd7e23b0cd8e610f4dc9ee53ad0adf3dba7",
+  "recovery_manifest": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_065303/manifest.json",
+  "optimizer_and_ema_restored": true,
+  "frozen_data_hashes_rechecked": true,
+  "complete_validation_images": 286,
+  "baseline_metrics": {
+    "metrics/precision(B)": 0.72572,
+    "metrics/recall(B)": 0.46646,
+    "metrics/mAP50(B)": 0.51123,
+    "metrics/mAP50-95(B)": 0.36997,
+    "metrics/precision(M)": 0.73556,
+    "metrics/recall(M)": 0.46519,
+    "metrics/mAP50(M)": 0.50709,
+    "metrics/mAP50-95(M)": 0.31023,
+    "val/box_loss": 1.08569,
+    "val/seg_loss": 2.22169,
+    "val/cls_loss": 1.3682,
+    "val/dfl_loss": 1.1357,
+    "val/sem_loss": 0.0
+  },
+  "best_selection_and_patience_reset": false,
+  "historical_validation_provisional_through_epoch": 22,
+  "preserved_best_checkpoint_sha256": "0b4aa40c39f858010f7eb034e1989a8519a76a7818346cb774364f7020c1434d",
+  "best_checkpoint_unchanged_during_revalidation": true,
+  "main_batches_seen_at_check": 14950,
+  "resumed_batches_seen_at_least": 110,
+  "training_functioning_at_check": true,
+  "health_issues": [],
+  "active_console_nms_warnings": 0,
+  "tests_run": 148,
+  "tests_passed": true,
+  "test_log_sha256": "1a4452446cb5c3e486af3b1d8c99fba634e21980b5ef6d688fdafa7c6a212cab",
+  "test_model_evaluation_performed": false,
+  "trained_classes": {
+    "0": "litter"
+  },
+  "remaining_training": {
+    "L1": "in progress",
+    "L2_taco_mju": "prepared; not started",
+    "O1_rock_log_context": "prepared; not started",
+    "local_obstruction_clear_trail": "reviewed local ground truth missing"
+  },
+  "app_ready": false
+}

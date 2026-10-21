@@ -1,0 +1,3 @@
+# Lightweight image preprocessing; conversion and label auditing use stdlib.
+Pillow>=10,<12
+requests>=2.31,<3

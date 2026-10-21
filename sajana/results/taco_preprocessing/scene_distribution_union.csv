@@ -1,0 +1,9 @@
+scene_id,scene_name,images
+0,Clean,37
+1,"Indoor, Man-made",211
+2,Pavement,816
+3,"Sand, Dirt, Pebbles",862
+4,Trash,29
+5,Vegetation,940
+6,Water,332
+7,unknown_7,26

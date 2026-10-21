@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "total_image_limit": 2000,
+  "budget_scope": "All selected training, validation and test photos across both tasks",
+  "seed": 42,
+  "output": "data/processed/component2_compact_2000",
+  "maximum_image_edge": 640,
+  "jpeg_quality": 90,
+  "litter": {
+    "source": "data/processed/taco_litter_seg_clean",
+    "certificate": "results/taco_preprocessing/official_clean_readiness.json",
+    "frozen_source": "runs/component2_training/preflight/L2/dataset_hashes.json",
+    "task": "segment",
+    "names": {"0": "litter"},
+    "counts": {"train": 1028, "val": 286, "test": 185},
+    "model_policy": "Reuse the completed TACO-only L1 baseline; validate resized-input and mobile exports before deployment. Completed L2 is retained as historical evidence, excluded from this budgeted profile."
+  },
+  "obstacle": {
+    "source": "data/processed/wildscenes_rock_log_detection",
+    "certificate": "results/obstacle_context/readiness.json",
+    "frozen_source": "runs/component2_training/preflight/O1/dataset_hashes.json",
+    "task": "detect",
+    "names": {"0": "rock_region", "1": "log_region"},
+    "counts": {"train": 350, "val": 50, "test": 101},
+    "strata": {
+      "train": {"rock": 120, "log_only": 160, "background": 70},
+      "val": {"rock": 3, "log_only": 32, "background": 15},
+      "test": {"rock": 30, "log_only": 51, "background": 20}
+    },
+    "model": "yolov8n.pt",
+    "initial_weights": "data/raw/pretrained/yolov8n.pt",
+    "weights_evidence": "runs/component2_training/weights/O1.json",
+    "model_policy": "New compact run initialized from official pretrained weights; never resume the larger O1 run on different data."
+  },
+  "training": {
+    "epochs": 50,
+    "patience": 15,
+    "imgsz": 416,
+    "batch": 2,
+    "workers": 0,
+    "cache": false,
+    "amp": false,
+    "plots": false,
+    "save_period": -1,
+    "seed": 42,
+    "deterministic": true
+  },
+  "constraints": [
+    "Retain source split membership; select from labels and a seed, never model scores.",
+    "Litter and rock/log tasks remain separate because cross-task labels are incomplete.",
+    "Only three source validation photos contain rocks; per-class validation evidence remains weak.",
+    "Background means no labelled rock/log; it does not certify a clear trail.",
+    "No real blockage, erosion or exposed-root annotations are available.",
+    "Raw archives and earlier checkpoints are preserved; a smaller working set alone does not reclaim their disk space.",
+    "Only selected runtime models and metadata belong in the Android app."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "checked_at": "2026-10-20T20:10:12.502196+05:30",
+  "passed": true,
+  "scope": "Planning-profile references, saved source readiness gates, native class catalogs, and common held-out label consistency. Refresh full source verifiers before a training freeze.",
+  "training_plan_sha256": "568f87fe9054a1021a58ee53191f34a62edee3532bf5185e2fd6202c3bce4666",
+  "experiments": [
+    {
+      "experiment_id": "L1",
+      "data_ready": true,
+      "readiness_report": "sajana/results/taco_preprocessing/official_clean_readiness.json",
+      "readiness_sha256": "38ac36db9c62ec98d66589bfb06980983503d3c8a139455fec1b4ad4ca2962c5",
+      "manifest_sha256": {
+        "train": "48e4cd6d6a7cc5775c0fd5755da5a8e1ce5fc87f2d8d4d5a1f7e87fdf2144b94",
+        "val": "2c5e8169a9655f0fc86ac3134cc9bdd67967d73283df15153769f44994e8a85b",
+        "test": "dcf2620897a7dd61853db9341e97dc787a1d4dcc762d26f0c90c5669711dcd67"
+      }
+    },
+    {
+      "experiment_id": "L2",
+      "data_ready": true,
+      "readiness_report": "sajana/data/processed/litter_taco_mju_aux/readiness.json",
+      "readiness_sha256": "0ad2d96a6b10bbd59fd9c3d18463648f0904717bbcee681166e52ca5ac10b4a2",
+      "manifest_sha256": {
+        "train": "ee351eb846b8d9cc5d99de76191c7c8c529897d538df110c4a439325267d6916",
+        "val": "796918d996d247366c93d24d1d387f3d084836dc7d6a9f6f22f72d331874f70a",
+        "test": "4efbbedfe2a7ab0de2f0640266124daf84bf5a985a68a9f565f8b17ff4a8c79b"
+      }
+    }
+  ],
+  "shared_evaluation": {
+    "val": {
+      "same_source_membership_geometry_and_label_bytes": true,
+      "images": 286
+    },
+    "test": {
+      "same_source_membership_geometry_and_label_bytes": true,
+      "images": 185
+    }
+  },
+  "native_source_numeric_classes_require_explicit_mapping": true,
+  "full_concurrent_component_data_ready": false,
+  "local_ground_truth_missing": true,
+  "training_started": false,
+  "model_metrics_computed": false
+}

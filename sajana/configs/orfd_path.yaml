@@ -1,0 +1,24 @@
+# RGB binary semantic segmentation; separate from YOLO litter polygons.
+dataset: ORFD_author_linked_mirror
+task: binary_semantic_segmentation
+purpose: auxiliary_vehicle_freespace_proxy
+processed_root: ../data/processed/orfd_path_seg
+source_splits:
+  training: train
+  validation: val
+  testing: test
+classes:
+  0: non_freespace
+  1: freespace_traversable_proxy
+mask_format: PNG_L_class_ids_0_1
+mask_rule: source_RGB_blue_channel_greater_than_200
+preserve_native_resolution: true
+published_image_count: 12198
+available_mirror_image_count: 11830
+independent_hiking_evaluation_supported: false
+
+# Current quota-limited recovery. Use training images/masks only as an auxiliary pool.
+partial_processed_root: ../data/processed/orfd_path_seg_partial
+partial_training_pairs: 3806
+partial_validation_pairs: 0
+partial_testing_pairs: 2193
