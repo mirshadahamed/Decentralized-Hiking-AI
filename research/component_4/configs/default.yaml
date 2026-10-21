@@ -110,6 +110,25 @@ simulator:
     kirigalpotta_peak: [20, 0.4]
     thotupola_peak: [15, 0.4]
   obs_noise_sd: 0.10
+  # S1 "realistic world" (research_gap_study.md section 5): what the calendar and weather cannot predict.
+  # Off for the main dataset (results stay reproducible); on in `build_dataset --world s1` -> dataset_s1.npz.
+  realism:
+    enabled: false
+    demand_ar_phi: 0.7                # day-to-day persistence of busier / quieter spells
+    demand_sd: 0.25                   # their size (lognormal sd), replaces daily_noise_sd
+    arrival_shift_sd_min: 40          # the morning peak comes earlier or later on some days
+    route_share_concentration: 40     # Dirichlet: how much the trail split varies day to day
+    bursts_per_day: 0.4               # tour buses / school trips (Poisson)
+    burst_people: [30, 90]
+    burst_window_h: [6.5, 10.5]
+    burst_main_share: 0.8
+    incident_prob: 0.08               # a slow group, a fallen tree, a rescue: one segment slowed
+    incident_start_h: [7, 12]
+    incident_hours: [1, 4]
+    incident_speed: 0.3
+    forecast_rain_sd: 0.7             # model input: day-ahead rain forecast = observed x lognormal error
+    forecast_rain_shift_prob: 0.25    # ... and its timing off by up to 3 h
+    forecast_temp_sd: 1.5
 
 task:
   input_steps: 24
@@ -159,6 +178,7 @@ control:                  # entry control: timed tickets per trail and slot (upg
   viewpoint_min_at_once: 50   # placeholder: viewpoints are platforms, not 1-m-wide trail; measure on a field visit
   exempt_access_points: true  # Visitor Center / trailhead are facilities, not trail
   use_daily_quota: true   # also respect the Cifuentes daily quota per trail
+  default_quota_rule: forecast   # forecast | classic | static (RQ9: forecast-driven beats static); officers can override
   safety_margin: 0.9      # plan to 90 % of capacity (crowd slowdown is not in the linear model)
   capacity_scale: 1.0     # multiplies segment capacity; DWC's choice of standard (see the trade-off sweep)
   walk_in_share: 0.2      # share of every slot kept for visitors without a booking

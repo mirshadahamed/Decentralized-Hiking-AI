@@ -7,9 +7,12 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/compon
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/capacity_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/ranger_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/map_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
@@ -397,6 +400,75 @@ class _RecordsApi extends FakeApi {
     return CrowdRecords(site: 'Horton Plains National Park', today: today,
         trails: {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta'}, rows: rows, note: 'estimates');
   }
+}
+
+/// Officer capacity panel: one trail; remembers the rule chosen.
+class _QuotaApi extends FakeApi {
+  _QuotaApi() : super(role: 'officer');
+
+  String rule = 'forecast';
+  int? manual;
+
+  @override
+  Future<CapacityPanel> capacityPanel(DateTime d) async => CapacityPanel.fromJson({
+        'day': C4Api.day(d),
+        'rules': {'forecast': 'a', 'classic': 'b', 'static': 'c', 'manual': 'd'},
+        'default_rule': 'forecast',
+        'trails': [
+          {
+            'trail': 'main', 'name': "World's End loop", 'expected_visitors': 300,
+            'quota': {'forecast': 175, 'classic': 351, 'static': 400, 'manual': manual, 'rule': rule,
+              'applied': {'forecast': 175, 'classic': 351, 'static': 400}[rule] ?? manual, 'decided_by': rule == 'forecast' ? null : 'off'},
+            'limiting_section': "World's End", 'reason': "World's End is expected over capacity 10-12 h",
+            'sections_over_capacity': 1,
+          }
+        ],
+        'over_capacity': [
+          {'seg_id': 25, 'trail': 'main', 'name': "World's End", 'hours': [10, 11], 'peak_people': 52.0, 'capacity_at_once': 30.0}
+        ],
+        'basis': {'crowd': 'ST-GNN day-ahead', 'weather': 'forecast', 'sensors': 'No counters inside the trail',
+          'evidence': 'RQ9 replay'},
+      });
+
+  @override
+  Future<List<Map<String, dynamic>>> setQuota(DateTime d, String trail, String rule, {int? quota}) async {
+    this.rule = rule;
+    manual = quota;
+    return [];
+  }
+}
+
+/// Ranger spot counts: the server can be switched off (no signal); counts it received are kept.
+class _CountApi extends FakeApi {
+  _CountApi() : super(role: 'ranger');
+
+  bool online = true;
+  final received = <String, SpotCount>{};
+
+  @override
+  Future<List<SegmentInfo>> segments() async => [
+        SegmentInfo(segId: 3, name: 'Mini World\'s End', trail: 'main', trailName: "World's End loop"),
+        SegmentInfo(segId: 25, name: "World's End", trail: 'main', trailName: "World's End loop"),
+      ];
+
+  @override
+  Future<void> addCount(SpotCount c) async {
+    if (!online) throw ApiException(0, 'Cannot reach the park server.');
+    received[c.clientId] = c;
+  }
+
+  @override
+  Future<ForecastCheck> forecastCheck(DateTime start, DateTime end) async => ForecastCheck.fromJson({
+        'summary': {'counts': 2, 'with_forecast': 2, 'mae': 6.5, 'bias': 2.5, 'within_30pct': 0.5,
+          'counted_over_capacity': 1, 'over_capacity_called': 1, 'false_alarms': 0},
+        'rows': [
+          {'day': C4Api.day(today), 'seg_id': 25, 'name': "World's End", 'time_min': 620, 'count': 40, 'forecast': 44.0,
+            'capacity_at_once': 30.0, 'counted_over': true, 'forecast_over': true},
+          {'day': C4Api.day(today), 'seg_id': 3, 'name': "Mini World's End", 'time_min': 560, 'count': 12, 'forecast': 3.0,
+            'capacity_at_once': 30.0, 'counted_over': false, 'forecast_over': false},
+        ],
+        'note': 'day-ahead forecast',
+      });
 }
 
 class _AdvisoryApi extends FakeApi {
@@ -831,6 +903,88 @@ void main() {
     await open();
     expect(tab, findsOneWidget);
     expect(find.text('offline copy'), findsOneWidget);
+  });
+
+  testWidgets('ranger counts walkers with no signal; the counts are sent once the signal is back', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final api = _CountApi()..online = false;
+    await t.pumpWidget(wrap(Scaffold(body: CountTab(now: () => DateTime(2026, 10, 22, 10, 15))), api));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('count_plus')));
+    await t.tap(find.byKey(const Key('count_plus')));
+    await t.tap(find.byKey(const Key('count_plus5')));
+    await t.pump();
+    expect(find.text('7'), findsOneWidget);
+    await t.tap(find.byKey(const Key('count_save')));
+    await t.pumpAndSettle();
+    expect(find.text('1 waiting to be sent'), findsOneWidget);                // kept on the phone
+    expect(api.received, isEmpty);
+    api.online = true;
+    await t.tap(find.text('Send now'));
+    await t.pumpAndSettle();
+    expect(find.text('All counts sent'), findsOneWidget);
+    final c = api.received.values.single;
+    expect((c.segId, c.count, c.time), (3, 7, '10:15'));
+  });
+
+  testWidgets('gate advice: hold entries to a trail or send groups elsewhere; all clear when quiet', (t) async {
+    final busy = GateAdvice.fromJson({
+      'time': '08:00', 'inside': 480, 'basis': 'From the 40 groups through the gate so far',
+      'over': [
+        {'seg_id': 25, 'name': "World's End", 'trail': 'main', 'at': '09:30', 'people': 61.0, 'capacity': 30.0}
+      ],
+      'advice': [
+        {'trail': 'main', 'trail_name': "World's End loop", 'hold_min': 60, 'send_to': ['Kirigalpotta'],
+          'text': "Hold new entries to the World's End loop for 60 min, or send the next groups to Kirigalpotta"}
+      ],
+    });
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: GateAdviceCard(busy))));
+    expect(find.text('Next 2 hours: act at the gate'), findsOneWidget);
+    expect(find.textContaining('Hold new entries'), findsOneWidget);
+    expect(find.textContaining("World's End: about 61 people at 09:30"), findsOneWidget);
+    final quiet = GateAdvice.fromJson({'time': '08:00', 'inside': 20, 'basis': 'b', 'over': [], 'advice': []});
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: GateAdviceCard(quiet))));
+    expect(find.text('Next 2 hours: keep the gate open'), findsOneWidget);
+  });
+
+  testWidgets('officer forecast check: counts next to the forecast, error and bottlenecks called', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    await t.pumpWidget(wrap(const Scaffold(body: ForecastCheckTab()), _CountApi()));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('check_summary')), findsOneWidget);
+    expect(find.text('6.5 people'), findsOneWidget);
+    expect(find.text('50 %'), findsOneWidget);
+    expect(find.textContaining('counted 40 · forecast 44'), findsOneWidget);
+  });
+
+  testWidgets('officer daily quota: forecast vs weather vs fixed, why, and choosing a rule or a number', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final api = _QuotaApi();
+    await t.pumpWidget(wrap(const Scaffold(body: CapacityTab()), api));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('quota_main')), findsOneWidget);
+    expect(find.text('175'), findsWidgets);                                   // forecast-driven quota applied
+    expect(find.text('351'), findsOneWidget);                                 // weather only
+    expect(find.text('400'), findsOneWidget);                                 // the same all year
+    expect(find.textContaining('expected over capacity 10-12 h'), findsOneWidget);
+    expect(find.textContaining('No counters inside the trail'), findsOneWidget);   // A6: the basis
+    expect(find.textContaining('10–12 h'), findsOneWidget);
+    await t.tap(find.byKey(const Key('rule_main_classic')));
+    await t.pumpAndSettle();
+    expect(api.rule, 'classic');
+    await t.tap(find.byKey(const Key('rule_main_manual')));
+    await t.pumpAndSettle();
+    await t.enterText(find.byKey(const Key('quota_number')), '120');
+    await t.tap(find.text('Use'));
+    await t.pumpAndSettle();
+    expect((api.rule, api.manual), ('manual', 120));
+    expect(find.text('120'), findsWidgets);
   });
 
   testWidgets('officer records: daily visitors past / today / future, filter by trail and dates, copy as CSV', (t) async {

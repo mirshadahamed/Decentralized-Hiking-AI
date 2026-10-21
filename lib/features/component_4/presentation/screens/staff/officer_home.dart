@@ -4,6 +4,8 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
+import 'capacity_screen.dart';
+import 'count_screen.dart';
 import 'ranger_home.dart';
 import 'records_screen.dart';
 
@@ -17,7 +19,7 @@ class OfficerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 6,
+      length: 8,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Park office · ${api.session?.username ?? ''}'),
@@ -38,16 +40,18 @@ class OfficerHome extends StatelessWidget {
           ],
           bottom: const TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.groups_outlined), text: 'Bottlenecks'),
+            Tab(icon: Icon(Icons.tune), text: 'Daily quota'),
             Tab(icon: Icon(Icons.calendar_view_week), text: 'This week'),
             Tab(icon: Icon(Icons.report_outlined), text: 'Trail condition'),
             Tab(icon: Icon(Icons.block), text: 'Close trail'),
             Tab(icon: Icon(Icons.notifications), text: 'Alerts'),
             Tab(icon: Icon(Icons.table_chart_outlined), text: 'Records'),
+            Tab(icon: Icon(Icons.fact_check_outlined), text: 'Forecast check'),
           ]),
         ),
         body: const TabBarView(
           physics: NeverScrollableScrollPhysics(), // the bottleneck map pans with a drag
-          children: [BottleneckView(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab()],
+          children: [BottleneckView(), CapacityTab(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab(), ForecastCheckTab()],
         ),
       ),
     );

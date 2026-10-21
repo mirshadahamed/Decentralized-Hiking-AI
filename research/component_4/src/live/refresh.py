@@ -83,8 +83,29 @@ class LiveContext:
         return out
 
 
-def publish_slots(ctx: LiveContext, db=None) -> list:
+def day_forecasts(ctx: LiveContext, tomorrow: dict | None, db=None):
+    """Save the crowd forecast of every bookable day, so its quota can use it (RQ9: forecast-driven Cifuentes).
+    Tomorrow: the ST-GNN forecast; later days: the planning model's likely case. Segments in entry-control order."""
+    from src.control.slots import build_control
+    order = build_control().seg.seg_id.astype(int).tolist()
+    if tomorrow is not None:
+        by_id = {int(s["seg_id"]): s["forecast_hourly"] for s in tomorrow["segments"]}
+        booking.save_forecast(tomorrow["forecast_date"], np.array([by_id[i] for i in order]).T,
+                              f"ST-GNN day-ahead ({tomorrow['source']['model']})", db)
+    seg_ids = ctx.seg.seg_id.astype(int).tolist()
+    for k in range(2 if tomorrow is not None else 1, ctx.cfg["live"]["horizon_days"] + 1):
+        d = (ctx.today + timedelta(days=k)).isoformat()
+        try:
+            hourly = np.array(ctx.planner.day(ctx.today.isoformat(), d)["hourly"]["p50"])
+        except ValueError:
+            continue
+        col = {i: hourly[:, j] for j, i in enumerate(seg_ids)}
+        booking.save_forecast(d, np.array([col[i] for i in order]).T, "planning model (likely case)", db)
+
+
+def publish_slots(ctx: LiveContext, db=None, tomorrow: dict | None = None) -> list:
     alerts = []
+    day_forecasts(ctx, tomorrow, db)
     for k in range(1, ctx.cfg["live"]["horizon_days"] + 1):
         d = ctx.today + timedelta(days=k)
         rain, basis = ctx.rain_share(d)
@@ -96,7 +117,7 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
     """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py), plus
     the segment lines and capacities for the bottleneck map (from tomorrow's server forecast, if given).
     Not published when only the historical-average fallback is available (no trained model)."""
-    from src.edge.pack import build_pack, map_extras, week_forecasts
+    from src.edge.pack import build_pack, crowd_calibration, map_extras, week_forecasts
     if ctx.model is None:
         return False
     tomorrow = pd.Timestamp(ctx.today + timedelta(days=1))
@@ -113,7 +134,8 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
                     "conditions": {t: v["factor"] for t, v in booking.conditions(d).items()}}
         week = week_forecasts(ctx.data, ctx.cfg, ctx.seg, ctx.model, ctx.scale, ctx.run, ctx.today.isoformat(),
                               ctx.planner, plan_kwargs=live_inputs)
-        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data, week)
+        pack["map"] = map_extras(forecast, ctx.seg, ctx.cfg, ctx.data, week,
+                                 crowd_calibration(ctx.model, ctx.data, ctx.scale, ctx.cfg, ctx.run))
         # FR4 / W7: Module 3 reads the same contract offline, from the pack already on the phone
         from src.serve.module3 import module3_feed
         pack["module3_feed"] = module3_feed(forecast, ctx.cfg)
@@ -148,7 +170,7 @@ def refresh(today: date | None = None, db=None) -> dict:
         day["weather_basis"] = ctx.rain_share(date.fromisoformat(day["date"]))[1]
     tomorrow = ctx.forecast_tomorrow()
     advisory_mode = ctx.cfg["control"].get("booking_mode", "required") == "advisory"
-    alerts = [] if advisory_mode else publish_slots(ctx, db)
+    alerts = [] if advisory_mode else publish_slots(ctx, db, tomorrow)
     if advisory_mode:                                       # pilgrimage site: recommended start times, no tickets
         publish_advisory(outlook)
     edge = publish_edge_pack(ctx, tomorrow)

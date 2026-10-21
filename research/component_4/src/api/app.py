@@ -331,6 +331,51 @@ def sell(body: WalkInIn, user: dict = Depends(role("ranger"))):
     return {"left": left}
 
 
+@app.get("/segments", tags=["public"])
+def segment_list():
+    """Sections of the trails (id, name, trail): what a ranger can count on."""
+    from src.serve.field_counts import segments
+    return segments(CFG)
+
+
+class SpotCountIn(BaseModel):
+    day: date
+    seg_id: int
+    time: str = Slot
+    count: int = Field(ge=0, le=5000)
+    client_id: str | None = Field(default=None, max_length=64)
+
+
+@app.post("/counts", tags=["ranger"], status_code=201)
+def add_spot_count(body: SpotCountIn, user: dict = Depends(role("ranger"))):
+    """A ranger's headcount on a section (the park's own sensor record, A4). Re-sending the same client_id
+    (a count saved offline and synced later) stores it once."""
+    from src.serve.field_counts import add_count
+    h, m = (int(x) for x in body.time.split(":"))
+    try:
+        r = add_count(body.day.isoformat(), body.seg_id, h * 60 + m, body.count, user["username"], body.client_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    auth.audit(user["username"], "spot_count", f"{body.day} seg {body.seg_id} {body.time} {body.count}")
+    return r
+
+
+@app.get("/counts/{day}", tags=["ranger"])
+def day_counts(day: date, user: dict = Depends(role("ranger"))):
+    from src.serve.field_counts import counts
+    return {"day": day.isoformat(), "counts": counts(day.isoformat(), day.isoformat())}
+
+
+@app.get("/admin/forecast-check", tags=["officer"])
+def forecast_check(start: date, end: date, user: dict = Depends(role("officer"))):
+    """Rangers' spot counts next to the day-ahead forecast of that section and hour: error, bias, share within
+    30 %, over-capacity called right / false alarms (A4, field validation)."""
+    from src.serve.field_counts import forecast_check as check
+    if end < start or (end - start).days > 400:
+        raise HTTPException(400, "Choose an end date after the start date, at most 400 days apart")
+    return check(CFG, start.isoformat(), end.isoformat())
+
+
 @app.get("/live/{day}", tags=["ranger"])
 def live_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
     """Traffic light per segment from the people who went through the gate (no trail sensors)."""
@@ -351,6 +396,21 @@ def live_status(day: date, at: time | None = None, user: dict = Depends(role("ra
                     "action": {"green": None, "amber": "Offer a later slot or another trail at the gate",
                                "red": "Pause entries to this trail for the next slot; send a ranger"}[light]})
     return {"day": day.isoformat(), "time": now.strftime("%H:%M"), "segments": out}
+
+
+@app.get("/gate/advice/{day}", tags=["ranger"])
+def gate_advice(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """A3: sections expected over capacity in the next 2 hours (from the gate counts and the coming slots) and what
+    to do at the gate: hold entries to a trail for N minutes, or send the next groups to a trail with room."""
+    from src.control.gate_advice import gate_advice as advise
+    require_booking()
+    ec = build_control()
+    now = when(datetime.combine(day, at) if at else None)
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    plan = None if pub is None else pub.pivot(index="slot", columns="trail", values="tickets")
+    return advise(ec, booking.entries(d), now.hour * 60 + now.minute, rain, plan)
 
 
 class CheckpointIn(BaseModel):
@@ -487,6 +547,41 @@ def records(start: date, end: date, trail: str | None = None, format: Literal["j
         return Response(to_csv(out["rows"]), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="{name}"'})
     return out
+
+
+@app.get("/admin/capacity/{day}", tags=["officer"])
+def capacity_panel(day: date, user: dict = Depends(role("officer"))):
+    """The day's quota per trail under each rule (forecast-driven Cifuentes, weather only, one fixed number, an
+    officer's number), the rule the ticket plan uses, and the sections expected over capacity with their hours."""
+    from src.serve.capacity_panel import day_panel
+    require_booking()
+    c = ctx()
+    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    return day_panel(c, day, live_inputs(c, day))
+
+
+class QuotaIn(BaseModel):
+    day: date
+    trail: TrailName
+    rule: Literal["forecast", "classic", "static", "manual"]
+    quota: int | None = Field(default=None, ge=0, le=100000)
+
+
+@app.post("/admin/quota", tags=["officer"])
+def set_quota(body: QuotaIn, user: dict = Depends(role("officer"))):
+    """Choose the quota rule (or a number) for a trail and day. The day's tickets are re-published at once;
+    existing bookings are never cancelled (alerts list the slots now over the safe plan)."""
+    require_booking()
+    c = ctx()
+    if not c.today + timedelta(days=1) <= body.day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    try:
+        alerts = booking.set_quota(body.day.isoformat(), body.trail, body.rule, body.quota, user["username"])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    auth.audit(user["username"], "quota", f"{body.day} {body.trail} {body.rule} {body.quota}")
+    return {"alerts": alerts}
 
 
 @app.get("/admin/season", tags=["officer"])

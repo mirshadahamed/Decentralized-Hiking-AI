@@ -55,6 +55,11 @@ def _connect(db=None):
         CREATE TABLE IF NOT EXISTS trail_conditions (
             day TEXT NOT NULL, trail TEXT NOT NULL, level TEXT NOT NULL, note TEXT NOT NULL,
             set_by TEXT NOT NULL, set_at TEXT NOT NULL, PRIMARY KEY (day, trail));
+        CREATE TABLE IF NOT EXISTS day_forecasts (
+            day TEXT PRIMARY KEY, hourly TEXT NOT NULL, basis TEXT NOT NULL, saved_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS quota_decisions (
+            day TEXT NOT NULL, trail TEXT NOT NULL, rule TEXT NOT NULL, quota REAL,
+            decided_by TEXT NOT NULL, decided_at TEXT NOT NULL, PRIMARY KEY (day, trail));
     """)
     cols = [r[1] for r in con.execute("PRAGMA table_info(bookings)")]
     if "checked_in_at" not in cols:                           # older databases
@@ -152,13 +157,94 @@ def _climatology_rain_share() -> pd.Series:
 
 @lru_cache(maxsize=512)
 def _planned(day: str, rain_share: float, closed: tuple = (), wetness: float = 0.0,
-             cond: tuple = ()) -> pd.DataFrame:
+             cond: tuple = (), quota: tuple = ()) -> pd.DataFrame:
     """All tickets per slot and trail (bookable + walk-in) from the entry-control plan.
-    cond: ((trail, share removed), ...) from reported trail conditions; a closed trail gets no tickets."""
+    cond: ((trail, share removed), ...) from reported trail conditions; a closed trail gets no tickets.
+    quota: ((trail, daily quota), ...) chosen for the day (resolve_quota); default the classic Cifuentes quota."""
     ec = build_control()
     cond = dict(cond)
     closed = set(closed) | {(t, f"{s // 60:02d}:{s % 60:02d}") for t, f in cond.items() if f >= 1.0 for s in ec.slots}
-    return ec.plan(rain_share, ec.daily_quota(rain_share, wetness, cond), closed=closed)
+    return ec.plan(rain_share, dict(quota) or ec.daily_quota(rain_share, wetness, cond), closed=closed)
+
+
+# ---------- daily quota: forecast-driven (RQ9), classic, static or set by an officer ----------
+QUOTA_RULES = {"forecast": "Cifuentes with the crowd forecast (recommended)",
+               "classic": "Cifuentes with the day's weather only",
+               "static": "one number all year (typical weather)",
+               "manual": "set by an officer"}
+
+
+def save_forecast(day: str, hourly: np.ndarray, basis: str, db=None):
+    """The crowd forecast [24 h, segments] the day's quota is computed from (written by the live refresh)."""
+    import json
+    with closing(_connect(db)) as con:
+        con.execute("INSERT OR REPLACE INTO day_forecasts VALUES (?,?,?,?)",
+                    (day, json.dumps(np.round(np.asarray(hourly, float), 2).tolist()), basis,
+                     datetime.now().isoformat(timespec="seconds")))
+        con.commit()
+
+
+def day_forecast(day: str, db=None) -> tuple[np.ndarray | None, str | None]:
+    import json
+    with closing(_connect(db)) as con:
+        r = con.execute("SELECT hourly, basis FROM day_forecasts WHERE day=?", (day,)).fetchone()
+    return (np.array(json.loads(r[0])), r[1]) if r else (None, None)
+
+
+def quota_decisions(day: str, db=None) -> dict:
+    with closing(_connect(db)) as con:
+        rows = con.execute("SELECT trail, rule, quota, decided_by, decided_at FROM quota_decisions WHERE day=?",
+                           (day,)).fetchall()
+    return {t: {"rule": r, "quota": q, "by": by, "at": at} for t, r, q, by, at in rows}
+
+
+def static_rain_share() -> float:
+    """Typical share of rainy open hours over the training years: what a once-a-year quota is set for."""
+    return float(_climatology_rain_share().mean())
+
+
+def resolve_quota(day: str, rain_share: float, wetness: float = 0.0, cond: dict | None = None, db=None) -> dict:
+    """Daily quota of every trail under each rule and the one applied:
+    {trail: {"forecast", "classic", "static", "manual", "rule", "applied", "decided_by"}}.
+    The rule is the officer's decision for that trail and day, otherwise control.default_quota_rule."""
+    ec = build_control()
+    cond = cond or {}
+    fc, _ = day_forecast(day, db)
+    classic = ec.daily_quota(rain_share, wetness, cond)
+    forecast = ec.daily_quota(rain_share, wetness, cond, forecast=fc) if fc is not None else classic
+    static = ec.daily_quota(static_rain_share())
+    default = ec.c.get("default_quota_rule", "forecast")
+    dec = quota_decisions(day, db)
+    out = {}
+    for t in ec.trails:
+        d = dec.get(t, {})
+        rule = d.get("rule", default)
+        opts = {"forecast": forecast[t], "classic": classic[t], "static": static[t],
+                "manual": d.get("quota") if rule == "manual" else None}
+        applied = opts[rule] if opts.get(rule) is not None else forecast[t]
+        if cond.get(t, 0.0) >= 1.0:                       # closed trail: nothing to sell, whatever the rule
+            applied = 0.0
+        out[t] = {k: (None if v is None else round(float(v))) for k, v in opts.items()} | {
+            "rule": rule, "applied": round(float(applied)), "decided_by": d.get("by"), "decided_at": d.get("at")}
+    return out
+
+
+def set_quota(day: str, trail: str, rule: str, quota: float | None, by: str, db=None) -> list:
+    """An officer chooses the quota rule (or a number) for a trail and day; the day is re-published at once
+    (freeze rule: existing bookings are kept, alerts returned)."""
+    if rule not in QUOTA_RULES:
+        raise ValueError(f"Unknown rule '{rule}'")
+    if rule == "manual" and (quota is None or quota < 0):
+        raise ValueError("A manual quota needs a number of people (0 or more)")
+    with closing(_connect(db)) as con:
+        con.execute("INSERT OR REPLACE INTO quota_decisions VALUES (?,?,?,?,?,?)",
+                    (day, trail, rule, quota if rule == "manual" else None, by,
+                     datetime.now().isoformat(timespec="seconds")))
+        con.commit()
+    pub = _published(day, db)
+    if pub is None:
+        return []
+    return publish_day(day, float(pub.rain_share.iloc[0]), pub.basis.iloc[0], db, wetness=float(pub.wetness.iloc[0]))
 
 
 def typical_rain_share(day: str) -> float:
@@ -202,7 +288,9 @@ def publish_day(day: str, rain_share: float, basis: str, db=None, wetness: float
     ec = build_control()
     closed = tuple(sorted(closed_slots(day, db)))
     cond = condition_factors(day, db)
-    plan = _planned(day, round(rain_share, 3), closed, round(wetness, 3), tuple(sorted(cond.items())))
+    quota = {t: v["applied"] for t, v in resolve_quota(day, rain_share, wetness, cond, db).items()}
+    plan = _planned(day, round(rain_share, 3), closed, round(wetness, 3), tuple(sorted(cond.items())),
+                    tuple(sorted(quota.items())))
     safe_bookable = np.floor(plan * (1 - ec.c["walk_in_share"])).astype(int)
     bk = booked(day, db, index=plan.index, columns=plan.columns)
     bookable = np.maximum(safe_bookable, bk)

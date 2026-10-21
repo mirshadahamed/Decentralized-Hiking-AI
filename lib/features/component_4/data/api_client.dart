@@ -228,6 +228,31 @@ class C4Api {
       await _send('GET', '/admin/records', query: {'start': day(start), 'end': day(end), 'trail': ?trail})
           as Map<String, dynamic>);
 
+  /// Ranger: sections expected over capacity in the next 2 h and what to do at the gate (A3).
+  Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(
+      await _send('GET', '/gate/advice/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
+  /// Sections a ranger can count on.
+  Future<List<SegmentInfo>> segments() async =>
+      [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
+
+  /// Ranger: send one spot count (A4). Re-sending the same clientId is harmless (stored once).
+  Future<void> addCount(SpotCount c) async => _send('POST', '/counts', body: c.toJson());
+
+  /// Officer: spot counts next to the day-ahead forecast of their section and hour.
+  Future<ForecastCheck> forecastCheck(DateTime start, DateTime end) async => ForecastCheck.fromJson(
+      await _send('GET', '/admin/forecast-check', query: {'start': day(start), 'end': day(end)}) as Map<String, dynamic>);
+
+  /// Officer capacity panel: the day's quota per trail under each rule and the one the ticket plan uses.
+  Future<CapacityPanel> capacityPanel(DateTime d) async =>
+      CapacityPanel.fromJson(await _send('GET', '/admin/capacity/${day(d)}') as Map<String, dynamic>);
+
+  /// Officer: choose the quota rule (forecast | classic | static | manual) for a trail and day. Returns alerts.
+  Future<List<Map<String, dynamic>>> setQuota(DateTime d, String trail, String rule, {int? quota}) async =>
+      ((await _send('POST', '/admin/quota', body: {'day': day(d), 'trail': trail, 'rule': rule, 'quota': quota}))['alerts']
+              as List)
+          .cast<Map<String, dynamic>>();
+
   Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
       .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))
       .toList();
