@@ -1,0 +1,32 @@
+[
+  {
+    "id": "litter_on_trail",
+    "title": "Litter on trail",
+    "category": "Litter",
+    "asset": "assets/demo/component_2/litter_on_trail.jpg"
+  },
+  {
+    "id": "litter_near_vegetation",
+    "title": "Litter near vegetation",
+    "category": "Litter",
+    "asset": "assets/demo/component_2/litter_near_vegetation.jpg"
+  },
+  {
+    "id": "rock_on_trail",
+    "title": "Rock on trail",
+    "category": "Rock",
+    "asset": "assets/demo/component_2/rock_on_trail.jpg"
+  },
+  {
+    "id": "fallen_log_branch",
+    "title": "Fallen log / branch",
+    "category": "Log / branch",
+    "asset": "assets/demo/component_2/fallen_log_branch.jpg"
+  },
+  {
+    "id": "clean_trail",
+    "title": "Clean trail",
+    "category": "Clean trail",
+    "asset": "assets/demo/component_2/clean_trail.jpg"
+  }
+]

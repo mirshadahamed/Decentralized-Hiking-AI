@@ -10,8 +10,10 @@ void main() {
     const anchors = 3;
     final dense = Float32List(6 * anchors);
     void setChannel(int channel, List<double> values) {
-      for (var i = 0; i < anchors; i++) dense[channel * anchors + i] = values[i];
+      for (var i = 0; i < anchors; i++)
+        dense[channel * anchors + i] = values[i];
     }
+
     setChannel(0, [0.5, 0.51, 0.5]);
     setChannel(1, [0.5, 0.5, 0.5]);
     setChannel(2, [0.4, 0.4, 0.4]);
@@ -43,7 +45,10 @@ void main() {
     );
 
     expect(result, hasLength(2));
-    expect(result.map((d) => d.label), containsAll(['rock_region', 'log_region']));
+    expect(
+      result.map((d) => d.label),
+      containsAll(['rock_region', 'log_region']),
+    );
     final rock = result.singleWhere((d) => d.label == 'rock_region');
     expect(rock.box.left, closeTo(0.3, 1e-6));
     expect(rock.box.right, closeTo(0.7, 1e-6));
@@ -91,5 +96,3 @@ void main() {
     expect(result.single.mask!.values.first, greaterThan(0.99));
   });
 }
-import 'dart:typed_data';
-

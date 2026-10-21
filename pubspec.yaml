@@ -68,6 +68,7 @@ flutter:
   assets:
     - assets/images/
     - assets/models/
+    - assets/demo/component_2/
     - assets/maps/
     - assets/knowledge/
 
