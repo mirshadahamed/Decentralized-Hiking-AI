@@ -1,6 +1,6 @@
 {
-  "pid": 52417,
-  "caffeinate_pid": 52418,
+  "pid": 2214,
+  "caffeinate_pid": 2215,
   "command": [
     "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/.venv-yolov8/bin/python",
     "-u",
@@ -12,9 +12,10 @@
     "--device",
     "mps"
   ],
-  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_resume_20261021_000544.log",
-  "launched_at": "2026-10-21T00:05:44.942838+05:30",
+  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_resume_20261021_065303.log",
+  "launched_at": "2026-10-21T06:53:03.723780+05:30",
   "machine": "Apple M4, 16 GiB",
   "requested_device": "mps",
-  "recovery": "complete validation after NMS timeouts"
+  "recovery": "Resume saved epoch 57 after system restart; preserve checkpoint selection and optimizer/EMA",
+  "interruption_evidence_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/reboot_interruption_20261021_065303"
 }

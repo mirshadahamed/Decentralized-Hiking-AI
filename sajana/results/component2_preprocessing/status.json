@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-21T00:12:23.959781+05:30",
+  "checked_at": "2026-10-21T06:55:13.791522+05:30",
   "verification_scope": "Per-source saved full verification certificates plus current prepared file-pair coverage; no replacement for source verifiers.",
   "preparation_order": [
     "source inventory and taxonomy",
@@ -468,10 +468,10 @@
     "device": "mps",
     "training_started": true,
     "full_run_started": true,
-    "completed_epochs": 22,
-    "main_batches_seen": 5720,
+    "completed_epochs": 57,
+    "main_batches_seen": 14980,
     "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
-    "updated_at": "2026-10-21T00:12:08.359261+05:30"
+    "updated_at": "2026-10-21T06:55:08.099756+05:30"
   },
   "label_policy": "Keep source tasks/classes separate; unannotated target classes are unknown, never negative. No fabricated imagery, masks or severity labels."
 }
