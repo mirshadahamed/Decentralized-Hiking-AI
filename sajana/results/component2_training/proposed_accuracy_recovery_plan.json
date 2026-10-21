@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-21",
+  "status": "proposal_only_no_training_started",
+  "data_modified": false,
+  "app_modified": false,
+  "model_training_started": false,
+  "image_budget": {
+    "maximum_photos": 2000,
+    "unit": "unique photo records; task annotations may be multi-label only after visual review",
+    "proposed_split_quotas": {
+      "train": 1400,
+      "validation": 300,
+      "threshold_calibration": 100,
+      "fresh_final_test": 200
+    },
+    "assignment_status": "no_image_ids_assigned",
+    "qualification": "These are planning quotas, not claims that current datasets can fill them. Holdout groups must be previously unused and independent by route/session/sequence. Reduce training allocation if class coverage cannot fit the holdouts."
+  },
+  "current_profiles": {
+    "compact_profile_photos": 2000,
+    "compact_profile_components": {
+      "TACO_litter": 1499,
+      "WildScenes_rock_log": 501
+    },
+    "supplemental_profile_photos": 560,
+    "combined_audited_records": 2560,
+    "non_test_development_candidates": 2223,
+    "non_test_development_candidates_source": {
+      "compact_train_and_validation": 1714,
+      "supplemental_train_and_validation": 509
+    },
+    "already_reviewed_old_test_photos_to_quarantine": {
+      "total": 337,
+      "TACO": 185,
+      "WildScenes": 101,
+      "GOOSE_extension": 51
+    },
+    "candidate_development_records_to_exclude_to_meet_1400_train_quota": 823,
+    "new_grouped_holdout_photos_needed_for_300_validation_100_calibration_200_test": 600,
+    "exclusion_count_is_a_floor": true
+  },
+  "split_policy": {
+    "group_keys_required": ["route_or_site", "recording_session_or_sequence", "capture_date_or_trip"],
+    "same_group_must_not_cross_splits": true,
+    "near_duplicates_must_be_visually_reviewed_before_split": true,
+    "old_reviewed_tests_allowed_for": [],
+    "class_absence_is_a_negative_only_after_annotation_completeness_review": true,
+    "route_condition_must_be_labeled_separately_from_object_classes": true,
+    "do_not_infer_from_object_absence": ["clear", "blocked", "safe", "unsafe", "route_recommendation"]
+  },
+  "per_class_coverage_targets": {
+    "validation": {
+      "minimum_confirmed_positive_photos_per_class": 20,
+      "recommended_confirmed_negative_photos_per_class": 30
+    },
+    "calibration": {
+      "minimum_confirmed_positive_and_negative_photos_per_class": 30,
+      "purpose": "select confidence thresholds only; no gradient updates"
+    },
+    "fresh_final_test": {
+      "minimum_confirmed_positive_photos_per_class": 30,
+      "minimum_confirmed_negative_photos_per_class": 30,
+      "preferred_positive_and_negative_photos_per_class": 100,
+      "report": ["TP", "FP", "FN", "TN", "precision", "recall", "specificity", "false_positive_rate", "mask_or_box_AP50", "mask_or_box_AP50_95", "confidence_intervals"]
+    },
+    "important": "Coverage targets are minimums for a useful research check; wide confidence intervals or weak domain representation still mean the result is inconclusive."
+  },
+  "experiments": [
+    {
+      "id": "L1",
+      "task": "litter instance segmentation",
+      "model": "YOLOv8n-seg",
+      "input_sizes": [640],
+      "initialization": "pinned pretrained initialization; record source/version/checksum",
+      "data": "reviewed TACO masks plus reviewed, task-compatible litter masks; add local clean and hard-negative photos",
+      "purpose": "reproducible compact baseline"
+    },
+    {
+      "id": "L2",
+      "task": "litter instance segmentation",
+      "model": "YOLOv8s-seg",
+      "input_sizes": [640],
+      "initialization": "same pinned initialization policy as L1",
+      "data": "exact same frozen split and annotation version as L1",
+      "purpose": "measure accuracy gain against mobile storage/memory cost"
+    },
+    {
+      "id": "L3",
+      "task": "litter instance segmentation",
+      "model": "YOLOv8n-seg resolution comparison",
+      "input_sizes": [416, 512, 640],
+      "initialization": "same pinned checkpoint, seed policy, and data as L1",
+      "purpose": "measure small-object recall versus phone runtime and memory"
+    },
+    {
+      "id": "O1",
+      "task": "rock/log/branch/debris object detection",
+      "model": "YOLOv8n",
+      "input_sizes": [416, 512],
+      "initialization": "pinned pretrained initialization; record source/version/checksum",
+      "data": "reviewed, harmonized object boxes with group-separated local and public data; keep weak semantic-region supervision tagged",
+      "purpose": "object localization only; no path-state output"
+    },
+    {
+      "id": "O2",
+      "task": "rock/log/branch/debris object detection",
+      "model": "YOLOv8s",
+      "input_sizes": [416, 512],
+      "initialization": "same pinned initialization policy as O1",
+      "data": "exact same frozen split and annotation version as O1",
+      "purpose": "measure accuracy gain against mobile storage/memory cost"
+    },
+    {
+      "id": "Q1",
+      "task": "mobile export comparison",
+      "model": "only the best research-gated candidate per task",
+      "input_sizes": "frozen selected size",
+      "initialization": "same trained checkpoint",
+      "data": "calibration and validation only; final test remains untouched",
+      "purpose": "compare dynamic quantization/export candidates and reject accuracy regressions before Android device testing"
+    }
+  ],
+  "acceptance_gates": {
+    "development_gate": {
+      "per_class_precision_at_least": 0.8,
+      "per_class_recall_at_least": 0.7,
+      "minimum_validation_positive_photos_per_class": 20,
+      "requires_verified_negative_photos": true
+    },
+    "final_gate": {
+      "all_development_gates_pass": true,
+      "fresh_group_held_out_test": true,
+      "per_class_test_positive_and_negative_counts_reported": true,
+      "false_positive_rate_and_confidence_intervals_reported": true,
+      "no_threshold_or_model_changes_after_final_test": true,
+      "physical_4gb_android_device_memory_latency_heat_and_battery_checks": true,
+      "route_condition_claim_requires_separate_reviewed_route_condition_labels": true
+    },
+    "app_safety_state_until_all_applicable_gates_pass": {
+      "model_quality_accepted": false,
+      "trail_condition": "not_assessed",
+      "route_advisory": "requires_map_and_reviewed_obstruction"
+    }
+  },
+  "known_missing_annotations": [
+    "No local trail photos or annotations are currently present.",
+    "No reviewed litter-negative trail photos or hard-negative trail examples.",
+    "Insufficient independently held-out rock/log examples after sequence grouping.",
+    "Branch, exposed-root, erosion/washout, mud/water and route-corridor intersection labels.",
+    "Reviewed trail condition labels such as clear, partly obstructed, substantially obstructed, and uncertain.",
+    "Mobima route/session identifiers and manual review of its 81 cross-split near-duplicate candidates.",
+    "Visual review of 209 suspicious TACO polygon rows and semantic-region-to-object box mappings."
+  ],
+  "next_step": "Collect and manually annotate grouped local photos, inspect/review candidate annotations and near-duplicates, then prepare a new frozen manifest for review. Start training only after the group split and label semantics are approved."
+}
