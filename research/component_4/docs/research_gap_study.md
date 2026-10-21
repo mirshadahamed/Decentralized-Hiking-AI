@@ -152,6 +152,18 @@ Those are exactly what gate counts and graph propagation are for. Today the app 
 
 If S2 shows gate counts and the graph still add nothing in a realistic world, that is the thesis answer for C1 / C4, stated plainly. A1 then still gives officers today's real numbers, but not as the ST-GNN's contribution.
 
+### Progress (21 Oct, branch `feature/component-4-research-gap`)
+| # | Status | Where |
+|---|---|---|
+| A2 | **Done.** The ticket plan uses the forecast-driven quota by default (`control.default_quota_rule: forecast`); the day's forecast is saved by the refresh. Officer tab "Daily quota" shows forecast / weather-only / same-all-year / own number, the limiting section and its hours. Choosing a rule re-plans the tickets (freeze rule kept) | `booking.resolve_quota`, `set_quota`; `serve/capacity_panel.py`; `GET /admin/capacity/{day}`, `POST /admin/quota`; app `staff/capacity_screen.dart` |
+| A6 | **Done.** Basis card on the quota panel; a basis line on the crowd map ("no counters inside the trail") | `capacity_screen.dart`, `bottleneck_screen.dart` |
+| A3 | **Done (physics version).** Gate advice for the next 2 h from the gate counts and the coming slots: "hold new entries to X for N min, or send the next groups to Y" | `control/gate_advice.py`; `GET /gate/advice/{day}`; ranger Live tab |
+| A4 | **Done.** Ranger "Count" tab (tap counter, works offline, sends once when the signal is back); officer "Forecast check" tab (error, bias, share within 30 %, over-capacity called / false alarms) | `serve/field_counts.py`; `POST /counts`, `GET /segments`, `GET /admin/forecast-check`; `count_screen.dart`, `services/count_store.dart` |
+| A5 | **Done (live model).** The pack carries a calibration table P(really over \| forecast fullness) from the deployed model's validation year; the phone shows "% chance" per section | `edge/pack.crowd_calibration`, `eval/uncertainty.py`; `BottleneckDay.chanceOver` |
+| S1 | **Done.** Realistic world: AR(1) demand, bus bursts, arrival-peak shift, route-share swings, incidents, forecast weather as input. Off by default; `build_dataset --world s1` → `dataset_s1.npz` | `sim/simulator.py` (`realism`, `day_events`), `data/build_dataset.py` |
+| S2 / S3 | Running (G1 protocol and calibration on the S1 world, both parks) | `eval/sparse_sensors.py --world s1`, `eval/uncertainty.py` |
+| A1 | Waits for S2: the phone model updated from gate counts during the day, if S2 shows it helps | – |
+
 ## 6. Scope note
 Booking, the Adam's Peak advice, the 90-day planner, officer records and the second park go beyond the gap.
 They show the system works end to end (design, completion, commercialisation marks). But they are not evidence for

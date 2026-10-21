@@ -88,14 +88,24 @@ switches English / සිංහල / தமிழ்.
    A ticket is valid from 15 min before to 15 min after its slot.
 2. **Check in**: type the code (or scan the QR in Chrome) → green tick. A second try says "checked_in".
 3. **Walk-ins**: sell places to visitors without a booking.
-4. **Live**: traffic lights estimated from who went through the gate.
+4. **Live**: traffic lights estimated from who went through the gate. The card on top says what to do at the gate
+   for the next 2 hours: *keep the gate open*, or *hold new entries to a trail for N min / send the next groups to
+   another trail*. To see it act, check in or sell many groups for one trail between 06:00 and 08:00.
+5. **Count**: pick a section, tap **+1** for every walker you see, **Save count**. Works in airplane mode: the count
+   waits on the phone ("1 waiting to be sent") and is sent with **Send now** when the signal is back.
+6. **Crowding**: on each section the **% chance** that it is really over capacity at that hour.
 
 **Park officer** (log out, log in as `officer1`)
-1. **This week**: next 7 days with bookings; **Refresh now** re-runs the daily refresh.
-2. **Trail condition**: trail, days, Good / Muddy / Partly closed / Closed, note → the safe limit and tickets
+1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather
+   only* and *the same all year*, why the forecast lowers it (which section, which hours), and the sections
+   expected over capacity. Tap another rule or **My number** to change the day's tickets (bookings are kept).
+2. **Forecast check**: rangers' counts next to the forecast of the same section and hour (mean error, share
+   within 30 %, over-capacity called / false alarms).
+3. **This week**: next 7 days with bookings; **Refresh now** re-runs the daily refresh.
+4. **Trail condition**: trail, days, Good / Muddy / Partly closed / Closed, note → the safe limit and tickets
    for those days change at once; bookings now over the limit are listed. Visitors see the condition on the day screen.
-3. **Close trail**: date, trail, time window, reason → affected bookings are listed (never cancelled).
-4. **Alerts**: slots with more bookings than is safe after the weather got worse, a trail condition or a closure.
+5. **Close trail**: date, trail, time window, reason → affected bookings are listed (never cancelled).
+6. **Alerts**: slots with more bookings than is safe after the weather got worse, a trail condition or a closure.
 
 ---
 
