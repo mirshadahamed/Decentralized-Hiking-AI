@@ -51,6 +51,12 @@ void main() {
     expect(s.peopleAt(9), closeTo(expected[9][s.id], 0.01)); // the phone's own forecast, per section
     expect(d.openHours, contains(d.worstHour));
     expect(d.recommendedQuota, map['recommended_daily_quota']);
+    // A5: chance of really being over capacity grows with how full the forecast is
+    expect(d.calibration, isNotNull);
+    final ranked = d.rankedAt(d.worstHour);
+    final pFull = d.chanceOver(ranked.first, d.worstHour)!, pEmpty = d.chanceOver(ranked.last, d.worstHour)!;
+    expect(pFull, greaterThanOrEqualTo(pEmpty));
+    expect(pEmpty, lessThan(0.05));
     // crowding levels follow forecast people / people the section holds at once
     for (final x in d.sections) {
       final u = x.utilisation(d.worstHour);

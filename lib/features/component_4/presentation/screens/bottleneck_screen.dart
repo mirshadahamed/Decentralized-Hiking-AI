@@ -326,6 +326,13 @@ class _MapTab extends StatelessWidget {
                       const SizedBox(width: C4Space.s),
                       Expanded(child: Text(day.nameOf(s), overflow: TextOverflow.ellipsis)),
                       Text('${s.peopleAt(hour).round()} / ${s.capacityAtOnce.round()} people'),
+                      if (day.chanceOver(s, hour) case final p? when p >= 0.05)
+                        Padding(
+                          padding: const EdgeInsets.only(left: C4Space.s),
+                          child: Text('${(p * 100).round()} %',
+                              key: Key('chance_${s.id}'),
+                              style: text.bodySmall?.copyWith(color: p >= 0.5 ? const Color(0xFFC62828) : null)),
+                        ),
                       const Icon(Icons.chevron_right, size: 18),
                     ]),
                   ),
@@ -359,6 +366,15 @@ class _SectionSheet extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(day.nameOf(s), style: text.titleLarge),
           Text('${trail?.name ?? s.trail} · ${s.lengthM} m', style: text.bodySmall),
+          if (day.chanceOver(s, hour) case final p?)
+            Padding(
+              padding: const EdgeInsets.only(top: C4Space.s),
+              child: Text(
+                  'At ${_h(hour)}: ${(p * 100).round()} % chance it is really over what it holds safely '
+                  '(from how often forecasts like this one were right in a past year).',
+                  key: const Key('section_chance'),
+                  style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+            ),
           const SizedBox(height: C4Space.m),
           Text('Expected people on this section, hour by hour (line = what it holds safely)', style: text.bodySmall),
           const SizedBox(height: C4Space.s),
@@ -456,6 +472,11 @@ class _CapacityTab extends StatelessWidget {
         ),
       ),
       for (final t in day.trails.values) _TrailCard(day: day, trail: t),
+      BasisNote(
+          key: const Key('crowd_basis'),
+          'Based on: ${day.source == 'planning' ? 'the planning outlook (calendar + typical weather)' : 'the ST-GNN with the '
+              'calendar and the weather forecast'}. No counters inside the trail: no section is counted, every number '
+              'is a forecast.'),
       if (day.disclaimer.isNotEmpty) BasisNote(day.disclaimer),
     ]);
   }

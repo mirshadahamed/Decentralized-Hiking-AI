@@ -114,7 +114,27 @@ def week_forecasts(data, cfg, seg, model, scale, run, today: str, planner, days:
     return out
 
 
-def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None) -> dict:
+def crowd_calibration(model, data, scale: float, cfg: dict, run: str | None = None) -> dict:
+    """A5 / S3: P(really over capacity | forecast fullness) from the model's validation year, so the phone can say
+    "70 % chance over capacity" instead of a single number (src/eval/uncertainty.py). Cached in the model's run."""
+    from src.config import PARK, RESULTS
+    from src.eval.bottlenecks import capacity_at_once
+    from src.eval.uncertainty import _flat, calibrate
+    from src.train.trainer import predict
+    path =RESULTS / run / "crowd_calibration.json" if run else None
+    if path is not None and path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    va = data.origins("val")
+    y, open_ = data.targets(va)
+    cap = capacity_at_once(cfg, PARK)
+    u, t = _flat(predict(model, data, va, np.ones(data.N, bool), scale), y, open_, cap, np.arange(data.N))
+    table = calibrate(u, t) | {"basis": "validation year of the deployed model (simulated counts)"}
+    if path is not None:
+        path.write_text(json.dumps(table), encoding="utf-8")
+    return table
+
+
+def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None, calibration: dict | None = None) -> dict:
     """What the phone needs to draw the bottleneck map and the capacity table offline (optional "map" key):
     each segment's line (simplified, lon/lat), Cifuentes capacity (people at once, PCC / RCC / ECC per day),
     the trail summaries (recommended daily number, limiting segment) and the open hours.
@@ -162,6 +182,8 @@ def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None) -> dict:
         # the week: today .. +6 days; "stgnn" days are forecast on the phone (inputs / extra_inputs), "planning"
         # days carry the planning model's people per hour
         "days": [_day_block(d, src, fc, people=src != "stgnn") for d, src, fc in (week or [])],
+        # chance of really being over capacity for a forecast fullness (bins = forecast / capacity_at_once)
+        **({"calibration": calibration} if calibration else {}),
     }
 
 
@@ -192,7 +214,8 @@ if __name__ == "__main__":
     seg["poi"] = seg["poi"].fillna("")
     today = str(data.times[origin - 24].date())
     week = week_forecasts(data, cfg, seg, model, scale, run, today, build_planner(cfg))
-    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data, week)
+    pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data, week,
+                             crowd_calibration(model, data, scale, cfg, run))
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
     pack["expected_people_today"] = [[round(float(x), 5) for x in row]
                                      for row in torch_forecast(model, data, origin - 24, scale)]
