@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:label="decentralized_hiking_ai"
         android:name="${applicationName}"

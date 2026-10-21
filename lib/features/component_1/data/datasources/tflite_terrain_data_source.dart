@@ -1,4 +1,4 @@
-import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:flutter_litert/native.dart';
 
 class TFLiteTerrainDataSource {
   TFLiteTerrainDataSource({this.modelAssetPath = 'assets/models/terrain_model_quant.tflite'});
