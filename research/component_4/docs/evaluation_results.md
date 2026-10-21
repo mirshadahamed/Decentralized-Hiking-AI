@@ -146,6 +146,12 @@ Horton Plains (p = 0.005), so it is dropped. **Reading:** the earlier single-see
 Peak" was seed noise. With every segment counted the graph adds nothing measurable; its value is on segments
 *without* counts (spatial CV, Horton Plains significant).
 
+**Horton Plains spatial CV, 3 seeds** (run `results/20261021_013444_benchmark_p04s`, held-out segments):
+- **Mean MAE:** ST-GNN **2.54** · LSTM 2.59 · GRU without graph 2.61 · historical average 4.20.
+- **Significance (Holm):** ST-GNN vs LSTM −0.05 and vs GRU without graph −0.07, both p < 10⁻¹².
+- **Per block** (ST-GNN vs LSTM): 3.78 vs 3.72, 3.97 vs 3.98, 0.91 vs 0.80, **1.51 vs 1.88**. So the
+  significant gain is small (2 %) and comes from one block.
+
 **Adam's Peak spatial CV, 3 seeds** (run `results/adams_peak/20261020_110028_benchmark_p04s`, MAE on held-out
 segments):
 
@@ -164,6 +170,36 @@ behave like their neighbours. It hurts at the summit: a queue there forms from t
 not from what nearby segments look like, and nothing else on the mountain behaves like it. So the graph's value
 on unseen segments is confirmed at Horton Plains and on ordinary Adam's Peak trail, but not at the bottleneck
 itself. **Next:** add the queue state as an input, or give the summit its own output head (B1 in the plan).
+
+## RQ1b – Bottleneck events, not just error (G3; `src.eval.bottlenecks`, run `20261021_094226_bottlenecks`)
+
+**Event:** a segment-hour during open hours (test year 2025) where people on the segment exceed `capacity_at_once`
+(Cifuentes spacing). Same trained models as RQ1, 3 seeds (Adam's Peak temporal GRU-no-graph: 1 seed). Bootstrap
+over days, 2,000 resamples. Full table: `metrics.csv`; tests: `tests.json`.
+
+F1 of over-capacity segment-hours (precision / recall in brackets):
+
+| Park, protocol | Historical avg | LSTM | GRU (no graph) | ST-GNN |
+|---|---|---|---|---|
+| Horton, all segments counted | 0.75 | 0.80 | 0.80 | **0.80** (0.88 / 0.74) |
+| Horton, held-out segments | 0.03 | 0.32 | **0.35** | 0.29 (0.33 / 0.26) |
+| Adam's Peak, all counted | 0.49 | 0.85 | 0.85 | **0.85** (0.86 / 0.84) |
+| Adam's Peak, held-out | 0.03 | **0.56** | 0.55 | 0.54 (0.43 / 0.70) |
+
+ST-GNN − other F1, 95 % interval:
+- **All segments counted:** a tie at both parks. Every interval contains 0 or is within ±0.01.
+- **Held-out segments:** the ST-GNN is **worse**:
+  - Horton: −0.03 vs LSTM [−0.04, −0.03]; −0.06 vs GRU without graph [−0.07, −0.05].
+  - Adam's Peak: −0.03 vs LSTM [−0.03, −0.02]; −0.01 vs GRU without graph [−0.02, −0.01].
+- **Busy events (≥ 0.8 capacity):** the same pattern.
+
+**Reading:**
+- The ST-GNN's lower MAE on held-out Horton segments (RQ1) **does not carry over to bottleneck detection**. It
+  smooths peaks from neighbours: lower average error, but fewer over-capacity hours flagged (recall 0.26).
+- Every model under-forecasts peaks on segments without counts (recall ≤ 0.33 at Horton). MAE training rewards
+  that, so claim C3 needs a peak-aware loss or a calibrated alert threshold (G8).
+- Day level is not informative here: in the simulator, some segment is over capacity on 363 of 365 Horton days.
+- "Warning hours" (~8 h) is simply the hour of the event, because the forecast is issued at midnight.
 
 ## RQ5 – Pretraining on urban traffic (objective O3, P0-1; `src.pretrain.traffic`, `src.eval.pretrain_transfer`, 20 Oct 2026)
 
@@ -208,6 +244,26 @@ useful starting point only for a new trail park with a few months of counts, and
 traffic peaks. Pretraining on the other park (RQ2) gives similar gains. In both cases, a new park should start
 with the historical average.
 
+**Domain adaptation by freezing the pretrained core** (run `20261021_064549_pretrain_transfer`, variant
+`frozen`). The graph and recurrent layers keep the traffic weights; only the input and output layers adapt.
+
+MAE by amount of target-park data:
+
+| Park | Days | Scratch | Fine-tuned | Frozen core |
+|---|---|---|---|---|
+| Horton Plains | 30 | 3.11 | **2.96** | 3.07 |
+| | 90 | 2.72 | **2.40** | 2.43 |
+| | 365 | 1.69 | 1.71 | **1.65** |
+| | full | **1.42** | 1.43 | 1.42 |
+| Adam's Peak | 30 | **9.89** | 10.47 | 12.15 |
+| | 90 | **9.59** | 9.62 | 10.03 |
+| | 365 | **6.25** | 6.69 | 6.95 |
+| | full | **4.23** | 4.59 | 4.88 |
+
+Freezing helps only Horton Plains at 365 days, by 2 %. At Adam's Peak it is the worst variant at every amount of
+data. This confirms the reading above: the traffic core fits trails whose crowds look like traffic peaks, and not
+the summit queue.
+
 ## RQ8 – Offline walk advice vs entry limits (`src.control.evaluate_advice`, run `20261020_234527_advice`)
 
 Horton Plains, 2025 test year (simulation), the same groups each day as the entry-control test.
@@ -246,6 +302,82 @@ Wilcoxon over days: every policy differs from no control (p < 10⁻¹⁷). Sprea
   - it is simulation;
   - compliance is assumed;
   - the forecast is the ST-GNN's day-ahead forecast with observed weather (as in RQ1).
+
+## RQ10 – No sensor record: gate counts only, or nothing (G1; `src.eval.sparse_sensors`)
+
+**Runs:** `results/20261021_100713_sparse` (Horton Plains) and `results/adams_peak/20261021_133744_sparse`.
+
+**Setup:**
+- The synthetic target trains every segment.
+- As input, the model sees either the gate segments' counts (`gate`) or no counts at all (`zero`).
+- Scored on the interior segments, test year 2025, 3 seeds.
+
+| Interior MAE | Horton, gate | Horton, zero | Adam's Peak, gate | Adam's Peak, zero |
+|---|---|---|---|---|
+| Historical average (simulation) | 1.63 | 1.63 | 11.28 | 11.28 |
+| LSTM | 1.44 | 1.44 | **3.87** | 3.90 |
+| GRU (no graph) | **1.43** | 1.44 | 3.97 | 3.94 |
+| ST-GNN | 1.45 | 1.45 | 4.00 | 3.96 |
+
+Over-capacity F1 (G3 events): 0.80–0.81 at Horton and 0.85–0.86 at Adam's Peak, the same for every model and both settings.
+
+**Paired tests (Holm), ST-GNN vs each model:**
+- vs the historical average: better at both parks, p < 10⁻¹¹.
+- vs the LSTM and GRU at Horton: slightly worse, by 0.01–0.02 (p ≤ 0.02).
+- vs the LSTM at Adam's Peak: slightly worse, by 0.07–0.12 (p ≤ 0.04).
+- vs the GRU at Adam's Peak: no difference.
+
+**Forecasts made during the day** (same models, issued at 08:00 / 10:00 / 12:00 for the rest of the day): gate counts
+improve the interior MAE by at most 3 % over no counts.
+
+**Reading:**
+- Without any counts, a model trained on the calibrated simulation forecasts almost as well as with every segment
+  counted (Horton 1.44 vs 1.42). That supports deployment at a park with **no sensor record**.
+- The **graph and the sensors add nothing**, because in the simulator a day's crowd is fully set by calendar +
+  weather + independent noise:
+  - day-to-day noise is lognormal with sd 0.15 and does not carry over between days;
+  - the arrival-time pattern is the same every day;
+  - the weather covariates are the *observed* weather, i.e. a perfect weather forecast.
+- So nothing exists that counts or neighbours could reveal. This is finding F5 made concrete: the simulator cannot
+  show the value of what the gap asks about. See `research_gap_study.md`, section 5.
+
+## RQ9 – Does the forecast make the daily quota better than a static one? (G2; `src.control.evaluate_quota`)
+
+**Runs:** `results/20261021_100715_quota` (Horton Plains) and `results/adams_peak/20261021_102216_quota`.
+
+**Setup:**
+- Test year 2025 (simulation).
+- The same groups arrive every day for every rule. Each trail has a daily quota, filled first come, first served at the gate.
+- A quota trades visitors for crowding, so every rule is swept over quota multipliers. Each is then re-run at the
+  multiplier that admits **as many visitors as the static quota**, and the rules are compared at that level.
+
+| Rule (equal visitors admitted) | Horton: over-capacity person-h | vs static | Adam's Peak: over-capacity person-h | vs static |
+|---|---|---|---|---|
+| Static (one number per trail, all year) | 60,444 | – | 93,140 | – |
+| Classic Cifuentes with the day's rain | 46,157 | −24 % | 77,227 | −17 % |
+| + historical-average forecast (FCcrowd) | 43,855 | −27 % | 74,204 | −20 % |
+| **+ ST-GNN forecast (FCcrowd)** | **44,023** | **−27 %** | **70,840** | **−24 %** |
+| + perfect forecast (oracle) | 42,859 | −29 % | 63,721 | −32 % |
+
+Visitors admitted at the matched level: Horton 58 %, Adam's Peak 28 % of those who came.
+
+Share of the oracle's gain over the static quota: ST-GNN 93 % (Horton), 76 % (Adam's Peak).
+
+Paired Wilcoxon over days, ST-GNN rule vs:
+- **Adam's Peak:** static p < 10⁻⁷, weather-only p < 10⁻⁴, historical-average forecast p = 0.013. Significant on every comparison.
+- **Horton Plains:** static p = 0.89, weather-only p = 0.28, historical-average forecast p = 0.51. Not significant: the
+  total cut is large, but it comes from a minority of busy days, while most days change little either way.
+
+**Reading:**
+- A forecast-driven Cifuentes quota beats a static quota at equal visitor numbers at both parks: a cut of 24–27 % in over-capacity time.
+- The ST-GNN's own contribution beyond weather and the historical average is clear only at Adam's Peak, where demand
+  swings most (Poya days, season). At Horton Plains a historical-average forecast does as well.
+- No daily quota removes over-capacity on most days, because crowding is about *when* people walk, not how many come
+  in a day. That is why slot tickets and walk advice (RQ8) cut far more. The forecast's natural place is
+  therefore in the slot plan's capacity and the walk advice, not only in the daily number.
+
+**Code:** `slots.EntryControl.daily_quota(..., forecast=)` now accepts the day-ahead forecast. The live booking
+plan still uses the classic quota (to switch: pass the published forecast in `booking._planned`).
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
