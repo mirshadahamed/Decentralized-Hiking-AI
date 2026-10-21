@@ -6,6 +6,7 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
+import 'count_screen.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
@@ -36,7 +37,7 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
@@ -56,11 +57,12 @@ class _RangerHomeState extends State<RangerHome> {
               },
             ),
           ],
-          bottom: const TabBar(tabs: [
+          bottom: const TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.qr_code_scanner), text: 'Check in'),
             Tab(icon: Icon(Icons.point_of_sale), text: 'Walk-ins'),
             Tab(icon: Icon(Icons.traffic), text: 'Live'),
             Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
+            Tab(icon: Icon(Icons.exposure_plus_1), text: 'Count'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -68,6 +70,7 @@ class _RangerHomeState extends State<RangerHome> {
           _WalkInTab(day: _day, at: () => _demo),
           _LiveTab(day: _day, now: _now, demo: _demo != null),
           const BottleneckView(), // where and when sections get crowded this week, also offline
+          CountTab(now: () => _now), // A4: spot counts, the park's own sensor record
         ]),
       ),
     );
@@ -289,10 +292,16 @@ class _LiveTab extends StatefulWidget {
 
 class _LiveTabState extends State<_LiveTab> {
   late Future<List<LiveSegment>> _future;
+  Future<GateAdvice?>? _advice;
 
   String get _at => '${widget.now.hour.toString().padLeft(2, '0')}:${widget.now.minute.toString().padLeft(2, '0')}';
 
-  Future<List<LiveSegment>> _load() => C4Scope.of(context).live(widget.day, at: widget.demo ? _at : null);
+  Future<List<LiveSegment>> _load() {
+    final api = C4Scope.of(context);
+    // A3: advice for the gate (booking parks); a server without it just shows no card
+    _advice = api.gateAdvice(widget.day, at: widget.demo ? _at : null).then<GateAdvice?>((a) => a, onError: (_) => null);
+    return api.live(widget.day, at: widget.demo ? _at : null);
+  }
 
   @override
   void didChangeDependencies() {
@@ -336,6 +345,7 @@ class _LiveTabState extends State<_LiveTab> {
                   ),
               ]),
               const SizedBox(height: 12),
+              FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
               if (issues.isEmpty)
                 const Card(child: ListTile(leading: Icon(Icons.check_circle, color: C4Colors.green), title: Text('All clear: no action needed.'))),
               for (final s in issues)
@@ -352,4 +362,54 @@ class _LiveTabState extends State<_LiveTab> {
           );
         },
       );
+}
+
+/// A3: what to do at the gate so no section goes over capacity in the next two hours.
+class GateAdviceCard extends StatelessWidget {
+  const GateAdviceCard(this.a, {super.key});
+
+  final GateAdvice? a;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = this.a;
+    if (a == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    if (a.advice.isEmpty) {
+      return Card(
+        key: const Key('gate_advice'),
+        child: ListTile(
+          leading: const Icon(Icons.door_front_door_outlined, color: C4Colors.green),
+          title: const Text('Next 2 hours: keep the gate open'),
+          subtitle: Text('No section is expected over capacity. ${a.basis}'),
+        ),
+      );
+    }
+    return Card(
+      key: const Key('gate_advice'),
+      color: const Color(0xFFFFF3E0),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Next 2 hours: act at the gate', style: text.titleMedium),
+          const SizedBox(height: 4),
+          for (final x in a.advice)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Icon(Icons.pan_tool_outlined, size: 18, color: C4Colors.amber),
+                const SizedBox(width: 8),
+                Expanded(child: Text(x['text'] as String, style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+              ]),
+            ),
+          const SizedBox(height: 4),
+          for (final o in a.over.take(4))
+            Text('${o['name']}: about ${(o['people'] as num).round()} people at ${o['at']} (holds ${(o['capacity'] as num).round()})',
+                style: text.bodySmall),
+          const SizedBox(height: 4),
+          Text(a.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
 }
