@@ -7,8 +7,20 @@ Turns the forecast into a carrying capacity and quota per trail (Cifuentes casca
 days, start times or trails.
 Built from open data only: OpenStreetMap, Copernicus DEM, Open-Meteo weather, Sri Lankan holiday/Poya calendar.
 
-**Start here:** `docs/user_guide.md` (use, test and understand the system) · `RUN_APP.md` (run the app) ·
-`docs/evaluation_results.md` (RQ1–RQ7) · `docs/improvement_plan.md` (proposal vs built, plan).
+**Start here:**
+| Doc | For |
+|---|---|
+| `docs/pp1_guide.md` | the whole component explained, for the presentation |
+| `docs/qa_pp1.md` | likely examiner questions with short answers and evidence |
+| `docs/user_guide.md`, `RUN_APP.md` | use, test and run the system |
+| `docs/technical_design.md` | architecture, model internals, why each technology |
+| `docs/requirements.md` | FR / NFR traced to code, tests and results; risk register |
+| `docs/evaluation_results.md` | every research question (RQ1–RQ10) with numbers |
+| `docs/research_gap_study.md`, `docs/improvement_plan.md` | the gap claim by claim; the plan to finish |
+| `docs/model_card.md` | model and data card (sources, licences, limits) |
+| `docs/assumptions*.md`, `docs/decisions.md`, `docs/field_validation_protocol.md` | assumptions, decision log, field protocol |
+
+Older phase plans are in `docs/archive/`.
 
 ## Pipeline
 ```
@@ -25,6 +37,7 @@ OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weat
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 .venv\Scripts\python.exe -m src.data.build_dataset        # downloads + simulation (~1 min after first run)
 .venv\Scripts\python.exe -m pytest -q                     # shape, leakage and seed tests
+.venv\Scripts\python.exe -m ruff check src tests dashboard  # lint (ruff.toml)
 .venv\Scripts\python.exe -m src.run_benchmark             # all models, both protocols (long, CPU)
 .venv\Scripts\python.exe -m src.serve.predict --date 2025-05-12
 .venv\Scripts\python.exe -m src.planning.backtest                 # planning accuracy by lead time
@@ -131,7 +144,15 @@ Protocol and pre-registered criteria: `docs/field_validation_protocol.md`. The l
 ## Results
 See the newest `results/<run>/metrics_temporal.csv`, `metrics_spatial.csv` and `stats.json`.
 
+## Data sources and credits
+- Trails: © OpenStreetMap contributors, ODbL 1.0 (credited on every map in the app).
+- Terrain: Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under
+  COPERNICUS by the European Union and ESA.
+- Weather: Open-Meteo.com (CC BY 4.0), ERA5 archive; NASA POWER for the rain cross-check.
+- Pretraining: METR-LA and PEMS-BAY (Li et al., DCRNN, ICLR 2018).
+Details and personal-data notes: `docs/model_card.md`.
+
 ## Limitations
 The training target is synthetic (no segment counts exist for the park). Every assumption is listed in
 `docs/assumptions.md`, and field counts will be used to calibrate it. Weather for the forecast day is
-currently the observed weather (a perfect forecast).
+the observed weather (a perfect forecast) in the main benchmark, and a noisy forecast in the S1 world.

@@ -376,8 +376,9 @@ Paired Wilcoxon over days, ST-GNN rule vs:
   in a day. That is why slot tickets and walk advice (RQ8) cut far more. The forecast's natural place is
   therefore in the slot plan's capacity and the walk advice, not only in the daily number.
 
-**Code:** `slots.EntryControl.daily_quota(..., forecast=)` now accepts the day-ahead forecast. The live booking
-plan still uses the classic quota (to switch: pass the published forecast in `booking._planned`).
+**Code:** `slots.EntryControl.daily_quota(..., forecast=)` accepts the day-ahead forecast. The live ticket plan uses
+the forecast-driven quota by default (`control.default_quota_rule: forecast`); officers can switch the rule per day
+(`booking.resolve_quota`, `POST /admin/quota`).
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
