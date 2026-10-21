@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-10-21T14:38:40.558150+05:30",
+  "tag": "final_test_obstacle",
+  "task": "obstacle",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+  "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+  "imgsz": 416,
+  "split": "test",
+  "images": 101,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.14621813665826816,
+    "metrics/recall(B)": 0.11068645083932854,
+    "metrics/mAP50(B)": 0.045733882511102386,
+    "metrics/mAP50-95(B)": 0.011966130359492521,
+    "fitness": 0.011966130359492521
+  },
+  "threshold": 0.3483483483483483,
+  "threshold_source": "frozen validation choice",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "rock_region",
+      "labelled_images": 30,
+      "labelled_regions": 48,
+      "AP50": 0.04315217387984342,
+      "AP50_95": 0.01226856861804207,
+      "precision_at_threshold": 0.14637039163143184,
+      "recall_at_threshold": 0.041666666666666664,
+      "f1_at_threshold": 0.0648677061125668
+    },
+    {
+      "class_id": 1,
+      "class_name": "log_region",
+      "labelled_images": 73,
+      "labelled_regions": 278,
+      "AP50": 0.04831559114236136,
+      "AP50_95": 0.011663692100942973,
+      "precision_at_threshold": 1.0,
+      "recall_at_threshold": 0.0,
+      "f1_at_threshold": 0.0
+    }
+  ],
+  "AP50": 0.045733882511102386,
+  "AP50_95": 0.011966130359492521,
+  "mean_precision_at_threshold": 0.5731851958157159,
+  "mean_recall_at_threshold": 0.020833333333333332,
+  "mean_f1_at_threshold": 0.0324338530562834,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.10720751490928049,
+    "inference": 9.557222702941283,
+    "loss": 0.000571722417175401,
+    "postprocess": 0.3342677228640313
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

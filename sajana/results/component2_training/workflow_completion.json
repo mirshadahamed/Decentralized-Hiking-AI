@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-10-21T14:54:14.019389+05:30",
+  "phase": "cycle_completed_accuracy_acceptance_failed",
+  "total_unique_photos_including_holdouts": 2000,
+  "dataset_profile": "sajana/configs/component2_compact_2000.json",
+  "dataset_split_counts": {
+    "litter": {
+      "train": 1028,
+      "val": 286,
+      "test": 185
+    },
+    "rock_log": {
+      "train": 350,
+      "val": 50,
+      "test": 101
+    }
+  },
+  "refinements": {
+    "litter_detail": {
+      "phase": "completed",
+      "epochs": 15
+    },
+    "obstacle_detail": {
+      "phase": "completed",
+      "epochs": 45
+    }
+  },
+  "refinement_completion": "quality/refinement_completion.json",
+  "frozen_selection": "quality/frozen_selection.json",
+  "public_test_report": "quality/public_test_results.json",
+  "public_tests_complete": true,
+  "test_used_to_train_or_select": false,
+  "software_tests": {
+    "passed": 175,
+    "failed": 0,
+    "command": "sajana/.venv-yolov8/bin/python -B -m unittest discover -s sajana/tests",
+    "scope": "software checks; not model accuracy"
+  },
+  "final_asset_photo_functional_check": {
+    "input_image_sha256": "4d43a74928e8a69d298983aebdb826353c63e45bf7a87db5faba21b670eca669",
+    "manifest_sha256": "2127303c04929f35668020a4ae1a327178a5a698381e2752562e9ec3bdc50a6a",
+    "detections": [
+      {
+        "task": "litter",
+        "label": "litter",
+        "confidence": 0.9039527177810669,
+        "box_xyxy_normalized": [
+          0.3313005268573761,
+          0.3469432592391968,
+          0.7694851160049438,
+          0.8643259406089783
+        ]
+      }
+    ],
+    "garbage_mask_polygon_returned": true,
+    "trail_condition": "not_assessed",
+    "model_quality_accepted": false,
+    "role": "validation photo functional check only; not independent accuracy evidence"
+  },
+  "selected_models_combined_bytes": 6960686,
+  "mobile_assets_prepared": true,
+  "export_validation_complete": true,
+  "standalone_litert_checks": "litert_desktop_benchmark.json",
+  "public_validation_quality_passed": false,
+  "quality_failures": [
+    "litter/litter: precision_at_threshold below 0.8",
+    "litter/litter: recall_at_threshold below 0.7",
+    "obstacle/rock_region: recall_at_threshold below 0.7",
+    "obstacle/rock_region: insufficient validation image coverage",
+    "obstacle/log_region: precision_at_threshold below 0.8",
+    "obstacle/log_region: recall_at_threshold below 0.7"
+  ],
+  "negative_garbage_photo_evaluation_complete": false,
+  "local_trail_evaluation_complete": false,
+  "physical_phone_benchmark_complete": false,
+  "android_build_tested": false,
+  "quality_accepted_for_app": false,
+  "full_component_ready": false,
+  "development_handoff": "sajana/docs/COMPONENT2_DEVELOPMENT_HANDOFF.md",
+  "development_bundle_record": "development_bundle.json",
+  "next_cycle_requires": [
+    "reviewed representative hiking examples within 2000-photo budget",
+    "garbage-negative labelled photos",
+    "adequate rock/log validation coverage",
+    "actual blockage/clear-trail, root and erosion labels",
+    "fresh independent final holdout after further model selection",
+    "Android integration and physical 4 GB phone benchmark"
+  ]
+}

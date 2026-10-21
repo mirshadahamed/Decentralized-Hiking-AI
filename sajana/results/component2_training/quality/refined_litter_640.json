@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-10-21T14:38:20.613657+05:30",
+  "tag": "refined_litter_640",
+  "task": "litter",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_refinement/litter_detail/fit/weights/best.pt",
+  "checkpoint_sha256": "0564b87f2aebcb99c5891e2630672222e841006d99b47c5ad519851335d9aec2",
+  "imgsz": 640,
+  "split": "val",
+  "images": 286,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.698408701588081,
+    "metrics/recall(B)": 0.4711111111111111,
+    "metrics/mAP50(B)": 0.5135584203115293,
+    "metrics/mAP50-95(B)": 0.36574329278678236,
+    "metrics/precision(M)": 0.7076821449816262,
+    "metrics/recall(M)": 0.4590811185457539,
+    "metrics/mAP50(M)": 0.5059143683216762,
+    "metrics/mAP50-95(M)": 0.3124374861270621,
+    "fitness": 0.6781807789138445
+  },
+  "threshold": 0.4124124124124124,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "litter",
+      "labelled_images": 286,
+      "labelled_regions": 675,
+      "AP50": 0.5059143683216762,
+      "AP50_95": 0.3124374861270621,
+      "precision_at_threshold": 0.7076821449816262,
+      "recall_at_threshold": 0.4590811185457539,
+      "f1_at_threshold": 0.5568970516106747
+    }
+  ],
+  "AP50": 0.5059143683216762,
+  "AP50_95": 0.3124374861270621,
+  "mean_precision_at_threshold": 0.7076821449816262,
+  "mean_recall_at_threshold": 0.4590811185457539,
+  "mean_f1_at_threshold": 0.5568970516106747,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.2332161993008031,
+    "inference": 45.19037254895178,
+    "loss": 0.00046678671465501384,
+    "postprocess": 2.071814104896033
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

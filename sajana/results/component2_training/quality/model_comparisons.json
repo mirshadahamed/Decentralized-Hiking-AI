@@ -1,0 +1,796 @@
+{
+  "litter": {
+    "native": {
+      "checked_at": "2026-10-21T13:50:05.610198+05:30",
+      "tag": "baseline_litter_640",
+      "task": "litter",
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+      "checkpoint_sha256": "f7397314c0587098e87d2e5bced8bec259a1698060d966222965fa059a334a55",
+      "imgsz": 640,
+      "split": "val",
+      "images": 286,
+      "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+      "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+      "metrics": {
+        "metrics/precision(B)": 0.6785803771506932,
+        "metrics/recall(B)": 0.4910497056874188,
+        "metrics/mAP50(B)": 0.5295547481084955,
+        "metrics/mAP50-95(B)": 0.3792379858783453,
+        "metrics/precision(M)": 0.6777188458917426,
+        "metrics/recall(M)": 0.4888888888888889,
+        "metrics/mAP50(M)": 0.5241965299443238,
+        "metrics/mAP50-95(M)": 0.32240037270651994,
+        "fitness": 0.7016383585848652
+      },
+      "threshold": 0.4084084084084084,
+      "threshold_source": "validation F1 curve",
+      "per_class": [
+        {
+          "class_id": 0,
+          "class_name": "litter",
+          "labelled_images": 286,
+          "labelled_regions": 675,
+          "AP50": 0.5241965299443238,
+          "AP50_95": 0.32240037270651994,
+          "precision_at_threshold": 0.6777188458917426,
+          "recall_at_threshold": 0.4888888888888889,
+          "f1_at_threshold": 0.568021630011526
+        }
+      ],
+      "AP50": 0.5241965299443238,
+      "AP50_95": 0.32240037270651994,
+      "mean_precision_at_threshold": 0.6777188458917426,
+      "mean_recall_at_threshold": 0.4888888888888889,
+      "mean_f1_at_threshold": 0.568021630011526,
+      "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+      "native_speed_ms_per_image": {
+        "preprocess": 1.1811388181817337,
+        "inference": 10.072297776223783,
+        "loss": 0.0004623986013852177,
+        "postprocess": 37.98557604195799
+      },
+      "phone_benchmark": false,
+      "full_component_ready": false
+    },
+    "exports": [
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_fp32.tflite",
+          "bytes": 13704469,
+          "sha256": "d63d91416eb0a1c2a381cf831b896b0f0fa19101ed7500251580cb53fbbb1527",
+          "inputs": [
+            {
+              "name": "images",
+              "shape": [
+                1,
+                640,
+                640,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "Identity",
+              "shape": [
+                1,
+                37,
+                8400
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            },
+            {
+              "name": "Identity_1",
+              "shape": [
+                1,
+                160,
+                160,
+                32
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "fp32",
+        "validation": {
+          "checked_at": "2026-10-21T14:11:59.531330+05:30",
+          "tag": "export_litter_fp32",
+          "task": "litter",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_fp32.tflite",
+          "checkpoint_sha256": "d63d91416eb0a1c2a381cf831b896b0f0fa19101ed7500251580cb53fbbb1527",
+          "imgsz": 640,
+          "split": "val",
+          "images": 286,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.6785801184139159,
+            "metrics/recall(B)": 0.4910491230700596,
+            "metrics/mAP50(B)": 0.5295547481084955,
+            "metrics/mAP50-95(B)": 0.379237794484635,
+            "metrics/precision(M)": 0.6777180715322128,
+            "metrics/recall(M)": 0.4888888888888889,
+            "metrics/mAP50(M)": 0.5241969512638232,
+            "metrics/mAP50-95(M)": 0.3223998783809307,
+            "fitness": 0.7016376728655658
+          },
+          "threshold": 0.4084084084084084,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "litter",
+              "labelled_images": 286,
+              "labelled_regions": 675,
+              "AP50": 0.5241969512638232,
+              "AP50_95": 0.3223998783809307,
+              "precision_at_threshold": 0.6777180715322128,
+              "recall_at_threshold": 0.4888888888888889,
+              "f1_at_threshold": 0.5680213580273971
+            }
+          ],
+          "AP50": 0.5241969512638232,
+          "AP50_95": 0.3223998783809307,
+          "mean_precision_at_threshold": 0.6777180715322128,
+          "mean_recall_at_threshold": 0.4888888888888889,
+          "mean_f1_at_threshold": 0.5680213580273971,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.2775275385250676,
+            "inference": 25.22870544051368,
+            "loss": 0.0008071330065596393,
+            "postprocess": 2.317739370660824
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": true,
+          "reasons": []
+        }
+      },
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_dynamic_int8.tflite",
+          "bytes": 3643497,
+          "sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+          "inputs": [
+            {
+              "name": "serving_default_images:0",
+              "shape": [
+                1,
+                640,
+                640,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "PartitionedCall:1",
+              "shape": [
+                1,
+                160,
+                160,
+                32
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            },
+            {
+              "name": "PartitionedCall:0",
+              "shape": [
+                1,
+                37,
+                8400
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "dynamic_int8",
+        "validation": {
+          "checked_at": "2026-10-21T14:12:11.206732+05:30",
+          "tag": "export_litter_dynamic_int8",
+          "task": "litter",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_dynamic_int8.tflite",
+          "checkpoint_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+          "imgsz": 640,
+          "split": "val",
+          "images": 286,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.671800501423631,
+            "metrics/recall(B)": 0.4948148148148148,
+            "metrics/mAP50(B)": 0.5265433237392189,
+            "metrics/mAP50-95(B)": 0.3765433526225541,
+            "metrics/precision(M)": 0.6727162382439126,
+            "metrics/recall(M)": 0.4962962962962963,
+            "metrics/mAP50(M)": 0.5233276132278017,
+            "metrics/mAP50-95(M)": 0.3214288797332968,
+            "fitness": 0.6979722323558509
+          },
+          "threshold": 0.3983983983983984,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "litter",
+              "labelled_images": 286,
+              "labelled_regions": 675,
+              "AP50": 0.5233276132278017,
+              "AP50_95": 0.3214288797332968,
+              "precision_at_threshold": 0.6727162382439126,
+              "recall_at_threshold": 0.4962962962962963,
+              "f1_at_threshold": 0.5711941790772084
+            }
+          ],
+          "AP50": 0.5233276132278017,
+          "AP50_95": 0.3214288797332968,
+          "mean_precision_at_threshold": 0.6727162382439126,
+          "mean_recall_at_threshold": 0.4962962962962963,
+          "mean_f1_at_threshold": 0.5711941790772084,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.2690156258461945,
+            "inference": 29.789795594418017,
+            "loss": 0.001015758765267104,
+            "postprocess": 2.2848608531877015
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": true,
+          "reasons": []
+        }
+      },
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_int8.tflite",
+          "bytes": 3651297,
+          "sha256": "cd8be0745cf00302cefe09ff7c009b21cd6dd9fe2002b1d1c775da80ae218821",
+          "inputs": [
+            {
+              "name": "serving_default_images:0",
+              "shape": [
+                1,
+                640,
+                640,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "PartitionedCall:1",
+              "shape": [
+                1,
+                160,
+                160,
+                32
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            },
+            {
+              "name": "PartitionedCall:0",
+              "shape": [
+                1,
+                37,
+                8400
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "int8",
+        "validation": {
+          "checked_at": "2026-10-21T14:12:17.409725+05:30",
+          "tag": "export_litter_int8",
+          "task": "litter",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_int8.tflite",
+          "checkpoint_sha256": "cd8be0745cf00302cefe09ff7c009b21cd6dd9fe2002b1d1c775da80ae218821",
+          "imgsz": 640,
+          "split": "val",
+          "images": 286,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.0,
+            "metrics/recall(B)": 0.0,
+            "metrics/mAP50(B)": 0.0,
+            "metrics/mAP50-95(B)": 0.0,
+            "metrics/precision(M)": 0.0,
+            "metrics/recall(M)": 0.0,
+            "metrics/mAP50(M)": 0.0,
+            "metrics/mAP50-95(M)": 0.0,
+            "fitness": 0.0
+          },
+          "threshold": 0.0,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "litter",
+              "labelled_images": 286,
+              "labelled_regions": 675,
+              "AP50": 0.0,
+              "AP50_95": 0.0,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            }
+          ],
+          "AP50": 0.0,
+          "AP50_95": 0.0,
+          "mean_precision_at_threshold": 0.0,
+          "mean_recall_at_threshold": 0.0,
+          "mean_f1_at_threshold": 0.0,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.27690500705734944,
+            "inference": 15.271980017526918,
+            "loss": 0.0008066504655594748,
+            "postprocess": 0.1570344929287448
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": false,
+          "reasons": [
+            "litter: AP drop exceeds 0.02",
+            "litter: recall drop exceeds 0.03"
+          ]
+        }
+      }
+    ],
+    "chosen_precision": "dynamic_int8"
+  },
+  "obstacle": {
+    "native": {
+      "checked_at": "2026-10-21T13:49:21.592506+05:30",
+      "tag": "baseline_obstacle_416",
+      "task": "obstacle",
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/best.pt",
+      "checkpoint_sha256": "4370c708ac3bbd821668f8cbfed27c796210ca45d9391698e70172c0e1986f7e",
+      "imgsz": 416,
+      "split": "val",
+      "images": 50,
+      "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+      "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+      "metrics": {
+        "metrics/precision(B)": 0.39615463587657923,
+        "metrics/recall(B)": 0.16666666666666666,
+        "metrics/mAP50(B)": 0.19578413123088392,
+        "metrics/mAP50-95(B)": 0.14111267956088341,
+        "fitness": 0.14111267956088341
+      },
+      "threshold": 0.35735735735735735,
+      "threshold_source": "validation F1 curve",
+      "per_class": [
+        {
+          "class_id": 0,
+          "class_name": "rock_region",
+          "labelled_images": 3,
+          "labelled_regions": 3,
+          "AP50": 0.33755813953488367,
+          "AP50_95": 0.2690232558139535,
+          "precision_at_threshold": 0.7923092717531585,
+          "recall_at_threshold": 0.3333333333333333,
+          "f1_at_threshold": 0.4692485685793548
+        },
+        {
+          "class_id": 1,
+          "class_name": "log_region",
+          "labelled_images": 33,
+          "labelled_regions": 100,
+          "AP50": 0.05401012292688419,
+          "AP50_95": 0.013202103307813415,
+          "precision_at_threshold": 0.0,
+          "recall_at_threshold": 0.0,
+          "f1_at_threshold": 0.0
+        }
+      ],
+      "AP50": 0.19578413123088392,
+      "AP50_95": 0.14111267956088341,
+      "mean_precision_at_threshold": 0.39615463587657923,
+      "mean_recall_at_threshold": 0.16666666666666666,
+      "mean_f1_at_threshold": 0.2346242842896774,
+      "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+      "native_speed_ms_per_image": {
+        "preprocess": 0.5824641600000025,
+        "inference": 6.738305900000006,
+        "loss": 0.00022086000001309003,
+        "postprocess": 13.319450839999982
+      },
+      "phone_benchmark": false,
+      "full_component_ready": false
+    },
+    "exports": [
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp32.tflite",
+          "bytes": 12629057,
+          "sha256": "1c4ed0bf301feb083a6ed8f9ba8987571e26a79701f9827219fe819ae8d643c1",
+          "inputs": [
+            {
+              "name": "images",
+              "shape": [
+                1,
+                416,
+                416,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "Identity",
+              "shape": [
+                1,
+                6,
+                3549
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "fp32",
+        "validation": {
+          "checked_at": "2026-10-21T14:17:40.955649+05:30",
+          "tag": "export_obstacle_fp32",
+          "task": "obstacle",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp32.tflite",
+          "checkpoint_sha256": "1c4ed0bf301feb083a6ed8f9ba8987571e26a79701f9827219fe819ae8d643c1",
+          "imgsz": 416,
+          "split": "val",
+          "images": 50,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.3961549011281411,
+            "metrics/recall(B)": 0.16666666666666666,
+            "metrics/mAP50(B)": 0.1957841218961553,
+            "metrics/mAP50-95(B)": 0.14111267567960156,
+            "fitness": 0.14111267567960156
+          },
+          "threshold": 0.35735735735735735,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "rock_region",
+              "labelled_images": 3,
+              "labelled_regions": 3,
+              "AP50": 0.33755813953488367,
+              "AP50_95": 0.2690232558139535,
+              "precision_at_threshold": 0.7923098022562822,
+              "recall_at_threshold": 0.3333333333333333,
+              "f1_at_threshold": 0.46924866162031464
+            },
+            {
+              "class_id": 1,
+              "class_name": "log_region",
+              "labelled_images": 33,
+              "labelled_regions": 100,
+              "AP50": 0.05401010425742692,
+              "AP50_95": 0.013202095545249606,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            }
+          ],
+          "AP50": 0.1957841218961553,
+          "AP50_95": 0.14111267567960156,
+          "mean_precision_at_threshold": 0.3961549011281411,
+          "mean_recall_at_threshold": 0.16666666666666666,
+          "mean_f1_at_threshold": 0.23462433081015732,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.16139331950398628,
+            "inference": 9.85782668030879,
+            "loss": 0.0010741599544417113,
+            "postprocess": 0.46995671960758045
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": true,
+          "reasons": []
+        }
+      },
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp16.tflite",
+          "bytes": 6357609,
+          "sha256": "06b8a52898f607c3e2aed857917b5eb7315a05a134565a5b00c38f7533e93394",
+          "inputs": [
+            {
+              "name": "serving_default_images:0",
+              "shape": [
+                1,
+                416,
+                416,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "PartitionedCall:0",
+              "shape": [
+                1,
+                6,
+                3549
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "fp16",
+        "validation": {
+          "checked_at": "2026-10-21T14:17:42.362191+05:30",
+          "tag": "export_obstacle_fp16",
+          "task": "obstacle",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_fp16.tflite",
+          "checkpoint_sha256": "06b8a52898f607c3e2aed857917b5eb7315a05a134565a5b00c38f7533e93394",
+          "imgsz": 416,
+          "split": "val",
+          "images": 50,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.3958501649244699,
+            "metrics/recall(B)": 0.16666666666666666,
+            "metrics/mAP50(B)": 0.19631374706091162,
+            "metrics/mAP50-95(B)": 0.14137469975018851,
+            "fitness": 0.14137469975018851
+          },
+          "threshold": 0.35735735735735735,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "rock_region",
+              "labelled_images": 3,
+              "labelled_regions": 3,
+              "AP50": 0.33754826254826265,
+              "AP50_95": 0.26901930501930504,
+              "precision_at_threshold": 0.7917003298489398,
+              "recall_at_threshold": 0.3333333333333333,
+              "f1_at_threshold": 0.4691417129744866
+            },
+            {
+              "class_id": 1,
+              "class_name": "log_region",
+              "labelled_images": 33,
+              "labelled_regions": 100,
+              "AP50": 0.05507923157356058,
+              "AP50_95": 0.013730094481071941,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            }
+          ],
+          "AP50": 0.19631374706091162,
+          "AP50_95": 0.14137469975018851,
+          "mean_precision_at_threshold": 0.3958501649244699,
+          "mean_recall_at_threshold": 0.16666666666666666,
+          "mean_f1_at_threshold": 0.2345708564872433,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.1501883201126475,
+            "inference": 9.815786680192105,
+            "loss": 0.0007974798791110516,
+            "postprocess": 0.33905337993928697
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": true,
+          "reasons": []
+        }
+      },
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+          "bytes": 3317189,
+          "sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+          "inputs": [
+            {
+              "name": "serving_default_images:0",
+              "shape": [
+                1,
+                416,
+                416,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "PartitionedCall:0",
+              "shape": [
+                1,
+                6,
+                3549
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "dynamic_int8",
+        "validation": {
+          "checked_at": "2026-10-21T14:17:43.837624+05:30",
+          "tag": "export_obstacle_dynamic_int8",
+          "task": "obstacle",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+          "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+          "imgsz": 416,
+          "split": "val",
+          "images": 50,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.41126419936582514,
+            "metrics/recall(B)": 0.16666666666666666,
+            "metrics/mAP50(B)": 0.1968629031759407,
+            "metrics/mAP50-95(B)": 0.14112943740028655,
+            "fitness": 0.14112943740028655
+          },
+          "threshold": 0.3483483483483483,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "rock_region",
+              "labelled_images": 3,
+              "labelled_regions": 3,
+              "AP50": 0.33774999999999994,
+              "AP50_95": 0.2691,
+              "precision_at_threshold": 0.8225283987316503,
+              "recall_at_threshold": 0.3333333333333333,
+              "f1_at_threshold": 0.47440991479270755
+            },
+            {
+              "class_id": 1,
+              "class_name": "log_region",
+              "labelled_images": 33,
+              "labelled_regions": 100,
+              "AP50": 0.05597580635188149,
+              "AP50_95": 0.01315887480057317,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            }
+          ],
+          "AP50": 0.1968629031759407,
+          "AP50_95": 0.14112943740028655,
+          "mean_precision_at_threshold": 0.41126419936582514,
+          "mean_recall_at_threshold": 0.16666666666666666,
+          "mean_f1_at_threshold": 0.23720495739635378,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.14955506005208008,
+            "inference": 11.368288340017898,
+            "loss": 0.0009584199870005249,
+            "postprocess": 0.3482483603147557
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": true,
+          "reasons": []
+        }
+      },
+      {
+        "artifact": {
+          "path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_int8.tflite",
+          "bytes": 3360309,
+          "sha256": "046f865f6e6b4203301d2244de5e98d10a52a01dbf2af430037543bfb8117951",
+          "inputs": [
+            {
+              "name": "serving_default_images:0",
+              "shape": [
+                1,
+                416,
+                416,
+                3
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "PartitionedCall:0",
+              "shape": [
+                1,
+                6,
+                3549
+              ],
+              "dtype": "<class 'numpy.float32'>"
+            }
+          ]
+        },
+        "precision": "int8",
+        "validation": {
+          "checked_at": "2026-10-21T14:17:45.067996+05:30",
+          "tag": "export_obstacle_int8",
+          "task": "obstacle",
+          "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_int8.tflite",
+          "checkpoint_sha256": "046f865f6e6b4203301d2244de5e98d10a52a01dbf2af430037543bfb8117951",
+          "imgsz": 416,
+          "split": "val",
+          "images": 50,
+          "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+          "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+          "metrics": {
+            "metrics/precision(B)": 0.0,
+            "metrics/recall(B)": 0.0,
+            "metrics/mAP50(B)": 0.0,
+            "metrics/mAP50-95(B)": 0.0,
+            "fitness": 0.0
+          },
+          "threshold": 0.0,
+          "threshold_source": "validation F1 curve",
+          "per_class": [
+            {
+              "class_id": 0,
+              "class_name": "rock_region",
+              "labelled_images": 3,
+              "labelled_regions": 3,
+              "AP50": 0.0,
+              "AP50_95": 0.0,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            },
+            {
+              "class_id": 1,
+              "class_name": "log_region",
+              "labelled_images": 33,
+              "labelled_regions": 100,
+              "AP50": 0.0,
+              "AP50_95": 0.0,
+              "precision_at_threshold": 0.0,
+              "recall_at_threshold": 0.0,
+              "f1_at_threshold": 0.0
+            }
+          ],
+          "AP50": 0.0,
+          "AP50_95": 0.0,
+          "mean_precision_at_threshold": 0.0,
+          "mean_recall_at_threshold": 0.0,
+          "mean_f1_at_threshold": 0.0,
+          "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+          "native_speed_ms_per_image": {
+            "preprocess": 0.15785424009663984,
+            "inference": 6.393669120152481,
+            "loss": 0.0007608198939124122,
+            "postprocess": 0.13669331958226394
+          },
+          "phone_benchmark": false,
+          "full_component_ready": false
+        },
+        "parity": {
+          "passed": false,
+          "reasons": [
+            "rock_region: AP drop exceeds 0.02",
+            "rock_region: recall drop exceeds 0.03"
+          ]
+        }
+      }
+    ],
+    "chosen_precision": "dynamic_int8"
+  }
+}

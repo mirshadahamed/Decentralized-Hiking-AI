@@ -31,7 +31,8 @@
           "rss_bytes": 163430400
         }
       ],
-      "artifact_bytes": 3643497
+      "artifact_bytes": 3643497,
+      "artifact_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012"
     },
     "obstacle": {
       "cold_interpreter_ms": 12.041250000038417,
@@ -58,9 +59,11 @@
           "rss_bytes": 169443328
         }
       ],
-      "artifact_bytes": 3317189
+      "artifact_bytes": 3317189,
+      "artifact_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539"
     }
   },
   "app_release_ready": false,
-  "note": "Mac Python process measurements include Python, NumPy, image decoding and interpreter overhead; they do not establish Android PSS, RAM, latency or battery behavior."
+  "note": "Mac Python process measurements include Python, NumPy, image decoding and interpreter overhead; they do not establish Android PSS, RAM, latency or battery behavior.",
+  "verified_against_final_asset_manifest": true
 }

@@ -1,10 +1,10 @@
 # Component 2 model handoff
 
-This component has a bounded working set of **2,000 unique photos including holdouts**. Use the frozen model manifest and final quality report rather than assuming that a completed training run establishes accuracy. Local trail blockage/clear-path, erosion and exposed-root labels are still missing.
+This component has a bounded working set of **2,000 unique photos including holdouts**. Training, model comparison, compressed export validation and reserved testing are complete. **Accuracy acceptance failed; the files are for development experiments.** Local trail blockage/clear-path, erosion and exposed-root labels are still missing. See the [final quality report](../results/component2_training/FINAL_QUALITY_REPORT.md) and the bundled `public_test_results.json` for the measured failures.
 
 ## Files and commands
 
-After the quality workflow finishes, these local assets are prepared:
+The quality workflow has prepared these local assets:
 
 - `assets/models/component2_litter.tflite`: garbage segmentation.
 - `assets/models/component2_obstacle.tflite`: rock/log context detection.
@@ -13,6 +13,10 @@ After the quality workflow finishes, these local assets are prepared:
 - `sajana/results/component2_training/quality/public_test_results.json`: final public holdout results, including separate object-localization and photo-presence checks.
 
 The root Flutter project already declares `assets/models/` as an asset directory. The two generated model binaries stay ignored by Git. The manifest and source code are versioned. The prepared ZIP contains the model files, hashes, interface description and quality report; it does not contain training photos or Python environments.
+
+Find the ZIP path and checksum in `sajana/results/component2_training/development_bundle.json`. Its `FINAL_QUALITY_REPORT.md` explains the results in plain language; `public_test_results.json` contains the exact scores. When transferring the bundle to another checkout, copy its two `.tflite` files and `component2_manifest.json` into `assets/models/`; keep the names in the manifest. The two models total 6,960,686 bytes (about 7 MB). They use INT8 weights with float32 graph inputs/outputs. Keep `quality_accepted_for_app=false` visible in the prototype.
+
+On reserved photo-presence checks, garbage was detected in 182/185 garbage-positive photos, but there were no garbage-negative photos to establish false alarms. Rocks were detected in only 5/30 positive photos. Logs were detected in 71/73 positive photos but falsely flagged 20/28 negative photos. These are not acceptable results for dependable trail judgments.
 
 Run a real photo through the reference implementation from the repository root:
 

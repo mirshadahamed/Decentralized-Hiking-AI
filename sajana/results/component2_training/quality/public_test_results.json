@@ -1,0 +1,184 @@
+{
+  "completed_at": "2026-10-21T14:38:41.082709+05:30",
+  "tests": {
+    "litter": {
+      "checked_at": "2026-10-21T14:38:33.334458+05:30",
+      "tag": "final_test_litter",
+      "task": "litter",
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_dynamic_int8.tflite",
+      "checkpoint_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+      "imgsz": 640,
+      "split": "test",
+      "images": 185,
+      "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+      "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+      "metrics": {
+        "metrics/precision(B)": 0.5932038578331826,
+        "metrics/recall(B)": 0.43661971830985913,
+        "metrics/mAP50(B)": 0.445529430416983,
+        "metrics/mAP50-95(B)": 0.3323473481160243,
+        "metrics/precision(M)": 0.6685151743016153,
+        "metrics/recall(M)": 0.40040241448692154,
+        "metrics/mAP50(M)": 0.4356463850450762,
+        "metrics/mAP50-95(M)": 0.28999391882700254,
+        "fitness": 0.6223412669430268
+      },
+      "threshold": 0.3983983983983984,
+      "threshold_source": "frozen validation choice",
+      "per_class": [
+        {
+          "class_id": 0,
+          "class_name": "litter",
+          "labelled_images": 185,
+          "labelled_regions": 497,
+          "AP50": 0.4356463850450762,
+          "AP50_95": 0.28999391882700254,
+          "precision_at_threshold": 0.5461774435372336,
+          "recall_at_threshold": 0.4504066929183564,
+          "f1_at_threshold": 0.49369033098425213
+        }
+      ],
+      "AP50": 0.4356463850450762,
+      "AP50_95": 0.28999391882700254,
+      "mean_precision_at_threshold": 0.5461774435372336,
+      "mean_recall_at_threshold": 0.4504066929183564,
+      "mean_f1_at_threshold": 0.49369033098425213,
+      "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+      "native_speed_ms_per_image": {
+        "preprocess": 0.2108173566395291,
+        "inference": 22.630708535241965,
+        "loss": 0.000745080949461742,
+        "postprocess": 2.2726187299200764
+      },
+      "phone_benchmark": false,
+      "full_component_ready": false
+    },
+    "obstacle": {
+      "checked_at": "2026-10-21T14:38:40.558150+05:30",
+      "tag": "final_test_obstacle",
+      "task": "obstacle",
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_dynamic_int8.tflite",
+      "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+      "imgsz": 416,
+      "split": "test",
+      "images": 101,
+      "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+      "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+      "metrics": {
+        "metrics/precision(B)": 0.14621813665826816,
+        "metrics/recall(B)": 0.11068645083932854,
+        "metrics/mAP50(B)": 0.045733882511102386,
+        "metrics/mAP50-95(B)": 0.011966130359492521,
+        "fitness": 0.011966130359492521
+      },
+      "threshold": 0.3483483483483483,
+      "threshold_source": "frozen validation choice",
+      "per_class": [
+        {
+          "class_id": 0,
+          "class_name": "rock_region",
+          "labelled_images": 30,
+          "labelled_regions": 48,
+          "AP50": 0.04315217387984342,
+          "AP50_95": 0.01226856861804207,
+          "precision_at_threshold": 0.14637039163143184,
+          "recall_at_threshold": 0.041666666666666664,
+          "f1_at_threshold": 0.0648677061125668
+        },
+        {
+          "class_id": 1,
+          "class_name": "log_region",
+          "labelled_images": 73,
+          "labelled_regions": 278,
+          "AP50": 0.04831559114236136,
+          "AP50_95": 0.011663692100942973,
+          "precision_at_threshold": 1.0,
+          "recall_at_threshold": 0.0,
+          "f1_at_threshold": 0.0
+        }
+      ],
+      "AP50": 0.045733882511102386,
+      "AP50_95": 0.011966130359492521,
+      "mean_precision_at_threshold": 0.5731851958157159,
+      "mean_recall_at_threshold": 0.020833333333333332,
+      "mean_f1_at_threshold": 0.0324338530562834,
+      "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+      "native_speed_ms_per_image": {
+        "preprocess": 0.10720751490928049,
+        "inference": 9.557222702941283,
+        "loss": 0.000571722417175401,
+        "postprocess": 0.3342677228640313
+      },
+      "phone_benchmark": false,
+      "full_component_ready": false
+    }
+  },
+  "photo_presence_at_frozen_thresholds": {
+    "litter": {
+      "litter": {
+        "tp": 182,
+        "fp": 0,
+        "fn": 3,
+        "tn": 0,
+        "threshold": 0.3983983983983984,
+        "positive_images": 185,
+        "negative_images": 0,
+        "observed_precision": 1.0,
+        "recall_on_positive_images": 0.9837837837837838,
+        "f1": 0.9918256130790191,
+        "false_positive_rate": null,
+        "negative_image_evidence_available": false,
+        "general_photo_accuracy_established": false
+      }
+    },
+    "obstacle": {
+      "rock_region": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 25,
+        "tn": 71,
+        "threshold": 0.39,
+        "positive_images": 30,
+        "negative_images": 71,
+        "observed_precision": 1.0,
+        "recall_on_positive_images": 0.16666666666666666,
+        "f1": 0.2857142857142857,
+        "false_positive_rate": 0.0,
+        "negative_image_evidence_available": true,
+        "general_photo_accuracy_established": false
+      },
+      "log_region": {
+        "tp": 71,
+        "fp": 20,
+        "fn": 2,
+        "tn": 8,
+        "threshold": 0.03,
+        "positive_images": 73,
+        "negative_images": 28,
+        "observed_precision": 0.7802197802197802,
+        "recall_on_positive_images": 0.9726027397260274,
+        "f1": 0.8658536585365854,
+        "false_positive_rate": 0.7142857142857143,
+        "negative_image_evidence_available": true,
+        "general_photo_accuracy_established": false
+      }
+    }
+  },
+  "selection_sha256": "0ed6d215e1dda98d0237412634a4a5e52a4a5a05feb2b49c44a3b8e6efc79ec8",
+  "validation_checks": {
+    "public_validation_quality_passed": false,
+    "failures": [
+      "litter/litter: precision_at_threshold below 0.8",
+      "litter/litter: recall_at_threshold below 0.7",
+      "obstacle/rock_region: recall_at_threshold below 0.7",
+      "obstacle/rock_region: insufficient validation image coverage",
+      "obstacle/log_region: precision_at_threshold below 0.8",
+      "obstacle/log_region: recall_at_threshold below 0.7"
+    ],
+    "local_trail_evaluation_complete": false,
+    "physical_phone_benchmark_complete": false,
+    "full_component_ready": false
+  },
+  "test_used_to_tune": false,
+  "full_component_ready": false
+}

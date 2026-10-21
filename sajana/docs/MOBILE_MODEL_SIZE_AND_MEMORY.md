@@ -1,6 +1,8 @@
 # Component 2 on a 4 GB Android phone
 
-The current dataset budget is **2,000 photos total**, including holdouts. The old large queue has been superseded by the [compact data/model profile](COMPACT_DATA_AND_MODEL.md). Reuse completed TACO-only L1 weights and train the smaller rock/log subset; preserve earlier runs as historical evidence.
+The current dataset budget is **2,000 photos total**, including holdouts. The old large queue has been superseded by the [compact data/model profile](COMPACT_DATA_AND_MODEL.md). Baseline and refinement training, compressed export comparisons and final public tests are complete. The selected garbage/rock-log models total **6,960,686 bytes (about 7 MB)**; accuracy acceptance failed. Use the [final report](../results/component2_training/FINAL_QUALITY_REPORT.md) and [development handoff](COMPONENT2_DEVELOPMENT_HANDOFF.md) for current measurements and integration instructions.
+
+The tested Mac conversion used a separate Python 3.11 environment and ONNX/onnx2tf/TensorFlow. Selected files have INT8 weights with float32 inputs/outputs, at 640 pixels for garbage and 416 for rock/log. Fully static INT8 candidates lost accuracy and were rejected. The direct LiteRT API below is a documented alternative, not the conversion route used for these files. Mac repeated-inference checks passed; physical Android memory/latency acceptance is still pending.
 
 The target is a physical Android phone with about 4 GB total RAM. Android Studio's emulator is the first app-behavior test environment. A physical phone is needed to accept latency, peak RAM, acceleration, heat and battery behavior; emulator timings are not phone benchmarks. The app initially processes one captured photo at a time.
 
@@ -36,13 +38,13 @@ This snapshots the current `best.pt` into a new ignored `sajana/runs/mobile_litt
 
 The resulting `litter_inference_preview.pt` is an **intermediate development snapshot**, not the Android runtime file and not a resumable training checkpoint. Use the original `last.pt` and project recovery runner to resume training. Do not run the suggested `runs/segment/train/weights/last.pt` path: the suggested custom name actually creates `runs/segment/m3_memory_optimized/weights/last.pt`. For our active run, follow the recorded `run_directory` and [recovery guide](YOLOV8_TRAINING_GUIDE.md).
 
-Training checkpoints, datasets, cached images, recovery archives and Python environments remain on the Mac. Only one selected `.tflite` artifact plus its class/preprocessing metadata belongs in the app. Keep required checkpoint-selection candidates until validation comparison finishes; ignoring a file in Git does not free disk space.
+Training checkpoints, datasets, cached images, recovery archives and Python environments remain on the Mac. Only the selected `.tflite` files plus their class/preprocessing metadata belong in the app. Keep required checkpoint-selection candidates until validation comparison finishes; ignoring a file in Git does not free disk space.
 
 ## Android export and calibration
 
 The pinned Ultralytics **8.4.183** source supports `format="litert"`, producing `.tflite`. Its `quantize=8` option performs static INT8 calibration. It does **not** support a separate `half=True` LiteRT export; FP16 execution is chosen through a supported GPU delegate at runtime. See the official [LiteRT export documentation](https://docs.ultralytics.com/integrations/litert/) and [export argument reference](https://docs.ultralytics.com/modes/export/).
 
-Do conversion in a separate environment after selecting a checkpoint; the active training environment currently lacks the export dependencies. No conversion packages were installed into it. Use the pinned exporter and compatible conversion packages recorded in a new environment lock. The following is the intended conversion API, **not an export already performed**:
+Conversion was completed in a separate environment; no conversion packages were installed into the training environment. The tested dependency lock is `sajana/requirements_mobile_export.lock.txt`. The following is the alternative direct-export API, **not the Mac pipeline used for the prepared assets**:
 
 ```python
 from ultralytics import YOLO

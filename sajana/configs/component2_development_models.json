@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "use": "development_only",
+  "quality_accepted_for_app": false,
+  "full_component_ready": false,
+  "models": {
+    "litter": {
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/assets/models/component2_litter.tflite",
+      "asset": "assets/models/component2_litter.tflite",
+      "checkpoint_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+      "names": {
+        "0": "litter"
+      },
+      "imgsz": 640,
+      "threshold": 0.3983983983983984,
+      "class_thresholds": {
+        "litter": 0.3983983983983984
+      },
+      "precision": "dynamic_int8",
+      "bytes": 3643497
+    },
+    "obstacle": {
+      "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/assets/models/component2_obstacle.tflite",
+      "asset": "assets/models/component2_obstacle.tflite",
+      "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+      "names": {
+        "0": "rock_region",
+        "1": "log_region"
+      },
+      "imgsz": 416,
+      "threshold": 0.3483483483483483,
+      "class_thresholds": {
+        "rock_region": 0.39,
+        "log_region": 0.03
+      },
+      "precision": "dynamic_int8",
+      "bytes": 3317189
+    }
+  }
+}

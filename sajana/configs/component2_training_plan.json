@@ -5,7 +5,7 @@
   "data_status": "sajana/results/component2_preprocessing/status.json",
   "trainer_implemented": true,
   "training_started": true,
-  "current_priority": "Both budgeted public models have finished training. Review weak validation results and smaller-image parity before model acceptance, Android export and physical-phone tests.",
+  "current_priority": "Current 2000-photo training/refinement, mobile export comparisons and final public tests are complete. Accuracy acceptance failed. Improve representative reviewed examples within budget and collect missing local trail labels before a new cycle; prototype integration may use development-only assets.",
   "compute_selection": "Local Mac, selected device: mps",
   "first_experiments": [
     {
@@ -188,7 +188,7 @@
     ],
     "guide": "sajana/docs/OBSTACLES_AND_ROUTE_ADVISORY.md"
   },
-  "remaining_training_queue": "sajana/src/train_compact_component2.py",
+  "remaining_training_queue": null,
   "component_training_runtime_status": "sajana/results/component2_training/queue_status.json",
   "public_model_selection_policy": "sajana/configs/component2_model_selection.json",
   "dataset_budget": {
@@ -214,5 +214,19 @@
     "stopping_reason": "15 epochs without validation improvement",
     "completion_record": "sajana/results/component2_training/compact_completion.json",
     "quality_accepted_for_app": false
+  },
+  "completed_public_training_cycle": {
+    "phase": "cycle_completed_accuracy_acceptance_failed",
+    "refinement_completed_epochs": {
+      "litter": 15,
+      "rock_log": 45
+    },
+    "workflow_completion": "sajana/results/component2_training/workflow_completion.json",
+    "quality_report": "sajana/results/component2_training/FINAL_QUALITY_REPORT.md",
+    "frozen_selection": "sajana/results/component2_training/quality/frozen_selection.json",
+    "public_test_results": "sajana/results/component2_training/quality/public_test_results.json",
+    "development_manifest": "sajana/configs/component2_development_models.json",
+    "quality_accepted_for_app": false,
+    "full_component_ready": false
   }
 }

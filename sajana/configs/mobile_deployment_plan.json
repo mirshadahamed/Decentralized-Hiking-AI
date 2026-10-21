@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Deployment experiments and measurement targets; does not alter active training or certify an app release.",
+  "purpose": "Measured development exports and pending Android acceptance; accuracy checks failed, so this does not certify an app release.",
   "target": {
     "platform": "Android",
     "physical_device_ram_gb": 4,
@@ -67,13 +67,14 @@
     "Package the selected runtime model and class/preprocessing metadata; keep datasets and training checkpoints outside the APK"
   ],
   "acceptance": {
-    "android_export_completed": false,
-    "exported_model_validation_complete": false,
+    "android_export_completed": true,
+    "exported_model_validation_complete": true,
     "physical_phone_benchmark_complete": false,
     "full_obstruction_model_available": false,
-    "app_release_ready": false
+    "app_release_ready": false,
+    "quality_accepted_for_app": false
   },
-  "scheduled_training_queue": "sajana/src/train_compact_component2.py",
+  "scheduled_training_queue": null,
   "dataset_budget": {
     "total_photos_including_holdouts": 2000,
     "configuration": "sajana/configs/component2_compact_2000.json",
@@ -91,8 +92,61 @@
       "training_completed": true
     },
     "combined_bytes": 13491166,
-    "android_export_completed": false,
+    "android_export_completed": true,
     "quality_accepted_for_app": false,
     "details": "sajana/results/component2_training/compact_completion.json"
-  }
+  },
+  "selected_development_assets": {
+    "manifest": "assets/models/component2_manifest.json",
+    "models": {
+      "litter": {
+        "asset": "assets/models/component2_litter.tflite",
+        "checkpoint_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+        "names": {
+          "0": "litter"
+        },
+        "imgsz": 640,
+        "threshold": 0.3983983983983984,
+        "class_thresholds": {
+          "litter": 0.3983983983983984
+        },
+        "precision": "dynamic_int8",
+        "bytes": 3643497
+      },
+      "obstacle": {
+        "asset": "assets/models/component2_obstacle.tflite",
+        "checkpoint_sha256": "7a59b31492351a67449a8ef0dfe37d2bb3adcee41391872bfe3e8b4494c0c539",
+        "names": {
+          "0": "rock_region",
+          "1": "log_region"
+        },
+        "imgsz": 416,
+        "threshold": 0.3483483483483483,
+        "class_thresholds": {
+          "rock_region": 0.39,
+          "log_region": 0.03
+        },
+        "precision": "dynamic_int8",
+        "bytes": 3317189
+      }
+    },
+    "combined_bytes": 6960686,
+    "quality_accepted_for_app": false
+  },
+  "tested_export_pipeline": {
+    "environment_lock": "sajana/requirements_mobile_export.lock.txt",
+    "python": "3.11.17",
+    "route": "YOLOv8 to simplified ONNX opset17 to onnx2tf 1.26.3 to TensorFlow 2.19 to LiteRT",
+    "selected_precision": "dynamic INT8 weights; float32 graph IO/activations",
+    "static_int8_accepted": false,
+    "calibration_split": "selected train only",
+    "validation_report": "sajana/results/component2_training/quality/model_comparisons.json",
+    "final_test_report": "sajana/results/component2_training/quality/public_test_results.json"
+  },
+  "desktop_runtime_check": {
+    "report": "sajana/results/component2_training/litert_desktop_benchmark.json",
+    "repetitions_per_model": 40,
+    "physical_phone_test": false
+  },
+  "development_handoff": "sajana/docs/COMPONENT2_DEVELOPMENT_HANDOFF.md"
 }

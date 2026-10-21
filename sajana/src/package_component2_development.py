@@ -16,6 +16,7 @@ def package():
         raise ValueError('Frozen holdout evidence is required before the development handoff')
     files = [(ROOT.parent / 'assets/models/component2_manifest.json', 'component2_manifest.json'),
              (ROOT / 'docs/COMPONENT2_DEVELOPMENT_HANDOFF.md', 'README.md'),
+             (ROOT / 'results/component2_training/FINAL_QUALITY_REPORT.md', 'FINAL_QUALITY_REPORT.md'),
              (evidence, 'public_test_results.json')]
     for task, spec in manifest['models'].items():
         path = Path(spec['checkpoint'])
