@@ -1,0 +1,158 @@
+{
+  "checked_at": "2026-10-21T13:04:58.824604+05:30",
+  "active_profile": "configs/component2_compact_2000.json",
+  "total_selected_images_including_holdouts": 2000,
+  "selected_split_images": {
+    "train": 1378,
+    "validation": 336,
+    "reserved_test": 286
+  },
+  "compact_image_and_label_bytes": 256507757,
+  "selected_litter_baseline": {
+    "experiment": "L1",
+    "phase": "completed",
+    "training_started": true,
+    "full_run_started": true,
+    "started_at": "2026-10-20T21:37:20.843324+05:30",
+    "pid": 2214,
+    "run_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720",
+    "model": "yolov8n-seg.pt",
+    "target_classes": {
+      "0": "litter"
+    },
+    "planned_epochs": 100,
+    "batch": 4,
+    "imgsz": 640,
+    "test_split_used_for_training": false,
+    "full_trail_damage_model": false,
+    "completed_epochs": 100,
+    "main_batches_seen": 25891,
+    "updated_at": "2026-10-21T09:37:00.929004+05:30",
+    "device": "mps",
+    "versions": {
+      "python": "3.9.6",
+      "torch": "2.8.0",
+      "ultralytics": "8.4.183"
+    },
+    "dataset_counts": {
+      "train": {
+        "images": 1028,
+        "objects": 3611,
+        "present_labels": 1028,
+        "present_images": 1028,
+        "missing_images": 0,
+        "verified_images": 1028,
+        "resized_images": 0
+      },
+      "val": {
+        "images": 286,
+        "objects": 675,
+        "present_labels": 286,
+        "present_images": 286,
+        "missing_images": 0,
+        "verified_images": 286,
+        "resized_images": 0
+      },
+      "test": {
+        "images": 185,
+        "objects": 497,
+        "present_labels": 185,
+        "present_images": 185,
+        "missing_images": 0,
+        "verified_images": 185,
+        "resized_images": 0
+      }
+    },
+    "smoke_training_images": 8,
+    "smoke_batches_seen": 4,
+    "last_smoke_loss": 27.233154296875,
+    "smoke_passed": true,
+    "save_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit",
+    "effective_batch": 4,
+    "current_epoch": 100,
+    "last_training_loss": 17.00581932067871,
+    "metrics": {
+      "metrics/precision(B)": 0.7713829625678806,
+      "metrics/recall(B)": 0.45488249445184503,
+      "metrics/mAP50(B)": 0.5328871640412862,
+      "metrics/mAP50-95(B)": 0.38346582023299763,
+      "metrics/precision(M)": 0.7866340329009237,
+      "metrics/recall(M)": 0.4488888888888889,
+      "metrics/mAP50(M)": 0.5162648507280598,
+      "metrics/mAP50-95(M)": 0.32072811611323776
+    },
+    "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+    "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/last.pt",
+    "active_console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/yolov8_training/console_resume_20261021_065303.log",
+    "validation_policy": "complete_nms_no_wall_clock_cutoff",
+    "historical_validation_provisional_through_epoch": 22,
+    "recovery_manifest_path": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/validation_recovery_20261021_065303/manifest.json",
+    "resumed_from_completed_epoch": 57,
+    "baseline_validation_complete": true,
+    "complete_validation_images": 286,
+    "interruption_evidence_directory": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/reboot_interruption_20261021_065303",
+    "finished_at": "2026-10-21T09:37:00.928994+05:30"
+  },
+  "compact_obstacle_model": {
+    "job": "O1_compact",
+    "task": "detect",
+    "model": "yolov8n.pt",
+    "names": {
+      "0": "rock_region",
+      "1": "log_region"
+    },
+    "pid": 28815,
+    "device": "mps",
+    "test_split_used_for_training": false,
+    "full_component_ready": false,
+    "total_profile_images": 2000,
+    "phase": "completed",
+    "updated_at": "2026-10-21T13:04:50.594622+05:30",
+    "batches_seen": 5950,
+    "planned_epochs": 50,
+    "train_loader_images": 350,
+    "train_loader_objects": 1081,
+    "val_loader_images": 50,
+    "val_loader_objects": 103,
+    "current_epoch": 34,
+    "latest_loss": 15.187068939208984,
+    "completed_epochs": 34,
+    "metrics": {
+      "metrics/precision(B)": 0.4158161527352812,
+      "metrics/recall(B)": 0.16666666666666666,
+      "metrics/mAP50(B)": 0.19598676649987756,
+      "metrics/mAP50-95(B)": 0.14114958179848902
+    },
+    "best_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/best.pt",
+    "last_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_compact_2000/O1/fit/weights/last.pt",
+    "finished_at": "2026-10-21T13:04:50.594613+05:30"
+  },
+  "historical_L2": {
+    "phase": "completed",
+    "completed_epochs": 50,
+    "used_in_compact_profile": false
+  },
+  "remaining_minutes_estimate_for_obstacle_training_only": 0,
+  "estimate_may_change_due_to_early_stopping_or_compute": true,
+  "selected_current_pairs_rehashed_this_check": true,
+  "latest_software_check_result": {
+    "tests_passed": 164,
+    "source": "compact_launch_verification.json",
+    "rerun_for_this_documentation_only_update": false
+  },
+  "inference_checkpoint_bytes": 7021108,
+  "mobile_export_completed": false,
+  "physical_4GB_phone_test_completed": false,
+  "local_blockage_clear_trail_ground_truth_ready": false,
+  "full_component_ready": false,
+  "original_source_datasets_deleted": false,
+  "compact_obstacle_completion": "compact_completion.json",
+  "obstacle_early_stopping": {
+    "completed_epochs": 34,
+    "best_epoch": 19,
+    "patience": 15
+  },
+  "obstacle_checkpoint_bytes": 6470058,
+  "combined_native_model_file_bytes": 13491166,
+  "quality_accepted_for_app": false
+}

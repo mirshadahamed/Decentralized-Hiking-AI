@@ -1,5 +1,7 @@
 # Training progress and dataset coverage
 
+This is a historical snapshot of the larger training plan. For the current 2,000-photo profile, see [simple progress](PROGRESS_SIMPLE.md) and live `HEALTH.md`.
+
 Snapshot: 2026-10-21T09:16:13.558465+05:30
 
 L1 has completed 92/100 epochs; epoch 93 is running. Queue: waiting_for_L1.

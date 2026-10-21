@@ -78,5 +78,21 @@
     "total_photos_including_holdouts": 2000,
     "configuration": "sajana/configs/component2_compact_2000.json",
     "datasets_packaged_in_app": false
+  },
+  "trained_public_model_artifacts": {
+    "litter": {
+      "model": "YOLOv8n-seg",
+      "bytes": 7021108,
+      "training_completed": true
+    },
+    "rock_log_context": {
+      "model": "YOLOv8n",
+      "bytes": 6470058,
+      "training_completed": true
+    },
+    "combined_bytes": 13491166,
+    "android_export_completed": false,
+    "quality_accepted_for_app": false,
+    "details": "sajana/results/component2_training/compact_completion.json"
   }
 }

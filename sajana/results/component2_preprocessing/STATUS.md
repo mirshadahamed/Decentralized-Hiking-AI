@@ -1,6 +1,8 @@
 # Component 2 dataset preparation status
 
-Checked: 2026-10-21T06:55:13.791522+05:30
+Current selected working set: **2,000 photos total**. See [simple progress](../component2_training/PROGRESS_SIMPLE.md). The source inventory below includes larger prepared datasets retained on disk; it is not the current training budget.
+
+Checked: 2026-10-21T09:37:02.760075+05:30
 
 | Source | Prepared pairs | State | Source release complete |
 | --- | ---: | --- | --- |
@@ -18,4 +20,4 @@ Local jointly annotated trail dataset: **missing**. The annotation workspace and
 
 The full concurrent component cannot be certified until real local damage/path/passability annotations and independent local holdouts exist.
 
-Binary litter baseline data ready: **True**. YOLOv8 training status: **training**; see `sajana/results/yolov8_training/status.json`.
+Binary litter baseline data ready: **True**. YOLOv8 training status: **completed**; see `sajana/results/yolov8_training/status.json`.

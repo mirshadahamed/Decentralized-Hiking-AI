@@ -5,7 +5,7 @@
   "data_status": "sajana/results/component2_preprocessing/status.json",
   "trainer_implemented": true,
   "training_started": true,
-  "current_priority": "Use 2000 photos total: retain completed TACO-only L1, replace oversized O1 with the compact rock/log run, then validate mobile exports.",
+  "current_priority": "Both budgeted public models have finished training. Review weak validation results and smaller-image parity before model acceptance, Android export and physical-phone tests.",
   "compute_selection": "Local Mac, selected device: mps",
   "first_experiments": [
     {
@@ -207,6 +207,12 @@
     "dataset": "sajana/data/processed/component2_compact_2000/obstacle",
     "configuration": "sajana/configs/component2_compact_2000.json",
     "runtime_status": "sajana/runs/component2_compact_2000/O1/status.json",
-    "large_checkpoint_optimizer_resume_allowed": false
+    "large_checkpoint_optimizer_resume_allowed": false,
+    "training_phase": "completed",
+    "completed_epochs": 34,
+    "best_validation_epoch": 19,
+    "stopping_reason": "15 epochs without validation improvement",
+    "completion_record": "sajana/results/component2_training/compact_completion.json",
+    "quality_accepted_for_app": false
   }
 }
