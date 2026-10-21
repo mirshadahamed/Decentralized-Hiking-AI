@@ -94,7 +94,11 @@ class C4Api {
       }
       return decoded;
     }
-    final detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
+    var detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
+    if (r.statusCode == 404 && detail == 'Not Found') {
+      // FastAPI's own 404: the route does not exist, i.e. the server runs older code than this app
+      detail = 'The park server does not have this feature yet ($path). Restart the server with the latest code.';
+    }
     final alts = decoded is Map && decoded['alternatives'] is List
         ? (decoded['alternatives'] as List).map((a) => Alternative.fromJson(a as Map<String, dynamic>)).toList()
         : <Alternative>[];
