@@ -1,0 +1,15 @@
+{
+  "launched_at": "2026-10-21T12:56:24.303118+05:30",
+  "pid": 28815,
+  "awake_helper_pid": 28816,
+  "console_log": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/component2_training/compact_O1_20261021_125624.log",
+  "code_commit": "b3b2a4ce7e0c0f73842409989b9cdc5e0e7babfd",
+  "total_dataset_images_including_holdouts": 2000,
+  "litter_model": "Completed TACO-only L1 baseline retained",
+  "obstacle_training_images": 350,
+  "obstacle_validation_images": 50,
+  "obstacle_reserved_test_images": 101,
+  "larger_O1_stopped": true,
+  "original_source_files_deleted": false,
+  "full_component_ready": false
+}
