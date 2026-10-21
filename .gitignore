@@ -177,11 +177,13 @@ sajana/results/yolov8_training/HEALTH.md
 sajana/results/yolov8_training/monitor_launch.json
 sajana/results/component2_training/queue_status.json
 sajana/results/component2_training/HEALTH.md
+sajana/results/component2_training/refinement_status.json
 
 # Reproducible 2,000-photo working set: version configuration and selection only.
 /sajana/data/processed/component2_compact_2000/
 /sajana/.tools/
 /sajana/.venv-export/
+/assets/models/component2_*.tflite
 
 # Downloaded reference material and unused alternate annotation taxonomy.
 # Keep the selected 4-class pLitter annotations, labels and manifests versioned.

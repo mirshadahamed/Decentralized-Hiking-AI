@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-10-21T14:17:45.067996+05:30",
+  "tag": "export_obstacle_int8",
+  "task": "obstacle",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/selected_obstacle_416/obstacle_int8.tflite",
+  "checkpoint_sha256": "046f865f6e6b4203301d2244de5e98d10a52a01dbf2af430037543bfb8117951",
+  "imgsz": 416,
+  "split": "val",
+  "images": 50,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.0,
+    "metrics/recall(B)": 0.0,
+    "metrics/mAP50(B)": 0.0,
+    "metrics/mAP50-95(B)": 0.0,
+    "fitness": 0.0
+  },
+  "threshold": 0.0,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "rock_region",
+      "labelled_images": 3,
+      "labelled_regions": 3,
+      "AP50": 0.0,
+      "AP50_95": 0.0,
+      "precision_at_threshold": 0.0,
+      "recall_at_threshold": 0.0,
+      "f1_at_threshold": 0.0
+    },
+    {
+      "class_id": 1,
+      "class_name": "log_region",
+      "labelled_images": 33,
+      "labelled_regions": 100,
+      "AP50": 0.0,
+      "AP50_95": 0.0,
+      "precision_at_threshold": 0.0,
+      "recall_at_threshold": 0.0,
+      "f1_at_threshold": 0.0
+    }
+  ],
+  "AP50": 0.0,
+  "AP50_95": 0.0,
+  "mean_precision_at_threshold": 0.0,
+  "mean_recall_at_threshold": 0.0,
+  "mean_f1_at_threshold": 0.0,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.15785424009663984,
+    "inference": 6.393669120152481,
+    "loss": 0.0007608198939124122,
+    "postprocess": 0.13669331958226394
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}

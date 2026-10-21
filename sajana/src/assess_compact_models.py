@@ -19,6 +19,15 @@ OUTPUT = ROOT / 'runs/component2_quality'
 REPORTS = ROOT / 'results/component2_training/quality'
 
 
+def check_test_identity(selection, task, digest, size, threshold):
+    if selection.get('validation_selection_complete') is not True or selection.get('test_used_to_select') is not False:
+        raise ValueError('Validation selection must finish before opening the reserved test')
+    selected = selection['models'][task]
+    if (selected['checkpoint_sha256'] != digest or selected['imgsz'] != size or
+            selected['threshold'] != threshold):
+        raise ValueError('Test requires the frozen checkpoint, resolution and threshold')
+
+
 def environment():
     for name, value in {'YOLO_AUTOINSTALL': 'false', 'YOLO_OFFLINE': 'true',
                         'YOLO_CONFIG_DIR': str(ROOT / 'data/raw/ultralytics_settings'),
@@ -42,14 +51,11 @@ def evaluate(checkpoint, task, size, tag, device='mps', split='val', threshold=N
     job = cfg[task]; folder = OUTPUT / tag
     folder.mkdir(parents=True, exist_ok=True)
     checkpoint = Path(checkpoint)
-    if split not in ('val', 'test', 'train'):
+    if split not in ('val', 'test'):
         raise ValueError('Unknown split')
     if split == 'test':
         frozen = json.loads((REPORTS / 'frozen_selection.json').read_text())
-        selected = frozen['models'][task]
-        if (selected['checkpoint_sha256'] != sha256(checkpoint) or selected['imgsz'] != size or
-                selected['threshold'] != threshold):
-            raise ValueError('Test requires the frozen checkpoint, resolution and threshold')
+        check_test_identity(frozen, task, sha256(checkpoint), size, threshold)
         marker = folder / 'test_started.json'
         if marker.exists():
             raise ValueError('Test already started; inspect prior artifacts before any repeat')
@@ -146,8 +152,20 @@ if __name__ == '__main__':
     torch.set_num_threads(2)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--device', default='mps')
+    parser.add_argument('--checkpoint', type=Path)
+    parser.add_argument('--task', choices=['litter', 'obstacle'])
+    parser.add_argument('--imgsz', type=int, default=640)
+    parser.add_argument('--tag')
+    parser.add_argument('--split', choices=['val', 'test'], default='val')
+    parser.add_argument('--threshold', type=float)
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    with (ROOT / 'runs/yolov8_litter/.training.lock').open('a+') as lock:
+    lock_path = OUTPUT / '.cpu_evaluation.lock' if args.device == 'cpu' else ROOT / 'runs/yolov8_litter/.training.lock'
+    with lock_path.open('a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        baseline(args.device)
+        if args.checkpoint:
+            if not args.task or not args.tag:
+                parser.error('Single evaluation requires --task and --tag')
+            evaluate(args.checkpoint, args.task, args.imgsz, args.tag, args.device, args.split, args.threshold)
+        else:
+            baseline(args.device)

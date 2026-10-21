@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-10-21T14:12:11.206732+05:30",
+  "tag": "export_litter_dynamic_int8",
+  "task": "litter",
+  "checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/component2_mobile/baseline_litter_640_slim/litter_dynamic_int8.tflite",
+  "checkpoint_sha256": "3cdc828009ce0703b54840fd2966001dc939834fa006aa32f39929035179e012",
+  "imgsz": 640,
+  "split": "val",
+  "images": 286,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "dataset_inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "metrics": {
+    "metrics/precision(B)": 0.671800501423631,
+    "metrics/recall(B)": 0.4948148148148148,
+    "metrics/mAP50(B)": 0.5265433237392189,
+    "metrics/mAP50-95(B)": 0.3765433526225541,
+    "metrics/precision(M)": 0.6727162382439126,
+    "metrics/recall(M)": 0.4962962962962963,
+    "metrics/mAP50(M)": 0.5233276132278017,
+    "metrics/mAP50-95(M)": 0.3214288797332968,
+    "fitness": 0.6979722323558509
+  },
+  "threshold": 0.3983983983983984,
+  "threshold_source": "validation F1 curve",
+  "per_class": [
+    {
+      "class_id": 0,
+      "class_name": "litter",
+      "labelled_images": 286,
+      "labelled_regions": 675,
+      "AP50": 0.5233276132278017,
+      "AP50_95": 0.3214288797332968,
+      "precision_at_threshold": 0.6727162382439126,
+      "recall_at_threshold": 0.4962962962962963,
+      "f1_at_threshold": 0.5711941790772084
+    }
+  ],
+  "AP50": 0.5233276132278017,
+  "AP50_95": 0.3214288797332968,
+  "mean_precision_at_threshold": 0.6727162382439126,
+  "mean_recall_at_threshold": 0.4962962962962963,
+  "mean_f1_at_threshold": 0.5711941790772084,
+  "metric_note": "Class-averaged object/mask metrics, not photo classification accuracy; fixed threshold curve values use standard AP matching.",
+  "native_speed_ms_per_image": {
+    "preprocess": 0.2690156258461945,
+    "inference": 29.789795594418017,
+    "loss": 0.001015758765267104,
+    "postprocess": 2.2848608531877015
+  },
+  "phone_benchmark": false,
+  "full_component_ready": false
+}
