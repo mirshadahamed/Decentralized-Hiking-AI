@@ -59,3 +59,9 @@ The app contract therefore reports garbage and rock/log observations with `model
 - `5aa114a5`: compressed export checks and photo inference contract.
 
 The final reports, frozen model manifests and completed-run records form the next commit milestone. Use `git log --oneline -- sajana/results/component2_training/PROGRESS_SIMPLE.md` to see that commit. Images, checkpoints, environments and changing training logs remain ignored.
+
+## Latest supplemental dataset/model cycle
+
+GOOSE semantic masks and MobimaSkidRoads boxes were added to a separate YOLOv8n trail-object detector. Together with the existing TACO litter photos, the profile is **2,059 photos** (59 above the earlier target). Train, validation and held-out test sequences are disjoint. The GOOSE extension test uses real synchronized camera frames; its colorized masks are used only as labels.
+
+The detector trained for 16 epochs and stopped when validation stopped improving. On the held-out test, box mAP50 was **1.8%**. At the fixed photo-check threshold it found only 3/46 obstacle-region photos, 2/43 rock photos and 0/38 debris photos. **This model fails the accuracy gate and is not ready for the app.** It does not replace the separate garbage model or predict whether a trail is passable. See [the supplemental report](../component2_cycle2/SUPPLEMENTAL_TRAINING_REPORT.md) and `trail_training.json` for complete results.

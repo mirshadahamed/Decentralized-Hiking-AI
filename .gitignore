@@ -181,6 +181,7 @@ sajana/results/component2_training/refinement_status.json
 
 # Reproducible 2,000-photo working set: version configuration and selection only.
 /sajana/data/processed/component2_compact_2000/
+/sajana/data/processed/component2_cycle2_trail*/
 /sajana/.tools/
 /sajana/.venv-export/
 /assets/models/component2_*.tflite

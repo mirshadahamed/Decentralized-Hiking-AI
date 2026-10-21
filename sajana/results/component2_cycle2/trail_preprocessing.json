@@ -1,0 +1,71 @@
+{
+  "created_at": "2026-10-21T16:08:31.367410+05:30",
+  "dataset": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/data/processed/component2_cycle2_trail_v4",
+  "photo_count": 560,
+  "profile_total_with_existing_litter": 2059,
+  "photos_by_split": {
+    "train": 391,
+    "val": 118,
+    "test": 51
+  },
+  "sources_by_split": {
+    "train": {
+      "MobimaSkidRoads": 234,
+      "GOOSE": 157
+    },
+    "val": {
+      "MobimaSkidRoads": 59,
+      "GOOSE": 59
+    },
+    "test": {
+      "GOOSE": 51
+    }
+  },
+  "objects_by_split_and_class": {
+    "train": {
+      "0": 9405,
+      "4": 32,
+      "1": 67,
+      "2": 83,
+      "3": 494,
+      "5": 393,
+      "6": 80
+    },
+    "val": {
+      "0": 2359,
+      "4": 1,
+      "2": 34,
+      "1": 19,
+      "3": 262,
+      "5": 176,
+      "6": 57
+    },
+    "test": {
+      "3": 330,
+      "0": 800,
+      "5": 112,
+      "6": 196
+    }
+  },
+  "classes": {
+    "0": "tree",
+    "1": "stump",
+    "2": "stem",
+    "3": "obstacle_region",
+    "4": "non_passable_obstacle",
+    "5": "debris",
+    "6": "rock"
+  },
+  "goose_root_excluded_positive_photos": 8,
+  "goose_root_class_trained": false,
+  "route_blockage_ground_truth": false,
+  "garbage_dataset_included": false,
+  "note": "All 293 Mobima photos and sequence-grouped GOOSE data. Ex-val photographs use synchronized camera frames; colorized segmentation images are excluded. Profile totals 2,059 including 1,499 existing litter photos. Obstacle labels do not predict passability.",
+  "rgb_test_input_audit": {
+    "test_photos": 51,
+    "camera_rgb_verified": true,
+    "colorized_label_maps_used_as_inputs": false
+  },
+  "manifest_csv": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/results/component2_cycle2/trail_manifest.csv",
+  "manifest_sha256": "5b058ae9ff2002c3c3e7f5fe626c400e3b0ca24395d8a7c06e1681dc6a964bd6"
+}
