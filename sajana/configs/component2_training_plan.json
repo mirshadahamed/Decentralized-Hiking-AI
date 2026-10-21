@@ -131,6 +131,7 @@
   "missing_annotation_is_negative": false,
   "independent_local_evaluation_ready": false,
   "android_application_framework": "existing Flutter project; Android Studio IDE/build/debug integration",
+  "mobile_deployment_plan": "sajana/configs/mobile_deployment_plan.json",
   "bot_behavior": "to be specified before implementation",
   "validation_report": "sajana/results/component2_preprocessing/training_plan_audit.json",
   "runtime_status": "sajana/results/yolov8_training/status.json",

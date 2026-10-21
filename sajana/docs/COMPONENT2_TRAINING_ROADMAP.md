@@ -75,6 +75,8 @@ Group local splits by route/site/session and duplicate groups before augmentatio
 
 After task and local evaluation pass, select the phone runtime and export a compatible model. Check exported predictions against the training model using fixed images, then benchmark accuracy, latency and memory on an actual Android device. Recheck accuracy after quantization or other optimization. Preserve the exact input preprocessing and output class mapping with the model artifact.
 
+The target is now a physical Android phone with about 4 GB RAM, using the Android Studio emulator first for app behavior. The [mobile size and memory guide](MOBILE_MODEL_SIZE_AND_MEMORY.md) and [deployment plan](../configs/mobile_deployment_plan.json) record a smaller inference-copy tool, 640/416 resolution and INT8 comparisons, and unmeasured device budgets. The ongoing YOLOv8 training protocol remains fixed; mobile optimization is evaluated separately.
+
 The inference interface should return structured predictions: model/version, classes, confidence and mask/box geometry. Any severity/passability output needs its own reviewed labels and evaluation. Keep image coordinates consistent through resizing and orientation handling.
 
 The [obstacle context export and route-advisory prototype](OBSTACLES_AND_ROUTE_ADVISORY.md) prepare the next stage. Marked-trail alternatives use reviewed, located blockage observations and a supplied permitted trail graph. Visible bypass suggestions remain pending corridor/surface/clearance review. The planner does not infer either feature from litter alone.
