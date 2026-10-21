@@ -178,6 +178,9 @@ sajana/results/yolov8_training/monitor_launch.json
 sajana/results/component2_training/queue_status.json
 sajana/results/component2_training/HEALTH.md
 
+# Reproducible 2,000-photo working set: version configuration and selection only.
+/sajana/data/processed/component2_compact_2000/
+
 # Downloaded reference material and unused alternate annotation taxonomy.
 # Keep the selected 4-class pLitter annotations, labels and manifests versioned.
 sajana/data/interim/rugd/*.pdf

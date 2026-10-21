@@ -1,5 +1,7 @@
 # Local YOLOv8 litter segmentation
 
+L1 has completed. The current working-set limit is [2,000 photos across garbage and rock/log tasks](COMPACT_DATA_AND_MODEL.md). Retain its completed TACO-only weights; follow the compact guide for remaining obstacle training. The run protocol below records the completed baseline.
+
 This run fine-tunes the official COCO-pretrained `yolov8n-seg.pt` checkpoint for one class, `0: litter`. It is the L1 TACO-only baseline. The configuration is [yolov8_litter_train.json](../configs/yolov8_litter_train.json); the runner is [train_yolov8.py](../src/train_yolov8.py).
 
 The local target is an Apple M4 Mac with 16 GB memory. A separate `sajana/.venv-yolov8` environment preserves preprocessing dependencies. Its versions are pinned in [requirements_yolov8.txt](../requirements_yolov8.txt). The Ultralytics package version and YOLO architecture version are different: the `yolov8n-seg.pt` checkpoint selects YOLOv8 instance segmentation. See the [official YOLOv8 model table](https://docs.ultralytics.com/models/yolov8/) and [MPS training instructions](https://docs.ultralytics.com/modes/train/#apple-silicon-mps-training).

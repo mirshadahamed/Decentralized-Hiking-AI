@@ -1,0 +1,100 @@
+{
+  "checked_at": "2026-10-21T12:51:44.783386+05:30",
+  "passed": true,
+  "total_images": 2000,
+  "configuration_sha256": "ea452070d463f86db420c905a6c1eb232e7c0bdd448d4868d3a595afc0fdcc16",
+  "inventory_sha256": "21b9fabd5bdc2b8536e36995827416bd95eba7a8aa8e1434e225ee6d21a8a838",
+  "tasks": {
+    "litter": {
+      "names": {
+        "0": "litter"
+      },
+      "task": "segment",
+      "splits": {
+        "train": {
+          "images": 1028,
+          "objects": 3611,
+          "background_images": 0,
+          "images_with_class": {
+            "0": 1028
+          }
+        },
+        "val": {
+          "images": 286,
+          "objects": 675,
+          "background_images": 0,
+          "images_with_class": {
+            "0": 286
+          }
+        },
+        "test": {
+          "images": 185,
+          "objects": 497,
+          "background_images": 0,
+          "images_with_class": {
+            "0": 185
+          }
+        }
+      },
+      "source_certificate_sha256": "38ac36db9c62ec98d66589bfb06980983503d3c8a139455fec1b4ad4ca2962c5",
+      "source_inventory_sha256": "086490a4f5a12dcf0cf13ba4615abf5294f1d62e991f0430fdef86c01fe2889e"
+    },
+    "obstacle": {
+      "names": {
+        "0": "rock_region",
+        "1": "log_region"
+      },
+      "task": "detect",
+      "splits": {
+        "train": {
+          "images": 350,
+          "objects": 1081,
+          "background_images": 70,
+          "images_with_class": {
+            "0": 120,
+            "1": 233
+          }
+        },
+        "val": {
+          "images": 50,
+          "objects": 103,
+          "background_images": 15,
+          "images_with_class": {
+            "0": 3,
+            "1": 33
+          }
+        },
+        "test": {
+          "images": 101,
+          "objects": 326,
+          "background_images": 20,
+          "images_with_class": {
+            "0": 30,
+            "1": 73
+          }
+        }
+      },
+      "source_certificate_sha256": "86b0b7914389ccb8f2742eb0768aa3277c09b85e8df4e76b4bfcadac4fad6b3c",
+      "source_inventory_sha256": "5732c8ee73dccb4777fff234b690d4d109c232ba2b89780a63b838d81f1bb04f"
+    }
+  },
+  "compact_image_bytes": 253785515,
+  "compact_label_bytes": 2722242,
+  "selected_source_bytes": 8629789489,
+  "source_split_membership_preserved": true,
+  "selection_uses_model_scores": false,
+  "test_model_evaluation_performed": false,
+  "maximum_image_edge": 640,
+  "jpeg_quality": 90,
+  "source_files_deleted": false,
+  "full_component_ready": false,
+  "limitations": [
+    "Retain source split membership; select from labels and a seed, never model scores.",
+    "Litter and rock/log tasks remain separate because cross-task labels are incomplete.",
+    "Only three source validation photos contain rocks; per-class validation evidence remains weak.",
+    "Background means no labelled rock/log; it does not certify a clear trail.",
+    "No real blockage, erosion or exposed-root annotations are available.",
+    "Raw archives and earlier checkpoints are preserved; a smaller working set alone does not reclaim their disk space.",
+    "Only selected runtime models and metadata belong in the Android app."
+  ]
+}

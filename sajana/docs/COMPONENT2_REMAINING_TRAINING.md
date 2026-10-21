@@ -1,5 +1,7 @@
 # Remaining YOLOv8 training
 
+**Superseded on 21 October 2026:** the user requests 2,000 photos total including holdouts. Use the [compact profile](COMPACT_DATA_AND_MODEL.md) and `sajana.src.train_compact_component2`. L1/L2 have completed; the large O1 queue below was stopped and remains documented as historical evidence. Do not restart this large queue for the compact profile.
+
 The user authorized the remaining relevant public-data training with small storage and memory use. The [queue configuration](../configs/component2_training_queue.json) keeps YOLOv8 nano architectures and schedules full jobs sequentially after the current L1 TACO run successfully finishes and releases its kernel lock.
 
 | Job | Model | Training | Validation | Reserved public test | Scope |

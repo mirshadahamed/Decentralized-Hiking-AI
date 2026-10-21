@@ -49,7 +49,7 @@
     "amp": false,
     "plots": false,
     "save_period": -1,
-    "status": "Authorized for the queued L2 and O1 runs after L1; see the recorded queue configuration",
+    "status": "Superseded by the 2000-photo compact profile: reuse TACO-only L1 and train compact rock/log YOLOv8n.",
     "does_not_resume_or_modify_L1": true
   },
   "design_targets_not_measurements": {
@@ -73,5 +73,10 @@
     "full_obstruction_model_available": false,
     "app_release_ready": false
   },
-  "scheduled_training_queue": "sajana/configs/component2_training_queue.json"
+  "scheduled_training_queue": "sajana/src/train_compact_component2.py",
+  "dataset_budget": {
+    "total_photos_including_holdouts": 2000,
+    "configuration": "sajana/configs/component2_compact_2000.json",
+    "datasets_packaged_in_app": false
+  }
 }

@@ -1,8 +1,10 @@
 # Component 2 on a 4 GB Android phone
 
+The current dataset budget is **2,000 photos total**, including holdouts. The old large queue has been superseded by the [compact data/model profile](COMPACT_DATA_AND_MODEL.md). Reuse completed TACO-only L1 weights and train the smaller rock/log subset; preserve earlier runs as historical evidence.
+
 The target is a physical Android phone with about 4 GB total RAM. Android Studio's emulator is the first app-behavior test environment. A physical phone is needed to accept latency, peak RAM, acceleration, heat and battery behavior; emulator timings are not phone benchmarks. The app initially processes one captured photo at a time.
 
-The existing model is already the nano YOLOv8 instance-segmentation model. Keep its current recorded experiment running. The proposed `yolo11n-seg.pt` selects a different architecture and would require a separate experiment. Fewer epochs and a smaller batch do not reduce the model's parameter count. A reduced input size may miss small litter, so compare validation results before selecting it.
+The existing litter model is already the nano YOLOv8 instance-segmentation model. The proposed `yolo11n-seg.pt` selects a different architecture and would require a separate experiment. Fewer photos, fewer epochs and a smaller batch do not reduce the model's parameter count. A reduced input size may miss small litter, so compare validation results before selecting it.
 
 ## What the suggested settings change
 

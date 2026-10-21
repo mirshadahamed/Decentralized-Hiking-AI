@@ -5,7 +5,7 @@
   "data_status": "sajana/results/component2_preprocessing/status.json",
   "trainer_implemented": true,
   "training_started": true,
-  "current_priority": "Finish L1, then sequential compact TACO+MJU and WildScenes rock/log YOLOv8 jobs with validation-only selection",
+  "current_priority": "Use 2000 photos total: retain completed TACO-only L1, replace oversized O1 with the compact rock/log run, then validate mobile exports.",
   "compute_selection": "Local Mac, selected device: mps",
   "first_experiments": [
     {
@@ -49,8 +49,11 @@
       },
       "device": "mps",
       "training_run_config": "sajana/configs/component2_training_queue.json",
-      "training_started": false,
-      "training_runner_implemented": true
+      "training_started": true,
+      "training_runner_implemented": true,
+      "training_phase": "completed",
+      "completed_epochs": 50,
+      "runtime_status": "sajana/runs/component2_training/jobs/L2/status.json"
     }
   ],
   "initial_experiment_exclusions": [
@@ -154,13 +157,24 @@
       "0": "rock_region",
       "1": "log_region"
     },
-    "training_started": false,
+    "training_started": true,
     "training_runner_implemented": true,
     "blockage_training_ready": false,
     "compute_policy": "Do not contend with active L1 GPU training; separate recorded run after its data gate and compute are available",
     "evaluation_limitation": "Author validation has only three rock images; independent trail evaluation and reviewed obstruction labels are required",
     "training_run_config": "sajana/configs/component2_training_queue.json",
-    "runtime_status": "sajana/runs/component2_training/jobs/O1/status.json"
+    "runtime_status": "sajana/runs/component2_training/jobs/O1/status.json",
+    "training_phase": "superseded_by_compact_profile",
+    "completed_epochs": 1,
+    "device": "mps",
+    "model_and_library_versions": {
+      "python": "3.9.6",
+      "torch": "2.8.0",
+      "ultralytics": "8.4.183"
+    },
+    "compact_replacement": "sajana/src/train_compact_component2.py",
+    "compact_dataset": "sajana/data/processed/component2_compact_2000/obstacle",
+    "previous_large_run_status": "interrupted_for_user_2000_image_budget"
   },
   "route_advisory": {
     "implementation": "sajana/src/route_advisory.py",
@@ -174,7 +188,25 @@
     ],
     "guide": "sajana/docs/OBSTACLES_AND_ROUTE_ADVISORY.md"
   },
-  "remaining_training_queue": "sajana/configs/component2_training_queue.json",
+  "remaining_training_queue": "sajana/src/train_compact_component2.py",
   "component_training_runtime_status": "sajana/results/component2_training/queue_status.json",
-  "public_model_selection_policy": "sajana/configs/component2_model_selection.json"
+  "public_model_selection_policy": "sajana/configs/component2_model_selection.json",
+  "dataset_budget": {
+    "total_images_including_holdouts": 2000,
+    "configuration": "sajana/configs/component2_compact_2000.json",
+    "readiness": "sajana/results/component2_training/compact_readiness.json",
+    "guide": "sajana/docs/COMPACT_DATA_AND_MODEL.md",
+    "large_queue_superseded": true,
+    "source_data_deleted": false,
+    "completed_L2_role": "historical only; excluded from compact profile"
+  },
+  "compact_context_experiment": {
+    "experiment_id": "O1_compact",
+    "task": "detect",
+    "model": "yolov8n.pt",
+    "dataset": "sajana/data/processed/component2_compact_2000/obstacle",
+    "configuration": "sajana/configs/component2_compact_2000.json",
+    "runtime_status": "sajana/runs/component2_compact_2000/O1/status.json",
+    "large_checkpoint_optimizer_resume_allowed": false
+  }
 }

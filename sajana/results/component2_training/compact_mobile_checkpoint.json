@@ -1,0 +1,25 @@
+{
+  "checked_at": "2026-10-21T12:52:04.719670+05:30",
+  "source_checkpoint": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/yolov8_litter/L1_yolov8n_seg_20261020_213720/fit/weights/best.pt",
+  "source_snapshot_sha256": "f7397314c0587098e87d2e5bced8bec259a1698060d966222965fa059a334a55",
+  "source_checkpoint_epoch": null,
+  "source_training_checkpoint_bytes": 7021108,
+  "preview_artifact": "/Users/sajana/SLIIT/RP/The project/Decentralized-Hiking-AI/sajana/runs/mobile_litter_preview/20261021_125203_635811/litter_inference_preview.pt",
+  "preview_sha256": "05b8240b12a5fd352ad1b62093a33f2eeabb3486b8fe3a9af1dc4337a6dcb2c7",
+  "preview_bytes": 7050683,
+  "size_reduction_percent": -0.42122981159098405,
+  "parameter_count": 3390771,
+  "class_mapping": {
+    "0": "litter"
+  },
+  "saved_inference_tensors_identical": true,
+  "source_checkpoint_written_by_tool": false,
+  "training_resume_supported_by_preview": false,
+  "dataset_images_loaded": 0,
+  "test_model_evaluation_performed": false,
+  "device_used_by_tool": "cpu",
+  "android_runtime_exported": false,
+  "physical_phone_memory_measured": false,
+  "app_release_ready": false,
+  "note": "Intermediate PyTorch snapshot from ongoing model development; not an Android release model. File-size savings do not measure inference RAM."
+}
