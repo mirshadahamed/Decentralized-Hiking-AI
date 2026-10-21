@@ -12,6 +12,7 @@ import hashlib
 import io
 import json
 import math
+import os
 import statistics
 import time
 from datetime import datetime, timedelta
@@ -23,6 +24,19 @@ from .train_yolov8 import finite_json
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / 'results/yolov8_training'
 TERMINAL_PHASES = {'completed', 'failed', 'interrupted'}
+
+
+def process_alive(pid):
+    """Report an absent trainer even when its last status still says training."""
+    if pid is None:
+        return None
+    try:
+        os.kill(int(pid), 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
 
 
 def completed_rows(path):
@@ -81,6 +95,9 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         issues.append('Nonfinite latest training loss')
     if status.get('error'):
         issues.append(status['error'])
+    alive = process_alive(status.get('pid')) if status['phase'] not in TERMINAL_PHASES else None
+    if alive is False:
+        issues.append('Training process no longer exists; resume the saved checkpoint before continuing')
     timing = epoch_timing(rows,status['planned_epochs'],status.get('resumed_from_completed_epoch',0))
     age = (checked_at - datetime.fromisoformat(status['updated_at'])).total_seconds()
     stale_after = max(600, 3 * timing['recent_seconds_per_epoch_median']) if timing else 600
@@ -123,6 +140,7 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
         'phase': status['phase'], 'current_epoch': status.get('current_epoch'),
         'completed_epochs': len(rows), 'planned_epochs': status['planned_epochs'],
         'heartbeat_age_seconds': max(0, age), 'main_batches_seen': status.get('main_batches_seen', 0),
+        'training_process_alive': alive,
         'training_functioning_at_check': bool(status.get('full_run_started') and not issues and
                                               status['phase'] not in ('failed', 'interrupted')),
         'completed_epoch_values_finite': all_finite, 'issues': issues,
@@ -147,7 +165,7 @@ def inspect(status_path=RESULTS / 'status.json', checked_at=None):
             'Validate exported predictions and measure speed/memory on the target Android phone',
         ],
     }
-    if timing and status['phase'] not in TERMINAL_PHASES:
+    if timing and status['phase'] == 'training' and not issues:
         report['estimated_full_budget_finish'] = (checked_at + timedelta(
             seconds=timing['remaining_seconds_to_epoch_budget'])).isoformat()
     return finite_json(report), rows
@@ -171,9 +189,13 @@ def save_report(report, output):
         lines += [f"Current complete validation mask mAP50: {ap}; recall: {recall}.", '']
     if timing:
         lo, hi = timing['remaining_seconds_observed_range']
-        lines += [f"Observed recent pace: {timing['recent_seconds_per_epoch_median']/60:.1f} minutes/epoch.",
-                  f"Remaining to full budget: {lo/3600:.1f}–{hi/3600:.1f} hours at observed speeds.",
-                  'This includes validation and excludes unpredictable early stopping, sleep or slowdown.', '']
+        lines += [f"Observed recent pace: {timing['recent_seconds_per_epoch_median']/60:.1f} minutes/epoch."]
+        if report.get('estimated_full_budget_finish'):
+            lines += [f"Remaining to full budget: {lo/3600:.1f}–{hi/3600:.1f} hours at observed speeds.",
+                      'This includes validation and excludes unpredictable early stopping, sleep or slowdown.']
+        else:
+            lines += ['Finish estimate withheld until healthy training progress is established.']
+        lines += ['']
     lines += ['| Metric | First epoch | Latest epoch |', '| --- | ---: | ---: |']
     for key, value in report['validation_trend'].items():
         first = f"{value['first']:.4f}" if value['first'] is not None else 'nonfinite'
@@ -217,6 +239,22 @@ def save_plot(rows, output, provisional_through=None):
     plt.close(fig)
 
 
+def watch_training(args):
+    """Keep refreshing diagnostics so a transient pause cannot leave a stale report."""
+    plotted_epoch = None
+    while True:
+        report, rows = inspect(args.status)
+        save_report(report, args.output)
+        if args.plot and plotted_epoch != len(rows):
+            save_plot(rows, args.output,report.get('historical_validation_provisional_through_epoch'))
+            plotted_epoch = len(rows)
+        print(json.dumps({key: report[key] for key in ('checked_at', 'phase', 'completed_epochs',
+              'training_functioning_at_check', 'issues', 'timing', 'app_model_ready')}, allow_nan=False), flush=True)
+        if not args.watch or report['phase'] in TERMINAL_PHASES:
+            break
+        time.sleep(args.interval)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--status', type=Path, default=RESULTS / 'status.json')
@@ -227,18 +265,7 @@ def main():
     args = parser.parse_args()
     if args.interval < 10:
         parser.error('Refresh interval must be at least 10 seconds')
-    plotted_epoch = None
-    while True:
-        report, rows = inspect(args.status)
-        save_report(report, args.output)
-        if args.plot and plotted_epoch != len(rows):
-            save_plot(rows, args.output,report.get('historical_validation_provisional_through_epoch'))
-            plotted_epoch = len(rows)
-        print(json.dumps({key: report[key] for key in ('checked_at', 'phase', 'completed_epochs',
-              'training_functioning_at_check', 'issues', 'timing', 'app_model_ready')}, allow_nan=False), flush=True)
-        if not args.watch or report['phase'] in TERMINAL_PHASES or report['issues']:
-            break
-        time.sleep(args.interval)
+    watch_training(args)
 
 
 if __name__ == '__main__':

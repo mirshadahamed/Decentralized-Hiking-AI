@@ -2,11 +2,15 @@ import tempfile
 import unittest
 import hashlib
 import json
+import io
+from contextlib import redirect_stdout
+from types import SimpleNamespace
+from unittest.mock import patch
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from sajana.src.check_yolov8_training import ROOT, completed_rows, epoch_timing, inspect, save_report
+from sajana.src.check_yolov8_training import ROOT, completed_rows, epoch_timing, inspect, save_report, watch_training
 
 
 class TrainingMonitorTests(unittest.TestCase):
@@ -62,6 +66,16 @@ class TrainingMonitorTests(unittest.TestCase):
             report, _ = inspect(root/'status.json', now)
             self.assertTrue(report['training_functioning_at_check'])
             self.assertFalse(report['app_model_ready'])
+            self.assertIn('estimated_full_budget_finish', report)
+            # A fresh heartbeat must not hide a trainer lost during a reboot.
+            state['pid'] = 12345
+            (root/'status.json').write_text(json.dumps(state))
+            with patch('sajana.src.check_yolov8_training.os.kill', side_effect=ProcessLookupError):
+                report, _ = inspect(root/'status.json', now)
+            self.assertFalse(report['training_functioning_at_check'])
+            self.assertFalse(report['training_process_alive'])
+            self.assertNotIn('estimated_full_budget_finish', report)
+            state.pop('pid'); (root/'status.json').write_text(json.dumps(state))
             (root/'console.log').write_text('WARNING NMS time limit 2.400s exceeded\n')
             report, _ = inspect(root/'status.json', now)
             self.assertFalse(report['training_functioning_at_check'])
@@ -75,6 +89,20 @@ class TrainingMonitorTests(unittest.TestCase):
             save_report(report, root/'report')
             saved = json.loads((root/'report/health_report.json').read_text())
             self.assertIsNone(saved['validation_trend']['metrics/recall(M)']['latest'])
+
+    def test_watch_refreshes_after_pause_then_stops_on_completion(self):
+        common = {'checked_at': 'fixture', 'completed_epochs': 57, 'timing': None, 'app_model_ready': False}
+        reports = [dict(common, phase='training', training_functioning_at_check=False, issues=['stale heartbeat']),
+                   dict(common, phase='training', training_functioning_at_check=True, issues=[]),
+                   dict(common, phase='completed', training_functioning_at_check=True, issues=[])]
+        args = SimpleNamespace(status=Path('fixture.json'), output=Path('fixture'),
+                               watch=True, plot=False, interval=60)
+        with patch('sajana.src.check_yolov8_training.inspect', side_effect=[(r, []) for r in reports]), \
+             patch('sajana.src.check_yolov8_training.save_report') as save, \
+             patch('sajana.src.check_yolov8_training.time.sleep') as sleep, redirect_stdout(io.StringIO()):
+            watch_training(args)
+        self.assertEqual([call.args[0] for call in save.call_args_list], reports)
+        self.assertEqual(sleep.call_count, 2)
 
 
 if __name__ == '__main__':

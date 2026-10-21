@@ -19,6 +19,25 @@ from zoneinfo import ZoneInfo
 from .train_yolov8 import ROOT, RESULTS, PROJECT, STATUS, now, sha256, write_json, update_public_plan
 
 
+def revalidate_checkpoint(trainer, expected_images, reset_selection):
+    """Preserve a valid best checkpoint and patience when resuming after a reboot."""
+    metrics = trainer.validator(trainer)
+    fitness = metrics.pop('fitness')
+    if trainer.validator.complete_nms_images != expected_images:
+        raise ValueError('Incomplete baseline validation')
+    trainer.metrics = metrics
+    trainer.fitness = fitness
+    if reset_selection:
+        # Only the first migration from the timeout-prone validator needs a new
+        # selection baseline. Ordinary resumes retain the restored stopper.
+        trainer.best_fitness = fitness
+        trainer.stopper.best_fitness = fitness
+        trainer.stopper.best_epoch = trainer.start_epoch
+        trainer.stopper.possible_stop = False
+        if not trainer.save_model():
+            raise ValueError('Corrected checkpoint baseline was not saved')
+
+
 def run(run_dir, device):
     state=json.loads(STATUS.read_text())
     if Path(state['run_directory']).resolve()!=run_dir.resolve():
@@ -31,13 +50,17 @@ def run(run_dir, device):
     if (RESULTS/'launch.json').exists():shutil.copy2(RESULTS/'launch.json',recovery/'launch_at_resume.json')
     original=json.loads((run_dir/'run_manifest.json').read_text())
     state.pop('error',None)
+    reset_selection = not (old_state.get('validation_policy') == 'complete_nms_no_wall_clock_cutoff'
+                           and old_state.get('baseline_validation_complete'))
+    provisional_through = (old_state['completed_epochs'] if reset_selection else
+                           old_state.get('historical_validation_provisional_through_epoch', 0))
 
     def record(**values):
         state.update(values,updated_at=now());write_json(STATUS,state);write_json(run_dir/'status.json',state)
 
     record(phase='verifying_resume',pid=os.getpid(),active_console_log=os.environ.get('C2_TRAIN_LOG'),
            validation_policy='complete_nms_no_wall_clock_cutoff',
-           historical_validation_provisional_through_epoch=old_state['completed_epochs'])
+           historical_validation_provisional_through_epoch=provisional_through)
     try:
         inventory=json.loads((run_dir/'dataset_hashes.json').read_text())
         dataset=ROOT/original['configuration']['dataset']
@@ -79,8 +102,12 @@ def run(run_dir, device):
                   'original_resume_checkpoint_sha256':sha256(checkpoint),'resume_completed_epochs':completed,
                   'checkpoint_backup_directory':str(recovery),'optimizer_and_ema_restored':True,
                   'frozen_data_hashes_rechecked':True,'test_model_evaluation_performed':False,
-                  'historical_epoch_scores_provisional':True,
-                  'selection_policy':'Complete current-checkpoint validation establishes a new baseline; preserve old best/snapshots for later validation-only review.'}
+                  'historical_epoch_scores_provisional':bool(provisional_through),
+                  'historical_validation_provisional_through_epoch':provisional_through,
+                  'selection_state_reset':reset_selection,
+                  'previous_recovery_manifest':old_state.get('recovery_manifest_path'),
+                  'selection_policy':('Complete current-checkpoint validation establishes a new baseline; preserve old best/snapshots for later validation-only review.' if reset_selection else
+                                      'Revalidate the current checkpoint while retaining saved best fitness, best checkpoint and early-stopping state.')}
         del ckpt
         write_json(recovery/'manifest.json',manifest);write_json(RESULTS/'validation_recovery.json',manifest)
         record(recovery_manifest_path=str(recovery/'manifest.json'),completed_epochs=completed,
@@ -102,14 +129,7 @@ def run(run_dir, device):
             trainer.loss_items={key:torch.zeros((),device=trainer.device) for key in loss_keys}
             trainer.loss_names=tuple(loss_keys)
             record(phase='revalidating_checkpoint',baseline_validation_complete=False)
-            trainer.metrics=trainer.validator(trainer)
-            trainer.fitness=trainer.metrics.pop('fitness')
-            if trainer.validator.complete_nms_images!=expected['val']['images']:
-                raise ValueError('Incomplete baseline validation')
-            trainer.best_fitness=trainer.fitness
-            trainer.stopper.best_fitness=trainer.fitness;trainer.stopper.best_epoch=trainer.start_epoch
-            trainer.stopper.possible_stop=False
-            if not trainer.save_model():raise ValueError('Corrected checkpoint baseline was not saved')
+            revalidate_checkpoint(trainer, expected['val']['images'], reset_selection)
             write_json(recovery/'complete_baseline_validation.json',{'metrics':trainer.metrics,
                         'fitness':trainer.fitness,'images_processed':trainer.validator.complete_nms_images,
                         'completed_epochs':completed,'test_used':False})
