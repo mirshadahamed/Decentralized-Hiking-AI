@@ -1,0 +1,14 @@
+# Lint for Component 4:  .venv\Scripts\python.exe -m ruff check src tests dashboard
+line-length = 120
+target-version = "py314"
+extend-exclude = [".venv", "data", "results", "notebooks"]
+
+[lint]
+select = ["E", "F", "W", "B"]
+ignore = [
+    "E501",  # a few table-like lines run to ~130 characters on purpose
+    "E731",  # one-line lambdas for small formatters
+    "B008",  # FastAPI Depends(...) in default arguments is the framework's pattern
+    "B023",  # closures in loops are called inside the same iteration (log tags, evaluators)
+    "B905",  # zip() over arrays of equal length by construction
+]

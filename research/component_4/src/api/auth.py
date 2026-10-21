@@ -1,4 +1,4 @@
-"""Staff accounts, sessions and audit log (live_and_ux_plan.md, section 3).
+"""Staff accounts, sessions and audit log (docs/archive/live_and_ux_plan.md, section 3).
 
 - Roles: ranger < officer < admin (a higher role can do everything a lower one can). Visitors need no account.
 - Passwords: salted scrypt hashes only (never stored or logged in plain text); at least 10 characters.

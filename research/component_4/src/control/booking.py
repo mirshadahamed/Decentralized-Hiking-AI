@@ -17,7 +17,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from src.config import DATA, PROCESSED, load_config
+from src.config import DATA, load_config
 from src.control.slots import build_control
 
 DB = DATA / "bookings.sqlite"

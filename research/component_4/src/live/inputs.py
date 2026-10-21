@@ -1,4 +1,4 @@
-"""Live inputs up to real dates: weather, calendar and visitor history (live_and_ux_plan.md, section 2.1).
+"""Live inputs up to real dates: weather, calendar and visitor history (docs/archive/live_and_ux_plan.md, section 2.1).
 
 weather   2022-01-01 .. yesterday  Open-Meteo archive (cached per finished year, recent part refreshed)
           today .. today+15        Open-Meteo forecast

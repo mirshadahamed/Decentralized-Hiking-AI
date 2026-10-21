@@ -170,7 +170,7 @@ capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
     partly_closed: 0.5
     closed: 1.0
 
-control:                  # entry control: timed tickets per trail and slot (upgrade_plan.md, section 2)
+control:                  # entry control: timed tickets per trail and slot (docs/archive/upgrade_plan.md, section 2)
   slot_minutes: 30
   first_slot_h: 6.0       # gate opens
   last_slot_h: 12.5       # last slot starts 12:30 (last entry 13:00)
@@ -188,7 +188,7 @@ control:                  # entry control: timed tickets per trail and slot (upg
   accept_trail_swap: 0.3  # evaluation: share who accept another trail when their trail is full
   booking_horizon_days: 90
 
-live:                     # live mode: real dates, refreshed every evening (live_and_ux_plan.md, section 2)
+live:                     # live mode: real dates, refreshed every evening (docs/archive/live_and_ux_plan.md, section 2)
   horizon_days: 90        # outlook and bookings
   forecast_days: 16       # Open-Meteo forecast horizon; climatology after this
   calendar_extra_days: 120

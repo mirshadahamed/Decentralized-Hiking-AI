@@ -89,7 +89,7 @@ if __name__ == "__main__":
     out, path = forecast_day(a.date, not a.no_weather, a.run)
     print(f"{path}\npark: expected={out['expected_visitors']} quota={out['recommended_daily_quota']} "
           f"(classic Cifuentes {out['classic_cifuentes_quota']})")
-    for t, v in out["trails"].items():
+    for v in out["trails"].values():
         print(f"  {v['name']:<18} expected={v['expected_visitors']:>5} quota={v['recommended_daily_quota']:>5} "
               f"classic={v['classic_cifuentes_quota']:>5} limiting seg={v['limiting_segment']:>2} "
               f"bottlenecks={v['bottleneck_segments']} peak={v['peak_occupancy']}")

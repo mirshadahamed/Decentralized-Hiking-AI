@@ -1,4 +1,4 @@
-"""Component 4 API: live forecasts, slot booking and staff operations (live_and_ux_plan.md, phase 2).
+"""Component 4 API: live forecasts, slot booking and staff operations (docs/archive/live_and_ux_plan.md, phase 2).
 
     .venv\\Scripts\\python.exe -m uvicorn src.api.app:app --port 8000      (docs at http://localhost:8000/docs)
 
@@ -46,7 +46,7 @@ def ctx() -> LiveContext:
             try:
                 _ctx = LiveContext(rebuild=False)
             except FileNotFoundError:
-                raise HTTPException(503, "No live data yet: run python -m src.live.refresh")
+                raise HTTPException(503, "No live data yet: run python -m src.live.refresh") from None
         return _ctx
 
 
@@ -273,7 +273,7 @@ def create_booking(body: BookingIn):
     except booking.SlotFull as e:
         return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
     return {"code": code, **booking.bookings_for_code(code), "window_minutes": build_control().c["slot_window_min"]}
 
 
@@ -355,7 +355,7 @@ def add_spot_count(body: SpotCountIn, user: dict = Depends(role("ranger"))):
     try:
         r = add_count(body.day.isoformat(), body.seg_id, h * 60 + m, body.count, user["username"], body.client_id)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
     auth.audit(user["username"], "spot_count", f"{body.day} seg {body.seg_id} {body.time} {body.count}")
     return r
 
@@ -440,7 +440,7 @@ def night_of(at: datetime) -> tuple[date, int]:
     return at.date(), m
 
 
-def night_passes(night: date) -> "pd.DataFrame":
+def night_passes(night: date):
     """Halfway counts of one night: its own date before the evening, plus the evening before (shifted < 0)."""
     import pandas as pd
     cut = NIGHT_START_H * 60
@@ -579,7 +579,7 @@ def set_quota(body: QuotaIn, user: dict = Depends(role("officer"))):
     try:
         alerts = booking.set_quota(body.day.isoformat(), body.trail, body.rule, body.quota, user["username"])
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
     auth.audit(user["username"], "quota", f"{body.day} {body.trail} {body.rule} {body.quota}")
     return {"alerts": alerts}
 

@@ -3,7 +3,7 @@
     python -m src.live.refresh                     # today (run every evening, e.g. Windows Task Scheduler 18:00)
     python -m src.live.refresh --today 2026-10-15  # a chosen 'today' (testing / demos)
 
-Steps (live_and_ux_plan.md, section 2.1):
+Steps (docs/archive/live_and_ux_plan.md, section 2.1):
   1-5 inputs: calendar, weather (observed / forecast / typical), visitor history (DWC / simulated)
   6   forecasts: 90-day outlook from today (planning model), tomorrow hour by hour (ST-GNN, or the
       historical-average fallback if no trained model is available)

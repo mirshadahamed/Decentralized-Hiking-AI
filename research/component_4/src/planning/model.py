@@ -1,4 +1,4 @@
-"""Long-range planning model: expected crowd for any day 2-90 days ahead (roadmap.md, section 3).
+"""Long-range planning model: expected crowd for any day 2-90 days ahead (docs/archive/roadmap.md, section 3).
 
 The day-ahead ST-GNN cannot be used this far ahead: it needs yesterday's counts and tomorrow's weather.
 This model works from what *is* known when the forecast is made (the issue date):

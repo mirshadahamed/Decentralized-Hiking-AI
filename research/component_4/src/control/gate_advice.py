@@ -70,7 +70,7 @@ def gate_advice(ec: EntryControl, admitted: pd.DataFrame, now_min: int, rain_sha
 
     names = ec.cfg["area"]["trail_names"]
     util_trail = {}
-    for r, t in enumerate(ec.trails):
+    for t in ec.trails:
         m = (ec.seg.trail == t).values & fin
         util_trail[t] = float((base[m] / C[m, None]).max()) if m.any() else 0.0
     room = [t for t, u in util_trail.items() if u < 0.6]
