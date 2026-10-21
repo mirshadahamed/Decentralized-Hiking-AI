@@ -43,8 +43,11 @@ def load_weights(model, state: dict):
 FREEZE_CORE = ("g1.", "g2.", "rnn.", "g_out.")   # graph + recurrent core; inp / fut / head stay trainable
 
 
-def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=()):
-    """sensed: bool [N]; unsensed nodes give no input history and no training loss.
+def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=(),
+          loss_nodes=None):
+    """sensed: bool [N]; unsensed nodes give no input history and (by default) no training loss.
+    loss_nodes: bool [N] segments scored in the loss, if not the sensed ones (sensor-sparse protocol G1: the
+    synthetic target covers every segment, while as input the model sees only what the park measures).
     init_state: start from these weights (fine-tuning a model trained on another park).
     select_on_val=False: no early stopping on the validation year; train `epochs` and keep the last weights
     (few-shot: a new park does not have a year of counts to choose the model with).
@@ -53,7 +56,8 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
     tc = cfg["train"]
     set_seed(seed)
     rng = np.random.default_rng(seed)
-    scale = data.y_scale(sensed)
+    loss_nodes = sensed if loss_nodes is None else loss_nodes
+    scale = data.y_scale(loss_nodes)
     model = build_model(data, kind, tc["hidden"])
     if init_state is not None:
         load_weights(model, init_state)
@@ -62,7 +66,7 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
             p.requires_grad_(False)
     opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=tc["lr"])
     tr_o, va_o = data.origins("train", tc["train_origin_stride"]), data.origins("val")
-    node_mask = torch.from_numpy(sensed)
+    node_mask = torch.from_numpy(loss_nodes)
 
     best, best_state, bad = np.inf, None, 0
     for ep in range(epochs or tc["epochs"]):
