@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../domain/terrain_profile.dart';
 import 'component_1_dashboard_controller.dart';
 
 class Component1DashboardScreen extends StatefulWidget {
-  const Component1DashboardScreen({
-    required this.controller,
-    super.key,
-  });
+  const Component1DashboardScreen({required this.controller, super.key});
 
   /// This screen owns and disposes the supplied controller.
   final Component1DashboardController controller;
@@ -16,8 +14,7 @@ class Component1DashboardScreen extends StatefulWidget {
       _Component1DashboardScreenState();
 }
 
-class _Component1DashboardScreenState
-    extends State<Component1DashboardScreen> {
+class _Component1DashboardScreenState extends State<Component1DashboardScreen> {
   @override
   void initState() {
     super.initState();
@@ -46,7 +43,8 @@ class _Component1DashboardScreenState
 
           if (snapshot == null) {
             return _ErrorView(
-              message: controller.error?.toString() ??
+              message:
+                  controller.error?.toString() ??
                   'Terrain data is not available.',
               onRetry: controller.refresh,
             );
@@ -60,7 +58,7 @@ class _Component1DashboardScreenState
             children: [
               if (warning)
                 Card(
-                  color: Colors.deepOrange.withOpacity(0.12),
+                  color: Colors.deepOrange.withValues(alpha: 0.12),
                   child: const ListTile(
                     leading: Icon(
                       Icons.warning_amber_rounded,
@@ -75,21 +73,60 @@ class _Component1DashboardScreenState
               _DataCard(
                 title: 'Detected terrain',
                 icon: Icons.terrain,
-                child: Text(
-                  _terrainLabel(snapshot.terrainProfile),
-                  style: Theme.of(context).textTheme.headlineSmall,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _terrainLabel(snapshot.terrainProfile),
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(snapshot.inferenceMode),
+                    Text(
+                      'IMU slope ${snapshot.slopePercent.toStringAsFixed(1)}% · '
+                      '${snapshot.speedMps.toStringAsFixed(2)} m/s',
+                    ),
+                  ],
+                ),
+              ),
+              _DataCard(
+                title: 'Live motion',
+                icon: Icons.sensors,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Steps  ${snapshot.stepCount}'),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Accelerometer  '
+                      '${snapshot.accelerometerX.toStringAsFixed(2)}, '
+                      '${snapshot.accelerometerY.toStringAsFixed(2)}, '
+                      '${snapshot.accelerometerZ.toStringAsFixed(2)} m/s²',
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Gyroscope  '
+                      '${snapshot.gyroscopeX.toStringAsFixed(2)}, '
+                      '${snapshot.gyroscopeY.toStringAsFixed(2)}, '
+                      '${snapshot.gyroscopeZ.toStringAsFixed(2)} rad/s',
+                    ),
+                  ],
                 ),
               ),
               _DataCard(
                 title: 'Metabolic cost',
                 icon: warning ? Icons.warning_amber_rounded : Icons.favorite,
                 iconColor: color,
-                child: Text(
-                  '${snapshot.metabolicCostW.toStringAsFixed(1)} W',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(color: color),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${snapshot.metabolicCostW.toStringAsFixed(1)} W',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(color: color),
+                    ),
+                    Text('Pack load ${snapshot.loadKg.toStringAsFixed(1)} kg'),
+                  ],
                 ),
               ),
               _DataCard(
@@ -129,15 +166,15 @@ class _Component1DashboardScreenState
   String _terrainLabel(TerrainProfile profile) {
     switch (profile) {
       case TerrainProfile.flatGround:
-        return 'Flat ground';
+        return 'Paved / Flat Path';
       case TerrainProfile.running:
         return 'Running';
       case TerrainProfile.stairs:
         return 'Stairs';
       case TerrainProfile.hikingTrail:
-        return 'Hiking trail';
+        return 'Gravel Trail';
       case TerrainProfile.roughOffTrail:
-        return 'Rough off-trail';
+        return 'Uneven / Rocky';
     }
   }
 }
@@ -181,10 +218,7 @@ class _DataCard extends StatelessWidget {
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.onRetry});
 
   final String message;
   final Future<void> Function() onRetry;
@@ -201,10 +235,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),

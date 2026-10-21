@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import '../domain/component_1_terrain_service.dart';
 
 /// Adapt the existing use case to this callback when constructing the
@@ -8,12 +10,12 @@ typedef LoadTerrainAssessment = Future<TerrainAssessmentSnapshot> Function();
 
 class Component1DashboardController extends ChangeNotifier {
   Component1DashboardController({
-    required LoadTerrainAssessment loadAssessment,
+    required this.loadAssessment,
     this.refreshInterval = const Duration(seconds: 1),
     this.highExertionThresholdW = 500,
-  }) : _loadAssessment = loadAssessment;
+  });
 
-  final LoadTerrainAssessment _loadAssessment;
+  final LoadTerrainAssessment loadAssessment;
   final Duration refreshInterval;
   final double highExertionThresholdW;
 
@@ -26,8 +28,7 @@ class Component1DashboardController extends ChangeNotifier {
   bool isLoading = true;
 
   bool get isHighExertion =>
-      snapshot != null &&
-      snapshot!.metabolicCostW >= highExertionThresholdW;
+      snapshot != null && snapshot!.metabolicCostW >= highExertionThresholdW;
 
   void start() {
     if (_timer != null || _disposed) return;
@@ -40,7 +41,7 @@ class Component1DashboardController extends ChangeNotifier {
 
     _isRefreshing = true;
     try {
-      final result = await _loadAssessment();
+      final result = await loadAssessment();
       if (_disposed) return;
       snapshot = result;
       error = null;
