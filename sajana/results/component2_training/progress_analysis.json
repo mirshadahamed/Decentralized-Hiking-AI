@@ -1,0 +1,194 @@
+{
+  "checked_at": "2026-10-21T09:16:13.558465+05:30",
+  "L1": {
+    "phase": "training",
+    "completed_epochs": 92,
+    "current_epoch": 93,
+    "planned_epochs": 100,
+    "target_classes": {
+      "0": "litter"
+    },
+    "dataset_counts": {
+      "train": {
+        "images": 1028,
+        "objects": 3611,
+        "present_labels": 1028,
+        "present_images": 1028,
+        "missing_images": 0,
+        "verified_images": 1028,
+        "resized_images": 0
+      },
+      "val": {
+        "images": 286,
+        "objects": 675,
+        "present_labels": 286,
+        "present_images": 286,
+        "missing_images": 0,
+        "verified_images": 286,
+        "resized_images": 0
+      },
+      "test": {
+        "images": 185,
+        "objects": 497,
+        "present_labels": 185,
+        "present_images": 185,
+        "missing_images": 0,
+        "verified_images": 185,
+        "resized_images": 0
+      }
+    },
+    "latest_completed_metrics": {
+      "metrics/precision(M)": 0.75257,
+      "metrics/recall(M)": 0.47407,
+      "metrics/mAP50(M)": 0.51759,
+      "metrics/mAP50-95(M)": 0.31291,
+      "train/seg_loss": 1.61243,
+      "val/seg_loss": 2.29372
+    },
+    "best_complete_validation_mask_map_epoch": 85,
+    "best_complete_validation_mask_map": 0.32057,
+    "training_health_issues": [],
+    "historical_validation_provisional_through_epoch": 22,
+    "latest_is_not_necessarily_selected_checkpoint": true
+  },
+  "queue": {
+    "phase": "waiting_for_L1",
+    "jobs": {
+      "L2": {
+        "job": "L2",
+        "phase": "queued"
+      },
+      "O1": {
+        "job": "O1",
+        "phase": "queued"
+      }
+    },
+    "pid": 6573
+  },
+  "dataset_coverage": [
+    {
+      "key": "taco",
+      "task": "litter instance segmentation",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 1028,
+        "val": 286,
+        "test": 185
+      },
+      "training_use": "Currently learning litter from its training split"
+    },
+    {
+      "key": "mju",
+      "task": "auxiliary litter instance segmentation",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 1485,
+        "val": 248,
+        "test": 742
+      },
+      "training_use": "Prepared auxiliary train split; full L2 training queued"
+    },
+    {
+      "key": "taco_mju",
+      "task": "combined binary litter baseline",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 2513,
+        "val": 286,
+        "test": 185
+      },
+      "training_use": "Derived union; L2 queued, not an additional independent source"
+    },
+    {
+      "key": "unofficial_taco",
+      "task": "unreviewed litter auxiliary pool",
+      "state": "verified_auxiliary_pool",
+      "available_data_ready": true,
+      "splits": {
+        "train": 3762,
+        "val": 0,
+        "test": 0
+      },
+      "training_use": "Optional pool excluded pending annotation-quality review"
+    },
+    {
+      "key": "plitter",
+      "task": "litter and trash-bin object detection",
+      "state": "not_ready",
+      "available_data_ready": false,
+      "splits": {
+        "train": 12086,
+        "val": 1511,
+        "test": 1508
+      },
+      "training_use": "Excluded: five orientation/alignment cases and one cross-split duplicate remain unresolved"
+    },
+    {
+      "key": "orfd",
+      "task": "auxiliary vehicle freespace segmentation",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 8392,
+        "val": 1245,
+        "test": 2193
+      },
+      "training_use": "Prepared vehicle-freespace context; excluded from these YOLO task heads"
+    },
+    {
+      "key": "rugd",
+      "task": "natural terrain semantic segmentation",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 4779,
+        "val": 733,
+        "test": 1924
+      },
+      "training_use": "Prepared terrain context; excluded from these YOLO task heads"
+    },
+    {
+      "key": "wildscenes",
+      "task": "forest terrain semantic segmentation",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
+      "training_use": "Native terrain-semantic task not trained; same photos underpin queued O1"
+    },
+    {
+      "key": "wildscenes_objects",
+      "task": "rock/log semantic-region object detection",
+      "state": "verified_prepared",
+      "available_data_ready": true,
+      "splits": {
+        "train": 6051,
+        "val": 283,
+        "test": 2133
+      },
+      "training_use": "O1 rock/log region detector queued; no full training yet"
+    }
+  ],
+  "local_photos": 0,
+  "local_class_review_rows": 0,
+  "geospatial_observations_are_image_training_labels": false,
+  "all_collected_datasets_in_current_model": false,
+  "full_component_ready": false,
+  "public_model_selection_completed": false,
+  "public_test_evaluation_completed": false,
+  "analysis": [
+    "Native source verification and current training health show no active training error.",
+    "Mask mAP has broadly plateaued while training loss continues down; there may be diminishing returns or overfitting. Local generalization is unmeasured.",
+    "The latest precision/recall are framework maximum-F1 summaries, not fixed-threshold app results; AP is not classification accuracy.",
+    "Validation and test are intentionally excluded from optimizer updates; reserved test evaluation has not occurred.",
+    "Prepared data and an eight-image smoke check are not completed full-dataset training.",
+    "The queue trains separate litter and rock/log context models, not one joint garbage/obstruction/clear-trail model.",
+    "Missing local erosion/root/corridor/actual blockage/clear-trail supervision prevents full component certification."
+  ]
+}
