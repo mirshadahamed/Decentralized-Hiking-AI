@@ -6,15 +6,20 @@ import 'package:decentralized_hiking_ai/app/app.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/map_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c4_i18n.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final today = DateTime(2026, 10, 15);
@@ -354,6 +359,43 @@ class _EdgeApi extends FakeApi {
   Future<Map<String, dynamic>> edgePack() async {
     if (!online) throw ApiException(0, 'Cannot reach the park server.');
     return jsonDecode(File('test/component_4/fixtures/edge_pack.json').readAsStringSync()) as Map<String, dynamic>;
+  }
+}
+
+/// Officer records: 3 trails a day; remembers the last request (dates, trail).
+class _RecordsApi extends FakeApi {
+  _RecordsApi() : super(role: 'officer');
+
+  DateTime? start, end;
+  String? trailAsked;
+
+  @override
+  Future<List<TrailInfo>> trails() async => [
+        TrailInfo(id: 'main', name: "World's End loop", lengthKm: 7.5, about: ''),
+        TrailInfo(id: 'kirigalpotta', name: 'Kirigalpotta', lengthKm: 5.1, about: ''),
+      ];
+
+  @override
+  Future<CrowdRecords> records(DateTime start, DateTime end, {String? trail}) async {
+    this.start = start;
+    this.end = end;
+    trailAsked = trail;
+    final rows = <RecordRow>[];
+    for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+      final period = d.isBefore(today) ? 'past' : d == today ? 'today' : 'future';
+      for (final (id, name, n) in [('main', "World's End loop", 300), ('kirigalpotta', 'Kirigalpotta', 20)]) {
+        if (trail != null && trail != id) continue;
+        rows.add(RecordRow(
+          date: d, trail: id, trailName: name, period: period,
+          visitors: n + d.day, low: period == 'future' ? n - 50 : null, high: period == 'future' ? n + 80 : null,
+          source: period == 'future' ? 'forecast (planning model)' : 'estimate (simulated with real weather)',
+          booked: period == 'past' ? 0 : 4, checkedIn: period == 'today' ? 3 : 0, gateTotal: period == 'today' ? 3 : 0,
+          safeLimit: id == 'main' ? 310 : 200,
+        ));
+      }
+    }
+    return CrowdRecords(site: 'Horton Plains National Park', today: today,
+        trails: {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta'}, rows: rows, note: 'estimates');
   }
 }
 
@@ -724,6 +766,139 @@ void main() {
       await t.pump();
     }
     expect(card, findsNothing);
+  });
+
+  testWidgets('bottleneck map: every section coloured by tomorrow\'s forecast, safe numbers per section, offline',
+      (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final api = _EdgeApi();
+    final tab = find.byKey(const Key('tab_bottleneck_map'));
+    Future<void> open() async {
+      await t.pumpWidget(wrap(BottleneckScreen(key: UniqueKey(), showTiles: false), api));
+      for (var i = 0; i < 40 && tab.evaluate().isEmpty; i++) {       // real time: read the pack, run the ST-GNN
+        await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        await t.pump();
+      }
+    }
+
+    await open();
+    expect(tab, findsOneWidget);
+    expect(find.textContaining('ST-GNN on this phone'), findsOneWidget);
+    expect(find.byKey(const Key('day_picker')), findsOneWidget);              // today + 6 days
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Tomorrow'), findsOneWidget);
+    await t.tap(find.text('Sat 12 Apr'));                                    // day 3: planning model, saved
+    await t.pump();
+    expect(find.textContaining('Planning outlook'), findsOneWidget);
+    await t.tap(find.text('Today'));
+    await t.pump();
+    expect(find.textContaining('ST-GNN on this phone'), findsOneWidget);
+    expect(find.byKey(const Key('hour_slider')), findsOneWidget);
+    expect(find.textContaining('of 48 sections'), findsOneWidget);
+    expect(find.textContaining(' people'), findsWidgets);              // the fullest sections at that hour
+    final before = find.textContaining('of 48 sections').evaluate().single.widget as Text;
+    await t.drag(find.byKey(const Key('hour_slider')), const Offset(-400, 0)); // early morning: quieter
+    await t.pump();
+    final after = find.textContaining('of 48 sections').evaluate().single.widget as Text;
+    expect(after.data, isNot(before.data));
+
+    await t.tap(find.text('Safe numbers'));
+    await t.pumpAndSettle();
+    expect(find.text('Safe number of visitors that day'), findsOneWidget);
+    expect(find.byKey(const Key('park_safe_number')), findsOneWidget);
+    expect(find.text("World's End loop"), findsOneWidget);
+    await t.tap(find.text("World's End loop"));
+    await t.pumpAndSettle();
+    expect(find.text('ECC/day'), findsOneWidget);
+    final row = find.descendant(of: find.byType(ExpansionTile), matching: find.text("World's End"));
+    await t.ensureVisible(row);
+    await t.pumpAndSettle();
+    await t.tap(row);                                                    // one section: hourly bars + PCC/RCC/ECC
+    await t.pumpAndSettle();
+    expect(find.text('Effective (ECC)'), findsOneWidget);
+    expect(find.textContaining('Holds safely at once'), findsOneWidget);
+    Navigator.of(t.element(find.text('Effective (ECC)'))).pop();          // close the section sheet
+    await t.pumpAndSettle();
+    await t.tap(find.text('Your walk'));                                  // offline walk advice (spread, not herd)
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('walk_pick')), findsOneWidget);
+    expect(find.text('What most visitors will do'), findsOneWidget);
+    expect(find.textContaining('Fullest place on the way'), findsWidgets);
+
+    api.online = false;                                                  // airplane mode: the stored pack
+    await open();
+    expect(tab, findsOneWidget);
+    expect(find.text('offline copy'), findsOneWidget);
+  });
+
+  testWidgets('officer records: daily visitors past / today / future, filter by trail and dates, copy as CSV', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    String? copied;
+    t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
+      return null;
+    });
+    final api = _RecordsApi();
+    await t.pumpWidget(wrap(const Scaffold(body: RecordsTab()), api));
+    await t.pumpAndSettle();
+    // default: past 30 days + next week, all trails
+    expect(api.start, today.subtract(const Duration(days: 30)));
+    expect(api.end, today.add(const Duration(days: 6)));
+    expect(api.trailAsked, isNull);
+    expect(find.text('Past'), findsOneWidget);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Expected'), findsOneWidget);
+    expect(find.byKey(const Key('records_summary')), findsOneWidget);
+    expect(find.textContaining('people counted at the gate'), findsOneWidget);
+    // all trails added up per day: 300 + 20 + 2 x day of month
+    final todayTotal = 320 + 2 * today.day;
+    expect(find.text('$todayTotal'), findsWidgets);
+    // date filter
+    await t.tap(find.text('Today + 6 days'));
+    await t.pumpAndSettle();
+    expect(api.start, today);
+    expect(api.end, today.add(const Duration(days: 6)));
+    expect(find.textContaining('~'), findsWidgets);                         // future days show the forecast range
+    // trail filter
+    await t.tap(find.byKey(const Key('records_trail')));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Kirigalpotta').last);
+    await t.pumpAndSettle();
+    expect(api.trailAsked, 'kirigalpotta');
+    // keep the records: CSV with one line per day and trail
+    await t.tap(find.byKey(const Key('records_csv')));
+    await t.pump();
+    expect(copied, startsWith(RecordRow.csvHeader));
+    expect(copied!.split('\n').length, 1 + 7);                               // header + 7 days, one trail
+    expect(copied, contains('Kirigalpotta'));
+    t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
+  test('offline-first: a screen seen once opens again with no connection, from the stored copy', () async {
+    var online = true;
+    final client = MockClient((r) async {
+      if (!online) throw const SocketException('airplane mode');
+      if (r.url.path.endsWith('/status')) {
+        return http.Response(jsonEncode({'site': 'Horton Plains National Park', 'today': '2026-10-20'}), 200);
+      }
+      return http.Response('{"detail": "not here"}', 404);
+    });
+    final api = C4Api(baseUrl: 'http://park', client: client, park: 'horton_plains');
+    expect((await api.status()).site, 'Horton Plains National Park');
+    expect(api.offline.value, isNull);
+    online = false;                                                    // airplane mode
+    final s = await api.status();
+    expect(s.site, 'Horton Plains National Park');                     // the stored copy
+    expect(api.offline.value, isNotNull);                              // ... and the app knows it is offline
+    await expectLater(api.trails(), throwsA(isA<ApiException>()));      // never seen: still a clear error
+    await expectLater(api.book(DateTime(2026, 10, 21), 'main', '07:00', 2), throwsA(isA<ApiException>())); // no offline booking
+    online = true;
+    await api.status();
+    expect(api.offline.value, isNull);                                 // back online
   });
 
   testWidgets('app home lists the modules', (t) async {

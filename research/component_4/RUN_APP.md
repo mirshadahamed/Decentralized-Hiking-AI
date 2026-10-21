@@ -145,18 +145,57 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
 - The server address is fixed into the build. If the laptop's IP changes, build again.
 - The Android emulator uses `C4_API=http://10.0.2.2:8000` instead.
 
-**Demo with no signal (the on-device forecast):**
+**Demo with no signal (offline-first app + forecast made on the phone):**
 1. Run the Horton Plains `refresh` **on the demo day**. The pack is for the day after the refresh, and the app's
    "tomorrow" is that day.
-2. While connected: Horton Plains → Plan & book → tap **tomorrow** → the card **"Forecast made on this phone"**
-   appears. The pack is now stored on the phone. Press ← back to the calendar.
-3. Turn on **airplane mode** (Wi-Fi off too).
-4. Tap **tomorrow** again. The card is still there, now with **offline copy**. Below it the app says it cannot
-   reach the park server: the rest of the day screen needs the server.
-5. The number of ms in the card is the time on *this* phone: the real-phone NFR1 measurement (plan item B4).
+2. While connected, open the app once: **Plan your visit → Horton Plains**. Opening a park stores its screens and
+   tomorrow's forecast pack on the phone. Open **Crowding** and tomorrow in **Plan & book** too, so their extra
+   data is stored.
+3. Turn on **airplane mode**, with Wi-Fi off too. You can now even close and reopen the app.
+4. Everything opened before still works. A dark bar at the bottom says **Offline · showing the copy saved on …**:
+   - destinations;
+   - Horton Plains overview and calendar;
+   - tomorrow's day screen, with the **Forecast made on this phone** card;
+   - **Crowding**: bottleneck map, safe numbers, your walk.
+5. What needs the server says so clearly: booking a ticket, and screens never opened while online.
+6. The number of ms on the cards is the time on *this* phone: the real-phone NFR1 measurement (plan item B4).
 
-Don't close the app while in airplane mode: the destination list itself needs the server when the app starts.
+**Crowding tab (the proposal's core output), also offline:**
+- **Days:** the chips at the top pick **Today**, **Tomorrow** or one of the next 5 days.
+  - Today and tomorrow: "ST-GNN on this phone · … ms".
+  - Later days: "Planning outlook · saved on this phone" (calendar + typical or forecast weather).
+  - The whole week is in the daily pack, so it works offline.
+- **Where:**
+  - hikers: **Crowding** in the bottom bar;
+  - officers: **Bottlenecks**, the first tab (Adam's Peak: the third);
+  - rangers: **Tomorrow**;
+  - the on-device card: **Every section on the map**.
+- **Map:** every trail section is coloured by tomorrow's ST-GNN forecast ÷ what it holds at once: green quiet,
+  yellow filling up, orange busy, red over capacity. Drag the **hour slider**; tap a section for its hourly bars and
+  PCC / RCC / ECC.
+- **Safe numbers:** the park's safe number for tomorrow (vs the fixed Cifuentes number); per trail the safe number
+  and the section that sets it, with the fullest sections first.
+- **Your walk:** what most visitors will do and what they will meet, the plan suggested for *this* phone, and other
+  good options (start time, the loop the other way round, another trail). Each phone draws a different good option,
+  so the advice does not move the whole crowd to one place (RQ8).
 
+**Officer records (keep the daily counts):** log in as an officer → **Records** tab (both parks).
+- **Dates:** presets (Past 30 days + next week, Past 30 days, Today + 6 days, Next 90 days, Past year) or
+  **Custom…** for any range.
+- **Trails:** the trail dropdown filters to one trail.
+- **Per day:**
+  - visitors: past = DWC total or the estimate, labelled; future = the forecast with its range;
+  - the system's own counts: booked, at the gate, halfway;
+  - the safe limit. Red days were above the safe limit.
+- **Keep the records:** the copy button puts the table on the clipboard as CSV (paste into Excel). Or download:
+  http://localhost:8101/admin/records?start=2026-10-01&end=2026-10-31&format=csv (needs an officer token; easiest
+  from http://localhost:8101/docs → Authorize).
+
+**Module 3 and the authority dashboard:**
+- The feed for Module 3: http://localhost:8000/parks/horton_plains/module3/feed. Contract:
+  `docs/schema/c4_module3_feed.schema.json`; sample: `docs/schema/sample_module3_feed.json`.
+- Authority view on the laptop: `.venv\Scripts\python.exe -m streamlit run dashboard/app.py` → **Bottlenecks
+  (authority)**.
 ---
 
 ## One-time setup (already done on this laptop – only for a new computer)

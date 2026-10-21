@@ -255,6 +255,28 @@ def fig_rq5():
     return _save(fig, "rq5.png")
 
 
+def fig_rq8():
+    s = pd.read_csv(latest(RES, "LATEST_ADVICE") / "summary.csv").set_index("policy")
+    comp = [0.25, 0.5, 0.75, 1.0]
+    fig, ax = plt.subplots(figsize=(6.6, 3.7))
+    ax.plot([100 * c for c in comp], [s.loc[f"H{c}", "cut_vs_no_control_pct"] for c in comp], marker="o", color=RED,
+            lw=2.2, label="Same advice on every phone (herd)")
+    ax.plot([100 * c for c in comp], [s.loc[f"S{c}", "cut_vs_no_control_pct"] for c in comp], marker="o", color=GREEN,
+            lw=2.2, label="Each phone draws a good option (spread)")
+    for p, ls, lab in (("Q", "--", "Daily Cifuentes limit"), ("QS", ":", "Limit + spread advice")):
+        v = s.loc[p, "cut_vs_no_control_pct"]
+        ax.axhline(v, color=DARK, ls=ls, lw=1.3)
+        ax.text(101, v, f" {lab}\n {v:.0f} %, {s.loc[p, 'refused_pct']:.0f} % turned away", fontsize=7, va="center")
+    ax.axhline(0, color="black", lw=0.8)
+    ax.set_xlim(20, 135)
+    ax.set_xticks([25, 50, 75, 100])
+    ax.set_xlabel("Hikers with a crowded plan who follow the advice (%)", fontsize=9)
+    ax.set_ylabel("Overcrowding removed (%)", fontsize=9)
+    ax.legend(fontsize=7.5, frameon=False, loc="lower left")
+    _style(ax)
+    return _save(fig, "rq8.png")
+
+
 def fig_rq4():
     df = pd.read_csv(latest(RES_AP, "LATEST_ADVISORY_SWEEP") / "sweep.csv")
     fig, ax = plt.subplots(figsize=(5.4, 3.3))
@@ -789,6 +811,50 @@ def build():
             pic.line.width = Pt(1)
             d.text(s, cap, x - Inches(0.05), Inches(6.05), Inches(2.25), Inches(0.9), 11, DARK, align=PP_ALIGN.CENTER)
 
+    s = d.slide("The proposal's output: bottlenecks and safe numbers per section", "Proof of concept – FR2, FR3, NFR4",
+                "This is the core of the proposal on one screen. Left: every trail section coloured by how full the "
+                "ST-GNN expects it to be at the chosen hour - forecast people divided by what the section holds at "
+                "Cifuentes spacing - computed on the phone, so it also works in airplane mode. Drag the hour slider: "
+                "at 08:00 World's End and Baker's Falls are over capacity. Right: the safe number per trail and for "
+                "the park, set by the most limiting section, instead of one fixed quota. Officers get the same view "
+                "as their first tab. (~60 s)")
+    phones(s, [("11_bottleneck_map", "Today + 6 days, hour by hour:\nevery section coloured"),
+               ("12_safe_numbers", "Safe number per trail,\nset by its limiting section")])
+    d.bullets(s, [
+        "Per section::  ST-GNN forecast ÷ people it holds at once (groups of 10, 50 m apart)",
+        "Per trail::  Cifuentes PCC → RCC → ECC; the most limiting section sets the safe number",
+        "Instead of a fixed quota::  690 tomorrow (weather, wet ground, crowding) vs 719 fixed",
+        "A week, offline::  today and tomorrow forecast by the ST-GNN on the phone (RQ6); days 3-7 from the planning model, saved",
+        "Users::  officers (first tab), rangers, hikers (Crowding tab) · whole app works offline",
+    ], Inches(5.3), Inches(1.6), Inches(7.8), Inches(5.2), 15, 12)
+
+    adv = pd.read_csv(latest(RES, "LATEST_ADVICE") / "summary.csv").set_index("policy")
+    s = d.slide("RQ8 – Can offline advice to hikers prevent overcrowding?", "Hiker guidance (feeds Module 3)",
+                f"Same 2025 visitors as the entry-control test. Every phone has tomorrow's ST-GNN forecast and works "
+                f"out, for each trail, direction and start hour, how full the sections will be when the hiker is on "
+                f"them. Hikers whose plan meets a busy section follow the advice with some probability. If every "
+                f"phone gives the SAME best option, the crowd moves together and at full compliance it is worse than "
+                f"no advice ({adv.loc['H1.0', 'cut_vs_no_control_pct']:.0f} %). If each phone draws one of the good "
+                f"options, weighted by room left, overcrowding falls by up to "
+                f"{adv.loc['S0.75', 'cut_vs_no_control_pct']:.0f} % - as much as the daily limit - without turning "
+                f"anyone away. Advice alone is not enough; limit plus spread advice removes "
+                f"{adv.loc['QS', 'cut_vs_no_control_pct']:.0f} %. Answers 'can offline route suggestions solve "
+                f"overcrowding': they help a lot, if they are spread, and work best with the dynamic limit. (~75 s)")
+    d.image(s, fig_rq8(), Inches(0.45), Inches(1.5), w=Inches(7.6))
+    pic = d.image(s, screens / "13_your_walk.png", Inches(8.4), Inches(1.45), h=Inches(4.6))
+    pic.line.color.rgb = rgb("#C9D3CD")
+    d.text(s, "On the phone, offline:\nsuggested plan + other good options", Inches(8.3), Inches(6.1), Inches(2.4),
+           Inches(0.7), 11, DARK, align=PP_ALIGN.CENTER)
+    d.bullets(s, [
+        f"Herd advice::  {adv.loc['H0.5', 'cut_vs_no_control_pct']:.0f} % at half compliance, "
+        f"{adv.loc['H1.0', 'cut_vs_no_control_pct']:.0f} % at full",
+        f"Spread advice::  up to {adv.loc['S0.75', 'cut_vs_no_control_pct']:.0f} %, nobody turned away",
+        f"Limit + spread::  {adv.loc['QS', 'cut_vs_no_control_pct']:.0f} % (limit alone "
+        f"{adv.loc['Q', 'cut_vs_no_control_pct']:.0f} %)",
+    ], Inches(10.9), Inches(1.6), Inches(2.3), Inches(4.8), 12, 10)
+    d.text(s, "2025 test year, simulation · p < 0.001 for every policy vs no control (Wilcoxon over days)",
+           Inches(0.6), Inches(5.65), Inches(7.6), Inches(0.4), 11, GREY)
+
     s = d.slide("Working prototype – visitors plan a trip", "Completion of prototype",
                 "Screens rendered from the real API output. Trip planner: any number of destinations, read from "
                 "config. Overview: week ahead and the quietest days. Calendar: 90-day crowd outlook. Day: expected "
@@ -832,7 +898,7 @@ def build():
         ["FR1", "Trail graph from OSM with terrain + weather per node", "Done", "2 parks, 48 / 57 segments"],
         ["FR2", "Forecast occupancy per segment, next 24 h, with the ST-GNN", "Done", "server + on the phone (RQ1, RQ6)"],
         ["FR3", "Dynamic capacity per segment with Cifuentes PCC-RCC-ECC", "Done", "daily safe limit per trail"],
-        ["FR4", "Output usable by the dashboard and Module 3", "Partly", "versioned JSON + REST; schema with M3 next"],
+        ["FR4", "Output usable by the dashboard and Module 3", "Done", "JSON Schema c4-module3-feed-1, /module3/feed"],
         ["FR5", "Synthetic-target limitation logged with every output", "Done", "disclaimer in every forecast"],
         ["NFR1", "On-device inference < 2 s", "Done (laptop)", "2 ms ONNX; Dart on phone; real phone next"],
         ["NFR2", "Graceful fallback without a weather forecast", "Done", "historical average + typical weather"],
@@ -905,7 +971,7 @@ def build():
         ["7", "Benchmarking (RMSE / MAE / t-test)", "Done", "3 seeds, spatial CV, Holm"],
         ["8", "Cifuentes cascade + integration", "Done", "safe limit in API and app"],
         ["9", "On-device quantisation + inference", "Done", "ONNX, int8 tested, Dart engine"],
-        ["10", "Cross-module integration (shared data layer)", "Started", "versioned JSON; schema with M3 in Nov"],
+        ["10", "Cross-module integration (shared data layer)", "Contract ready", "JSON Schema + /module3/feed; M3 sign-off"],
         ["11", "Field validation + system / QA testing", "Planned Dec", "65 + 24 automated tests"],
         ["12", "Thesis documentation", "Ongoing", "docs/, evaluation_results.md"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.9, 2.6, 4.1], 12, row_h=0.4)
@@ -921,7 +987,7 @@ def build():
          "responses mapped to FR / NFR"],
         ["9 – 22 Nov", "Domain adaptation beyond fine-tuning (layer freezing, PeMS04/08); feature ablation; lead time",
          "RQ5 and RQ1b tables"],
-        ["23 Nov – 6 Dec", "JSON Schema + contract tests with Module 3 (FR4); CHIRPS / NASA POWER (O1)",
+        ["23 Nov – 6 Dec", "Module 3 owner adopts the feed (schema ready, FR4); CHIRPS / NASA POWER (O1)",
          "Module 3 owner signs off"],
         ["7 – 24 Dec", "Field counts: Horton Plains 2–3 days; Adam's Peak 23 Dec (Unduvap Poya)", "RQ7 report (A1–A3)"],
         ["28 Dec – 10 Jan", "Recalibrate the simulator; re-run RQ1–RQ5; survey summary", "results for PP2"],
@@ -954,6 +1020,22 @@ def build():
         "Planning model::  daily totals no better than the calendar average (MAE ≈ 110 vs 108); "
         "segment-hour occupancy better (1.44 vs 1.65)",
     ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 15, 10)
+
+    # B2 --------------------------------------------------------------- officer records (backup)
+    s = d.slide("Backup – Officer records: past, today and the week ahead", "Backup",
+                "For keeping records: visitors per day for any trail and date range - the past (DWC total or the "
+                "estimate, labelled), today, and the forecast with its range - next to this system's own counts "
+                "(bookings, gate, halfway) and the day's safe limit. Red = above the safe limit. Copy as CSV, or "
+                "GET /admin/records?format=csv for Excel. Officers only. (~30 s)")
+    pic = d.image(s, screens / "14_records.png", Inches(0.55), Inches(1.45), h=Inches(5.5))
+    pic.line.color.rgb = rgb("#C9D3CD")
+    d.bullets(s, [
+        "Daily, per trail::  past · today · future, filter by trail and by date range (presets or any range)",
+        "Past::  DWC daily total when connected, otherwise the estimate simulated with the real weather (labelled)",
+        "Future::  planning-model forecast with its likely range (P10–P90)",
+        "Own records::  booked, checked in at the gate, walk-ins, halfway counts, the day's safe limit",
+        "Keep::  copy as CSV in the app, or /admin/records?format=csv (Excel); works offline from the last copy",
+    ], Inches(3.4), Inches(1.6), Inches(9.6), Inches(5.0), 15, 12)
 
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "PP1_Component4.pptx"

@@ -39,7 +39,44 @@ class C4Frame extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Theme(
         data: C4Theme.of(Theme.of(context).brightness),
-        child: C4Scope(api: api, lang: lang, child: child),
+        child: C4Scope(
+          api: api,
+          lang: lang,
+          child: Column(children: [Expanded(child: child), OfflineBanner(api: api)]),
+        ),
+      );
+}
+
+/// Shown under every screen while the app runs on its stored copy (no connection).
+class OfflineBanner extends StatelessWidget {
+  const OfflineBanner({super.key, required this.api});
+
+  final C4Api api;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<DateTime?>(
+        valueListenable: api.offline,
+        builder: (context, since, _) => since == null
+            ? const SizedBox.shrink()
+            : Material(
+                color: const Color(0xFF37474F),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Row(children: [
+                      const Icon(Icons.cloud_off, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Offline · showing the copy saved on ${DateFormat('d MMM, HH:mm').format(since)}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
       );
 }
 

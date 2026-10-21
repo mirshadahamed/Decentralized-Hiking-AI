@@ -25,4 +25,10 @@ class EdgeStore {
       return null; // a pack from a newer server version
     }
   }
+
+  /// For Module 3 (safety assistant): Component 4's feed (schema c4-module3-feed-1,
+  /// research/component_4/docs/schema/) for tomorrow - people per segment and hour, what each segment holds,
+  /// the hours to avoid, safe numbers. Read from the pack kept on the phone, so it also works with no signal.
+  static Future<Map<String, dynamic>?> module3Feed(C4Api api) async =>
+      (await load(api))?.$1.pack['module3_feed'] as Map<String, dynamic>?;
 }

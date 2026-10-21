@@ -92,6 +92,15 @@ $env:C4_PARK = "adams_peak"; .venv\Scripts\python.exe -m src.api.users add --use
      tomorrow again. The card is still there, with an **offline copy** chip. The rest of the screen needs the
      server, so it shows an error; that is expected.
 6. **Map**: the three trails, viewpoints and the trailhead.
+7. **Crowding** (bottom bar):
+   - **Map:** every trail section coloured by how full it will be tomorrow at the hour you choose;
+   - **Safe numbers:** the safe number per trail and the section that sets it;
+   - **Your walk:** a suggested start time, direction or trail that avoids the busy sections. Each phone draws a
+     different good option (RQ8).
+
+   It all works offline from the forecast pack.
+8. **Offline-first:** everything you opened once while online also opens in airplane mode, with a dark
+   "Offline" bar. Booking needs a connection.
 
 ### 3.2 Pilgrim – Adam's Peak (no tickets)
 1. Choose **Adam's Peak (Sri Pada) → Start times.** The season calendar.
@@ -486,6 +495,8 @@ test/component_4/           Flutter tests, fixtures (edge pack), screenshots_tes
 | Does the graph actually help? | On sections without counts at Horton Plains, yes and significantly; at Adam's Peak on ordinary trail too, but not at the summit queue (a capacity effect, not a neighbour effect). With counts on every section it ties with an LSTM. The clean ablation (same network, no graph) isolates the graph | RQ1 |
 | Did you pretrain on traffic as proposed? | Yes, METR-LA → PEMS-BAY. It helps only Horton Plains with 30–90 days of counts; not Adam's Peak; zero-shot fails. That answers the research gap | RQ5 |
 | Does it run on a phone? | Yes, in plain Dart from a 175 KB daily pack, offline. 2 ms in ONNX on a laptop core; real-phone timing next | RQ6 |
+| Can offline route suggestions solve overcrowding? | They remove up to 73 % (as much as the daily limit, nobody turned away) **if each phone spreads its suggestion**. Identical advice on every phone moves the crowd together and is worse than nothing at full compliance. Limit + spread advice: 95 % | RQ8 |
+| How does Module 3 use your output? | It reads one versioned JSON per park and day (`GET /module3/feed`, JSON Schema `c4-module3-feed-1`): people per section and hour, what each section holds, the hours to avoid, the safe numbers. Contract tests guard it | `docs/schema/` |
 | Why not quantise? | Tested: the model is already 100 KB, int8 saves 2 KB and adds 25 % error at Adam's Peak | RQ6 |
 | Why Cifuentes and not your own formula? | Externally validated and used in protected areas. The forecast enters through a crowding factor of the same form as the rain factor | 5.7 |
 | How do you avoid leakage? | Time split, scalers on training data only, spatial blocks, tests that check it | 5.4, tests |

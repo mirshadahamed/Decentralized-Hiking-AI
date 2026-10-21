@@ -6,6 +6,9 @@ For each park (test year 2025, every segment counted, day-ahead from midnight) a
   scratch_full / pretrained_full   trained on the park's 2 years, from random weights / from the traffic weights
                                     (both with early stopping on the 2024 validation year)
   scratch_<k> / pretrained_<k>      only the park's last k days (30, 90, 365); fixed epochs, no validation year
+  frozen_full / frozen_<k>          (--variants pretrained frozen) domain adaptation by layer freezing: the
+                                    traffic-pretrained graph + recurrent core stays fixed, only the input and
+                                    output layers learn the park
   traffic_zero_shot                 the traffic weights used unchanged (scale from the park's last 30 days)
   HA, HA_<k>                        historical average from 2 years / k days
 The model inputs follow the Horton Plains covariate list (the traffic data was built with it), so at Adam's Peak
@@ -25,7 +28,7 @@ from src.eval.metrics import paired_tests
 from src.eval.transfer import load as load_park
 from src.models.baselines import HistoricalAverage
 from src.run_benchmark import evaluate
-from src.train.trainer import build_model, load_weights, predict, train
+from src.train.trainer import FREEZE_CORE, build_model, load_weights, predict, train
 from src.utils import new_run_dir
 
 PARKS = ["horton_plains", "adams_peak"]
@@ -37,6 +40,8 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="+", default=None, help="default: the seeds that were pretrained")
     ap.add_argument("--fewshot-epochs", type=int, default=15)
     ap.add_argument("--parks", nargs="+", default=PARKS)
+    ap.add_argument("--variants", nargs="+", default=["pretrained"], choices=["pretrained", "frozen"],
+                    help="how the traffic weights are used: fine-tune everything, or freeze the core (frozen)")
     a = ap.parse_args()
     pre_dir = RESULTS / (RESULTS / "LATEST_PRETRAIN").read_text(encoding="utf-8").strip()
     ckpts = {int(p.stem.split("_s")[-1]): torch.load(p, weights_only=False) for p in pre_dir.glob("traffic_stgnn_s*.pt")}
@@ -73,7 +78,7 @@ def main():
 
         add("HA", [HistoricalAverage().fit(d, every).predict(d, te)], d)
         _, d30 = load_park(park, common, train_cfg, 30)
-        zs, sc_full, pre_full = [], [], []
+        zs, sc_full, pre_full, fr_full = [], [], [], []
         for s in seeds:
             w = ckpts[s]["state_dict"]
             m = load_weights(build_model(d, kind, train_cfg["hidden"]), w)
@@ -82,14 +87,20 @@ def main():
             sc_full.append(predict(m, d, te, every, sc))
             m, sc = train(d, kind, every, cfg, s, log=lambda x: log(f"[{park} full pretrained] {x}"), init_state=w)
             pre_full.append(predict(m, d, te, every, sc))
+            if "frozen" in a.variants:
+                m, sc = train(d, kind, every, cfg, s, log=lambda x: log(f"[{park} full frozen] {x}"), init_state=w,
+                              freeze=FREEZE_CORE)
+                fr_full.append(predict(m, d, te, every, sc))
         add("traffic_zero_shot", zs, d)
         add("scratch_full", sc_full, d)
         add("pretrained_full", pre_full, d)
+        if fr_full:
+            add("frozen_full", fr_full, d)
 
         for k in a.days:
             _, dk = load_park(park, common, train_cfg, k)
             add(f"HA_{k}", [HistoricalAverage().fit(dk, every).predict(dk, te)], dk)
-            p_sc, p_pre = [], []
+            p_sc, p_pre, p_fr = [], [], []
             for s in seeds:
                 tag = lambda x, how: log(f"[{park} {k}d {how}] {x}")
                 m, sc = train(dk, kind, every, cfg, s, log=lambda x: tag(x, "scratch"), select_on_val=False,
@@ -98,19 +109,31 @@ def main():
                 m, sc = train(dk, kind, every, cfg, s, log=lambda x: tag(x, "pretrained"), select_on_val=False,
                               epochs=a.fewshot_epochs, init_state=ckpts[s]["state_dict"])
                 p_pre.append(predict(m, dk, te, every, sc))
+                if "frozen" in a.variants:
+                    m, sc = train(dk, kind, every, cfg, s, log=lambda x: tag(x, "frozen"), select_on_val=False,
+                                  epochs=a.fewshot_epochs, init_state=ckpts[s]["state_dict"], freeze=FREEZE_CORE)
+                    p_fr.append(predict(m, dk, te, every, sc))
             add(f"scratch_{k}", p_sc, dk)
             add(f"pretrained_{k}", p_pre, dk)
+            if p_fr:
+                add(f"frozen_{k}", p_fr, dk)
 
         t = {"full": paired_tests({x: day_err[x] for x in ("pretrained_full", "scratch_full", "HA")}, "pretrained_full"),
              "zero_shot": paired_tests({x: day_err[x] for x in ("traffic_zero_shot", "HA")}, "traffic_zero_shot")}
         for k in a.days:
             t[f"{k}_days"] = paired_tests({x: day_err[x] for x in (f"pretrained_{k}", f"scratch_{k}", f"HA_{k}")},
                                           f"pretrained_{k}")
+        if "frozen" in a.variants:                        # layer freezing vs scratch and vs full fine-tuning
+            t["frozen_full"] = paired_tests({x: day_err[x] for x in ("frozen_full", "scratch_full", "pretrained_full")},
+                                            "frozen_full")
+            for k in a.days:
+                t[f"frozen_{k}_days"] = paired_tests(
+                    {x: day_err[x] for x in (f"frozen_{k}", f"scratch_{k}", f"pretrained_{k}")}, f"frozen_{k}")
         tests[park] = t
 
     df = pd.DataFrame(rows)
     df.to_csv(run / "metrics.csv", index=False)
-    (run / "tests.json").write_text(json.dumps({"pretrained": pre_dir.name, "seeds": seeds, "days": a.days,
+    (run / "tests.json").write_text(json.dumps({"pretrained": pre_dir.name, "seeds": seeds, "days": a.days, "variants": a.variants,
                                                 "covariates": list(common), "tests": tests}, indent=2), encoding="utf-8")
     (RESULTS / "LATEST_PRETRAIN_TRANSFER").write_text(run.name, encoding="utf-8")
     log(df[["park", "model", "MAE", "RMSE"]].round(3).to_string(index=False))

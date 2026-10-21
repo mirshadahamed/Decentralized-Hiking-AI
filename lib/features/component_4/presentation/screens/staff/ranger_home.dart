@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
+import '../bottleneck_screen.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
@@ -35,7 +36,7 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
@@ -59,12 +60,14 @@ class _RangerHomeState extends State<RangerHome> {
             Tab(icon: Icon(Icons.qr_code_scanner), text: 'Check in'),
             Tab(icon: Icon(Icons.point_of_sale), text: 'Walk-ins'),
             Tab(icon: Icon(Icons.traffic), text: 'Live'),
+            Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
           ]),
         ),
-        body: TabBarView(children: [
+        body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
           _CheckInTab(at: () => _demo),
           _WalkInTab(day: _day, at: () => _demo),
           _LiveTab(day: _day, now: _now, demo: _demo != null),
+          const BottleneckView(), // where and when sections get crowded this week, also offline
         ]),
       ),
     );
