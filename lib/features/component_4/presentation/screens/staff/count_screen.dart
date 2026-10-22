@@ -109,7 +109,9 @@ class _CountTabState extends State<CountTab> {
         decoration: const InputDecoration(labelText: 'Section', border: OutlineInputBorder()),
         items: [
           for (final s in _segments)
-            DropdownMenuItem(value: s.segId, child: Text('${s.name} · ${s.trailName}', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(
+                value: s.segId,
+                child: Text('${s.modelInput ? '★ ' : ''}${s.name} · ${s.trailName}', overflow: TextOverflow.ellipsis)),
         ],
         onChanged: (v) => setState(() => _seg = v),
       ),
@@ -146,8 +148,8 @@ class _CountTabState extends State<CountTab> {
         Expanded(child: Text(_waiting == 0 ? 'All counts sent' : '$_waiting waiting to be sent', key: const Key('count_waiting'))),
         if (_waiting > 0) TextButton(onPressed: _sync, child: const Text('Send now')),
       ]),
-      const BasisNote('These counts are the park\'s own record of how many people are on the trail. The office '
-          'compares them with the forecast (Forecast check) to see how far it can be trusted.'),
+      const BasisNote('★ = a count here updates today\'s forecast for every section (Live tab). All counts are the '
+          'park\'s own record; the office compares them with the forecast (Forecast check).'),
     ]);
   }
 }

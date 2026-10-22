@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | **Model** | ST-GNN: GCN (space) + GRU (time) + decoder on future covariates; `src/models/stgnn.py` |
-| **Version in the app** | Horton Plains run `20261015_095519_benchmark` (seed 42); Adam's Peak `results/adams_peak/` latest benchmark |
+| **Version in the app** | Gate-only ST-GNN from the latest sparse-sensor run (`LATEST_SPARSE`, seed 42) at each park; `live.model_input: all` switches back to the benchmark model |
 | **Size** | 13,665 parameters (Horton Plains), ~100 KB ONNX / ~175 KB daily phone pack with inputs |
 | **Task** | Day-ahead (00:00) forecast of people on each trail segment for each hour of the next 24 h |
-| **Inputs** | Last 24 h of counts where they exist (or gate counts / none), sensed flag, 17 hourly covariates (calendar, Poya, weather), 13 segment descriptions |
+| **Inputs** | Deployed (G6): last 24 h of **gate counts only**, sensed flag, 17 hourly covariates (calendar, Poya, weather), 13 segment descriptions. Research benchmark: counts of every segment |
 | **Output** | People per segment per hour; with Cifuentes: safe number per trail, sections over capacity, % chance of crowding |
 | **Training data** | Synthetic occupancy 2022–23 from the calibrated simulator (validation 2024, test 2025) |
 | **Training** | Masked L1 over open hours, Adam lr 0.002, batch 64, ≤ 20 epochs, early stopping on 2024; seeds 42–44 |

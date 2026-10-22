@@ -56,6 +56,36 @@ What is left is mainly **evidence**, not features.
 | Staff screenshots | **Done**: `src.report.app_fixtures` + 4 new screenshot tests | `docs/slides/screens/15–18_*.png` |
 | S2 (realistic world, sparse sensors) | Running | `results/20261021_172706_sparse_s1` |
 
+### Re-check 21 Oct (night): everything left to complete the component
+Checked again against the proposal, the mark sheet, the code and `results/`. Found 4 items the plan did not list
+(marked **new**). "Me" = code / runs that can start now; "You" = needs people, permits or a phone.
+
+| # | Work | Why it is needed | Who | Blocked by |
+|---|---|---|---|---|
+| R1 | **Done 21 Oct**: RQ3 / RQ4 re-run with the current advice model (start times −42 %, P90 advice −56 %, 115 % of perfect) | `evaluation_results.md` flags their numbers as from the old model (before crowd-dependent climb times) | Me | – |
+| R2 | **new** RQ2 park-to-park transfer with 3 seeds | the only result still on one seed | Me | – |
+| R3 | **new** Retrain and redeploy the app's model after G8, and rebuild the phone pack | the app still serves the 15 Oct checkpoint (seed 42) | Me | G8 |
+| R4 | **new** Planning model: beat the calendar average on daily totals, or say plainly it does not | backup slide: daily MAE 110 vs 108 | Me | – |
+| S2 | **Done 22 Oct**: realistic world – graph significant with counts everywhere (−0.013 vs no-graph, p_Holm 0.007); gate counts only ≈ HA + 3 %, graph adds nothing. Next: gates + a few ranger-counted sections | C1, C4 | Me | – |
+| C5b | RQ9 quota replay on the realistic world | ST-GNN vs historical-average quota at Horton | Me | S2 |
+| G6 | **Done 21 Oct**: live forecast from gate counts only (`live.model_input: gate`, model from `LATEST_SPARSE`; phone pack ships gate counts only; Dart = PyTorch re-checked) | deployment must match the "no sensor record" claim | Me | – |
+| G8 | Peak-aware loss: **code done** (`trainer.masked_l1(peak=...)`, `src.eval.peak_loss`, pipeline checked); full 3-seed spatial run waits for free CPU. Periodic inputs after | RQ1b: peaks smoothed on unseen sections | Me | CPU |
+| G4, W3 | Pretraining with sparse sensors; PeMS04/08; one adversarial method (DANN-style) | O3 wording, C2 | Me | PeMS04/08 download |
+| G5 | Robustness of conclusions to simulator assumptions | F5 | Me | – |
+| W5 | CHIRPS rain | O1 | Me | – |
+| W1 | Field counts + recalibration + re-runs | main objective | You (+ me for the analysis) | permits |
+| W6 | DWC / SLTDA data request | demand calibration | You | supervisor letter |
+| W8 | Surveys, 2–3 interviews, SUS test | requirements validation | You | – |
+| W9 | Confirm Cifuentes parameters | capacity numbers | You | DWC |
+| W4 | Real Android timing | NFR1 | You (release build ready) | a phone |
+| W7 | Module 3 sign-off, shared dashboard | FR4, WBS 10 | You + Ahamed M.M | team |
+| W10 | Green CI run | standards | You | push |
+| W11 | Letters of interest, cost per park | commercialisation | You | – |
+| W13 | Thesis chapters, paper (RQ9 + RQ10 + RQ8) | final deliverable | You + me for drafts | results above |
+| Y | **Yala National Park** as a third park (jeep safaris) | NFR3, commercialisation, a bottleneck no calendar predicts | Me | branch `feature/component-4-yala` |
+
+Order for "Me": R1, R2, G6 now → S2 / C5b when the run ends → G8 → R3 → G4 / W3 → G5 → W5 → R4.
+
 ---
 
 ## 2. What is still missing, by mark-sheet row

@@ -306,6 +306,7 @@ class _LiveTab extends StatefulWidget {
 class _LiveTabState extends State<_LiveTab> {
   late Future<List<LiveSegment>> _future;
   Future<GateAdvice?>? _advice;
+  Future<TodayUpdate?>? _today;
 
   String get _at => '${widget.now.hour.toString().padLeft(2, '0')}:${widget.now.minute.toString().padLeft(2, '0')}';
 
@@ -313,6 +314,8 @@ class _LiveTabState extends State<_LiveTab> {
     final api = C4Scope.of(context);
     // A3: advice for the gate (booking parks); a server without it just shows no card
     _advice = api.gateAdvice(widget.day, at: widget.demo ? _at : null).then<GateAdvice?>((a) => a, onError: (_) => null);
+    // A1: the rest of today, updated with the rangers' counts (no card if the server has no spot model)
+    _today = api.liveForecast(widget.day, at: widget.demo ? _at : null).then<TodayUpdate?>((a) => a, onError: (_) => null);
     return api.live(widget.day, at: widget.demo ? _at : null);
   }
 
@@ -359,6 +362,7 @@ class _LiveTabState extends State<_LiveTab> {
               ]),
               const SizedBox(height: 12),
               FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
+              FutureBuilder<TodayUpdate?>(future: _today, builder: (context, u) => TodayUpdateCard(u.data)),
               if (issues.isEmpty)
                 const Card(child: ListTile(leading: Icon(Icons.check_circle, color: C4Colors.green), title: Text('All clear: no action needed.'))),
               for (final s in issues)
@@ -421,6 +425,69 @@ class GateAdviceCard extends StatelessWidget {
                 style: text.bodySmall),
           const SizedBox(height: 4),
           Text(a.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+/// A1: the rest of today, updated from the rangers' spot counts (the graph model carries them to every section).
+class TodayUpdateCard extends StatelessWidget {
+  const TodayUpdateCard(this.u, {super.key});
+
+  final TodayUpdate? u;
+
+  static String _hours(List<dynamic> hs) {
+    final h = [for (final x in hs) (x as num).toInt()];
+    if (h.isEmpty) return '';
+    final runs = <String>[];
+    var start = h.first;
+    for (var i = 0; i < h.length; i++) {
+      if (i == h.length - 1 || h[i + 1] != h[i] + 1) {
+        runs.add('${start.toString().padLeft(2, '0')}–${(h[i] + 1).toString().padLeft(2, '0')} h');
+        if (i + 1 < h.length) start = h[i + 1];
+      }
+    }
+    return runs.join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final u = this.u;
+    if (u == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    final moved = u.changes.where((c) => ((c['change'] as num).abs()) >= 1).take(4).toList();
+    return Card(
+      key: const Key('today_update'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.update, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                  u.countsUsed == 0
+                      ? 'Rest of today from ${u.fromHour.toString().padLeft(2, '0')}:00 · no counts yet'
+                      : 'Rest of today from ${u.fromHour.toString().padLeft(2, '0')}:00 · updated with ${u.countsUsed} count${u.countsUsed == 1 ? '' : 's'}',
+                  style: text.titleSmall),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          if (u.over.isEmpty)
+            Text('No section expected over capacity for the rest of the day.', style: text.bodyMedium)
+          else
+            for (final o in u.over.take(5))
+              Text('${o['name']}: over capacity ${_hours(o['over_hours'] as List)}',
+                  style: text.bodyMedium?.copyWith(color: C4Colors.red)),
+          if (moved.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Changed most by the counts:', style: text.bodySmall),
+            for (final c in moved)
+              Text('${c['name']}: busiest hour ${(c['change'] as num) > 0 ? '+' : ''}${(c['change'] as num).round()} people',
+                  style: text.bodySmall),
+          ],
+          const SizedBox(height: 4),
+          Text(u.basis, style: text.bodySmall),
         ]),
       ),
     );

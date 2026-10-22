@@ -35,11 +35,12 @@ def _w(t: torch.Tensor) -> dict:
     return {"shape": list(a.shape), "data": [round(float(x), 7) for x in a.ravel()]}
 
 
-def _day_inputs(data, origin: int, scale: float) -> dict:
-    """The parts of the model input that change from day to day (scaled like TrailData.batch)."""
+def _day_inputs(data, origin: int, scale: float, sensed: np.ndarray) -> dict:
+    """The parts of the model input that change from day to day (scaled like TrailData.batch). Counts of segments
+    the model does not read are sent as 0: the phone gets only what the park measures (the gates, G6)."""
     past, fut = np.arange(origin - data.L, origin), np.arange(origin, origin + data.H)
     return {
-        "occupancy_past": [[round(float(x), 6) for x in row] for row in (data.y[past] / scale)],
+        "occupancy_past": [[round(float(x), 6) for x in row] for row in (data.y[past] / scale * sensed)],
         "covariates_past": [[round(float(x), 6) for x in row] for row in data.cov_s[past]],
         "covariates_future": [[round(float(x), 6) for x in row] for row in data.cov_s[fut]],
     }
@@ -49,7 +50,8 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
                sensed: np.ndarray | None = None, extra_origins=()) -> dict:
     """Pack for the day starting at hour index `origin` of `data` (TrailData). `extra_origins`: other days the
     phone should also forecast itself (e.g. today), stored as "extra_inputs" {date: day inputs}."""
-    sensed = np.ones(data.N, bool) if sensed is None else sensed
+    from src.serve.predict import model_inputs
+    sensed = model_inputs(model, data) if sensed is None else sensed
     state = {k: v for k, v in model.state_dict().items() if k != "adj"}
     rnn = "lstm" if isinstance(model.rnn, torch.nn.LSTM) else "gru"
     poi = [str(p) for p in data.segment_poi]
@@ -58,10 +60,10 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
         "day": str(data.times[origin].date()), "scale": float(scale),
         "model": {"rnn": rnn, "hidden": int(model.inp.out_features), "use_graph": bool(model.use_graph),
                   "adjacency": _w(model.adj), "weights": {k: _w(v) for k, v in state.items()}},
-        "extra_inputs": {str(data.times[o].date()): _day_inputs(data, int(o), scale) for o in extra_origins
+        "extra_inputs": {str(data.times[o].date()): _day_inputs(data, int(o), scale, sensed) for o in extra_origins
                          if data.L <= o <= data.T - data.H},
         "inputs": {
-            **_day_inputs(data, origin, scale),
+            **_day_inputs(data, origin, scale, sensed),
             "static": [[round(float(x), 6) for x in row] for row in data.static_s],
             "sensed": [bool(x) for x in sensed],
             "covariate_names": list(data.cov_names), "static_names": list(data.static_names),
@@ -120,14 +122,15 @@ def crowd_calibration(model, data, scale: float, cfg: dict, run: str | None = No
     from src.config import PARK, RESULTS
     from src.eval.bottlenecks import capacity_at_once
     from src.eval.uncertainty import _flat, calibrate
+    from src.serve.predict import model_inputs
     from src.train.trainer import predict
-    path =RESULTS / run / "crowd_calibration.json" if run else None
+    path = RESULTS / run / "crowd_calibration.json" if run else None
     if path is not None and path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     va = data.origins("val")
     y, open_ = data.targets(va)
     cap = capacity_at_once(cfg, PARK)
-    u, t = _flat(predict(model, data, va, np.ones(data.N, bool), scale), y, open_, cap, np.arange(data.N))
+    u, t = _flat(predict(model, data, va, model_inputs(model, data), scale), y, open_, cap, np.arange(data.N))
     table = calibrate(u, t) | {"basis": "validation year of the deployed model (simulated counts)"}
     if path is not None:
         path.write_text(json.dumps(table), encoding="utf-8")
@@ -189,7 +192,8 @@ def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None, calibration
 
 def torch_forecast(model, data, origin: int, scale: float) -> np.ndarray:
     """[H, N] people from PyTorch (the reference the Dart engine must match)."""
-    xp, xf, _, _ = data.batch(np.array([origin]), np.ones(data.N, bool), scale)
+    from src.serve.predict import model_inputs
+    xp, xf, _, _ = data.batch(np.array([origin]), model_inputs(model, data), scale)
     with torch.no_grad():
         return np.clip(model(xp, xf).numpy()[0] * scale, 0, None)
 

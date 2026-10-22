@@ -20,7 +20,7 @@ import pandas as pd
 import torch
 
 from src.config import RESULTS, load_config
-from src.data.build_dataset import access_points
+from src.data.build_dataset import access_points, viewpoints
 from src.eval.bottlenecks import capacity_at_once, counts, scores
 from src.eval.metrics import paired_tests
 from src.models.baselines import HistoricalAverage
@@ -36,8 +36,12 @@ INTRADAY_HOURS = (8, 10, 12)       # forecasts issued during the day (gate count
 
 
 def settings(data):
+    """gate: access points only; spot: gates + the viewpoints, where a ranger can stand and count (A4);
+    zero: no counts; all: every segment counted (reference)."""
     gate = np.isin(data.segment_poi, list(access_points(data.cfg)))
-    return {"gate": gate, "zero": np.zeros(data.N, bool), "all": np.ones(data.N, bool)}
+    halfway = np.char.startswith(data.segment_poi.astype(str), "half_")      # pilgrim sites: counted already
+    spot = gate | halfway | np.isin(data.segment_poi, list(viewpoints(data.cfg)))
+    return {"gate": gate, "spot": spot, "zero": np.zeros(data.N, bool), "all": np.ones(data.N, bool)}
 
 
 def intraday_mae(model, data, sensed, scale, nodes, hour):
@@ -53,7 +57,7 @@ def intraday_mae(model, data, sensed, scale, nodes, hour):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--settings", nargs="+", default=["gate", "zero"], choices=["gate", "zero", "all"])
+    ap.add_argument("--settings", nargs="+", default=["gate", "zero"], choices=["gate", "spot", "zero", "all"])
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
     ap.add_argument("--world", choices=["default", "s1"], default="default",
                     help="s1: the realistic world (data/processed/dataset_s1.npz, src.data.build_dataset --world s1)")
@@ -94,8 +98,13 @@ def main():
                 model, scale = train(data, kind, sensed, cfg, s, log=log, loss_nodes=every)
                 p = predict(model, data, te, sensed, scale)
                 r, de = evaluate(kind, p, data, te, interior, cfg, {"setting": name, "seed": s})
+                uncounted = np.setdiff1d(interior, np.where(sensed)[0])     # interior segments nobody counts
+                if len(uncounted):
+                    r["MAE_uncounted"] = evaluate(kind, p, data, te, uncounted, cfg)[0]["MAE"]
                 for h in INTRADAY_HOURS:
                     r[f"MAE_from_{h:02d}h"] = intraday_mae(model, data, sensed, scale, interior, h)
+                    if len(uncounted):
+                        r[f"MAE_uncounted_from_{h:02d}h"] = intraday_mae(model, data, sensed, scale, uncounted, h)
                 rows.append(r)
                 ps.append(p), des.append(de)
                 torch.save({"state_dict": model.state_dict(), "scale": scale, "kind": kind, "sensed": sensed,

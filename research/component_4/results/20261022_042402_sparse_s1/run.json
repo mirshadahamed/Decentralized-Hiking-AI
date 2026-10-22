@@ -1,0 +1,342 @@
+{
+  "tag": "sparse_s1",
+  "git": "a10a7170",
+  "created": "2026-10-22T04:24:02.543092",
+  "config": {
+    "seed": 42,
+    "destination": {
+      "kind": "national_park",
+      "region": "Central Highlands \u00b7 Nuwara Eliya District",
+      "summary": "High-altitude plateau of grassland and cloud forest, ending at the World's End escarpment.",
+      "elevation": "2,100 \u2013 2,389 m",
+      "best_time": "Early morning, before the mist rises (usually before 10:00). January to March is the driest.",
+      "getting_there": "By road via Ohiya or Pattipola; trains to Ohiya or Pattipola station. Entry tickets at the park gate.",
+      "facts": [
+        "Part of the Central Highlands UNESCO World Heritage Site",
+        "Plastic and polythene are not allowed in the park",
+        "Cold mornings: bring a warm layer and rain gear"
+      ],
+      "accent": "#2F6B4F"
+    },
+    "area": {
+      "name": "Horton Plains National Park",
+      "bbox": [
+        80.74,
+        6.77,
+        80.84,
+        6.85
+      ],
+      "dem_bbox": [
+        80.73,
+        6.755,
+        80.85,
+        6.86
+      ],
+      "weather_point": [
+        6.795,
+        80.8
+      ],
+      "crs_metric": "EPSG:32644",
+      "pois": {
+        "entrance": "Horton Plains Visitor Center",
+        "mini_worlds_end": "Mini World's End",
+        "worlds_end": "World's End (Plate 1)",
+        "bakers_falls": "Baker's Falls",
+        "kirigalpotta_peak": "Kirigalpotta",
+        "thotupola_head": "Thotupola Trailhead",
+        "thotupola_peak": "Thotupola Kanda"
+      },
+      "routes": {
+        "main": [
+          "entrance",
+          "mini_worlds_end",
+          "worlds_end",
+          "bakers_falls",
+          "entrance"
+        ],
+        "kirigalpotta": [
+          "entrance",
+          "kirigalpotta_peak",
+          "entrance"
+        ],
+        "thotupola": [
+          "thotupola_head",
+          "thotupola_peak",
+          "thotupola_head"
+        ]
+      },
+      "road_links": [
+        [
+          "entrance",
+          "thotupola_head",
+          0.5
+        ]
+      ],
+      "trail_names": {
+        "main": "World's End loop",
+        "kirigalpotta": "Kirigalpotta",
+        "thotupola": "Thotupola Kanda"
+      },
+      "trail_info": {
+        "main": "Loop past Mini World's End, World's End and Baker's Falls; about 3.5 hours",
+        "kirigalpotta": "5.2 km each way to the 2nd-highest peak (2,388 m); long and exposed, last start 09:30",
+        "thotupola": "1.3 km each way to the 3rd-highest peak (2,357 m); trailhead is a 4.2 km drive up the Pattipola road"
+      },
+      "main_trail": "main",
+      "focus_poi": "worlds_end",
+      "poi_roles": {
+        "viewpoint": [
+          "mini_worlds_end",
+          "worlds_end",
+          "bakers_falls",
+          "kirigalpotta_peak",
+          "thotupola_peak"
+        ],
+        "access": [
+          "entrance",
+          "thotupola_head"
+        ]
+      },
+      "poi_labels": {
+        "entrance": "Visitor Center",
+        "mini_worlds_end": "Mini World's End",
+        "worlds_end": "World's End",
+        "bakers_falls": "Baker's Falls",
+        "kirigalpotta_peak": "Kirigalpotta peak",
+        "thotupola_head": "Thotupola trailhead",
+        "thotupola_peak": "Thotupola Kanda"
+      }
+    },
+    "graph": {
+      "target_segment_m": 300,
+      "poi_snap_m": 80,
+      "max_grade": 0.25
+    },
+    "dates": {
+      "start": "2022-01-01",
+      "end": "2025-12-31",
+      "train_end": "2023-12-31",
+      "val_end": "2024-12-31"
+    },
+    "simulator": {
+      "base_daily_visitors": 450,
+      "dow_multiplier": [
+        1.0,
+        0.9,
+        0.9,
+        0.95,
+        1.1,
+        1.9,
+        2.1
+      ],
+      "holiday_multiplier": 1.9,
+      "poya_multiplier": 2.4,
+      "long_weekend_multiplier": 1.3,
+      "school_holiday_multiplier": 1.25,
+      "month_multiplier": [
+        1.1,
+        1.1,
+        1.0,
+        1.4,
+        0.9,
+        0.8,
+        0.85,
+        1.0,
+        0.8,
+        0.8,
+        0.85,
+        1.2
+      ],
+      "daily_noise_sd": 0.15,
+      "morning_rain_k": 0.06,
+      "min_rain_multiplier": 0.35,
+      "group_size_poisson_mean": 2.2,
+      "arrival_early_share": 0.85,
+      "arrival_early_mean_h": 6.9,
+      "arrival_early_sd_h": 0.75,
+      "arrival_late_range_h": [
+        8.5,
+        12.5
+      ],
+      "gate_open_h": 6.0,
+      "gate_last_entry_h": 13.0,
+      "route_share": {
+        "main": 0.86,
+        "kirigalpotta": 0.05,
+        "thotupola": 0.09
+      },
+      "route_last_entry_h": {
+        "kirigalpotta": 9.5
+      },
+      "route_start_offset_min": {
+        "thotupola": 12
+      },
+      "reversible_routes": [
+        "main"
+      ],
+      "standard_direction_share": 0.85,
+      "walker_speed_sd": 0.12,
+      "leisure_speed_factor": 0.75,
+      "rain_light_mm": 0.5,
+      "rain_heavy_mm": 3.0,
+      "rain_light_speed": 0.85,
+      "rain_heavy_speed": 0.7,
+      "crowd_rho0_per_m": 0.4,
+      "crowd_min_speed": 0.4,
+      "dwell_minutes": {
+        "mini_worlds_end": [
+          8,
+          0.4
+        ],
+        "worlds_end": [
+          20,
+          0.4
+        ],
+        "bakers_falls": [
+          12,
+          0.4
+        ],
+        "kirigalpotta_peak": [
+          20,
+          0.4
+        ],
+        "thotupola_peak": [
+          15,
+          0.4
+        ]
+      },
+      "obs_noise_sd": 0.1,
+      "realism": {
+        "enabled": false,
+        "demand_ar_phi": 0.7,
+        "demand_sd": 0.25,
+        "arrival_shift_sd_min": 40,
+        "route_share_concentration": 40,
+        "bursts_per_day": 0.4,
+        "burst_people": [
+          30,
+          90
+        ],
+        "burst_window_h": [
+          6.5,
+          10.5
+        ],
+        "burst_main_share": 0.8,
+        "incident_prob": 0.08,
+        "incident_start_h": [
+          7,
+          12
+        ],
+        "incident_hours": [
+          1,
+          4
+        ],
+        "incident_speed": 0.3,
+        "forecast_rain_sd": 0.7,
+        "forecast_rain_shift_prob": 0.25,
+        "forecast_temp_sd": 1.5
+      }
+    },
+    "task": {
+      "input_steps": 24,
+      "horizon": 24,
+      "open_hours": [
+        6,
+        18
+      ],
+      "spatial_blocks": 4
+    },
+    "train": {
+      "hidden": 32,
+      "batch_size": 64,
+      "lr": 0.002,
+      "epochs": 20,
+      "patience": 4,
+      "train_origin_stride": 4,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "spatial_seeds": [
+        42
+      ],
+      "peak_hours": [
+        7,
+        11
+      ]
+    },
+    "planning": {
+      "typical_start_h": 7,
+      "later_note": "Views at World's End are often lost to mist later in the morning.",
+      "access_note": "Check with DWC that the trail is open and whether a guide is needed."
+    },
+    "capacity": {
+      "space_per_person_m": 1.0,
+      "group_size": 10,
+      "group_gap_m": 50,
+      "open_from_h": 6,
+      "open_hours": 12,
+      "rain_mm": 0.5,
+      "management_capacity": 0.7,
+      "busy_utilisation": 0.8,
+      "wet_ground": {
+        "days": 3,
+        "saturation_mm": 60
+      },
+      "condition_levels": {
+        "good": 0.0,
+        "muddy": 0.2,
+        "partly_closed": 0.5,
+        "closed": 1.0
+      }
+    },
+    "control": {
+      "slot_minutes": 30,
+      "first_slot_h": 6.0,
+      "last_slot_h": 12.5,
+      "bin_minutes": 30,
+      "viewpoint_min_at_once": 50,
+      "exempt_access_points": true,
+      "use_daily_quota": true,
+      "default_quota_rule": "forecast",
+      "safety_margin": 0.9,
+      "capacity_scale": 1.0,
+      "walk_in_share": 0.2,
+      "slot_window_min": 15,
+      "response_walkers": 300,
+      "max_slot_shift_h": 2,
+      "accept_trail_swap": 0.3,
+      "booking_horizon_days": 90
+    },
+    "live": {
+      "horizon_days": 90,
+      "forecast_days": 16,
+      "calendar_extra_days": 120,
+      "dwc_totals_csv": "data/live/dwc_daily_totals.csv",
+      "model_input": "gate"
+    },
+    "api": {
+      "allow_time_override": true,
+      "cors_origins": [
+        "*"
+      ]
+    },
+    "arima": {
+      "order": [
+        1,
+        0,
+        1
+      ],
+      "seasonal_order": [
+        1,
+        1,
+        1,
+        24
+      ],
+      "fit_days": 60,
+      "history_days": 14
+    },
+    "park": "horton_plains"
+  }
+}

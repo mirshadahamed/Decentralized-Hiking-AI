@@ -161,8 +161,10 @@ If S2 shows gate counts and the graph still add nothing in a realistic world, th
 | A4 | **Done.** Ranger "Count" tab (tap counter, works offline, sends once when the signal is back); officer "Forecast check" tab (error, bias, share within 30 %, over-capacity called / false alarms) | `serve/field_counts.py`; `POST /counts`, `GET /segments`, `GET /admin/forecast-check`; `count_screen.dart`, `services/count_store.dart` |
 | A5 | **Done (live model).** The pack carries a calibration table P(really over \| forecast fullness) from the deployed model's validation year; the phone shows "% chance" per section | `edge/pack.crowd_calibration`, `eval/uncertainty.py`; `BottleneckDay.chanceOver` |
 | S1 | **Done.** Realistic world: AR(1) demand, bus bursts, arrival-peak shift, route-share swings, incidents, forecast weather as input. Off by default; `build_dataset --world s1` → `dataset_s1.npz` | `sim/simulator.py` (`realism`, `day_events`), `data/build_dataset.py` |
-| S2 / S3 | Running (G1 protocol and calibration on the S1 world, both parks) | `eval/sparse_sensors.py --world s1`, `eval/uncertainty.py` |
-| A1 | Waits for S2: the phone model updated from gate counts during the day, if S2 shows it helps | – |
+| S2 | **Done (RQ11).** In the realistic world counts inside the trail help (−4 / −6 %), and with them the ST-GNN beats both non-graph models at both parks (significant). Gate counts alone add ≤ 1 % | `results/…_sparse_s1` |
+| S3 | **Done (RQ12).** The calibrated chance halves the Brier score vs the base rate; the alert on it raises recall (Horton 0.50 → 0.60) and F1 at both parks | `…_sparse_s1/uncertainty/` |
+| S4b | **Done (RQ11b).** With 7 / 9 counted sections only the ST-GNN improves the *uncounted* sections (Horton −1.7 %, Adam's Peak −4 %, ~80 % of the all-counted gain); significant vs LSTM and GRU at both parks | `results/…_sparse_s1` (spot) |
+| A1 | **Done (server + app).** Today's forecast updated from the rangers' spot counts with the spot-trained ST-GNN (counts at ★ sections are model input; elsewhere a check). Ranger Live tab: "Rest of today · updated with N counts", sections now over capacity, what changed. Phone-offline version: next (the pack needs the spot model) | `live/intraday.py`; `GET /live/forecast/{day}`; `/segments` flags `model_input`; `TodayUpdateCard`, ★ in Count |
 
 ## 6. Scope note
 Booking, the Adam's Peak advice, the 90-day planner, officer records and the second park go beyond the gap.

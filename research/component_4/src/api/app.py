@@ -335,8 +335,13 @@ def sell(body: WalkInIn, user: dict = Depends(role("ranger"))):
 @app.get("/segments", tags=["public"])
 def segment_list():
     """Sections of the trails (id, name, trail): what a ranger can count on."""
+    from src.live.intraday import model_sections
     from src.serve.field_counts import segments
-    return segments(CFG)
+    try:
+        used = model_sections(ctx())
+    except HTTPException:
+        used = set()
+    return segments(CFG, used)
 
 
 class SpotCountIn(BaseModel):
@@ -430,6 +435,21 @@ def forecast_check(start: date, end: date, user: dict = Depends(role("officer"))
     if end < start or (end - start).days > 400:
         raise HTTPException(400, "Choose an end date after the start date, at most 400 days apart")
     return check(CFG, start.isoformat(), end.isoformat())
+
+
+@app.get("/live/forecast/{day}", tags=["ranger"])
+def live_forecast(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """A1: the rest of today per section - the morning forecast and the forecast updated with the rangers' spot
+    counts so far (ST-GNN of the spot setting, RQ11b) - and the sections now expected over capacity."""
+    from src.live.intraday import update_today
+    from src.serve.field_counts import counts
+    now = when(datetime.combine(day, at) if at else None)
+    try:
+        return update_today(ctx(), day, now.hour * 60 + now.minute, counts(day.isoformat(), day.isoformat()))
+    except LookupError as e:
+        raise HTTPException(503, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.get("/live/{day}", tags=["ranger"])
