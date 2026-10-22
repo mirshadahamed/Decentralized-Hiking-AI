@@ -1,0 +1,136 @@
+{
+  "compliance": 0.5,
+  "seed": 11,
+  "tests": {
+    "hist_avg_vs_none": {
+      "season_diff_person_hours": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "nights_that_differ": 0,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "hist_avg_vs_plan_lead1": {
+      "season_diff_person_hours": 3668.4352675822934,
+      "ci95": [
+        0.0,
+        11005.30580274688
+      ],
+      "nights_that_differ": 1,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "hist_avg_vs_perfect": {
+      "season_diff_person_hours": 22254.962789081903,
+      "ci95": [
+        3761.03542647053,
+        50871.60831861001
+      ],
+      "nights_that_differ": 4,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_none": {
+      "season_diff_person_hours": -3989.7125123055557,
+      "ci95": [
+        -11969.137536916667,
+        0.0
+      ],
+      "nights_that_differ": 1,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_plan_lead1": {
+      "season_diff_person_hours": -321.2772447232626,
+      "ci95": [
+        -963.8317341697878,
+        0.0
+      ],
+      "nights_that_differ": 1,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead30_vs_perfect": {
+      "season_diff_person_hours": 18265.250276776347,
+      "ci95": [
+        -228.67708583502576,
+        44665.51719136841
+      ],
+      "nights_that_differ": 4,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_vs_none": {
+      "season_diff_person_hours": -3668.4352675822934,
+      "ci95": [
+        -11005.30580274688,
+        0.0
+      ],
+      "nights_that_differ": 1,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_vs_perfect": {
+      "season_diff_person_hours": 18586.52752149961,
+      "ci95": [
+        92.60015888823682,
+        43808.63827405349
+      ],
+      "nights_that_differ": 4,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_none": {
+      "season_diff_person_hours": -25659.402087370738,
+      "ci95": [
+        -54982.12831067917,
+        -4263.261182762908
+      ],
+      "nights_that_differ": 6,
+      "wilcoxon_p": 0.03125,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_plan_lead1": {
+      "season_diff_person_hours": -21990.966819788446,
+      "ci95": [
+        -48950.779052466205,
+        -3119.871260692593
+      ],
+      "nights_that_differ": 6,
+      "wilcoxon_p": 0.03125,
+      "nights": 132
+    },
+    "plan_lead1_p90_vs_perfect": {
+      "season_diff_person_hours": -3404.439298288835,
+      "ci95": [
+        -13516.996343191528,
+        8270.8909241935
+      ],
+      "nights_that_differ": 7,
+      "wilcoxon_p": 0.296875,
+      "nights": 132
+    },
+    "perfect_vs_none": {
+      "season_diff_person_hours": -22254.962789081903,
+      "ci95": [
+        -50760.804845038896,
+        -3761.03542647053
+      ],
+      "nights_that_differ": 4,
+      "wilcoxon_p": null,
+      "nights": 132
+    },
+    "perfect_vs_plan_lead1": {
+      "season_diff_person_hours": -18586.52752149961,
+      "ci95": [
+        -45515.81908429282,
+        -92.60015888823682
+      ],
+      "nights_that_differ": 4,
+      "wilcoxon_p": null,
+      "nights": 132
+    }
+  }
+}
