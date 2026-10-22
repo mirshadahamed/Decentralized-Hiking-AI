@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/component_2/presentation/component_2_home.dart';
+import 'pp1_home_page.dart';
 import 'router.dart';
 
 class HikingAssistantApp extends StatelessWidget {
@@ -9,14 +9,14 @@ class HikingAssistantApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI Hiking Assistant',
+      title: 'Hiking Safety & Environmental Monitoring',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
       routes: AppRoutes.routes,
-      home: const Component2Home(),
+      home: const Pp1HomePage(),
     );
   }
 }
