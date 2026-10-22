@@ -11,6 +11,7 @@ import '../data/component_2_photo_source.dart';
 import '../domain/component_2_demo_photo.dart';
 import '../domain/component_2_detection.dart';
 import '../domain/component_2_incident_report.dart';
+import '../domain/environmental_severity.dart';
 
 class Component2Controller extends ChangeNotifier {
   Component2Controller({
@@ -131,6 +132,13 @@ class Component2Controller extends ChangeNotifier {
       photoThumbnail: Uint8List.fromList(img.encodeJpg(thumbnail, quality: 55)),
       notes: notes.trim(),
       location: location.trim(),
+      environmentalObservationLevel: result == null
+          ? ''
+          : EnvironmentalSeverity.fromResult(result!).overallLabel,
+      detectionCount: result?.detections.length ?? 0,
+      highestConfidence: result == null || result!.detections.isEmpty
+          ? null
+          : result!.detections.map((item) => item.confidence).reduce(math.max),
     );
     await reports.save(report);
     return report;

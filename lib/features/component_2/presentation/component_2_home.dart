@@ -10,6 +10,7 @@ import '../data/component_2_incident_report_repository.dart';
 import '../domain/component_2_demo_photo.dart';
 import '../domain/component_2_detection.dart';
 import '../domain/component_2_incident_report.dart';
+import '../domain/environmental_severity.dart';
 import 'component_2_controller.dart';
 
 class Component2Home extends StatefulWidget {
@@ -60,13 +61,13 @@ class _Component2HomeState extends State<Component2Home> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        'Litter & Trail Monitoring',
+        'Trail & Environmental Monitoring',
         style: Theme.of(context).textTheme.titleMedium
             ?.copyWith(fontWeight: FontWeight.w600),
       ),
       actions: [
         IconButton(
-          tooltip: 'About prototype AI',
+          tooltip: 'About this preview',
           onPressed: _showPrototypeInfo,
           icon: const Icon(Icons.info_outline),
         ),
@@ -97,7 +98,6 @@ class _Component2HomeState extends State<Component2Home> {
                 _perform(() => _controller.selectPhoto(ImageSource.gallery)),
             onTakePhoto: () =>
                 _perform(() => _controller.selectPhoto(ImageSource.camera)),
-            onUseSample: () => _useFirstAvailableSample(),
           ),
           const SizedBox(height: 22),
           _sectionHeading(context, 'Try a sample'),
@@ -108,13 +108,18 @@ class _Component2HomeState extends State<Component2Home> {
             _sectionHeading(context, 'Analysis results'),
             const SizedBox(height: 10),
             _ResultSummary(result: result),
+            const SizedBox(height: 18),
+            _sectionHeading(context, 'Additional trail conditions'),
+            const SizedBox(height: 8),
+            const _UnassessedTrailConditions(),
           ],
-          if (_controller.displayImage != null) ...[
+          if (_controller.displayImage != null &&
+              _controller.result != null) ...[
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _openIncidentReport,
               icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text('Create incident report'),
+              label: const Text('Report environmental issue'),
             ),
           ],
           const SizedBox(height: 16),
@@ -130,8 +135,8 @@ class _Component2HomeState extends State<Component2Home> {
 
   String get _progressLabel {
     if (_controller.isPickingPhoto) return 'Opening photo picker…';
-    if (_controller.isLoadingSample) return 'Loading sample offline…';
-    return 'Analyzing photo offline…';
+    if (_controller.isLoadingSample) return 'Opening sample photo…';
+    return 'Analyzing photo…';
   }
 
   Widget _sectionHeading(BuildContext context, String title) => Text(
@@ -166,62 +171,28 @@ class _Component2HomeState extends State<Component2Home> {
     if (error is FormatException) {
       return 'This photo could not be read. Choose another image.';
     }
-    if (error is StateError &&
-        error.message.startsWith('Demo photo is not installed:')) {
-      return 'Add the named demo photo under assets/demo/component_2/ and rebuild the app.';
-    }
-    return 'Offline analysis could not finish. Try another photo or sample.';
+    return 'Photo analysis could not finish. Try another photo.';
   }
 
   Future<void> _onSampleTapped(Component2DemoPhoto sample) async {
-    if (!sample.isAvailable) {
-      _showMessage(
-        'Copy ${sample.assetPath.split('/').last} into assets/demo/component_2/ to enable this sample.',
-      );
-      return;
-    }
+    if (!sample.isAvailable) return;
     await _perform(() => _controller.selectSample(sample));
   }
 
-  Future<void> _useFirstAvailableSample() async {
-    try {
-      final samples = await _samples;
-      if (!mounted) return;
-      final available = samples.where((sample) => sample.isAvailable);
-      if (available.isEmpty) {
-        _showMessage(
-          'Add a reviewed demo photo to assets/demo/component_2/ to use a sample.',
-        );
-        return;
-      }
-      await _perform(() => _controller.selectSample(available.first));
-    } catch (_) {
-      if (mounted) _showMessage('The sample-photo list could not be loaded.');
-    }
-  }
-
   void _showPrototypeInfo() {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 8, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Prototype observations',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'AI results are prototype observations for environmental monitoring. Trail safety and route blockage are not assessed by the current model.',
-              ),
-            ],
-          ),
+      builder: (context) => AlertDialog(
+        title: const Text('About this preview'),
+        content: const Text(
+          'This PP1 build demonstrates local environmental-object detection. Trail safety and route blockage are not yet certified outputs.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -237,7 +208,7 @@ class _Component2HomeState extends State<Component2Home> {
   Future<void> _openIncidentReport() async {
     final image = _controller.displayImage;
     final result = _controller.result;
-    if (image == null) return;
+    if (image == null || result == null) return;
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -277,42 +248,25 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Observe the trail around you',
+          'A clearer view of your surroundings',
           style: Theme.of(context).textTheme.titleLarge
               ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 4),
         Text(
-          'Photo analysis runs locally on this device.',
+          'Choose a photo to see local environmental observations.',
           style: Theme.of(context).textTheme.bodyMedium
               ?.copyWith(color: scheme.onSurfaceVariant),
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            _StatusChip(
-              icon: Icons.offline_bolt_outlined,
-              label: 'Offline AI',
-              foreground: scheme.primary,
-              background: scheme.primaryContainer,
-            ),
-            _StatusChip(
-              icon: Icons.science_outlined,
-              label: 'Prototype',
-              foreground: scheme.tertiary,
-              background: scheme.tertiaryContainer,
-            ),
-            if (busy)
-              _StatusChip(
-                icon: isAnalyzing ? Icons.auto_awesome : Icons.hourglass_top,
-                label: isAnalyzing ? 'Analyzing' : 'Loading',
-                foreground: scheme.onSurfaceVariant,
-                background: scheme.surfaceContainerHighest,
-              ),
-          ],
-        ),
+        if (busy) ...[
+          const SizedBox(height: 12),
+          _StatusChip(
+            icon: isAnalyzing ? Icons.auto_awesome : Icons.hourglass_top,
+            label: isAnalyzing ? 'Analyzing' : 'Loading',
+            foreground: scheme.onSurfaceVariant,
+            background: scheme.surfaceContainerHighest,
+          ),
+        ],
       ],
     );
   }
@@ -356,7 +310,6 @@ class _AnalysisPhotoCard extends StatelessWidget {
     required this.progressLabel,
     required this.onChoosePhoto,
     required this.onTakePhoto,
-    required this.onUseSample,
   });
 
   final Uint8List? image;
@@ -366,7 +319,6 @@ class _AnalysisPhotoCard extends StatelessWidget {
   final String progressLabel;
   final VoidCallback onChoosePhoto;
   final VoidCallback onTakePhoto;
-  final VoidCallback onUseSample;
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +403,7 @@ class _AnalysisPhotoCard extends StatelessWidget {
                                     ),
                                   ),
                                   SizedBox(width: 12),
-                                  Text('Analyzing photo offline...'),
+                                  Text('Analyzing photo…'),
                                 ],
                               ),
                             ),
@@ -491,11 +443,6 @@ class _AnalysisPhotoCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-                TextButton.icon(
-                  onPressed: busy ? null : onUseSample,
-                  icon: const Icon(Icons.landscape_outlined),
-                  label: const Text('Use sample'),
                 ),
                 if (busy) ...[
                   LinearProgressIndicator(
@@ -596,7 +543,7 @@ class _DetectionPainter extends CustomPainter {
     Color color,
   ) {
     final label =
-        '${detection.label} ${(detection.confidence * 100).toStringAsFixed(0)}%';
+        '${_humanClassName(detection.label)} ${(detection.confidence * 100).toStringAsFixed(0)}%';
     final text = TextPainter(
       text: TextSpan(
         text: label,
@@ -643,7 +590,9 @@ class _SampleCarousel extends StatelessWidget {
       future: samples,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(child: Text('Sample list is unavailable.'));
+          return const Center(
+            child: Text('Demo photos will appear here soon.'),
+          );
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator.adaptive());
@@ -659,7 +608,7 @@ class _SampleCarousel extends StatelessWidget {
               child: Card(
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
-                  onTap: () => onTap(sample),
+                  onTap: sample.isAvailable ? () => onTap(sample) : null,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -723,18 +672,12 @@ class _SamplePlaceholder extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined, color: scheme.primary, size: 26),
             const SizedBox(height: 5),
             Text(
-              sample.isAvailable ? 'Demo photo' : 'Photo not installed',
+              sample.isAvailable ? 'Demo photo' : 'Sample photo coming soon',
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall,
             ),
-            if (!sample.isAvailable)
-              Text(
-                'development only',
-                style: Theme.of(context).textTheme.labelSmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
-              ),
           ],
         ),
       ),
@@ -750,9 +693,8 @@ class _ResultSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final all = result.detections;
-    final highest = all.isEmpty
-        ? '—'
-        : '${(all.map((item) => item.confidence).reduce(math.max) * 100).toStringAsFixed(1)}%';
+    final severity = EnvironmentalSeverity.fromResult(result);
+    final highest = _highestConfidence(all);
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
@@ -761,68 +703,195 @@ class _ResultSummary extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: Theme.of(context).colorScheme.primary,
+                Expanded(
+                  child: Text(
+                    'Environmental observation level',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  'Analysis complete',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
+                _SeverityBadge(level: severity.overallLevel),
               ],
             ),
-            const SizedBox(height: 12),
-            _ObservationRow(
+            const SizedBox(height: 6),
+            Text(
+              severity.overallLabel,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _DetectionGroup(
               label: 'Litter',
-              detected: result.litterDetections.isNotEmpty,
+              detections: result.litterDetections,
+              level: severity.litterLevel,
+              areaLabel:
+                  'Mask area ${(severity.litterAreaRatio * 100).toStringAsFixed(1)}%',
             ),
-            _ObservationRow(
+            const SizedBox(height: 12),
+            _DetectionGroup(
               label: 'Rock',
-              detected: result.rockDetections.isNotEmpty,
+              detections: result.rockDetections,
+              level: severity.obstacleLevel,
             ),
-            _ObservationRow(
+            const SizedBox(height: 12),
+            _DetectionGroup(
               label: 'Log',
-              detected: result.logDetections.isNotEmpty,
+              detections: result.logDetections,
+              level: severity.obstacleLevel,
             ),
             const Divider(height: 22),
-            _ValueRow(label: 'Highest confidence', value: highest),
             _ValueRow(label: 'Number of detections', value: '${all.length}'),
+            _ValueRow(label: 'Highest confidence', value: highest),
+            _ValueRow(
+              label: 'Obstacle box area',
+              value:
+                  '${(severity.obstacleAreaRatio * 100).toStringAsFixed(1)}%',
+            ),
             _ValueRow(
               label: 'Inference time',
               value: '${result.inferenceDuration.inMilliseconds} ms',
             ),
-            const _ValueRow(label: 'Processing mode', value: 'Offline'),
+            const _ValueRow(label: 'Processing', value: 'On-device'),
             const _ValueRow(label: 'Trail condition', value: 'Not assessed'),
           ],
         ),
       ),
     );
   }
+
+  String _highestConfidence(List<Component2Detection> detections) {
+    if (detections.isEmpty) return '—';
+    final highest = detections.map((item) => item.confidence).reduce(math.max);
+    return '${(highest * 100).toStringAsFixed(1)}%';
+  }
 }
 
-class _ObservationRow extends StatelessWidget {
-  const _ObservationRow({required this.label, required this.detected});
+class _DetectionGroup extends StatelessWidget {
+  const _DetectionGroup({
+    required this.label,
+    required this.detections,
+    required this.level,
+    this.areaLabel,
+  });
 
   final String label;
-  final bool detected;
+  final List<Component2Detection> detections;
+  final ObservationLevel level;
+  final String? areaLabel;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          detected ? Icons.check_circle : Icons.remove_circle_outline,
-          size: 18,
-          color: detected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.outline,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            Text('${detections.length}'),
+            const SizedBox(width: 8),
+            _SeverityBadge(level: level),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(label)),
-        Text(detected ? 'Detected' : 'Not detected'),
+        const SizedBox(height: 4),
+        if (detections.isEmpty)
+          Text(
+            'No ${label.toLowerCase()} detected',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (var index = 0; index < detections.length; index++)
+                Text(
+                  'Detection ${index + 1} · ${(detections[index].confidence * 100).toStringAsFixed(1)}%',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ),
+        if (areaLabel != null) ...[
+          const SizedBox(height: 3),
+          Text(
+            areaLabel!,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _SeverityBadge extends StatelessWidget {
+  const _SeverityBadge({required this.level});
+
+  final ObservationLevel level;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (level) {
+      ObservationLevel.low => const Color(0xFF2E7D32),
+      ObservationLevel.moderate => const Color(0xFFEF6C00),
+      ObservationLevel.high => const Color(0xFFC62828),
+    };
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Text(
+          level.label,
+          style: TextStyle(color: color, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnassessedTrailConditions extends StatelessWidget {
+  const _UnassessedTrailConditions();
+
+  static const _conditions = [
+    ('Erosion', Icons.landscape_outlined),
+    ('Exposed roots', Icons.nature_outlined),
+    ('Debris', Icons.forest_outlined),
+    ('Trail blockage', Icons.block_outlined),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Column(
+      children: [
+        for (var index = 0; index < _conditions.length; index++) ...[
+          if (index > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            dense: true,
+            leading: Icon(_conditions[index].$2),
+            title: Text(_conditions[index].$1),
+            trailing: const Text('Not assessed'),
+          ),
+        ],
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Not assessed in current PP1 model'),
+          ),
+        ),
       ],
     ),
   );
@@ -854,7 +923,7 @@ class _IncidentReportSheet extends StatefulWidget {
   });
 
   final Uint8List image;
-  final Component2PhotoResult? result;
+  final Component2PhotoResult result;
   final Future<void> Function(String type, String notes, String location)
   onSave;
 
@@ -864,17 +933,31 @@ class _IncidentReportSheet extends StatefulWidget {
 
 class _IncidentReportSheetState extends State<_IncidentReportSheet> {
   static const _types = [
-    'litter / waste',
-    'rock / obstruction',
-    'fallen log / branch',
-    'other',
+    'Litter / waste',
+    'Rock / obstacle',
+    'Fallen tree / log',
+    'Trail damage / erosion',
+    'Other',
   ];
   final _notes = TextEditingController();
   final _location = TextEditingController();
-  String _type = _types.first;
+  late String _type;
   bool _saving = false;
   String? _error;
   late final DateTime _createdAt = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    final labels = widget.result.detections.map((item) => item.label).toSet();
+    _type = labels.contains('litter')
+        ? _types[0]
+        : labels.contains('rock_region')
+        ? _types[1]
+        : labels.contains('log_region')
+        ? _types[2]
+        : _types.last;
+  }
 
   @override
   void dispose() {
@@ -885,12 +968,14 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final detected =
-        widget.result?.detections
-            .map((item) => item.label)
-            .toSet()
-            .join(', ') ??
-        '';
+    final detected = widget.result.detections
+        .map((item) => _humanClassName(item.label))
+        .toSet()
+        .join(', ');
+    final severity = EnvironmentalSeverity.fromResult(widget.result);
+    final highestConfidence = widget.result.detections.isEmpty
+        ? 'No detections'
+        : '${(widget.result.detections.map((item) => item.confidence).reduce(math.max) * 100).toStringAsFixed(1)}%';
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -904,7 +989,7 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Create incident report',
+                'Report environmental issue',
                 style: Theme.of(context).textTheme.titleLarge
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
@@ -926,13 +1011,13 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Detected classes'),
+                        const Text('AI detections'),
                         const SizedBox(height: 4),
-                        Text(
-                          detected.isEmpty ? 'No model observations' : detected,
-                        ),
+                        Text(detected.isEmpty ? 'None detected' : detected),
                         const SizedBox(height: 8),
-                        const Text('Report status: Local draft'),
+                        Text('Observation: ${severity.overallLabel}'),
+                        Text('Detections: ${widget.result.detections.length}'),
+                        Text('Highest confidence: $highestConfidence'),
                       ],
                     ),
                   ),
@@ -946,7 +1031,7 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
               DropdownButtonFormField<String>(
                 initialValue: _type,
                 decoration: const InputDecoration(
-                  labelText: 'Incident type',
+                  labelText: 'Report category',
                   border: OutlineInputBorder(),
                 ),
                 items: _types
@@ -959,6 +1044,15 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
                     ? null
                     : (value) => setState(() => _type = value ?? _type),
               ),
+              if (_type == 'Trail damage / erosion') ...[
+                const SizedBox(height: 8),
+                Text(
+                  'This is a manual report category; erosion is not detected by the model.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               TextField(
                 controller: _notes,
@@ -1024,6 +1118,13 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
     }
   }
 }
+
+String _humanClassName(String label) => switch (label) {
+  'rock_region' => 'Rock',
+  'log_region' => 'Log',
+  'litter' => 'Litter',
+  _ => label,
+};
 
 class Component2SavedReportsPage extends StatefulWidget {
   const Component2SavedReportsPage({required this.repository, super.key});
@@ -1096,6 +1197,9 @@ class _Component2SavedReportsPageState
                 subtitle: Text(
                   [
                     DateFormat('MMM d, yyyy · h:mm a').format(report.createdAt),
+                    if (report.environmentalObservationLevel.isNotEmpty)
+                      report.environmentalObservationLevel,
+                    'Detections: ${report.detectionCount}',
                     if (report.detectedClasses.isNotEmpty)
                       report.detectedClasses.join(', '),
                     if (report.location.isNotEmpty) report.location,

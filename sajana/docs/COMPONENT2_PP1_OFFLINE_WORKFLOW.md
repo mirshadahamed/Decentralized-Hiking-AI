@@ -30,17 +30,48 @@ small, manually reviewed demonstration photos at these exact paths:
 | Filename | Intended example |
 | --- | --- |
 | `litter_on_trail.jpg` | Litter visible on a trail |
-| `litter_near_vegetation.jpg` | A second litter scene with vegetation nearby |
+| `litter_multiple.jpg` | Several pieces of litter |
 | `rock_on_trail.jpg` | A rock visible on a trail |
-| `fallen_log_branch.jpg` | A fallen log or branch |
+| `fallen_log.jpg` | A fallen log |
 | `clean_trail.jpg` | A reviewed clean-trail example |
 
 Keep fresh independent final-test photos out of this demo folder. These are
 development/demo-only assets and must not be used to claim model accuracy. Until
 the image files are present in the asset directory and the app is rebuilt, the
-carousel displays each expected filename as a placeholder and sample inference
-is unavailable. No sample result is generated without running the local models
-on an actual image.
+carousel shows a neutral “Sample photo coming soon” placeholder and sample
+inference is unavailable. Add all five reviewed demo images above and rebuild
+the app to enable bundled sample selection. No sample result is generated
+without running the local models on an actual image.
+
+## Temporary PP1 observation levels
+
+The result screen displays a deterministic development heuristic for supported
+detections only. Litter area is computed from each predicted mask at the same
+0.5 probability cutoff used by the overlay painter, scaled by its normalized
+detection box, summed, and divided by image area. One litter detection below
+2% is Low; 2–4 detections or 2% to below 8% is Moderate; 5+ detections or 8%+
+is High. Rock/log area is the sum of their normalized box areas: below 5% is
+Low, 5% to below 15% is Moderate, and 15%+ is High. When rules differ, the
+higher level is used. Low/no detections maps to “Normal observation”, Moderate
+to “Attention recommended”, and High to “High environmental concern”. These
+temporary PP1 thresholds are not validated safety thresholds and do not assess
+erosion, roots, debris, trail blockage, or route safety. Those categories remain
+“Not assessed in current PP1 model”.
+
+## Copy development photos to an Android emulator
+
+The helper below copies only the five allowlisted demo filenames into the
+emulator's Pictures folder. Point it at a directory containing reviewed
+development photos; do not include fresh final-test or holdout images there.
+For example:
+
+```sh
+bash scripts/component2/seed_emulator_demo_photos.sh /path/to/reviewed-demo-photos
+```
+
+It targets `emulator-5554` by default. Set `ANDROID_SERIAL` to another attached
+device ID when needed. Bundled assets do not require this step and work without
+gallery permission or network access once packaged by Flutter.
 
 ## Offline reports and Android photo access
 

@@ -11,6 +11,9 @@ class Component2IncidentReport {
     required this.photoThumbnail,
     this.notes = '',
     this.location = '',
+    this.environmentalObservationLevel = '',
+    this.detectionCount = 0,
+    this.highestConfidence,
   });
 
   final String id;
@@ -21,6 +24,9 @@ class Component2IncidentReport {
   final Uint8List photoThumbnail;
   final String notes;
   final String location;
+  final String environmentalObservationLevel;
+  final int detectionCount;
+  final double? highestConfidence;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -31,6 +37,9 @@ class Component2IncidentReport {
     'photoThumbnail': base64Encode(photoThumbnail),
     'notes': notes,
     'location': location,
+    'environmentalObservationLevel': environmentalObservationLevel,
+    'detectionCount': detectionCount,
+    'highestConfidence': highestConfidence,
   };
 
   factory Component2IncidentReport.fromJson(Map<String, Object?> json) =>
@@ -44,5 +53,9 @@ class Component2IncidentReport {
         photoThumbnail: base64Decode(json['photoThumbnail']! as String),
         notes: json['notes'] as String? ?? '',
         location: json['location'] as String? ?? '',
+        environmentalObservationLevel:
+            json['environmentalObservationLevel'] as String? ?? '',
+        detectionCount: json['detectionCount'] as int? ?? 0,
+        highestConfidence: (json['highestConfidence'] as num?)?.toDouble(),
       );
 }

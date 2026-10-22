@@ -6,10 +6,10 @@
     "asset": "assets/demo/component_2/litter_on_trail.jpg"
   },
   {
-    "id": "litter_near_vegetation",
-    "title": "Litter near vegetation",
+    "id": "litter_multiple",
+    "title": "Several pieces of litter",
     "category": "Litter",
-    "asset": "assets/demo/component_2/litter_near_vegetation.jpg"
+    "asset": "assets/demo/component_2/litter_multiple.jpg"
   },
   {
     "id": "rock_on_trail",
@@ -18,10 +18,10 @@
     "asset": "assets/demo/component_2/rock_on_trail.jpg"
   },
   {
-    "id": "fallen_log_branch",
-    "title": "Fallen log / branch",
+    "id": "fallen_log",
+    "title": "Fallen log",
     "category": "Log / branch",
-    "asset": "assets/demo/component_2/fallen_log_branch.jpg"
+    "asset": "assets/demo/component_2/fallen_log.jpg"
   },
   {
     "id": "clean_trail",
