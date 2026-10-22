@@ -10,8 +10,9 @@ void main() {
     const anchors = 3;
     final dense = Float32List(6 * anchors);
     void setChannel(int channel, List<double> values) {
-      for (var i = 0; i < anchors; i++)
+      for (var i = 0; i < anchors; i++) {
         dense[channel * anchors + i] = values[i];
+      }
     }
 
     setChannel(0, [0.5, 0.51, 0.5]);
@@ -64,7 +65,9 @@ void main() {
     dense[4] = 0.9;
     dense[5] = 1;
     final prototypes = Float32List(2 * 2 * 32);
-    for (var pixel = 0; pixel < 4; pixel++) prototypes[pixel * 32] = 10;
+    for (var pixel = 0; pixel < 4; pixel++) {
+      prototypes[pixel * 32] = 10;
+    }
     const transform = LetterboxTransform(
       sourceWidth: 100,
       sourceHeight: 100,

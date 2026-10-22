@@ -55,6 +55,19 @@ void main() {
         'fallen_log.jpg',
         'clean_trail.jpg',
       ]);
+      expect(samples.every((sample) => sample.demoOnly), isTrue);
+      expect(samples.every((sample) => !sample.isAvailable), isTrue);
+      expect(
+        samples.every((sample) => sample.sourceDatasetOrOwner == null),
+        isTrue,
+      );
+      expect(samples.every((sample) => sample.sourceSplit == null), isTrue);
+      expect(
+        samples.every(
+          (sample) => sample.licenseProvenanceNote.contains('Pending'),
+        ),
+        isTrue,
+      );
     },
   );
 
@@ -172,6 +185,7 @@ void main() {
       expect(restored.photoThumbnail, isNotEmpty);
       expect(restored.createdAt, DateTime(2026, 10, 22, 10));
       expect(restored.status, 'Saved offline');
+      expect(restored.source, 'User reported');
       controller.dispose();
     },
   );
@@ -207,6 +221,12 @@ void main() {
 
       expect(find.text('Environmental observation level'), findsOneWidget);
       expect(find.text('Attention recommended'), findsOneWidget);
+      expect(
+        find.text(
+          'Development-only model. Research accuracy acceptance was not met; observations are not definitive safety information.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Detection 1 · 82.0%'), findsOneWidget);
       expect(find.text('Detection 1 · 71.0%'), findsOneWidget);
       expect(find.text('On-device'), findsOneWidget);
@@ -221,10 +241,11 @@ void main() {
         350,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Not assessed'), findsNWidgets(5));
+      expect(find.text('Not assessed'), findsNWidgets(4));
+      expect(find.text('Trail condition observations'), findsOneWidget);
       expect(find.text('Erosion'), findsOneWidget);
       expect(find.text('Exposed roots'), findsOneWidget);
-      expect(find.text('Debris'), findsOneWidget);
+      expect(find.text('Debris'), findsNothing);
       expect(find.text('Trail blockage'), findsOneWidget);
       expect(find.text('Not assessed in current PP1 model'), findsOneWidget);
       await tester.scrollUntilVisible(
@@ -234,18 +255,22 @@ void main() {
       );
       expect(find.text('Report environmental issue'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('Report environmental issue'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Report environmental issue'));
       await tester.pumpAndSettle();
+      expect(find.text('Source: AI observation'), findsOneWidget);
       expect(find.text('Save offline report'), findsOneWidget);
       expect(find.text('AI detections'), findsOneWidget);
       expect(find.text('Observation: Attention recommended'), findsOneWidget);
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Trail damage / erosion').last);
+      await tester.tap(find.text('Erosion / trail damage').last);
       await tester.pumpAndSettle();
+      expect(find.text('Source: User reported'), findsOneWidget);
       expect(
         find.text(
-          'This is a manual report category; erosion is not detected by the model.',
+          'This category is user-reported and is not detected by the current model.',
         ),
         findsOneWidget,
       );
@@ -257,7 +282,8 @@ void main() {
       expect(find.text('Saved offline'), findsOneWidget);
       expect((await controller.reports.all()), hasLength(1));
       final storedReport = (await controller.reports.all()).single;
-      expect(storedReport.incidentType, 'Trail damage / erosion');
+      expect(storedReport.incidentType, 'Erosion / trail damage');
+      expect(storedReport.source, 'User reported');
       expect(storedReport.detectedClasses, ['litter', 'rock_region']);
       expect(
         storedReport.environmentalObservationLevel,
@@ -268,27 +294,39 @@ void main() {
       await tester.tap(find.byTooltip('Saved reports'));
       await tester.pumpAndSettle();
       expect(find.text('Saved reports'), findsOneWidget);
-      expect(find.text('Trail damage / erosion'), findsOneWidget);
+      expect(find.text('Erosion / trail damage'), findsOneWidget);
       expect(find.textContaining('Saved offline'), findsNWidgets(2));
       controller.dispose();
     },
   );
 
-  testWidgets('PP1 launches directly into Component 2 and shows scoped info', (
+  testWidgets('PP1 landing page opens Component 2 and shows scoped info', (
     tester,
   ) async {
     await tester.pumpWidget(const HikingAssistantApp());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
+    expect(
+      find.text('Hiking Safety & Environmental Monitoring'),
+      findsOneWidget,
+    );
     expect(find.text('Trail & Environmental Monitoring'), findsOneWidget);
+    expect(find.byType(Card), findsOneWidget);
     expect(find.text('Plan your visit'), findsNothing);
     expect(find.text('Terrain & effort'), findsNothing);
     expect(find.text('Hiker safety assistant'), findsNothing);
     expect(find.text('Offline AI'), findsNothing);
     expect(find.text('Prototype'), findsNothing);
 
+    await tester.tap(find.byType(Card));
+    for (var frame = 0; frame < 8; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('A clearer view of your surroundings'), findsOneWidget);
+    expect(find.text('Trail & Environmental Monitoring'), findsOneWidget);
+
     await tester.tap(find.byTooltip('About this preview'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 400));
     expect(
       find.text(
         'This PP1 build demonstrates local environmental-object detection. Trail safety and route blockage are not yet certified outputs.',

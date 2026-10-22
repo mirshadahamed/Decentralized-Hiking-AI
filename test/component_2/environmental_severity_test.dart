@@ -11,6 +11,7 @@ void main() {
     double right = 0.2,
     double bottom = 0.2,
     List<double> maskValues = const [1],
+    int maskHeight = 1,
   }) => Component2Detection(
     task: DetectionTask.litter,
     label: 'litter',
@@ -18,7 +19,7 @@ void main() {
     box: NormalizedBox(left, top, right, bottom),
     mask: DetectionMask(
       width: maskValues.length,
-      height: 1,
+      height: maskHeight,
       values: Float32List.fromList(maskValues),
     ),
   );
@@ -36,15 +37,18 @@ void main() {
     box: NormalizedBox(left, top, right, bottom),
   );
 
-  Component2PhotoResult result(List<Component2Detection> detections) =>
-      Component2PhotoResult(
-        detections: detections,
-        imageWidth: 1000,
-        imageHeight: 1000,
-        inferenceDuration: Duration.zero,
-        modelVersion: 'test',
-        modelQualityAccepted: false,
-      );
+  Component2PhotoResult result(
+    List<Component2Detection> detections, {
+    int imageWidth = 1000,
+    int imageHeight = 1000,
+  }) => Component2PhotoResult(
+    detections: detections,
+    imageWidth: imageWidth,
+    imageHeight: imageHeight,
+    inferenceDuration: Duration.zero,
+    modelVersion: 'test',
+    modelQualityAccepted: false,
+  );
 
   group('litter heuristic', () {
     test('uses mask area and count thresholds', () {
@@ -85,6 +89,28 @@ void main() {
       );
 
       expect(severity.litterAreaRatio, closeTo(0.02, 0.0001));
+      expect(severity.litterLevel, ObservationLevel.moderate);
+    });
+
+    test('maps positive cropped mask cells into source-image pixel area', () {
+      final severity = EnvironmentalSeverity.fromResult(
+        result(
+          [
+            litter(
+              left: 0.2,
+              top: 0.1,
+              right: 0.4,
+              bottom: 0.5,
+              maskValues: const [1, 0],
+            ),
+          ],
+          imageWidth: 2000,
+          imageHeight: 1000,
+        ),
+      );
+
+      // One mask cell covers a 200x400 area: 80,000 / 2,000,000 pixels.
+      expect(severity.litterAreaRatio, closeTo(0.04, 0.0001));
       expect(severity.litterLevel, ObservationLevel.moderate);
     });
   });
