@@ -27,7 +27,8 @@ def _con(db=None):
     return con
 
 
-def segments(cfg) -> list:
+def segments(cfg, model_input: set | None = None) -> list:
+    """model_input: seg_ids whose counts update today's forecast (A1); listed first."""
     ec = build_control()
     labels = cfg["area"].get("poi_labels", {})
     names = cfg["area"]["trail_names"]
@@ -36,8 +37,8 @@ def segments(cfg) -> list:
         trail = names.get(s.trail, s.trail)
         out.append({"seg_id": int(s.seg_id), "trail": s.trail, "trail_name": trail,
                     "name": labels.get(s.poi, f"{trail}, section {int(s.seg_id)}") if s.poi else f"{trail}, section {int(s.seg_id)}",
-                    "length_m": round(float(s.length_m))})
-    return out
+                    "length_m": round(float(s.length_m)), "model_input": int(s.seg_id) in (model_input or set())})
+    return sorted(out, key=lambda x: not x["model_input"])
 
 
 def add_count(day: str, seg_id: int, time_min: int, count: int, by: str, client_id: str | None = None, db=None) -> dict:

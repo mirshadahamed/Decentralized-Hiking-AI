@@ -986,16 +986,18 @@ class CapacityPanel {
 }
 // ---------- A4: rangers' spot counts and the forecast check ----------
 class SegmentInfo {
-  SegmentInfo({required this.segId, required this.name, required this.trail, required this.trailName});
+  SegmentInfo({required this.segId, required this.name, required this.trail, required this.trailName, this.modelInput = false});
 
   final int segId;
   final String name, trail, trailName;
+  final bool modelInput; // A1: a count here updates today's forecast
 
   factory SegmentInfo.fromJson(Map<String, dynamic> j) => SegmentInfo(
         segId: _int(j['seg_id']),
         name: j['name'] as String? ?? '',
         trail: j['trail'] as String? ?? '',
         trailName: j['trail_name'] as String? ?? '',
+        modelInput: j['model_input'] == true,
       );
 }
 
@@ -1076,6 +1078,24 @@ class GateAdvice {
         over: [for (final o in j['over'] as List? ?? []) o as Map<String, dynamic>],
         advice: [for (final a in j['advice'] as List? ?? []) a as Map<String, dynamic>],
         inside: _int(j['inside']),
+        basis: j['basis'] as String? ?? '',
+      );
+}
+
+// ---------- A1: the rest of today, updated from the rangers' spot counts ----------
+class TodayUpdate {
+  TodayUpdate({required this.fromHour, required this.countsUsed, required this.changes, required this.over, required this.basis});
+
+  final int fromHour, countsUsed;
+  final List<Map<String, dynamic>> changes; // seg_id, name, change (peak people, updated - morning), over_hours
+  final List<Map<String, dynamic>> over; // seg_id, name, over_hours, capacity_at_once
+  final String basis;
+
+  factory TodayUpdate.fromJson(Map<String, dynamic> j) => TodayUpdate(
+        fromHour: _int(j['from_hour']),
+        countsUsed: _int(j['counts_used']),
+        changes: [for (final c in j['biggest_changes'] as List? ?? []) c as Map<String, dynamic>],
+        over: [for (final o in j['over_capacity'] as List? ?? []) o as Map<String, dynamic>],
         basis: j['basis'] as String? ?? '',
       );
 }

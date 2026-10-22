@@ -949,6 +949,24 @@ void main() {
     expect(find.text('Next 2 hours: keep the gate open'), findsOneWidget);
   });
 
+  testWidgets('rest of today: updated with the spot counts, sections now over capacity, what changed', (t) async {
+    final u = TodayUpdate.fromJson({
+      'from_hour': 11, 'counts_used': 3, 'basis': 'Updated from 3 ranger counts at the counted places',
+      'biggest_changes': [
+        {'seg_id': 25, 'name': "World's End", 'change': 14.2, 'over_hours': [11, 12]},
+        {'seg_id': 3, 'name': 'Section 3', 'change': 0.2, 'over_hours': []},
+      ],
+      'over_capacity': [
+        {'seg_id': 25, 'name': "World's End", 'over_hours': [11, 12, 14], 'capacity_at_once': 30.0}
+      ],
+    });
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: TodayUpdateCard(u))));
+    expect(find.textContaining('updated with 3 counts'), findsOneWidget);
+    expect(find.text("World's End: over capacity 11–13 h, 14–15 h"), findsOneWidget);
+    expect(find.text("World's End: busiest hour +14 people"), findsOneWidget);
+    expect(find.textContaining('Section 3'), findsNothing);                 // tiny changes are not listed
+  });
+
   testWidgets('officer forecast check: counts next to the forecast, error and bottlenecks called', (t) async {
     t.view.physicalSize = const Size(1179, 2556);
     t.view.devicePixelRatio = 3;

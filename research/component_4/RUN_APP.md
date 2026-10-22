@@ -91,8 +91,9 @@ switches English / සිංහල / தமிழ்.
 4. **Live**: traffic lights estimated from who went through the gate. The card on top says what to do at the gate
    for the next 2 hours: *keep the gate open*, or *hold new entries to a trail for N min / send the next groups to
    another trail*. To see it act, check in or sell many groups for one trail between 06:00 and 08:00.
-5. **Count**: pick a section, tap **+1** for every walker you see, **Save count**. Works in airplane mode: the count
+5. **Count**: pick a section (★ = the count also updates today's forecast), tap **+1** for every walker you see, **Save count**. Works in airplane mode: the count
    waits on the phone ("1 waiting to be sent") and is sent with **Send now** when the signal is back.
+   Back on **Live**, the card *Rest of today · updated with N counts* shows the sections now expected over capacity.
 6. **Crowding**: on each section the **% chance** that it is really over capacity at that hour.
 
 **Park officer** (log out, log in as `officer1`)

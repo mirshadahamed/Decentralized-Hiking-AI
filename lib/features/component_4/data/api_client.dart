@@ -232,6 +232,10 @@ class C4Api {
   Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(
       await _send('GET', '/gate/advice/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
 
+  /// Ranger: the rest of today, updated with the spot counts made so far (A1).
+  Future<TodayUpdate> liveForecast(DateTime d, {String? at}) async => TodayUpdate.fromJson(
+      await _send('GET', '/live/forecast/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
   /// Sections a ranger can count on.
   Future<List<SegmentInfo>> segments() async =>
       [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
