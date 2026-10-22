@@ -34,7 +34,11 @@ class EnvironmentalSeverity {
     final obstacles = result.detections
         .where((detection) => detection.task == DetectionTask.obstacle)
         .toList(growable: false);
-    final litterAreaRatio = _litterMaskAreaRatio(litter);
+    final litterAreaRatio = _litterMaskAreaRatio(
+      litter,
+      result.imageWidth,
+      result.imageHeight,
+    );
     final obstacleAreaRatio = _boxAreaRatio(obstacles);
     final litterLevel = _litterLevel(litter.length, litterAreaRatio);
     final obstacleLevel = _obstacleLevel(obstacleAreaRatio);
@@ -82,19 +86,31 @@ ObservationLevel _obstacleLevel(double areaRatio) {
   return ObservationLevel.low;
 }
 
-double _litterMaskAreaRatio(List<Component2Detection> detections) {
-  var area = 0.0;
+/// Estimates source-image pixels covered by predicted litter masks. Masks are
+/// box-cropped, so each positive cell contributes its mapped source-image area.
+double _litterMaskAreaRatio(
+  List<Component2Detection> detections,
+  int imageWidth,
+  int imageHeight,
+) {
+  var totalMaskPixels = 0.0;
   for (final detection in detections) {
     final mask = detection.mask;
     if (mask == null) continue;
-    final maskAreaFraction =
-        mask.values.where((value) => value >= 0.5).length / mask.values.length;
-    final boxArea =
+    final positiveMaskPixels = mask.values
+        .where((value) => value >= 0.5)
+        .length;
+    final sourcePixelsPerMaskCell =
         (detection.box.right - detection.box.left) *
-        (detection.box.bottom - detection.box.top);
-    area += boxArea * maskAreaFraction;
+        imageWidth /
+        mask.width *
+        (detection.box.bottom - detection.box.top) *
+        imageHeight /
+        mask.height;
+    totalMaskPixels += positiveMaskPixels * sourcePixelsPerMaskCell;
   }
-  return area.clamp(0.0, 1.0);
+  final imagePixels = imageWidth * imageHeight;
+  return (totalMaskPixels / imagePixels).clamp(0.0, 1.0);
 }
 
 double _boxAreaRatio(List<Component2Detection> detections) {

@@ -36,27 +36,27 @@ small, manually reviewed demonstration photos at these exact paths:
 | `clean_trail.jpg` | A reviewed clean-trail example |
 
 Keep fresh independent final-test photos out of this demo folder. These are
-development/demo-only assets and must not be used to claim model accuracy. Until
-the image files are present in the asset directory and the app is rebuilt, the
-carousel shows a neutral “Sample photo coming soon” placeholder and sample
-inference is unavailable. Add all five reviewed demo images above and rebuild
-the app to enable bundled sample selection. No sample result is generated
-without running the local models on an actual image.
+development/demo-only assets and must not be used to claim model accuracy. The
+current catalogue has no approved images: cards show a neutral “Photo
+unavailable” state until a manually reviewed example with recorded split,
+source identifier and redistribution permission is added. No sample result is
+generated without running the local models on an actual image.
 
 ## Temporary PP1 observation levels
 
-The result screen displays a deterministic development heuristic for supported
-detections only. Litter area is computed from each predicted mask at the same
-0.5 probability cutoff used by the overlay painter, scaled by its normalized
-detection box, summed, and divided by image area. One litter detection below
-2% is Low; 2–4 detections or 2% to below 8% is Moderate; 5+ detections or 8%+
-is High. Rock/log area is the sum of their normalized box areas: below 5% is
-Low, 5% to below 15% is Moderate, and 15%+ is High. When rules differ, the
-higher level is used. Low/no detections maps to “Normal observation”, Moderate
-to “Attention recommended”, and High to “High environmental concern”. These
-temporary PP1 thresholds are not validated safety thresholds and do not assess
-erosion, roots, debris, trail blockage, or route safety. Those categories remain
-“Not assessed in current PP1 model”.
+The result screen displays deterministic, temporary PP1 heuristics for the
+supported detections only. For litter, each predicted mask cell at the overlay's
+0.5 probability cutoff is mapped through its detection box into source-image
+pixel area; the sum of positive litter-mask area is divided by total source
+image pixels. One litter detection below 2% is Low; 2–4 detections or 2% to
+below 8% is Moderate; 5+ detections or 8%+ is High. Rock/log area is the sum
+of their normalized box areas: below 5% is Low, 5% to below 15% is Moderate,
+and 15%+ is High. When rules differ, the higher level is used. Low/no
+detections maps to “Normal observation”, Moderate to “Attention recommended”,
+and High to “High environmental concern”. These thresholds are not validated
+safety thresholds. Erosion, exposed roots and trail blockage remain “Not
+assessed” in this PP1 model. They do not establish passability or provide route
+advice.
 
 ## Copy development photos to an Android emulator
 

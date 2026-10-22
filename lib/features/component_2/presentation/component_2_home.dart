@@ -113,7 +113,7 @@ class _Component2HomeState extends State<Component2Home> {
             const SizedBox(height: 10),
             _ResultSummary(result: result),
             const SizedBox(height: 18),
-            _sectionHeading(context, 'Additional trail conditions'),
+            _sectionHeading(context, 'Trail condition observations'),
             const SizedBox(height: 8),
             const _UnassessedTrailConditions(),
           ],
@@ -750,6 +750,21 @@ class _ResultSummary extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (!result.modelQualityAccepted) ...[
+              const SizedBox(height: 10),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Text(
+                    'Development-only model. Research accuracy acceptance was not met; observations are not definitive safety information.',
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             _DetectionGroup(
               label: 'Litter',
@@ -897,7 +912,6 @@ class _UnassessedTrailConditions extends StatelessWidget {
   static const _conditions = [
     ('Erosion', Icons.landscape_outlined),
     ('Exposed roots', Icons.nature_outlined),
-    ('Debris', Icons.forest_outlined),
     ('Trail blockage', Icons.block_outlined),
   ];
 
