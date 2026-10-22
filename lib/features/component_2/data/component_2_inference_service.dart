@@ -35,8 +35,9 @@ class Component2InferenceService implements Component2PhotoAnalyzer {
   final _decoder = const YoloOutputDecoder();
 
   Future<void> _load() async {
-    if (_disposed)
+    if (_disposed) {
       throw StateError('Component 2 inference service has been disposed.');
+    }
     if (_litter != null && _obstacle != null && _manifest != null) return;
     Interpreter? loadedLitter;
     Interpreter? loadedObstacle;
@@ -76,12 +77,13 @@ class Component2InferenceService implements Component2PhotoAnalyzer {
         _obstacleAsset,
         options: InterpreterOptions()..threads = 2,
       );
-      final litter = loadedLitter!;
-      final obstacle = loadedObstacle!;
-      if (_disposed)
+      final litter = loadedLitter;
+      final obstacle = loadedObstacle;
+      if (_disposed) {
         throw StateError(
           'Component 2 inference service was disposed while loading models.',
         );
+      }
       litter.allocateTensors();
       obstacle.allocateTensors();
       _requireShape(litter.getInputTensor(0).shape, const [
@@ -155,8 +157,9 @@ class Component2InferenceService implements Component2PhotoAnalyzer {
 
   @override
   Future<PhotoAnalysis> analyze(Uint8List bytes) async {
-    if (bytes.isEmpty)
+    if (bytes.isEmpty) {
       throw const FormatException('The selected photo is empty.');
+    }
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
       throw const FormatException(
@@ -258,8 +261,9 @@ class Component2InferenceService implements Component2PhotoAnalyzer {
     final denseIndex = interpreter.getOutputTensors().indexWhere(
       (t) => t.shape.length == 3 && t.shape[0] == 1 && t.shape[1] == 6,
     );
-    if (denseIndex < 0)
+    if (denseIndex < 0) {
       throw StateError('Obstacle model output tensor changed after loading.');
+    }
     final denseShape = interpreter.getOutputTensor(denseIndex).shape;
     views.inputs[0].setAll(0, prepared.rgbFloat32);
     interpreter.invoke();
@@ -287,26 +291,29 @@ class Component2InferenceService implements Component2PhotoAnalyzer {
     final names = (spec['names'] as Map<String, dynamic>).entries.toList()
       ..sort((a, b) => int.parse(a.key).compareTo(int.parse(b.key)));
     for (var i = 0; i < names.length; i++) {
-      if (int.parse(names[i].key) != i)
+      if (int.parse(names[i].key) != i) {
         throw StateError(
           'Class IDs in the model manifest must be contiguous from zero.',
         );
+      }
     }
     return names.map((entry) => entry.value as String).toList(growable: false);
   }
 
   void _requireShape(List<int> actual, List<int> expected, String name) {
-    if (!_sameShape(actual, expected))
+    if (!_sameShape(actual, expected)) {
       throw StateError(
         'Unexpected $name tensor shape $actual; expected $expected.',
       );
+    }
   }
 
   void _requireFloat32(TensorType actual, String name) {
-    if (actual != TensorType.float32)
+    if (actual != TensorType.float32) {
       throw StateError(
         'Unexpected $name tensor type $actual; expected float32.',
       );
+    }
   }
 
   bool _sameShape(List<int> a, List<int> b) =>

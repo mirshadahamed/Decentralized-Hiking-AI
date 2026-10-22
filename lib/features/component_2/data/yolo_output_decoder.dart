@@ -27,9 +27,15 @@ class YoloOutputDecoder {
   }) {
     final maskChannels = prototypes == null ? 0 : prototypeChannels;
     final classCount = denseChannels - 4 - maskChannels;
-    if (dense.length != denseChannels * anchors || classCount != labels.length ||
-        (prototypes != null && (prototypeChannels != 32 || prototypes.length != prototypeWidth * prototypeHeight * prototypeChannels))) {
-      throw StateError('Model output tensor does not match its verified class and mask shapes.');
+    if (dense.length != denseChannels * anchors ||
+        classCount != labels.length ||
+        (prototypes != null &&
+            (prototypeChannels != 32 ||
+                prototypes.length !=
+                    prototypeWidth * prototypeHeight * prototypeChannels))) {
+      throw StateError(
+        'Model output tensor does not match its verified class and mask shapes.',
+      );
     }
 
     final candidates = <_Candidate>[];
@@ -47,45 +53,68 @@ class YoloOutputDecoder {
 
       final cx = dense[anchor].toDouble() * transform.targetSize;
       final cy = dense[anchors + anchor].toDouble() * transform.targetSize;
-      final width = dense[2 * anchors + anchor].toDouble() * transform.targetSize;
-      final height = dense[3 * anchors + anchor].toDouble() * transform.targetSize;
-      final left = (transform.sourceX(cx - width / 2) / transform.sourceWidth).clamp(0.0, 1.0).toDouble();
-      final top = (transform.sourceY(cy - height / 2) / transform.sourceHeight).clamp(0.0, 1.0).toDouble();
-      final right = (transform.sourceX(cx + width / 2) / transform.sourceWidth).clamp(0.0, 1.0).toDouble();
-      final bottom = (transform.sourceY(cy + height / 2) / transform.sourceHeight).clamp(0.0, 1.0).toDouble();
+      final width =
+          dense[2 * anchors + anchor].toDouble() * transform.targetSize;
+      final height =
+          dense[3 * anchors + anchor].toDouble() * transform.targetSize;
+      final left = (transform.sourceX(cx - width / 2) / transform.sourceWidth)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      final top = (transform.sourceY(cy - height / 2) / transform.sourceHeight)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      final right = (transform.sourceX(cx + width / 2) / transform.sourceWidth)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      final bottom =
+          (transform.sourceY(cy + height / 2) / transform.sourceHeight)
+              .clamp(0.0, 1.0)
+              .toDouble();
       final box = NormalizedBox(left, top, right, bottom);
       if (!box.isValid) continue;
       final coefficients = prototypes == null
           ? null
-          : List<double>.generate(maskChannels, (i) => dense[(4 + classCount + i) * anchors + anchor].toDouble(), growable: false);
+          : List<double>.generate(
+              maskChannels,
+              (i) => dense[(4 + classCount + i) * anchors + anchor].toDouble(),
+              growable: false,
+            );
       candidates.add(_Candidate(classId, score, box, coefficients));
     }
     candidates.sort((a, b) => b.score.compareTo(a.score));
 
     final kept = <_Candidate>[];
     for (final candidate in candidates) {
-      if (kept.any((other) => other.classId == candidate.classId && _iou(other.box, candidate.box) > iouThreshold)) continue;
+      if (kept.any(
+        (other) =>
+            other.classId == candidate.classId &&
+            _iou(other.box, candidate.box) > iouThreshold,
+      )) {
+        continue;
+      }
       kept.add(candidate);
       if (kept.length >= maxDetections) break;
     }
     return kept
-        .map((candidate) => Component2Detection(
-              task: task,
-              label: labels[candidate.classId],
-              confidence: candidate.score,
-              box: candidate.box,
-              mask: prototypes == null
-                  ? null
-                  : _makeMask(
-                      prototypes,
-                      prototypeWidth,
-                      prototypeHeight,
-                      prototypeChannels,
-                      candidate.coefficients!,
-                      candidate.box,
-                      transform,
-                    ),
-            ))
+        .map(
+          (candidate) => Component2Detection(
+            task: task,
+            label: labels[candidate.classId],
+            confidence: candidate.score,
+            box: candidate.box,
+            mask: prototypes == null
+                ? null
+                : _makeMask(
+                    prototypes,
+                    prototypeWidth,
+                    prototypeHeight,
+                    prototypeChannels,
+                    candidate.coefficients!,
+                    candidate.box,
+                    transform,
+                  ),
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -102,17 +131,33 @@ class YoloOutputDecoder {
     final values = Float32List(side * side);
     for (var y = 0; y < side; y++) {
       final v = (y + 0.5) / side;
-      final sourceY = (box.top + (box.bottom - box.top) * v) * transform.sourceHeight;
-      final modelY = sourceY * transform.resizedHeight / transform.sourceHeight + transform.padTop;
+      final sourceY =
+          (box.top + (box.bottom - box.top) * v) * transform.sourceHeight;
+      final modelY =
+          sourceY * transform.resizedHeight / transform.sourceHeight +
+          transform.padTop;
       final py = modelY * protoHeight / transform.targetSize - 0.5;
       for (var x = 0; x < side; x++) {
         final u = (x + 0.5) / side;
-        final sourceX = (box.left + (box.right - box.left) * u) * transform.sourceWidth;
-        final modelX = sourceX * transform.resizedWidth / transform.sourceWidth + transform.padLeft;
+        final sourceX =
+            (box.left + (box.right - box.left) * u) * transform.sourceWidth;
+        final modelX =
+            sourceX * transform.resizedWidth / transform.sourceWidth +
+            transform.padLeft;
         final px = modelX * protoWidth / transform.targetSize - 0.5;
         var logit = 0.0;
         for (var channel = 0; channel < protoChannels; channel++) {
-          logit += coefficients[channel] * _sampleProto(prototypes, protoWidth, protoHeight, protoChannels, px, py, channel);
+          logit +=
+              coefficients[channel] *
+              _sampleProto(
+                prototypes,
+                protoWidth,
+                protoHeight,
+                protoChannels,
+                px,
+                py,
+                channel,
+              );
         }
         final clamped = logit.clamp(-80.0, 80.0);
         values[y * side + x] = 1 / (1 + math.exp(-clamped));
@@ -121,7 +166,15 @@ class YoloOutputDecoder {
     return DetectionMask(width: side, height: side, values: values);
   }
 
-  double _sampleProto(Float32List proto, int width, int height, int channels, double x, double y, int channel) {
+  double _sampleProto(
+    Float32List proto,
+    int width,
+    int height,
+    int channels,
+    double x,
+    double y,
+    int channel,
+  ) {
     final boundedX = x.clamp(0.0, width - 1.0).toDouble();
     final boundedY = y.clamp(0.0, height - 1.0).toDouble();
     final x0 = boundedX.floor();
@@ -130,19 +183,29 @@ class YoloOutputDecoder {
     final y1 = (y0 + 1).clamp(0, height - 1).toInt();
     final dx = boundedX - x0;
     final dy = boundedY - y0;
-    final a = proto[(y0 * width + x0) * channels + channel] * (1 - dx) +
+    final a =
+        proto[(y0 * width + x0) * channels + channel] * (1 - dx) +
         proto[(y0 * width + x1) * channels + channel] * dx;
-    final b = proto[(y1 * width + x0) * channels + channel] * (1 - dx) +
+    final b =
+        proto[(y1 * width + x0) * channels + channel] * (1 - dx) +
         proto[(y1 * width + x1) * channels + channel] * dx;
     return a * (1 - dy) + b * dy;
   }
 
   double _iou(NormalizedBox a, NormalizedBox b) {
-    final width = math.max(0.0, math.min(a.right, b.right) - math.max(a.left, b.left));
-    final height = math.max(0.0, math.min(a.bottom, b.bottom) - math.max(a.top, b.top));
+    final width = math.max(
+      0.0,
+      math.min(a.right, b.right) - math.max(a.left, b.left),
+    );
+    final height = math.max(
+      0.0,
+      math.min(a.bottom, b.bottom) - math.max(a.top, b.top),
+    );
     final intersection = width * height;
-    final union = (a.right - a.left) * (a.bottom - a.top) +
-        (b.right - b.left) * (b.bottom - b.top) - intersection;
+    final union =
+        (a.right - a.left) * (a.bottom - a.top) +
+        (b.right - b.left) * (b.bottom - b.top) -
+        intersection;
     return union <= 0 ? 0 : intersection / union;
   }
 }

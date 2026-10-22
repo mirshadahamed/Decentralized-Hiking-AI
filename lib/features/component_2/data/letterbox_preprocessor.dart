@@ -21,8 +21,10 @@ class LetterboxTransform {
   final int padLeft;
   final int padTop;
 
-  double sourceX(double modelX) => (modelX - padLeft) * sourceWidth / resizedWidth;
-  double sourceY(double modelY) => (modelY - padTop) * sourceHeight / resizedHeight;
+  double sourceX(double modelX) =>
+      (modelX - padLeft) * sourceWidth / resizedWidth;
+  double sourceY(double modelY) =>
+      (modelY - padTop) * sourceHeight / resizedHeight;
 }
 
 class PreparedInput {
@@ -39,9 +41,15 @@ PreparedInput prepareLetterboxedInput(img.Image encodedImage, int targetSize) {
     throw ArgumentError('Image and model input dimensions must be positive.');
   }
   final source = img.bakeOrientation(encodedImage);
-  final scale = targetSize / (source.width > source.height ? source.width : source.height);
-  final resizedWidth = _roundToEven(source.width * scale).clamp(1, targetSize).toInt();
-  final resizedHeight = _roundToEven(source.height * scale).clamp(1, targetSize).toInt();
+  final scale =
+      targetSize /
+      (source.width > source.height ? source.width : source.height);
+  final resizedWidth = _roundToEven(source.width * scale)
+      .clamp(1, targetSize)
+      .toInt();
+  final resizedHeight = _roundToEven(source.height * scale)
+      .clamp(1, targetSize)
+      .toInt();
   final padLeft = _roundToEven((targetSize - resizedWidth) / 2 - 0.1);
   final padTop = _roundToEven((targetSize - resizedHeight) / 2 - 0.1);
   final transform = LetterboxTransform(
