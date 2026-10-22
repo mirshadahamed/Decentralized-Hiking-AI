@@ -9,6 +9,7 @@ class Component2DemoPhoto {
     this.sourceSplit,
     this.originalIdentifier,
     this.licenseProvenanceNote = '',
+    this.demoOnly = true,
   });
 
   final String id;
@@ -20,4 +21,5 @@ class Component2DemoPhoto {
   final String? sourceSplit;
   final String? originalIdentifier;
   final String licenseProvenanceNote;
+  final bool demoOnly;
 }

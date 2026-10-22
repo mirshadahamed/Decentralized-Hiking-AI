@@ -42,6 +42,7 @@ class AssetComponent2DemoPhotoRepository
             sourceSplit: json['source_split'] as String?,
             originalIdentifier: json['original_identifier'] as String?,
             licenseProvenanceNote: json['license_provenance_note'] as String,
+            demoOnly: json['demo_only'] as bool,
           );
         })
         .toList(growable: false);
