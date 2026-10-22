@@ -9,6 +9,7 @@ class Component2IncidentReport {
     required this.createdAt,
     required this.status,
     required this.photoThumbnail,
+    this.source = 'User reported',
     this.notes = '',
     this.location = '',
     this.environmentalObservationLevel = '',
@@ -22,6 +23,7 @@ class Component2IncidentReport {
   final DateTime createdAt;
   final String status;
   final Uint8List photoThumbnail;
+  final String source;
   final String notes;
   final String location;
   final String environmentalObservationLevel;
@@ -35,6 +37,7 @@ class Component2IncidentReport {
     'createdAt': createdAt.toIso8601String(),
     'status': status,
     'photoThumbnail': base64Encode(photoThumbnail),
+    'source': source,
     'notes': notes,
     'location': location,
     'environmentalObservationLevel': environmentalObservationLevel,
@@ -51,6 +54,7 @@ class Component2IncidentReport {
         createdAt: DateTime.parse(json['createdAt']! as String),
         status: json['status']! as String,
         photoThumbnail: base64Decode(json['photoThumbnail']! as String),
+        source: json['source'] as String? ?? 'User reported',
         notes: json['notes'] as String? ?? '',
         location: json['location'] as String? ?? '',
         environmentalObservationLevel:

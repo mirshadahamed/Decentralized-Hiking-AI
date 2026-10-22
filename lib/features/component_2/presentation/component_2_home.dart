@@ -224,9 +224,10 @@ class _Component2HomeState extends State<Component2Home> {
       builder: (_) => _IncidentReportSheet(
         image: image,
         result: result,
-        onSave: (incidentType, notes, location) async {
+        onSave: (incidentType, source, notes, location) async {
           await _controller.saveIncidentReport(
             incidentType: incidentType,
+            source: source,
             notes: notes,
             location: location,
           );
@@ -967,7 +968,12 @@ class _IncidentReportSheet extends StatefulWidget {
 
   final Uint8List image;
   final Component2PhotoResult result;
-  final Future<void> Function(String type, String notes, String location)
+  final Future<void> Function(
+    String type,
+    String source,
+    String notes,
+    String location,
+  )
   onSave;
 
   @override
@@ -979,12 +985,14 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
     'Litter / waste',
     'Rock / obstacle',
     'Fallen tree / log',
-    'Trail damage / erosion',
+    'Erosion / trail damage',
+    'Exposed roots',
     'Other',
   ];
   final _notes = TextEditingController();
   final _location = TextEditingController();
   late String _type;
+  late bool _aiSuggestedCategory;
   bool _saving = false;
   String? _error;
   late final DateTime _createdAt = DateTime.now();
@@ -1000,6 +1008,7 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
         : labels.contains('log_region')
         ? _types[2]
         : _types.last;
+    _aiSuggestedCategory = _type != _types.last;
   }
 
   @override
@@ -1037,6 +1046,19 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 14),
+              Text(
+                'Source: ${_aiSuggestedCategory ? 'AI observation' : 'User reported'}',
+              ),
+              if (!_aiSuggestedCategory) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'The selected category is user-reported; model detections are listed separately.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1085,12 +1107,16 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
                     .toList(growable: false),
                 onChanged: _saving
                     ? null
-                    : (value) => setState(() => _type = value ?? _type),
+                    : (value) => setState(() {
+                        _type = value ?? _type;
+                        _aiSuggestedCategory = false;
+                      }),
               ),
-              if (_type == 'Trail damage / erosion') ...[
+              if (_type == 'Erosion / trail damage' ||
+                  _type == 'Exposed roots') ...[
                 const SizedBox(height: 8),
                 Text(
-                  'This is a manual report category; erosion is not detected by the model.',
+                  'This category is user-reported and is not detected by the current model.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -1149,7 +1175,12 @@ class _IncidentReportSheetState extends State<_IncidentReportSheet> {
       _error = null;
     });
     try {
-      await widget.onSave(_type, _notes.text, _location.text);
+      await widget.onSave(
+        _type,
+        _aiSuggestedCategory ? 'AI observation' : 'User reported',
+        _notes.text,
+        _location.text,
+      );
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
@@ -1242,6 +1273,7 @@ class _Component2SavedReportsPageState
                     DateFormat('MMM d, yyyy · h:mm a').format(report.createdAt),
                     if (report.environmentalObservationLevel.isNotEmpty)
                       report.environmentalObservationLevel,
+                    report.source,
                     'Detections: ${report.detectionCount}',
                     if (report.detectedClasses.isNotEmpty)
                       report.detectedClasses.join(', '),

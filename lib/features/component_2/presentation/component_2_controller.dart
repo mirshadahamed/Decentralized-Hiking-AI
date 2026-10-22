@@ -102,6 +102,7 @@ class Component2Controller extends ChangeNotifier {
 
   Future<Component2IncidentReport> saveIncidentReport({
     required String incidentType,
+    String source = 'User reported',
     String notes = '',
     String location = '',
     DateTime? createdAt,
@@ -124,6 +125,7 @@ class Component2Controller extends ChangeNotifier {
     final report = Component2IncidentReport(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       incidentType: incidentType,
+      source: source,
       detectedClasses:
           result?.detections.map((item) => item.label).toSet().toList() ??
           const [],
