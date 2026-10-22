@@ -106,9 +106,11 @@ class Booking {
     required this.groupSize,
     required this.status,
     this.windowMinutes = 15,
+    this.trailName,
   });
 
   final String code, trail, slot, status;
+  final String? trailName; // the park's name for the trail (server sends it; older tickets have none)
   final DateTime day;
   final int groupSize, windowMinutes;
 
@@ -128,6 +130,7 @@ class Booking {
         groupSize: _int(j['group_size']),
         status: j['status'] as String? ?? 'booked',
         windowMinutes: _int(j['window_minutes'] ?? 15),
+        trailName: j['trail_name'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -138,6 +141,7 @@ class Booking {
         'group_size': groupSize,
         'status': status,
         'window_minutes': windowMinutes,
+        if (trailName != null) 'trail_name': trailName,
       };
 }
 

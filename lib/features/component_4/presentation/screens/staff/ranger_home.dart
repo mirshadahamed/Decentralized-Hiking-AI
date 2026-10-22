@@ -9,7 +9,6 @@ import '../bottleneck_screen.dart';
 import 'count_screen.dart';
 import 'sightings_screen.dart';
 
-const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
 /// Gate tools: check in tickets, sell walk-in places, live traffic lights.
 /// A "demo time" lets the prototype be shown on any date (the server must allow time override).
@@ -100,7 +99,7 @@ class _CheckInTab extends StatefulWidget {
   State<_CheckInTab> createState() => _CheckInTabState();
 }
 
-class _CheckInTabState extends State<_CheckInTab> {
+class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   final _code = TextEditingController();
   CheckInResult? _result;
   String? _error;
@@ -171,7 +170,7 @@ class _CheckInTabState extends State<_CheckInTab> {
                 const SizedBox(height: 8),
                 Text(_result!.reason, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
                 if (_result!.trail != null)
-                  Text('${_trailNames[_result!.trail] ?? _result!.trail} · ${_result!.slot} · ${_result!.groupSize} people',
+                  Text('${trailName(_result!.trail!)} · ${_result!.slot} · ${_result!.groupSize} people',
                       style: Theme.of(context).textTheme.titleMedium),
               ]),
             ),
@@ -213,9 +212,9 @@ class _WalkInTab extends StatefulWidget {
   State<_WalkInTab> createState() => _WalkInTabState();
 }
 
-class _WalkInTabState extends State<_WalkInTab> {
+class _WalkInTabState extends State<_WalkInTab> with ParkTrails {
   late Future<List<WalkInSlot>> _future;
-  String _trail = 'main';
+  String? _trail;
 
   @override
   void didChangeDependencies() {
@@ -235,7 +234,7 @@ class _WalkInTabState extends State<_WalkInTab> {
       context: context,
       builder: (d) => StatefulBuilder(
         builder: (d, set) => AlertDialog(
-          title: Text('Walk-in · ${_trailNames[s.trail]} · ${s.slot}'),
+          title: Text('Walk-in · ${trailName(s.trail)} · ${s.slot}'),
           content: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             IconButton.outlined(onPressed: size > 1 ? () => set(() => size--) : null, icon: const Icon(Icons.remove)),
             Padding(padding: const EdgeInsets.all(16), child: Text('$size', style: Theme.of(d).textTheme.headlineMedium)),
@@ -269,15 +268,17 @@ class _WalkInTabState extends State<_WalkInTab> {
             return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = C4Scope.of(context).walkIns(widget.day); }));
           }
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          final slots = snap.data!.where((s) => s.trail == _trail).toList();
+          final trail = pickTrail(_trail);
+          final slots = snap.data!.where((s) => s.trail == trail).toList();
           return ListView(padding: const EdgeInsets.all(16), children: [
             Text('Walk-in places on ${niceDate(widget.day)}', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: [for (final e in _trailNames.entries) ButtonSegment(value: e.key, label: Text(e.value))],
-              selected: {_trail},
-              onSelectionChanged: (s) => setState(() => _trail = s.first),
-            ),
+            if (trail != null)
+              SegmentedButton<String>(
+                segments: [for (final e in trailNames.entries) ButtonSegment(value: e.key, label: Text(e.value))],
+                selected: {trail},
+                onSelectionChanged: (s) => setState(() => _trail = s.first),
+              ),
             const SizedBox(height: 8),
             for (final s in slots)
               Card(
@@ -303,7 +304,7 @@ class _LiveTab extends StatefulWidget {
   State<_LiveTab> createState() => _LiveTabState();
 }
 
-class _LiveTabState extends State<_LiveTab> {
+class _LiveTabState extends State<_LiveTab> with ParkTrails {
   late Future<List<LiveSegment>> _future;
   Future<GateAdvice?>? _advice;
   Future<TodayUpdate?>? _today;
@@ -369,7 +370,7 @@ class _LiveTabState extends State<_LiveTab> {
                 Card(
                   child: ListTile(
                     leading: CircleAvatar(backgroundColor: C4Colors.light(s.light)),
-                    title: Text('${_trailNames[s.trail]} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
+                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
                     subtitle: Text('About ${s.people.round()} people (safe: ${s.capacity?.round() ?? '-'})\n${s.action ?? ''}'),
                     isThreeLine: true,
                   ),

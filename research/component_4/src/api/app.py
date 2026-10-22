@@ -275,7 +275,8 @@ def create_booking(body: BookingIn):
         return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
-    return {"code": code, **booking.bookings_for_code(code), "window_minutes": build_control().c["slot_window_min"]}
+    return {"code": code, **with_trail_name(booking.bookings_for_code(code)),
+            "window_minutes": build_control().c["slot_window_min"]}
 
 
 @app.get("/bookings/{code}", tags=["public"])
@@ -283,7 +284,12 @@ def get_booking(code: str):
     b = booking.bookings_for_code(code)
     if b is None:
         raise HTTPException(404, "Unknown code")
-    return {"code": code.strip().upper(), **b}
+    return {"code": code.strip().upper(), **with_trail_name(b)}
+
+
+def with_trail_name(b: dict) -> dict:
+    """A booking with its trail's name, so a ticket kept on the phone shows the right park's trail offline."""
+    return b | {"trail_name": CFG["area"]["trail_names"].get(b["trail"], b["trail"])}
 
 
 @app.delete("/bookings/{code}", tags=["public"])

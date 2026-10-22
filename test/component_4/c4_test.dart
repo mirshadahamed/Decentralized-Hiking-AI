@@ -808,6 +808,18 @@ void main() {
     expect(find.textContaining('1 booked slot(s) now over the limit'), findsOneWidget);
   });
 
+  testWidgets('officer at another park (Yala) sees and acts on its own trails', (t) async {
+    final api = _YalaOfficerApi();
+    await t.pumpWidget(wrap(const Scaffold(body: ConditionTab()), api));
+    await t.pumpAndSettle();
+    expect(find.text('Patanangala and Buthawa'), findsOneWidget);          // the park's first circuit is preselected
+    expect(find.text("World's End loop"), findsNothing);
+    await t.tap(find.text('Muddy'));
+    await t.tap(find.text('Save and re-plan tickets'));
+    await t.pumpAndSettle();
+    expect(api.conditionTrail, 'patanangala');
+  });
+
   testWidgets('tomorrow: the ST-GNN runs on the device, and keeps working offline from the stored pack', (t) async {
     final api = _EdgeApi();
     final card = find.text('Forecast made on this phone', skipOffstage: false);
@@ -1132,4 +1144,24 @@ class _SightingApi extends FakeApi {
 
   @override
   Future<void> endSighting(int id, String time) async => active = false;
+}
+
+/// An officer at Yala: three safari circuits; remembers which trail a condition was reported for.
+class _YalaOfficerApi extends FakeApi {
+  _YalaOfficerApi() : super(role: 'officer');
+
+  String? conditionTrail;
+
+  @override
+  Future<List<TrailInfo>> trails() async => [
+        TrailInfo(id: 'patanangala', name: 'Patanangala and Buthawa', lengthKm: 22.7, about: ''),
+        TrailInfo(id: 'southern', name: 'Southern tanks (Bembewa, Maliththa)', lengthKm: 7.2, about: ''),
+        TrailInfo(id: 'katagamuwa', name: 'Katagamuwa circuit', lengthKm: 11.8, about: ''),
+      ];
+
+  @override
+  Future<List<Map<String, dynamic>>> setCondition(String trail, DateTime from, DateTime to, String level, String note) async {
+    conditionTrail = trail;
+    return [];
+  }
 }

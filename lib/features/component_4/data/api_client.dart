@@ -163,6 +163,12 @@ class C4Api {
 
   Future<ParkInfo> destination() async => ParkInfo.fromJson(await _send('GET', '/destination') as Map<String, dynamic>);
 
+  final _trailNames = <String, Map<String, String>>{};
+
+  /// Trail id -> name of the park in use (cached per park: trails do not change while the app runs).
+  Future<Map<String, String>> trailNames() async =>
+      _trailNames[park ?? ''] ??= {for (final t in await trails()) t.id: t.name};
+
   Future<List<TrailInfo>> trails() async =>
       (await _send('GET', '/trails') as List).map((t) => TrailInfo.fromJson(t as Map<String, dynamic>)).toList();
 
