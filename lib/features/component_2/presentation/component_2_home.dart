@@ -102,7 +102,11 @@ class _Component2HomeState extends State<Component2Home> {
           const SizedBox(height: 22),
           _sectionHeading(context, 'Try a sample'),
           const SizedBox(height: 10),
-          _SampleCarousel(samples: _samples, onTap: _onSampleTapped),
+          _SampleCarousel(
+            samples: _samples,
+            selectedSampleId: _controller.selectedSample?.id,
+            onTap: _onSampleTapped,
+          ),
           if (_controller.result case final result?) ...[
             const SizedBox(height: 22),
             _sectionHeading(context, 'Analysis results'),
@@ -175,7 +179,11 @@ class _Component2HomeState extends State<Component2Home> {
   }
 
   Future<void> _onSampleTapped(Component2DemoPhoto sample) async {
-    if (!sample.isAvailable) return;
+    if (!sample.isAvailable) {
+      debugPrint('Component 2 demo asset is unavailable: ${sample.assetPath}');
+      _showMessage('This sample photo is unavailable on this build.');
+      return;
+    }
     await _perform(() => _controller.selectSample(sample));
   }
 
@@ -578,58 +586,80 @@ class _DetectionPainter extends CustomPainter {
 }
 
 class _SampleCarousel extends StatelessWidget {
-  const _SampleCarousel({required this.samples, required this.onTap});
+  const _SampleCarousel({
+    required this.samples,
+    required this.selectedSampleId,
+    required this.onTap,
+  });
 
   final Future<List<Component2DemoPhoto>> samples;
+  final String? selectedSampleId;
   final ValueChanged<Component2DemoPhoto> onTap;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 174,
+    height: 224,
     child: FutureBuilder<List<Component2DemoPhoto>>(
       future: samples,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(
-            child: Text('Demo photos will appear here soon.'),
+          debugPrint(
+            'Component 2 demo catalog failed to load: ${snapshot.error}',
           );
+          return const Center(child: Text('Demo samples are unavailable.'));
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator.adaptive());
         }
         return ListView.separated(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
           itemCount: snapshot.data!.length,
           separatorBuilder: (context, index) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
             final sample = snapshot.data![index];
+            final selected = sample.id == selectedSampleId;
+            final colors = Theme.of(context).colorScheme;
             return SizedBox(
-              width: 158,
+              width: 172,
               child: Card(
+                color: selected ? colors.secondaryContainer : null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: selected ? colors.primary : colors.outlineVariant,
+                    width: selected ? 2 : 1,
+                  ),
+                ),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
-                  onTap: sample.isAvailable ? () => onTap(sample) : null,
+                  onTap: () => onTap(sample),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
+                      SizedBox(
+                        height: 126,
                         child: sample.isAvailable
                             ? Image.asset(
                                 sample.assetPath,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    _SamplePlaceholder(sample: sample),
+                                errorBuilder: (context, error, stackTrace) {
+                                  debugPrint(
+                                    'Component 2 demo asset failed to render: ${sample.assetPath}',
+                                  );
+                                  return const _SamplePlaceholder();
+                                },
                               )
-                            : _SamplePlaceholder(sample: sample),
+                            : const _SamplePlaceholder(),
                       ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
+                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               sample.title,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
@@ -655,9 +685,7 @@ class _SampleCarousel extends StatelessWidget {
 }
 
 class _SamplePlaceholder extends StatelessWidget {
-  const _SamplePlaceholder({required this.sample});
-
-  final Component2DemoPhoto sample;
+  const _SamplePlaceholder();
 
   @override
   Widget build(BuildContext context) {
@@ -669,13 +697,14 @@ class _SamplePlaceholder extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo_outlined, color: scheme.primary, size: 26),
-            const SizedBox(height: 5),
+            Icon(
+              Icons.image_not_supported_outlined,
+              color: scheme.onSurfaceVariant,
+              size: 28,
+            ),
+            const SizedBox(height: 6),
             Text(
-              sample.isAvailable ? 'Demo photo' : 'Sample photo coming soon',
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              'Photo unavailable',
               style: Theme.of(context).textTheme.labelSmall,
             ),
           ],
