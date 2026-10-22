@@ -1004,7 +1004,7 @@ def build():
         ["NFR4", "Actionable for a non-technical official", "Done", "safe limit + 'why', night plan, HOLD"],
         ["NFR5", "No personally identifiable data", "Done", "booking code only, no names"],
         ["FR6–9", "Slot tickets · officer quota rule · gate advice · ranger spot counts", "Done", "−99.6 % (tickets); RQ9; offline counts"],
-        ["FR10–13", "Chance of crowding · 90-day outlook · Adam's Peak advice · records", "Done", "calibrated; P10–P90; −22 % waiting"],
+        ["FR10–13", "Chance of crowding · 90-day outlook · Adam's Peak advice · records", "Done", "calibrated; P10–P90; −42 % waiting"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [0.8, 5.4, 1.6, 4.3], 12, row_h=0.4)
     d.text(s, "Requirements are provisional until the stakeholder surveys return (DWC, rangers, operators, hikers).",
            Inches(0.6), Inches(6.75), Inches(9), Inches(0.3), 11, GREY)

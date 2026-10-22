@@ -68,6 +68,6 @@ Config: `configs/parks/adams_peak.yaml` (overrides `configs/default.yaml`). Hort
 | C. Halfway checks | 0 | 41,093 | 2,558 |
 | D. Both | 0 | 33,050 | 2,410 |
 
-Start times alone cut waiting by 22 % with 2.8 % of pilgrims moving their start. Halfway checks move the waiting
+Start times alone cut waiting by 42 % with 2.3 % of pilgrims moving their start (re-run 21 Oct with the current advice model; 22 % with the earlier one). Halfway checks move the waiting
 off the steep steps. Both together give the least waiting overall (−28 %). How these change when B1 and C3 are
 wrong: `evaluation_results.md` (RQ4).

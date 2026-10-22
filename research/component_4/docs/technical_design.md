@@ -171,7 +171,8 @@ enters the cascade (objective O5). FCwet, FCcond: ground still wet, officer-repo
 - **Walk advice on the phone:** each phone draws one of the good options weighted by room left (spread, RQ8).
 
 ## 8. On the phone
-`src.edge.pack` publishes `edge_pack.json` each evening (weights + scaled inputs, ~175 KB). The app stores it;
+`src.edge.pack` publishes `edge_pack.json` each evening (weights + scaled inputs, ~175 KB). The deployed model is the
+gate-only ST-GNN (`live.model_input: gate`, G6): it reads only the gate counts, and the pack carries only those. The app stores it;
 `domain/edge_forecaster.dart` runs the same forward pass in plain Dart (≤ 0.0001 people from PyTorch; ~150 ms in
 the test runner). ONNX export runs in 2 ms on one laptop core; int8 quantisation was tested and rejected (saves 2 KB,
 error +25 % at Adam's Peak, −0.3 % at Horton Plains). A calibration table P(really over | forecast fullness) gives "% chance of crowding".
@@ -187,7 +188,7 @@ No personal visitor data: bookings carry a code, not a name (NFR5).
 | Graph learning | PyTorch 2 + PyTorch Geometric (`DenseGCNConv`) | standard for ST-GNNs; dense layer is exact and fast for N ≤ 57 |
 | Baselines | statsmodels SARIMAX, LSTM / GRU in PyTorch | the proposal's mandatory comparisons |
 | Geo | OSMnx, GeoPandas, Shapely, Rasterio, PyProj | open data, reproducible downloads |
-| Planning | scikit-learn gradient-boosted quantile regression (P10 / P50 / P90) | inputs that exist weeks ahead; honest ranges |
+| Planning | scikit-learn gradient-boosted quantile regression, P10–P90 recalibrated on 2024 (conformal) | inputs that exist weeks ahead; honest ranges |
 | Optimisation | SciPy `linprog` (HiGHS) | exact LP, no licence |
 | Edge | ONNX Runtime, pure-Dart forward pass | offline on any phone, no native plugin |
 | Service | FastAPI, Uvicorn, SQLite | typed, self-documenting API (`/docs`); no server to install |

@@ -8,8 +8,8 @@ Significance: paired tests over forecast days (or nights), Holm-corrected where 
 |---|---|---|
 | RQ1 | Does the trail graph improve forecasts? | **On trail sections without counts, yes at Horton Plains** and on ordinary Adam's Peak trail; **not at the Adam's Peak summit queue**, where an LSTM is better. With counts everywhere: a tie with the LSTM at both parks (3 seeds) |
 | RQ2 | Does a model trained on one park work on another? | **Not as it is** (worse than a historical average). Pre-training **does** help a new park learn from little data, but with ≤ 90 days of counts a historical average is as good |
-| RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~20 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it |
-| RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: useful when the final steps are a real bottleneck (≤ 25 people/min), little effect above** |
+| RQ3 | Do better forecasts give better crowd control? | **Only with the right decision rule.** Advice from the median forecast captures ~16–18 % of what perfect knowledge would; advice from the **P90 (busy case)** captures all of it (115 %, −56 % waiting) |
+| RQ4 | Do the Adam's Peak policies hold if the assumptions are wrong? | **Halfway checks: yes at every flow tested. Start times: −42 % at the assumed flow, useful up to 30 people/min, slightly harmful at 35** |
 | RQ5 | Does pretraining on urban traffic (METR-LA, PEMS-BAY) help? | **Only at Horton Plains with 30–90 days of counts** (−5 to −12 % vs scratch); no help at Adam's Peak; zero-shot fails; a historical average still wins at ≤ 90 days |
 | RQ8 | Can offline advice to hikers prevent overcrowding? | **Yes, if it is spread:** up to −73 % with nobody turned away (as much as the daily limit). Identical advice on every phone backfires at high compliance (+12 % worse). Limit + spread advice: −95 % |
 | RQ6 | Can the forecast run on the phone within 2 s? | **Yes**: 2 ms (ONNX, laptop core), ~140 ms in plain Dart, offline |
@@ -73,60 +73,56 @@ network overtakes the historical average.
 
 ---
 
-## RQ3 – Value of the forecast for crowd control (`src.control.evaluate_forecast_value`, run `results/adams_peak/20261016_112228_forecast_value`)
+## RQ3 – Value of the forecast for crowd control (`src.control.evaluate_forecast_value`, run `results/adams_peak/20261021_214725_forecast_value`)
 
-Adam's Peak, 132 nights of the 2025 season, 50 % of advised pilgrims follow the advice. The advice is computed
-before the night from each forecast; the night then happens as it really did.
+Re-run 21 Oct 2026 with the current advice model (crowd-dependent climb times, evening starts, real sunrise;
+`assumptions_adams_peak.md` N1–N7). Adam's Peak, 132 nights of the 2025 season, 50 % of advised pilgrims follow
+the advice. The advice is computed before the night from each forecast; the night then happens as it really did.
 
 | Advice from | Forecast error (MAE, climbers/night) | Waiting on the final steps (person-h) | Cut vs no advice | Share of the perfect-knowledge benefit | Pilgrims moved |
 |---|---|---|---|---|---|
 | No advice | – | 45,841 | – | 0 % | 0 % |
 | Calendar average | 805 | 45,841 | 0 % | 0 % | 0 % |
-| Forecast 30 days ahead (P50) | 649 | 42,233 | 8 % | 23 % | 2.0 % |
-| Forecast 1 day ahead (P50) | 646 | 43,082 | 6 % | 18 % | 2.0 % |
-| **Forecast 1 day ahead (P90)** | 1,246 | **27,508** | **40 %** | **117 %** | 6.4 % |
-| Perfect knowledge | 0 | 30,121 | 34 % | 100 % | 4.0 % |
+| Forecast 30 days ahead (P50) | 649 | 41,852 | 9 % | 18 % | 0.5 % |
+| Forecast 1 day ahead (P50) | 646 | 42,173 | 8 % | 16 % | 0.5 % |
+| **Forecast 1 day ahead (P90)** | 1,246 | **20,182** | **56 %** | **115 %** | 3.8 % |
+| Perfect knowledge | 0 | 23,586 | 49 % | 100 % | 2.2 % |
 
-Season total difference with a paired bootstrap 95 % interval over nights: P90 advice vs no advice −18,333
-person-h [−40,361, −2,489]; P90 vs P50 advice −15,574 [−34,178, −2,107]; perfect vs no advice −15,720
-[−36,854, −2,303]. Queues form on only ~10 nights a season, so per-night tests have little power (Wilcoxon p ≈ 0.03–0.1).
+Paired bootstrap 95 % intervals over nights are in `tests.json` (P90 vs median advice and perfect vs no advice
+both exclude 0). Queues form on only a few nights a season, so per-night tests have little power.
 
-**Reading:** a smaller forecast error does not by itself give better control. The median forecast is too low on
-exactly the rare peak nights, so the advice does not trigger; the P90 forecast errs on the safe side and beats
-even "perfect knowledge of the total" (which still misjudges where in the night people start), at the cost of
-moving 6 % of pilgrims instead of 4 %. This is why officers plan on the busy case (decisions.md, 16 Oct 2026),
-and it is a result about **decision-focused** forecast evaluation, not only accuracy.
+**Reading (unchanged by the re-run, stronger):** a smaller forecast error does not by itself give better control.
+The median forecast is too low on exactly the rare peak nights, so the advice does not trigger; the P90 forecast
+errs on the safe side and beats even "perfect knowledge of the total" (which still misjudges where in the night
+people start). This is why officers plan on the busy case (decisions.md, 16 Oct 2026): a result about
+**decision-focused** forecast evaluation, not only accuracy.
 
 ---
 
-> **Note (19 Oct 2026):** RQ3 and RQ4 were run with the *earlier* advice model (climb times on an empty
-> mountain, starts from 00:00, sunrise fixed at 06:00). The advice now uses crowd-dependent climb times,
-> starts from 18:00 the evening before and the real sunrise of each date (`assumptions_adams_peak.md`, N1–N7).
-> Re-run `src.control.evaluate_advisory`, `--sweep` and `src.control.evaluate_forecast_value` to update these
-> numbers (planned after PP1).
+## RQ4 – Sensitivity (`src.control.evaluate_advisory --sweep`, run `results/adams_peak/20261021_214443_advisory_sweep`)
 
-## RQ4 – Sensitivity (`src.control.evaluate_advisory --sweep`, run `results/adams_peak/20261016_112652_advisory_sweep`)
-
-Final-steps flow (people per minute; assumed 25) × share of pilgrims who follow the advice (assumed 50 %).
+Re-run 21 Oct 2026 with the current advice model. Final-steps flow (people per minute; assumed 25) × share of
+pilgrims who follow the advice (assumed 50 %). Main run (`20261021_213251_advisory`, flow 25, 50 %): start times
+alone cut waiting on the final steps by **42 %** (was 22 % with the old model), moving 2.3 % of pilgrims' starts;
+halfway checks remove all waiting on the final steps; both together cut total waiting by 44 %.
 
 Cut in waiting on the final steps from **start times alone (B)**, vs no control:
 
 | Flow (people/min) | 25 % follow | 50 % follow | 75 % follow | 100 % follow | No control: person-h |
 |---|---|---|---|---|---|
-| 15 | 19 % | 46 % | 56 % | 61 % | 220,086 |
-| 20 | 14 % | 31 % | 40 % | 44 % | 99,541 |
-| 25 | 6 % | 22 % | 25 % | 24 % | 45,649 |
-| 30 | −1 % | 2 % | 6 % | 5 % | 19,410 |
-| 35 | −8 % | −2 % | 3 % | 1 % | 8,302 |
+| 15 | 52 % | 77 % | 77 % | 73 % | 221,038 |
+| 20 | 40 % | 62 % | 66 % | 66 % | 100,125 |
+| 25 | 25 % | 42 % | 45 % | 45 % | 45,912 |
+| 30 | 11 % | 24 % | 31 % | 33 % | 19,614 |
+| 35 | −14 % | −14 % | −14 % | −14 % | 8,483 |
 
-- **Halfway checks (C, D)** remove all waiting on the final steps at every flow (in the simulator the hold is
-  obeyed perfectly; real compliance at the rest halts is an open question). Total waiting with **both (D, 50 %)**
-  is 48 % (flow 15) to 0 % (flow 35) lower than no control.
-- **Start times (B)** work when the final steps really are a bottleneck; above ~30 people/min queues are short and
-  advice changes little (small negatives are noise of a few hundred person-hours). Returns diminish beyond ~75 %
-  compliance.
-- The **flow is the number that matters most** (waiting changes 26-fold between 15 and 35 people/min): measuring
-  it on one Poya night is the most valuable field work.
+- **Halfway checks (C, D)** remove all waiting on the final steps at every flow (the hold is obeyed perfectly in the
+  simulator; real compliance at the rest halts is an open question). Total waiting with **both (D, 50 %)** is 78 %
+  (flow 15) to 31 % (flow 30) lower than no control, and no lower at flow 35.
+- **Start times (B)** work when the final steps are a real bottleneck (≤ 30 people/min). At 35 people/min queues are
+  short and the advice makes them slightly worse (−14 %, a few hundred person-hours): there the app should not advise.
+- The **flow is the number that matters most** (waiting changes 26-fold between 15 and 35 people/min): measuring it
+  on one Poya night is the most valuable field work.
 
 ---
 
@@ -340,6 +336,131 @@ improve the interior MAE by at most 3 % over no counts.
   - the weather covariates are the *observed* weather, i.e. a perfect weather forecast.
 - So nothing exists that counts or neighbours could reveal. This is finding F5 made concrete: the simulator cannot
   show the value of what the gap asks about. See `research_gap_study.md`, section 5.
+
+### RQ10 on the realistic world S1 (S2; run `results/20261021_172706_sparse_s1`, Horton Plains, 3 seeds)
+S1 adds what a calendar cannot predict: persistent busy spells, tour-bus bursts, shifted arrival peaks, route-share
+swings, incidents, and a **forecast** (not observed) weather input. Interior-segment MAE, test year 2025:
+
+| Input | Historical avg | LSTM | GRU (no graph) | ST-GNN | ST-GNN vs LSTM (Holm) |
+|---|---|---|---|---|---|
+| Every segment counted | 2.35 | 2.21 | 2.20 | **2.19** | −0.019, p = 0.002 (better) |
+| Gate counts only | 2.35 | 2.29 | 2.29 | 2.29 | +0.002, p = 1.0 (tie) |
+| No counts | 2.35 | 2.28 | 2.30 | 2.30 | +0.018, p = 0.12 (tie) |
+
+Forecasts issued during the day (10:00) with gate counts: 1.09 vs 1.07 with every segment counted.
+
+**Reading:**
+- In a world with unpredictable crowds, **counts inside the trail matter**: every segment counted beats the
+  historical average by 7 %; gate counts only by 3 % (ST-GNN vs HA, p_Holm = 0.08 – not significant).
+- **The graph now helps when counts exist**: the ST-GNN is significantly better than both the LSTM and the same
+  network without the graph (−0.013, p_Holm = 0.007). Small (≤ 1 %), but it is the first setting where the graph's
+  value is significant with counts everywhere – the default simulator had nothing for it to find.
+- **With gate counts only, the graph adds nothing**: information that never reaches the gates cannot be propagated.
+  So C1 holds only where some sections are counted; C4 (no sensor record) is feasible but leaves most of the
+  attainable gain unused. Spot counts by rangers (A4) are the cheap way to recover it – the next experiment
+  (a few counted sections + gates).
+
+## RQ11 – The same question in a realistic world (S1 + S2; `src.eval.sparse_sensors --world s1`)
+
+**Runs:** `results/20261021_172706_sparse_s1` (Horton Plains) and `results/adams_peak/20261021_220619_sparse_s1`.
+
+**The S1 world:** the simulator gets things a calendar cannot predict:
+- busier or quieter spells that last for days;
+- bus bursts;
+- a morning peak that comes earlier or later;
+- swings in the trail split;
+- incidents that slow a section;
+- models given a **weather forecast with errors** instead of the observed weather.
+
+Scored on the interior segments, 3 seeds.
+
+| Interior MAE | Horton: none | Horton: gates | Horton: all counted | Adam's Peak: none | Adam's Peak: gates | Adam's Peak: all counted |
+|---|---|---|---|---|---|---|
+| Historical average | 2.35 | 2.35 | 2.35 | 12.76 | 12.76 | 12.76 |
+| LSTM | 2.28 | 2.29 | 2.21 | **7.12** | **7.14** | 6.84 |
+| GRU (no graph) | 2.30 | 2.29 | 2.20 | 7.21 | 7.14 | 6.78 |
+| ST-GNN | 2.30 | 2.29 | **2.19** | 7.21 | 7.19 | **6.73** |
+
+Forecasts made during the day: rest-of-day MAE at 08:00, Adam's Peak, ST-GNN:
+
+| Counts the model sees | MAE |
+|---|---|
+| None | 4.90 |
+| Gates only | 4.87 |
+| Every segment | 4.24 |
+
+**Paired tests (Holm), ST-GNN vs the other models:**
+- **Every segment counted:** better than the LSTM at both parks (−0.02, p = 0.002 Horton; −0.11, p = 0.003 Adam's Peak). Better than the GRU without graph at both (p = 0.007 / 0.018).
+- **Gates only or no counts:** no significant difference, or slightly worse.
+
+**Over-capacity F1:**
+
+| Park | Range across models and settings | Best |
+|---|---|---|
+| Horton | 0.61–0.64 | The historical average ties the models |
+| Adam's Peak | 0.74–0.76 | The ST-GNN is highest in every setting |
+
+**Reading:**
+1. **The world now has something to learn, and counts on the trail help:** −4 % (Horton) and −6 % (Adam's Peak)
+   MAE vs no counts, and −13 % during the day at Adam's Peak.
+2. **With those counts the graph adds a small, significant gain at both parks.** This is the first result where the
+   ST-GNN beats both non-graph models on held-out time at Adam's Peak. Claim C1 holds *when segments are counted*.
+3. **Gate counts do not carry into the trail** (≤ 1 % at any hour). An entry count says how many came, not where
+   the day's deviations are: incidents, route swings, slow sections. So a gate-only phone update (A1 as planned) is
+   **not worth building**. What helps is counting *inside* the trail, which the rangers' spot counts (A4) provide.
+
+### RQ11b – A few counted sections: does the graph carry them to the rest? (S4b)
+
+**Runs:** `results/20261022_042402_sparse_s1` (Horton) and `results/adams_peak/20261022_054232_sparse_s1`.
+
+**Setup:**
+- Counted sections ("spot"):
+  - Horton: the 2 gates and 5 viewpoints (7 of 48);
+  - Adam's Peak: the 4 gates, the summit and the halfway checkpoints (9 of 57).
+
+  These are places where a ranger can stand and count (A4).
+- Scored on the **uncounted** interior sections: 41 at Horton, 48 at Adam's Peak.
+- Compared with the RQ11 models on the same sections.
+
+MAE on uncounted sections, mean of 3 seeds (day-ahead / issued at 08:00):
+
+| Counts the model sees | Horton: LSTM | Horton: GRU (no graph) | Horton: ST-GNN | Adam's Peak: LSTM | Adam's Peak: GRU (no graph) | Adam's Peak: ST-GNN |
+|---|---|---|---|---|---|---|
+| None | 1.76 / 1.50 | 1.78 / 1.51 | 1.78 / 1.52 | 5.45 / 3.29 | 5.52 / 3.30 | 5.50 / 3.31 |
+| Gates only | 1.77 / 1.51 | 1.78 / 1.51 | 1.78 / 1.51 | 5.47 / 3.28 | 5.45 / 3.28 | 5.48 / 3.29 |
+| **Gates + spots** | 1.77 / 1.51 | 1.79 / 1.52 | **1.75 / 1.49** | 5.51 / 3.31 | 5.46 / 3.26 | **5.28 / 3.13** |
+| Every section | 1.71 / 1.46 | 1.72 / 1.46 | 1.70 / 1.45 | 5.32 / 3.03 | 5.26 / 2.96 | 5.23 / 2.97 |
+
+Paired tests (Holm), ST-GNN vs the other models in the spot setting, interior sections:
+- **Horton:** −0.02 vs LSTM (p = 0.002); −0.03 vs GRU without graph (p < 0.001).
+- **Adam's Peak:** −0.25 vs LSTM (p < 10⁻⁵); −0.20 vs GRU without graph (p < 10⁻⁴).
+
+**Reading:** this is the research gap's own condition: a sparse, offline trail graph with a handful of counts.
+- **Only the graph model uses a few counts to improve the sections nobody counts.** The LSTM and the GRU without
+  graph do not improve on uncounted sections when spots are counted, because they have no way to pass a count to a
+  neighbour.
+- **The ST-GNN does improve:**
+  - Horton: −1.7 %, recovering about a third of the gain from counting every section;
+  - Adam's Peak: −4 %, recovering **about 80 %** of that gain with 9 of 57 sections counted.
+- **Claims C1 and C4 are supported here** (simulation; field check in December). It also makes the A4 spot counts
+  a model input, not only a check.
+
+## RQ12 – A calibrated chance of over-capacity (S3; `src.eval.uncertainty`)
+
+Same S1 runs, seed 42, in folder `uncertainty/`.
+
+**Brier score:** 0.007 at both parks, against 0.014 (Horton) and 0.022 (Adam's Peak) for the base rate. So the
+chance is informative.
+
+**Alert on the chance, threshold chosen on the validation year (0.25–0.40), vs the "forecast > capacity" rule:**
+
+| Park | Recall: point rule → chance | F1 change |
+|---|---|---|
+| Horton | 0.49–0.54 → 0.58–0.65 | +0.01 to +0.03 for every model and setting |
+| Adam's Peak | Up for gate / zero, e.g. GRU 0.66 → 0.81 | +0.00 to +0.02 |
+
+**Reading:** part of the peaks that point forecasts miss (G3) are caught when the alert uses the calibrated chance.
+This is what the app now shows per section (A5).
 
 ## RQ9 – Does the forecast make the daily quota better than a static one? (G2; `src.control.evaluate_quota`)
 

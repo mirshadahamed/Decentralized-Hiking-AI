@@ -23,7 +23,7 @@ that show it.
 | FR9 | Let rangers record spot counts offline and compare them with the forecast | `src/serve/field_counts.py`, `count_screen.dart`, `count_store.dart` | `test_field_counts` (3 tests); Flutter `ranger counts walkers with no signal`, `officer forecast check` | The park's first sensor record; feeds RQ7 | Done |
 | FR10 | Show the chance that a section goes over capacity, not only a number | `src/eval/uncertainty.py`, `src/edge/pack.py` (`crowd_calibration`) | `test_uncertainty::test_calibration_is_monotone_and_matches_rates` | Calibrated on the validation year | Done |
 | FR11 | Give a 2–90-day outlook with a range and suggestions (quieter day / time / trail) | `src/planning/` | `test_planning` (4 tests incl. no information after the issue date) | Lead-time backtest | Done |
-| FR12 | Adam's Peak: recommended start times and halfway holds without tickets | `src/control/advisory.py` | `test_adams_peak`, `test_api_adams_peak` | −22 % waiting (start times); final steps cleared (both) | Done |
+| FR12 | Adam's Peak: recommended start times and halfway holds without tickets | `src/control/advisory.py` | `test_adams_peak`, `test_api_adams_peak` | −42 % waiting (start times); final steps cleared (both) | Done |
 | FR13 | Officer records: visitors per trail and day, past / today / future, CSV | `src/serve/records.py`, `records_screen.dart` | `test_records` (5 tests) | – | Done |
 
 ## Non-functional requirements
