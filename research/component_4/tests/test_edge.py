@@ -30,11 +30,13 @@ def test_pack_rebuilds_the_exact_model_inputs(trained):
     i = pack["inputs"]
     occ, cp, cf, st = (np.array(i[k]) for k in ("occupancy_past", "covariates_past", "covariates_future", "static"))
     L, N = occ.shape
-    x_past = np.concatenate([occ[..., None], np.ones((L, N, 1)), np.broadcast_to(cp[:, None], (L, N, cp.shape[1])),
+    sensed = np.array(i["sensed"], bool)                   # the gates only, for the deployed sensor-sparse model (G6)
+    assert (occ[:, ~sensed] == 0).all()                    # counts the park does not have are not shipped
+    x_past = np.concatenate([occ[..., None], np.broadcast_to(sensed[None, :, None].astype(float), (L, N, 1)), np.broadcast_to(cp[:, None], (L, N, cp.shape[1])),
                              np.broadcast_to(st[None], (L, N, st.shape[1]))], -1)
     x_fut = np.concatenate([np.broadcast_to(cf[:, None], (cf.shape[0], N, cf.shape[1])),
                             np.broadcast_to(st[None], (cf.shape[0], N, st.shape[1]))], -1)
-    xp, xf, _, _ = data.batch(np.array([origin]), np.ones(data.N, bool), scale)
+    xp, xf, _, _ = data.batch(np.array([origin]), sensed, scale)
     assert np.allclose(x_past, xp.numpy()[0], atol=1e-5) and np.allclose(x_fut, xf.numpy()[0], atol=1e-5)
     # the rounded weights in the pack still give the same forecast (to a hundredth of a person)
     w = {k: torch.tensor(v["data"], dtype=torch.float32).reshape(v["shape"]) for k, v in pack["model"]["weights"].items()}
@@ -42,6 +44,7 @@ def test_pack_rebuilds_the_exact_model_inputs(trained):
                         hidden=pack["model"]["hidden"], use_graph=True,
                         rnn=pack["model"]["rnn"])
     clone.load_state_dict(w, strict=False)
+    clone.sensed = sensed
     assert np.abs(torch_forecast(clone.eval(), data, origin, scale) - torch_forecast(model, data, origin, scale)).max() < 0.01
 
 

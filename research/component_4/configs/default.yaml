@@ -193,6 +193,7 @@ live:                     # live mode: real dates, refreshed every evening (docs
   forecast_days: 16       # Open-Meteo forecast horizon; climatology after this
   calendar_extra_days: 120
   dwc_totals_csv: data/live/dwc_daily_totals.csv   # optional: date,trail,visitors (real counts replace simulated)
+  model_input: gate         # G6: the deployed ST-GNN reads only the gate counts (RQ10); "all" = every segment
 
 api:
   allow_time_override: true   # DEMO ONLY: staff may pass a time ('at') for check-in / walk-ins / live status
