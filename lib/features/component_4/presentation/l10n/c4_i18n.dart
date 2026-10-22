@@ -151,6 +151,7 @@ const Map<String, Map<String, String>> _strings = {
   'all': {'en': 'All', 'si': 'සියල්ල', 'ta': 'அனைத்தும்'},
   'kind_national_park': {'en': 'National park', 'si': 'ජාතික වනෝද්‍යානය', 'ta': 'தேசிய பூங்கா'},
   'kind_pilgrimage': {'en': 'Pilgrimage', 'si': 'වන්දනා ස්ථානය', 'ta': 'யாத்திரைத் தலம்'},
+  'kind_safari': {'en': 'Safari', 'si': 'සෆාරි', 'ta': 'சஃபாரி'},
   'no_match': {'en': 'No destinations match.', 'si': 'ගැළපෙන ගමනාන්ත නැත.', 'ta': 'பொருந்தும் இடங்கள் இல்லை.'},
   'trails_n': {'en': '{n} trails', 'si': 'මංපෙත් {n}', 'ta': '{n} பாதைகள்'},
   'routes_n': {'en': '{n} routes', 'si': 'මාර්ග {n}', 'ta': '{n} வழிகள்'},

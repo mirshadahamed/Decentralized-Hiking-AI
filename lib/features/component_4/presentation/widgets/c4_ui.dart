@@ -151,6 +151,7 @@ class ErrorRetry extends StatelessWidget {
 IconData kindIcon(String kind) => switch (kind) {
       'pilgrimage' => Icons.temple_buddhist_outlined,
       'national_park' => Icons.forest_outlined,
+      'safari' => Icons.directions_car_outlined,
       'waterfall' => Icons.water_outlined,
       _ => Icons.landscape_outlined,
     };

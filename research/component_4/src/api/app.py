@@ -115,7 +115,8 @@ def health():
 def status():
     s = published("status.json")
     return {k: v for k, v in s.items() if k != "alerts"} | {
-        "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required"}
+        "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required",
+        "sightings": bool(CFG["simulator"].get("sightings"))}
 
 
 @app.get("/destination", tags=["public"])
@@ -364,6 +365,61 @@ def add_spot_count(body: SpotCountIn, user: dict = Depends(role("ranger"))):
 def day_counts(day: date, user: dict = Depends(role("ranger"))):
     from src.serve.field_counts import counts
     return {"day": day.isoformat(), "counts": counts(day.isoformat(), day.isoformat())}
+
+
+class SightingIn(BaseModel):
+    day: date
+    seg_id: int
+    time: str = Slot
+    species: str = Field(default="leopard", max_length=40)
+    client_id: str | None = Field(default=None, max_length=64)
+
+
+class SightingEndIn(BaseModel):
+    time: str = Slot
+
+
+def require_sightings():
+    if not CFG["simulator"].get("sightings"):
+        raise HTTPException(400, "Sighting management is used at safari parks")
+
+
+@app.post("/sightings", tags=["ranger"], status_code=201)
+def report_sighting(body: SightingIn, user: dict = Depends(role("ranger"))):
+    """A ranger / tracker reports an animal by the track (safari parks). Re-sending the same client_id stores it once."""
+    from src.serve.sightings import add
+    require_sightings()
+    h, m = (int(x) for x in body.time.split(":"))
+    try:
+        sid = add(body.day.isoformat(), body.seg_id, h * 60 + m, body.species, user["username"], body.client_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    auth.audit(user["username"], "sighting", f"{body.day} seg {body.seg_id} {body.time} {body.species}")
+    return sighting_status(body.day, time(h, m), user) | {"id": sid}
+
+
+@app.post("/sightings/{sighting_id}/end", tags=["ranger"])
+def end_sighting(sighting_id: int, body: SightingEndIn, user: dict = Depends(role("ranger"))):
+    from src.serve.sightings import end
+    require_sightings()
+    h, m = (int(x) for x in body.time.split(":"))
+    if not end(sighting_id, h * 60 + m):
+        raise HTTPException(404, "No open sighting with that id")
+    auth.audit(user["username"], "sighting_end", f"{sighting_id} {body.time}")
+    return {"ended": sighting_id}
+
+
+@app.get("/sightings/{day}", tags=["ranger"])
+def sighting_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """Active sightings with the rule (at most N jeeps stopped, M minutes each) and the jeeps near each one,
+    estimated from the gate entries; when it is crowded, which circuits avoid it."""
+    from src.serve.sightings import advice
+    require_sightings()
+    now = when(datetime.combine(day, at) if at else None)
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    return advice(CFG, d, now.hour * 60 + now.minute, rain)
 
 
 @app.get("/admin/forecast-check", tags=["officer"])

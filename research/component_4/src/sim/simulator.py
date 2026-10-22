@@ -37,7 +37,32 @@ def daily_demand(cal: pd.DataFrame, precip_day: np.ndarray, p: dict, rng) -> np.
         noise = np.exp(e - sd ** 2 / 2)
     else:
         noise = rng.lognormal(0.0, p["daily_noise_sd"], len(cal))
-    return p["base_daily_visitors"] * mult * rain * noise
+    return p["base_daily_visitors"] * mult * rain * noise * (1 - closed_days(cal, p))
+
+
+def closed_days(cal: pd.DataFrame, p: dict) -> np.ndarray:
+    """1 on days the park is closed every year (Yala: drought closure), from simulator.closed [["MM-DD", "MM-DD"]]."""
+    md = cal.index.strftime("%m-%d")
+    out = np.zeros(len(cal))
+    for a, b in p.get("closed", []):
+        out[(md >= a) & (md <= b)] = 1.0
+    return out
+
+
+def day_sightings(p: dict, rng, hotspot_weight: np.ndarray) -> list:
+    """Wildlife sightings that stop jeeps (safari parks, simulator.sightings): (segment, start min, end min).
+    A leopard by the road holds every passing jeep for a while; where and when is not in any calendar."""
+    c = p.get("sightings")
+    if not c:
+        return []
+    w = hotspot_weight / hotspot_weight.sum()
+    out = []
+    for _ in range(rng.poisson(c["per_day"])):
+        lo, hi = c["windows_h"][int(rng.integers(len(c["windows_h"])))]
+        start = rng.uniform(lo, hi) * 60
+        out.append((int(rng.choice(len(w), p=w)), start, start + rng.lognormal(np.log(c["duration_min"][0]),
+                                                                              c["duration_min"][1])))
+    return out
 
 
 def realism(p: dict) -> dict | None:
@@ -71,6 +96,8 @@ def day_events(p: dict, rng, n_segments: int, main_trail: str) -> dict:
 
 
 def sample_groups(n_visitors: int, p: dict, rng) -> np.ndarray:
+    if n_visitors <= 0:                               # closed day (no draws, so other parks' streams are unchanged)
+        return np.zeros(0, dtype=int)
     mean = 1 + p["group_size_poisson_mean"]
     sizes = 1 + rng.poisson(p["group_size_poisson_mean"], int(n_visitors / mean * 1.3) + 5)
     keep = np.searchsorted(np.cumsum(sizes), n_visitors) + 1
@@ -106,6 +133,14 @@ class TrailSimulator:
         self.dwell = {int(i): params["dwell_minutes"][poi]
                       for i, poi in segments.poi.items() if poi in params["dwell_minutes"]}
         self.setup_bottleneck(segments)
+        # where sightings happen: segments near the listed hotspots weigh more (safari parks only)
+        hot = set((params.get("sightings") or {}).get("hotspots", []))
+        self.hotspot_weight = np.where(segments.poi.fillna("").isin(hot), (params.get("sightings") or {}).get(
+            "hotspot_weight", 1.0), 1.0).astype(float)
+        self.sightings = []          # set per day by simulate_day
+        # sighting management (None = every passing jeep stops): {"cap_jeeps": K, "rotation_min": R}
+        self.sighting_policy = (params.get("sightings") or {}).get("policy")
+        self.last_sighting_stats = {}
 
     def option_probs(self, route_share=None):
         share = dict(route_share or self.p["route_share"])
@@ -118,11 +153,15 @@ class TrailSimulator:
         probs = np.array(probs)
         return probs / probs.sum()
 
-    def _walk(self, walk, arrive, size, speed, dwell, precip_h, crowd, diff, visited=None, hold=None):
+    def _walk(self, walk, arrive, size, speed, dwell, precip_h, crowd, diff, visited=None, hold=None, stops=None,
+              record=None):
         """Walk the steps of `walk` from times `arrive`. diff=None: only compute times (no occupancy recorded).
-        hold: {segment: minutes per group} extra waiting on that segment (halfway checks)."""
+        hold: {segment: minutes per group} extra waiting on that segment (halfway checks).
+        stops: {segment: [(start, end, minutes per group)]} sightings that hold groups arriving in [start, end).
+        record: {segment: array} filled with each group's first arrival time on that segment."""
         p, t = self.p, arrive.copy()
         visited = set() if visited is None else visited
+        stops = stops or {}
         for s, d in walk:
             hour = np.clip((t // 60).astype(int), 0, 23)
             rain = np.where(precip_h[hour] >= p["rain_heavy_mm"], p["rain_heavy_speed"],
@@ -132,6 +171,10 @@ class TrailSimulator:
                 dur = dur + dwell[s]
             if hold is not None and s in hold and s not in visited:
                 dur = dur + hold[s]
+            for a, b, stop in stops.get(s, ()):
+                dur = dur + np.where((t >= a) & (t < b), stop, 0.0)
+            if record is not None and s in record and s not in visited:
+                record[s] = t.copy()
             visited.add(s)
             if diff is not None:
                 start = np.clip(np.round(t).astype(int), 0, MIN_PER_DAY)
@@ -241,6 +284,45 @@ class TrailSimulator:
             option = np.concatenate([option, np.full(len(g), self.option_of_trail(b["trail"]))])
         return size, arrive, option
 
+    def _manage_sightings(self, stops, size, arrive, option, speed, dwell, precip_h):
+        """Ranger at the sighting: first come, first served, at most `cap_jeeps` stopped at once, each for at most
+        `rotation_min`; a jeep that finds it full is moved on (no stop). Arrival times come from a dry run of the day
+        without sighting stops (an approximation: earlier stops are not in it)."""
+        pol = self.sighting_policy
+        cap, rot = int(pol.get("cap_jeeps") or 10 ** 9), float(pol.get("rotation_min") or np.inf)
+        G = len(size)
+        arr = {s: np.full(G, np.inf) for s in stops}
+        ones = np.ones((self.S, 24))
+        for k, (_, walk) in enumerate(self.options):
+            m = option == k
+            if not m.any():
+                continue
+            rec = {s: np.full(int(m.sum()), np.inf) for s in stops}
+            self._walk(walk, arrive[m], size[m], speed[m], {s: v[m] for s, v in dwell.items()}, precip_h, ones, None,
+                       record=rec)
+            for s in stops:
+                arr[s][m] = rec[s]
+        out, viewed, moved = {}, 0, 0
+        for s, items in stops.items():
+            out[s] = []
+            for a, b, stop in items:
+                new = np.zeros(G)
+                busy_until = []                                      # end times of the jeeps stopped now
+                for g in np.argsort(arr[s], kind="stable"):
+                    t = arr[s][g]
+                    if not (a <= t < b):
+                        continue
+                    busy_until = [e for e in busy_until if e > t]
+                    if len(busy_until) < cap:
+                        new[g] = min(stop[g], rot)
+                        busy_until.append(t + new[g])
+                        viewed += 1
+                    else:
+                        moved += 1
+                out[s].append((a, b, new))
+        self.last_sighting_stats = {"viewed": viewed, "moved_on": moved}
+        return out
+
     def option_of_trail(self, trail: str, reverse: bool = False) -> int:
         return next(k for k, ((t, _), rev) in enumerate(zip(self.options, self.reverse))
                     if t == trail and rev == (reverse and trail in self.p.get("reversible_routes", [])))
@@ -261,6 +343,14 @@ class TrailSimulator:
             arrive[m] += p.get("route_start_offset_min", {}).get(trail, 0)
         speed = rng.lognormal(0.0, p["walker_speed_sd"], G)
         dwell = {s: rng.lognormal(np.log(med), sd, G) for s, (med, sd) in self.dwell.items()}
+        stops = {}
+        if self.sightings:
+            med, sd = p["sightings"]["stop_min"]
+            for s, a, b in self.sightings:
+                stops.setdefault(s, []).append((a, b, rng.lognormal(np.log(med), sd, G)))
+
+        if stops and self.sighting_policy is not None:      # {} = count only, every passing jeep stops
+            stops = self._manage_sightings(stops, size, arrive, option, speed, dwell, precip_h)
 
         if hold is None:
             hold = bool((p.get("bottleneck") or {}).get("hold", False))
@@ -277,7 +367,8 @@ class TrailSimulator:
                     m = option == k
                     if m.any():
                         finish[m] = self._walk(walk, arrive[m], size[m], speed[m],
-                                               {s: v[m] for s, v in dwell.items()}, precip_h, crowd, diff)
+                                               {s: v[m] for s, v in dwell.items()}, precip_h, crowd, diff,
+                                               stops={s: [(a, b, v[m]) for a, b, v in x] for s, x in stops.items()})
             per_min = np.cumsum(diff, axis=1)[:, :MIN_PER_DAY]
             hourly = per_min.reshape(self.S, 24, 60).mean(axis=2)
             density = hourly / self.length[:, None]
@@ -291,6 +382,7 @@ class TrailSimulator:
         route_share overrides the config split (used for what-if diversion experiments).
         With simulator.realism on (S1), the day also gets its own events (day_events)."""
         ev = day_events(self.p, rng, self.S, self.trails[0]) if realism(self.p) else {}
+        self.sightings = day_sightings(self.p, rng, self.hotspot_weight)
         size, gate, option = self.sample_day(n_visitors, rng, route_share, ev)
         hourly, _, duration = self.simulate_groups(size, gate, option, precip_h, rng, slow=ev.get("slow"))
         trail_of = np.array([self.options[k][0] for k in option])

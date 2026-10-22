@@ -10,6 +10,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/capacity_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/sightings_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/ranger_home.dart';
@@ -929,6 +930,25 @@ void main() {
     expect((c.segId, c.count, c.time), (3, 7, '10:15'));
   });
 
+  testWidgets('safari sightings: report a leopard, see the jeep rule and the circuits that avoid it, end it', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final api = _SightingApi();
+    await t.pumpWidget(wrap(Scaffold(body: SightingsTab(now: () => DateTime(2026, 11, 10, 7, 10))), api));
+    await t.pumpAndSettle();
+    expect(find.text('No active sightings'), findsOneWidget);
+    await t.tap(find.byKey(const Key('sighting_report')));
+    await t.pumpAndSettle();
+    expect(api.reported, (12, '07:10', 'leopard'));
+    expect(find.text('Leopard at Heenwewa Tank · since 07:10'), findsOneWidget);
+    expect(find.text('About 14 jeeps near · at most 10 stopped, 10 min each'), findsOneWidget);
+    expect(find.textContaining('send new jeeps on Southern tanks'), findsOneWidget);
+    await t.tap(find.text('Animal gone'));
+    await t.pumpAndSettle();
+    expect(find.text('No active sightings'), findsOneWidget);
+  });
+
   testWidgets('gate advice: hold entries to a trail or send groups elsewhere; all clear when quiet', (t) async {
     final busy = GateAdvice.fromJson({
       'time': '08:00', 'inside': 480, 'basis': 'From the 40 groups through the gate so far',
@@ -1060,4 +1080,38 @@ void main() {
     expect(find.text('Plan your visit'), findsOneWidget);
     expect(find.textContaining('coming soon'), findsNWidgets(3));
   });
+}
+
+/// Safari park: one section; a sighting appears when reported and goes when ended.
+class _SightingApi extends FakeApi {
+  (int, String, String)? reported;
+  bool active = false;
+
+  Map<String, dynamic> get _json => {
+        'time': '07:10', 'note': 'estimated from the gate entries',
+        'sightings': [
+          if (active)
+            {'id': 1, 'seg_id': 12, 'place': 'Heenwewa Tank', 'since': '07:10', 'species': 'leopard', 'jeeps_near': 14,
+              'cap_jeeps': 10, 'rotation_min': 10, 'circuits_avoiding': ['Southern tanks'],
+              'advice': 'Leopard at Heenwewa Tank since 07:10: at most 10 jeeps stopped at once, 10 min each; others '
+                  'move on. About 14 jeeps near it: send new jeeps on Southern tanks.'}
+        ],
+      };
+
+  @override
+  Future<List<SegmentInfo>> segments() async =>
+      [SegmentInfo(segId: 12, name: 'Heenwewa Tank', trail: 'patanangala', trailName: 'Patanangala and Buthawa')];
+
+  @override
+  Future<SightingStatus> sightings(DateTime d, {String? at}) async => SightingStatus.fromJson(_json);
+
+  @override
+  Future<SightingStatus> reportSighting(DateTime d, int segId, String time, String species, String clientId) async {
+    reported = (segId, time, species);
+    active = true;
+    return SightingStatus.fromJson(_json);
+  }
+
+  @override
+  Future<void> endSighting(int id, String time) async => active = false;
 }

@@ -36,7 +36,9 @@ def test_gateway_lists_parks_and_forwards():
     assert parks["horton_plains"]["booking_mode"] != "advisory"
     for p in parks.values():                                    # what the trip planner needs for every destination
         assert p["kind"] and p["summary"] and p["best_time"] and p["getting_there"] and p["trails"]
-    assert {parks["adams_peak"]["kind"], parks["horton_plains"]["kind"]} == {"pilgrimage", "national_park"}
+    assert (parks["adams_peak"]["kind"], parks["horton_plains"]["kind"]) == ("pilgrimage", "national_park")
+    if "yala" in parks:
+        assert parks["yala"]["kind"] == "safari" and parks["yala"]["booking_mode"] == "required"
     assert "nallathanniya" in parks["adams_peak"]["trails"]
     assert c.get("/parks/nowhere/health").status_code == 404
     gateway.PORTS["adams_peak"] = 1                           # nothing listens there

@@ -306,11 +306,13 @@ class ServerStatus {
     this.park = 'horton_plains',
     this.site = 'Horton Plains',
     this.bookingMode = 'required',
+    this.sightings = false,
   });
 
   final DateTime today;
   final String refreshedAt, note, park, site;
   final String bookingMode; // required = slot tickets | advisory = recommended start times (pilgrim sites)
+  final bool sightings; // safari parks: rangers report wildlife sightings and manage the jeeps at them
 
   bool get isAdvisory => bookingMode == 'advisory';
 
@@ -321,6 +323,55 @@ class ServerStatus {
         park: j['park'] as String? ?? 'horton_plains',
         site: j['site'] as String? ?? 'Horton Plains',
         bookingMode: j['booking_mode'] as String? ?? 'required',
+        sightings: j['sightings'] as bool? ?? false,
+      );
+}
+
+// ---------- wildlife sightings (safari parks, /sightings/{day}) ----------
+class Sighting {
+  Sighting({
+    required this.id,
+    required this.segId,
+    required this.place,
+    required this.since,
+    required this.species,
+    required this.jeepsNear,
+    required this.capJeeps,
+    required this.rotationMin,
+    required this.advice,
+    required this.circuitsAvoiding,
+  });
+
+  final int id, segId, jeepsNear, capJeeps, rotationMin;
+  final String place, since, species, advice;
+  final List<String> circuitsAvoiding;
+
+  bool get crowded => jeepsNear > capJeeps;
+
+  factory Sighting.fromJson(Map<String, dynamic> j) => Sighting(
+        id: _int(j['id']),
+        segId: _int(j['seg_id']),
+        place: j['place'] as String? ?? '',
+        since: j['since'] as String? ?? '',
+        species: j['species'] as String? ?? '',
+        jeepsNear: _int(j['jeeps_near']),
+        capJeeps: _int(j['cap_jeeps']),
+        rotationMin: _int(j['rotation_min']),
+        advice: j['advice'] as String? ?? '',
+        circuitsAvoiding: [for (final c in j['circuits_avoiding'] as List? ?? []) '$c'],
+      );
+}
+
+class SightingStatus {
+  SightingStatus({required this.time, required this.sightings, required this.note});
+
+  final String time, note;
+  final List<Sighting> sightings;
+
+  factory SightingStatus.fromJson(Map<String, dynamic> j) => SightingStatus(
+        time: j['time'] as String? ?? '',
+        note: j['note'] as String? ?? '',
+        sightings: [for (final s in j['sightings'] as List? ?? []) Sighting.fromJson(s as Map<String, dynamic>)],
       );
 }
 

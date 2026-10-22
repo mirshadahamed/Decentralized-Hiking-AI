@@ -72,6 +72,17 @@ Remove-Item Env:C4_PARK                                    # back to Horton Plai
 Gateway: `GET /parks`, and `/parks/<park>/...` forwards to that park's API (ports 8101, 8102, …).
 Adam's Peak assumptions: `docs/assumptions_adams_peak.md`.
 
+**Yala National Park, Block 1 (jeep safaris; branch `feature/component-4-yala`).** The same pipeline with vehicles:
+jeep tracks from OSM (35 sections of ~1.2 km, 3 circuits from the Palatupana and Katagamuwa entrances), jeeps of
+~4.5 people at safari pace, morning and afternoon sessions, the annual drought closure, and **leopard-sighting jams**
+that hold every passing jeep – a bottleneck no calendar predicts. Assumptions: `docs/assumptions_yala.md`.
+```powershell
+$env:C4_PARK = "yala"
+.venv\Scripts\python.exe -m src.data.build_dataset          # graph, terrain (DEM tile N06 E081), weather, simulation
+.venv\Scripts\python.exe -m src.run_benchmark               # models (RQ1 for Yala)
+.venv\Scripts\python.exe -m src.live.refresh                # live outlook, slot plans, phone pack
+```
+
 **Adding a destination** (no app change needed: the app's trip planner lists whatever `/parks` returns):
 1. Copy `configs/parks/adams_peak.yaml` to `configs/parks/<new_id>.yaml`; set `destination` (kind, region,
    summary, elevation, best_time, getting_there, facts, accent), `area` (bbox, routes, trail names) and

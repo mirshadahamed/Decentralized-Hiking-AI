@@ -7,6 +7,7 @@ import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
 import 'count_screen.dart';
+import 'sightings_screen.dart';
 
 const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
@@ -21,6 +22,15 @@ class RangerHome extends StatefulWidget {
 
 class _RangerHomeState extends State<RangerHome> {
   DateTime? _demo; // null = real time
+  bool _sightings = false; // safari parks (Yala): the Sightings tab
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    C4Scope.of(context).status().then((s) {
+      if (mounted && s.sightings != _sightings) setState(() => _sightings = s.sightings);
+    }, onError: (_) {});
+  }
 
   DateTime get _now => _demo ?? DateTime.now();
   DateTime get _day => DateTime(_now.year, _now.month, _now.day);
@@ -37,7 +47,8 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 5,
+      key: ValueKey(_sightings),
+      length: _sightings ? 6 : 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
@@ -57,12 +68,13 @@ class _RangerHomeState extends State<RangerHome> {
               },
             ),
           ],
-          bottom: const TabBar(isScrollable: true, tabs: [
+          bottom: TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.qr_code_scanner), text: 'Check in'),
             Tab(icon: Icon(Icons.point_of_sale), text: 'Walk-ins'),
             Tab(icon: Icon(Icons.traffic), text: 'Live'),
             Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
             Tab(icon: Icon(Icons.exposure_plus_1), text: 'Count'),
+            if (_sightings) Tab(icon: Icon(Icons.pets), text: 'Sightings'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -71,6 +83,7 @@ class _RangerHomeState extends State<RangerHome> {
           _LiveTab(day: _day, now: _now, demo: _demo != null),
           const BottleneckView(), // where and when sections get crowded this week, also offline
           CountTab(now: () => _now), // A4: spot counts, the park's own sensor record
+          if (_sightings) SightingsTab(now: () => _now, demo: _demo != null), // jeeps at wildlife sightings
         ]),
       ),
     );

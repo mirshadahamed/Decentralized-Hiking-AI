@@ -236,6 +236,18 @@ class C4Api {
   Future<List<SegmentInfo>> segments() async =>
       [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
 
+  /// Ranger (safari parks): active wildlife sightings with the rule and the jeeps near each one.
+  Future<SightingStatus> sightings(DateTime d, {String? at}) async =>
+      SightingStatus.fromJson(await _send('GET', '/sightings/${day(d)}', query: at == null ? null : {'at': at}));
+
+  /// Ranger: report an animal by the track; returns the updated list.
+  Future<SightingStatus> reportSighting(DateTime d, int segId, String time, String species, String clientId) async =>
+      SightingStatus.fromJson(await _send('POST', '/sightings',
+          body: {'day': day(d), 'seg_id': segId, 'time': time, 'species': species, 'client_id': clientId}));
+
+  /// Ranger: the animal has gone.
+  Future<void> endSighting(int id, String time) async => _send('POST', '/sightings/$id/end', body: {'time': time});
+
   /// Ranger: send one spot count (A4). Re-sending the same clientId is harmless (stored once).
   Future<void> addCount(SpotCount c) async => _send('POST', '/counts', body: c.toJson());
 
