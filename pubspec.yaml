@@ -68,7 +68,7 @@ flutter:
   assets:
     - assets/images/
     - assets/models/
-    - assets/demo/component_2/
+    - assets/demo/component_2/ # Catalog and reviewed, demo-only photos.
     - assets/maps/
     - assets/knowledge/
 

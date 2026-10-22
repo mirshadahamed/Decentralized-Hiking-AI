@@ -25,13 +25,23 @@ class AssetComponent2DemoPhotoRepository
     return entries
         .map((entry) {
           final json = entry as Map<String, dynamic>;
-          final assetPath = json['asset'] as String;
+          if (json['demo_only'] != true) {
+            throw const FormatException(
+              'Component 2 sample catalog entries must be demo-only.',
+            );
+          }
+          final fileName = json['file_name'] as String;
+          final assetPath = 'assets/demo/component_2/$fileName';
           return Component2DemoPhoto(
             id: json['id'] as String,
-            title: json['title'] as String,
-            category: json['category'] as String,
+            title: json['display_title'] as String,
+            category: json['expected_development_category'] as String,
             assetPath: assetPath,
             isAvailable: availableAssets.contains(assetPath),
+            sourceDatasetOrOwner: json['source_dataset_or_owner'] as String?,
+            sourceSplit: json['source_split'] as String?,
+            originalIdentifier: json['original_identifier'] as String?,
+            licenseProvenanceNote: json['license_provenance_note'] as String,
           );
         })
         .toList(growable: false);

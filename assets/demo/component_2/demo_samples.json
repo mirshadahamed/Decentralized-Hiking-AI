@@ -1,32 +1,57 @@
 [
   {
     "id": "litter_on_trail",
-    "title": "Litter on trail",
-    "category": "Litter",
-    "asset": "assets/demo/component_2/litter_on_trail.jpg"
+    "file_name": "litter_on_trail.jpg",
+    "display_title": "Litter on trail",
+    "expected_development_category": "Litter / waste",
+    "source_dataset_or_owner": null,
+    "source_split": null,
+    "original_identifier": null,
+    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
+    "demo_only": true
   },
   {
     "id": "litter_multiple",
-    "title": "Several pieces of litter",
-    "category": "Litter",
-    "asset": "assets/demo/component_2/litter_multiple.jpg"
+    "file_name": "litter_multiple.jpg",
+    "display_title": "Several pieces of litter",
+    "expected_development_category": "Multiple litter items",
+    "source_dataset_or_owner": null,
+    "source_split": null,
+    "original_identifier": null,
+    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
+    "demo_only": true
   },
   {
     "id": "rock_on_trail",
-    "title": "Rock on trail",
-    "category": "Rock",
-    "asset": "assets/demo/component_2/rock_on_trail.jpg"
+    "file_name": "rock_on_trail.jpg",
+    "display_title": "Rock on trail",
+    "expected_development_category": "Rock / obstacle",
+    "source_dataset_or_owner": null,
+    "source_split": null,
+    "original_identifier": null,
+    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
+    "demo_only": true
   },
   {
     "id": "fallen_log",
-    "title": "Fallen log",
-    "category": "Log / branch",
-    "asset": "assets/demo/component_2/fallen_log.jpg"
+    "file_name": "fallen_log.jpg",
+    "display_title": "Fallen log",
+    "expected_development_category": "Fallen tree / log",
+    "source_dataset_or_owner": null,
+    "source_split": null,
+    "original_identifier": null,
+    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
+    "demo_only": true
   },
   {
     "id": "clean_trail",
-    "title": "Clean trail",
-    "category": "Clean trail",
-    "asset": "assets/demo/component_2/clean_trail.jpg"
+    "file_name": "clean_trail.jpg",
+    "display_title": "Clean trail",
+    "expected_development_category": "Clean trail / hard negative",
+    "source_dataset_or_owner": null,
+    "source_split": null,
+    "original_identifier": null,
+    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
+    "demo_only": true
   }
 ]

@@ -5,6 +5,10 @@ class Component2DemoPhoto {
     required this.category,
     required this.assetPath,
     required this.isAvailable,
+    this.sourceDatasetOrOwner,
+    this.sourceSplit,
+    this.originalIdentifier,
+    this.licenseProvenanceNote = '',
   });
 
   final String id;
@@ -12,4 +16,8 @@ class Component2DemoPhoto {
   final String category;
   final String assetPath;
   final bool isAvailable;
+  final String? sourceDatasetOrOwner;
+  final String? sourceSplit;
+  final String? originalIdentifier;
+  final String licenseProvenanceNote;
 }
