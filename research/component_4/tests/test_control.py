@@ -17,6 +17,13 @@ def ec():
     return build_control()
 
 
+def test_forecast_quota_never_above_classic(ec):
+    classic = ec.daily_quota(0.2)
+    assert ec.daily_quota(0.2, forecast=np.zeros((24, len(ec.seg)))) == classic
+    crowded = ec.daily_quota(0.2, forecast=np.full((24, len(ec.seg)), 1e4))
+    assert all(crowded[t] <= classic[t] for t in classic) and sum(crowded.values()) < sum(classic.values())
+
+
 @pytest.mark.parametrize("rain", [0.0, 0.5])
 def test_plan_never_exceeds_planned_capacity(ec, rain):
     quota = ec.daily_quota(rain)
