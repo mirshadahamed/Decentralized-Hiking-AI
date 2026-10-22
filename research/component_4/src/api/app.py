@@ -447,9 +447,9 @@ def live_forecast(day: date, at: time | None = None, user: dict = Depends(role("
     try:
         return update_today(ctx(), day, now.hour * 60 + now.minute, counts(day.isoformat(), day.isoformat()))
     except LookupError as e:
-        raise HTTPException(503, str(e))
+        raise HTTPException(503, str(e)) from e
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
 
 
 @app.get("/live/{day}", tags=["ranger"])

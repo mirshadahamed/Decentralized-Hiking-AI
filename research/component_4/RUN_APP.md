@@ -1,4 +1,4 @@
-# How to run the Component 4 app (Horton Plains + Adam's Peak)
+# How to run the Component 4 app (Horton Plains, Adam's Peak, Yala)
 
 Two programs run at the same time:
 1. **The park servers** (Python): forecasts, bookings, staff logins; one per park behind one address. Terminal 1.
@@ -95,6 +95,18 @@ switches English / සිංහල / தமிழ்.
    waits on the phone ("1 waiting to be sent") and is sent with **Send now** when the signal is back.
    Back on **Live**, the card *Rest of today · updated with N counts* shows the sections now expected over capacity.
 6. **Crowding**: on each section the **% chance** that it is really over capacity at that hour.
+
+**Yala visitor** (Plan your visit → filter **Safari** → *Yala National Park (Block 1)*)
+1. Overview: three safari circuits from the Palatupana and Katagamuwa entrances, the quiet days, the annual closure.
+2. Calendar → a day → expected visitors, the safe limit per circuit, suggestions → book a jeep slot (06:00 morning or
+   14:00–15:30 afternoon) exactly as at Horton Plains.
+
+**Yala ranger: wildlife sightings** (choose Yala → **Staff** → log in with a **Yala** ranger account, setup step 5)
+1. Press **Now** → demo time, e.g. 10 Nov 2026 07:10. Sell a few walk-ins on *Patanangala and Buthawa* first
+   (Walk-ins tab) so jeeps are on the tracks.
+2. **Sightings** tab (only at Yala) → pick a section (e.g. *Heenwewa Tank*), species **leopard** → **Report at 07:10**.
+3. The card shows the rule (*at most 10 jeeps stopped, 10 min each*), the jeeps estimated near it from the gate, and
+   – when it is crowded – which circuits avoid it. **Animal gone** ends it.
 
 **Park officer** (log out, log in as `officer1`)
 1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather
@@ -227,7 +239,10 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
    .venv\Scripts\python.exe -m src.api.users add --username ranger1 --role ranger
    Remove-Item Env:C4_PARK
    ```
+   Yala has its own accounts too: the same lines with `$env:C4_PARK = "yala"`.
 6. Adam's Peak data (once, ~10 min): `$env:C4_PARK = "adams_peak"; .venv\Scripts\python.exe -m src.data.build_dataset`
+7. Yala data (once, ~10 min): `$env:C4_PARK = "yala"; .venv\Scripts\python.exe -m src.data.build_dataset`, then
+   `.venv\Scripts\python.exe -m src.run_benchmark` (model, a few hours) and `.venv\Scripts\python.exe -m src.live.refresh`.
 
 ---
 
@@ -247,6 +262,8 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
 | **Bookings open from tomorrow up to 90 days ahead** | Pick a day 1–90 days after the last refresh date |
 | Check-in **Too early / Too late** | Set the ranger **demo time** within 15 min of the ticket's slot |
 | **Wrong username or password, or account locked** | 5 wrong tries lock the account for 15 min. Forgot the password? Make a new account (setup step 5) |
+| Terminal 1 shows `error while attempting to bind on address ('127.0.0.1', 8101)` | An **old** `serve_all` is still running (and serving old code). Stop it: close its terminal, or `Get-CimInstance Win32_Process -Filter "Name='python.exe'" \| Where-Object CommandLine -match 'src.api' \| ForEach-Object { Stop-Process -Id $_.ProcessId }`, then start again |
+| Yala staff login fails | Yala has its own accounts: make one with `$env:C4_PARK = "yala"` (setup step 5) |
 | `address already in use` / port 8000 busy | Use another port: `--port 8001` in Terminal 1 and `C4_API=http://localhost:8001` in Terminal 2 |
 | Chrome shows an old version | Press `R` in Terminal 2, or stop (`q`) and run step 2 again |
 
