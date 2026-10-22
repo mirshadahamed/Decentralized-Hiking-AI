@@ -107,13 +107,19 @@ class _Component2HomeState extends State<Component2Home> {
             selectedSampleId: _controller.selectedSample?.id,
             onTap: _onSampleTapped,
           ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: _controller.isBusy ? null : _useSample,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Use sample'),
+          ),
           if (_controller.result case final result?) ...[
             const SizedBox(height: 22),
             _sectionHeading(context, 'Analysis results'),
             const SizedBox(height: 10),
             _ResultSummary(result: result),
             const SizedBox(height: 18),
-            _sectionHeading(context, 'Trail condition observations'),
+            _sectionHeading(context, 'Additional trail conditions'),
             const SizedBox(height: 8),
             const _UnassessedTrailConditions(),
           ],
@@ -160,6 +166,10 @@ class _Component2HomeState extends State<Component2Home> {
   }
 
   String _messageForError(Object error) {
+    if (error is Component2DemoPhotoLoadException) {
+      debugPrint('Component 2 demo photo load failed: $error');
+      return 'Unable to load this sample photo.';
+    }
     if (error is PlatformException) {
       switch (error.code) {
         case 'no_available_camera':
@@ -179,12 +189,43 @@ class _Component2HomeState extends State<Component2Home> {
   }
 
   Future<void> _onSampleTapped(Component2DemoPhoto sample) async {
-    if (!sample.isAvailable) {
-      debugPrint('Component 2 demo asset is unavailable: ${sample.assetPath}');
-      _showMessage('This sample photo is unavailable on this build.');
+    if (!sample.isAvailable || !sample.runAiInference) {
+      debugPrint(
+        'Component 2 demo asset is unavailable for inference: ${sample.assetPath}',
+      );
+      _showMessage('Unable to load this sample photo.');
       return;
     }
     await _perform(() => _controller.selectSample(sample));
+  }
+
+  Future<void> _useSample() async {
+    try {
+      final samples = await _samples;
+      final available = samples
+          .where((sample) => sample.isAvailable && sample.runAiInference)
+          .toList(growable: false);
+      final selectedId = _controller.selectedSample?.id;
+      Component2DemoPhoto? sample;
+      if (selectedId != null) {
+        for (final candidate in available) {
+          if (candidate.id == selectedId) {
+            sample = candidate;
+            break;
+          }
+        }
+      }
+      sample ??= available.isEmpty ? null : available.first;
+      if (sample == null) {
+        debugPrint('No available Component 2 demo photo can be loaded.');
+        if (mounted) _showMessage('Unable to load this sample photo.');
+        return;
+      }
+      await _onSampleTapped(sample);
+    } catch (error) {
+      debugPrint('Component 2 sample catalog failed to load: $error');
+      if (mounted) _showMessage('Unable to load this sample photo.');
+    }
   }
 
   void _showPrototypeInfo() {
@@ -798,7 +839,7 @@ class _ResultSummary extends StatelessWidget {
               label: 'Inference time',
               value: '${result.inferenceDuration.inMilliseconds} ms',
             ),
-            const _ValueRow(label: 'Processing', value: 'On-device'),
+            const _ValueRow(label: 'Processing', value: 'Processed on device'),
             const _ValueRow(label: 'Trail condition', value: 'Not assessed'),
           ],
         ),

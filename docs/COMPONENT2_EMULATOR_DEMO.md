@@ -1,57 +1,55 @@
-# Component 2 emulator photo demo
+# Component 2 PP1 emulator demo
 
-Component 2 can analyze photos selected with Android's system photo picker or
-captured with the camera. Its bundled-sample carousel reads only the
-demo-only catalog in `assets/demo/component_2/demo_samples.json`; it never
-creates detections without passing a real image to the local TFLite models.
+Component 2 runs both local LiteRT/TFLite models on-device. The five images
+below are demonstration inputs only: selecting a carousel card or pressing
+**Use sample** loads the bundled asset and sends its real bytes through the
+inference service. The result screen shows the model output, the development
+quality disclaimer, and `trail_condition: not_assessed`. Demo photos are not
+training, validation, calibration, or final-test evidence.
 
-## Current photo status
+## Local demo photos and provenance
 
-The five planned image files are not bundled yet. The local review queue does
-not show approved demo examples, TACO's local image-level license fields are
-empty, and the MJU-Waste metadata does not state a redistribution license.
-Therefore no image has been copied into the app. Each catalog entry records
-the missing provenance and remains unavailable until its image has been
-reviewed, its development split and source identifier are recorded, and its
-license permits redistribution. Demo photos are never fresh evaluation
-evidence.
+The expected workstation-local files are:
 
-The filenames expected by the catalog and helper are:
+| File | Display title | Development category |
+| --- | --- | --- |
+| `litter_on_trail.jpg` | Litter on trail | Litter / waste |
+| `litter_multiple.jpg` | Several pieces of litter | Multiple litter items |
+| `rock_on_trail.jpg` | Rock on trail | Rock / obstacle |
+| `fallen_log.jpg` | Fallen log | Fallen tree / log |
+| `clean_trail.jpg` | Clean trail | Clean trail / hard negative |
 
-| File | Intended example |
-| --- | --- |
-| `litter_on_trail.jpg` | Litter visible on a trail |
-| `litter_multiple.jpg` | Several pieces of litter |
-| `rock_on_trail.jpg` | A rock visible on a trail |
-| `fallen_log.jpg` | A fallen log or branch |
-| `clean_trail.jpg` | A manually reviewed clean-trail negative |
+The catalog records all five as demo-only and enables real AI inference. Their
+source, owner, original identifier, split, and redistribution rights are not
+confirmed. The JPGs are therefore ignored by Git and must stay local until
+redistribution permission is verified. They are included in a local Flutter
+build through the `assets/demo/component_2/` asset-directory registration, but
+they will not be present in a fresh clone. Do not copy the JPGs into a public
+commit or use them as accuracy evidence. Add them to a clone only after the
+source and rights are reviewed.
 
-## Seed an Android gallery after photos are approved
+## Run the demo
 
-Once all five approved development photos are available in
-`assets/demo/component_2/`, start the Android emulator and copy them into its
-Pictures collection:
-
-```sh
-adb -s emulator-5554 get-state
-adb -s emulator-5554 shell mkdir -p /sdcard/Pictures/Component2Demo
-for file in litter_on_trail.jpg litter_multiple.jpg rock_on_trail.jpg fallen_log.jpg clean_trail.jpg; do
-  adb -s emulator-5554 push "assets/demo/component_2/$file" "/sdcard/Pictures/Component2Demo/$file"
-  adb -s emulator-5554 shell am broadcast \
-    -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-    -d "file:///sdcard/Pictures/Component2Demo/$file"
-done
-```
-
-The repository helper performs the same allowlisted copy and checks the five
-files before writing to the emulator:
+After placing the five files in `assets/demo/component_2/`, run:
 
 ```sh
+flutter pub get
 bash scripts/component2/seed_emulator_demo_photos.sh assets/demo/component_2
+flutter run -d emulator-5554
 ```
 
-To use a connected device other than `emulator-5554`, set `ANDROID_SERIAL`.
-The gallery seed is only for testing the real `Choose photo` flow; bundled
-sample inference does not depend on it. Android's `image_picker` uses the
-system Photo Picker where available and does not need broad media-storage
-permissions.
+The seed script finds `adb` on `PATH` or under the Android SDK, verifies that
+`emulator-5554` is online and all five files exist, copies them to
+`/sdcard/Pictures/Component2Demo/`, requests media scanning, and prints the
+resulting directory listing. Set `ADB` or `ANDROID_SERIAL` to override the
+default tool path or device.
+
+The app opens on the PP1 landing page. Tap **Trail & Environmental
+Monitoring** to enter Component 2. The horizontal **Try a sample** carousel
+shows the bundled photos; tapping a card runs local model inference, and
+**Use sample** analyzes the selected card or the first available card. **Choose
+photo** opens Android's system Photo Picker, where the seeded images are also
+available. The chosen gallery photo uses the same on-device inference service.
+
+No network service is needed for Component 2 photo analysis after installation.
+Saved environmental reports remain on the device with `Saved offline` status.

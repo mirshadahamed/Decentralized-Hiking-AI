@@ -7,8 +7,9 @@
     "source_dataset_or_owner": null,
     "source_split": null,
     "original_identifier": null,
-    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
-    "demo_only": true
+    "license_provenance_note": "Source, owner, split, original identifier, and redistribution permission are unconfirmed. Local PP1 demonstration only; do not redistribute or treat as evaluation evidence.",
+    "demo_only": true,
+    "run_ai_inference": true
   },
   {
     "id": "litter_multiple",
@@ -18,8 +19,9 @@
     "source_dataset_or_owner": null,
     "source_split": null,
     "original_identifier": null,
-    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
-    "demo_only": true
+    "license_provenance_note": "Source, owner, split, original identifier, and redistribution permission are unconfirmed. Local PP1 demonstration only; do not redistribute or treat as evaluation evidence.",
+    "demo_only": true,
+    "run_ai_inference": true
   },
   {
     "id": "rock_on_trail",
@@ -29,8 +31,9 @@
     "source_dataset_or_owner": null,
     "source_split": null,
     "original_identifier": null,
-    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
-    "demo_only": true
+    "license_provenance_note": "Source, owner, split, original identifier, and redistribution permission are unconfirmed. Local PP1 demonstration only; do not redistribute or treat as evaluation evidence.",
+    "demo_only": true,
+    "run_ai_inference": true
   },
   {
     "id": "fallen_log",
@@ -40,8 +43,9 @@
     "source_dataset_or_owner": null,
     "source_split": null,
     "original_identifier": null,
-    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
-    "demo_only": true
+    "license_provenance_note": "Source, owner, split, original identifier, and redistribution permission are unconfirmed. Local PP1 demonstration only; do not redistribute or treat as evaluation evidence.",
+    "demo_only": true,
+    "run_ai_inference": true
   },
   {
     "id": "clean_trail",
@@ -51,7 +55,8 @@
     "source_dataset_or_owner": null,
     "source_split": null,
     "original_identifier": null,
-    "license_provenance_note": "Pending: no reviewed image with redistribution permission has been selected. Do not treat this demo entry as evaluation evidence.",
-    "demo_only": true
+    "license_provenance_note": "Source, owner, split, original identifier, and redistribution permission are unconfirmed. Local PP1 demonstration only; do not redistribute or treat as evaluation evidence.",
+    "demo_only": true,
+    "run_ai_inference": true
   }
 ]

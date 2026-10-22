@@ -56,7 +56,7 @@ void main() {
         'clean_trail.jpg',
       ]);
       expect(samples.every((sample) => sample.demoOnly), isTrue);
-      expect(samples.every((sample) => !sample.isAvailable), isTrue);
+      expect(samples.every((sample) => sample.runAiInference), isTrue);
       expect(
         samples.every((sample) => sample.sourceDatasetOrOwner == null),
         isTrue,
@@ -64,10 +64,21 @@ void main() {
       expect(samples.every((sample) => sample.sourceSplit == null), isTrue);
       expect(
         samples.every(
-          (sample) => sample.licenseProvenanceNote.contains('Pending'),
+          (sample) => sample.licenseProvenanceNote.contains('unconfirmed'),
         ),
         isTrue,
       );
+      for (final sample in samples.where((sample) => sample.isAvailable)) {
+        final data = await rootBundle.load(sample.assetPath);
+        final bytes = data.buffer.asUint8List(
+          data.offsetInBytes,
+          data.lengthInBytes,
+        );
+        final decoded = img.decodeImage(bytes);
+        expect(decoded, isNotNull, reason: sample.assetPath);
+        expect(decoded!.width, greaterThan(0), reason: sample.assetPath);
+        expect(decoded.height, greaterThan(0), reason: sample.assetPath);
+      }
     },
   );
 
@@ -108,6 +119,44 @@ void main() {
       controller.dispose();
     },
   );
+
+  testWidgets('Use sample selects the first available photo and analyzes it', (
+    tester,
+  ) async {
+    final analyzer = FakeAnalyzer(
+      () async => PhotoAnalysis(result: photoResult, displayImage: sourceImage),
+    );
+    const sample = Component2DemoPhoto(
+      id: 'sample_litter',
+      title: 'Litter on trail',
+      category: 'Litter',
+      assetPath: 'assets/demo/component_2/litter_on_trail.jpg',
+      isAvailable: true,
+    );
+    final controller = Component2Controller(
+      inference: analyzer,
+      demoPhotos: FakeDemoPhotos(sourceImage, demoSamples: const [sample]),
+      reports: MemoryReports(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: Component2Home(controller: controller)),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Use sample'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Use sample'));
+    await tester.pumpAndSettle();
+
+    expect(analyzer.receivedBytes, sourceImage);
+    expect(controller.selectedSample, sample);
+    expect(controller.selectedPhotoDescription, 'Demo photo · Litter');
+    expect(controller.result?.trailCondition, 'not_assessed');
+    controller.dispose();
+  });
 
   test(
     'gallery permission failure is retryable and preserves the current photo',
@@ -229,7 +278,7 @@ void main() {
       );
       expect(find.text('Detection 1 · 82.0%'), findsOneWidget);
       expect(find.text('Detection 1 · 71.0%'), findsOneWidget);
-      expect(find.text('On-device'), findsOneWidget);
+      expect(find.text('Processed on device'), findsOneWidget);
       expect(
         find.text(
           'Trail safety and route blockage are not assessed by the current model.',
@@ -242,7 +291,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Not assessed'), findsNWidgets(4));
-      expect(find.text('Trail condition observations'), findsOneWidget);
+      expect(find.text('Additional trail conditions'), findsOneWidget);
       expect(find.text('Erosion'), findsOneWidget);
       expect(find.text('Exposed roots'), findsOneWidget);
       expect(find.text('Debris'), findsNothing);

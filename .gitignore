@@ -148,6 +148,8 @@ research/component_4/results/*_quick/
 *~
 
 # Component 2: local source downloads, generated imagery and model outputs
+# Demo photos have unconfirmed source and redistribution rights; keep local for PP1 only.
+/assets/demo/component_2/*.jpg
 sajana/.venv-yolov8/
 sajana/data/raw/
 sajana/data/processed/**/*.cache

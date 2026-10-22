@@ -9,6 +9,16 @@ abstract interface class Component2DemoPhotoRepository {
   Future<Uint8List> load(Component2DemoPhoto sample);
 }
 
+class Component2DemoPhotoLoadException implements Exception {
+  const Component2DemoPhotoLoadException(this.assetPath, this.cause);
+
+  final String assetPath;
+  final Object cause;
+
+  @override
+  String toString() => 'Could not load $assetPath: $cause';
+}
+
 class AssetComponent2DemoPhotoRepository
     implements Component2DemoPhotoRepository {
   AssetComponent2DemoPhotoRepository({AssetBundle? bundle})
@@ -30,6 +40,11 @@ class AssetComponent2DemoPhotoRepository
               'Component 2 sample catalog entries must be demo-only.',
             );
           }
+          if (json['run_ai_inference'] != true) {
+            throw const FormatException(
+              'Component 2 demo samples must enable local AI inference.',
+            );
+          }
           final fileName = json['file_name'] as String;
           final assetPath = 'assets/demo/component_2/$fileName';
           return Component2DemoPhoto(
@@ -43,6 +58,7 @@ class AssetComponent2DemoPhotoRepository
             originalIdentifier: json['original_identifier'] as String?,
             licenseProvenanceNote: json['license_provenance_note'] as String,
             demoOnly: json['demo_only'] as bool,
+            runAiInference: json['run_ai_inference'] as bool,
           );
         })
         .toList(growable: false);
@@ -51,9 +67,16 @@ class AssetComponent2DemoPhotoRepository
   @override
   Future<Uint8List> load(Component2DemoPhoto sample) async {
     if (!sample.isAvailable) {
-      throw StateError('Demo photo is not installed: ${sample.assetPath}');
+      throw Component2DemoPhotoLoadException(
+        sample.assetPath,
+        StateError('Demo photo is not installed.'),
+      );
     }
-    final data = await _bundle.load(sample.assetPath);
-    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    try {
+      final data = await _bundle.load(sample.assetPath);
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    } catch (error) {
+      throw Component2DemoPhotoLoadException(sample.assetPath, error);
+    }
   }
 }

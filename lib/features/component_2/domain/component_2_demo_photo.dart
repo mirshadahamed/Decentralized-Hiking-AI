@@ -10,6 +10,7 @@ class Component2DemoPhoto {
     this.originalIdentifier,
     this.licenseProvenanceNote = '',
     this.demoOnly = true,
+    this.runAiInference = true,
   });
 
   final String id;
@@ -22,4 +23,5 @@ class Component2DemoPhoto {
   final String? originalIdentifier;
   final String licenseProvenanceNote;
   final bool demoOnly;
+  final bool runAiInference;
 }
