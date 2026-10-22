@@ -82,6 +82,7 @@ class EdgeForecaster {
 
   factory EdgeForecaster.fromPack(Map<String, dynamic> pack) {
     if (pack['schema'] != schema) throw FormatException('Unknown edge pack ${pack['schema']}');
+    PlaceNames.remember(pack['poi_labels']);
     final m = pack['model'] as Map<String, dynamic>;
     final weights = (m['weights'] as Map<String, dynamic>).map((k, v) => MapEntry(k, _W.fromJson(v as Map<String, dynamic>)));
     final a = _W.fromJson(m['adjacency'] as Map<String, dynamic>);
@@ -241,4 +242,20 @@ class EdgeForecaster {
     return EdgeForecast(people: people, millis: sw.elapsedMilliseconds, day: forDay ?? day,
         places: [for (var s = 0; s < n; s++) (pack['segments'] as List?)?.isNotEmpty == true ? placeOf(s) : ('', '')]);
   }
+}
+
+/// Names of the places on the trails ("worlds_end" -> "World's End"), from the park's own config (sent in the
+/// daily pack). Screens show these instead of the internal keys.
+class PlaceNames {
+  static final Map<String, String> _labels = {};
+
+  static bool isKnown(String poi) => _labels.containsKey(poi);
+
+  static void remember(Object? labels) {
+    if (labels is Map) _labels.addAll(labels.map((k, v) => MapEntry('$k', '$v')));
+  }
+
+  /// The park's name for a place, or the key made readable ("katagamuwa_tank" -> "Katagamuwa tank").
+  static String of(String poi) =>
+      _labels[poi] ?? poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase());
 }

@@ -122,7 +122,7 @@ class C4Colors {
 
 String niceDate(DateTime d) => DateFormat('EEE d MMM yyyy').format(d);
 String shortDate(DateTime d) => DateFormat('EEE d MMM').format(d);
-String about(int n) => n >= 100 ? 'about ${(n / 10).round() * 10}' : 'about $n';
+String about(int n) => n >= 100 ? 'about ${NumberFormat.decimalPattern().format((n / 10).round() * 10)}' : 'about $n';
 
 /// Rounded "people" figure with its basis, e.g. "about 870 people (660 – 1,100)".
 String peopleRange(int p10, int p50, int p90) {
@@ -255,6 +255,76 @@ class WeekStrip extends StatelessWidget {
 OutlookDay quietestOf(List<OutlookDay> days) => days.reduce((a, b) => b.p50 < a.p50 ? b : a);
 
 /// Small grey line that says what an estimate is based on (every estimate carries its basis).
+/// A headline figure with what it means: "870" / "people expected" / "likely 666 – 1,104".
+/// Used wherever one number is the answer (expected crowd, safe limit, forecast error).
+class StatValue extends StatelessWidget {
+  const StatValue({super.key, required this.value, required this.label, this.caption, this.color, this.large = true});
+
+  final String value, label;
+  final String? caption;
+  final Color? color;
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final style = (large ? text.displaySmall : text.headlineSmall)
+        ?.copyWith(fontWeight: FontWeight.w600, color: color, fontFeatures: const [FontFeature.tabularFigures()]);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Wrap(crossAxisAlignment: WrapCrossAlignment.end, spacing: 8, children: [
+        Text(value, style: style),
+        Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(label, style: text.titleSmall)),
+      ]),
+      if (caption != null)
+        Text(caption!, style: text.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+    ]);
+  }
+}
+
+/// Small stat tile for a row of figures (equal heights in an IntrinsicHeight row).
+class StatTile extends StatelessWidget {
+  const StatTile({super.key, required this.label, required this.value, this.unit, this.color});
+
+  final String label, value;
+  final String? unit;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(C4Space.m),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: text.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          const SizedBox(height: C4Space.xs),
+          Text(value, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600, color: color)),
+          if (unit != null) Text(unit!, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Explains a marker used in a list (e.g. the star on sections whose counts update the forecast).
+class IconNote extends StatelessWidget {
+  const IconNote({super.key, required this.icon, required this.text, this.color});
+
+  final IconData icon;
+  final String text;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, size: 16, color: color ?? Theme.of(context).colorScheme.outline),
+          const SizedBox(width: 6),
+          Expanded(child: Text(text, style: Theme.of(context).textTheme.bodySmall)),
+        ]),
+      );
+}
+
 class BasisNote extends StatelessWidget {
   const BasisNote(this.text, {super.key});
 

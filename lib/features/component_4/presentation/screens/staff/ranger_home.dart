@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../data/api_client.dart';
+import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
@@ -370,7 +371,7 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
                 Card(
                   child: ListTile(
                     leading: CircleAvatar(backgroundColor: C4Colors.light(s.light)),
-                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
+                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${BottleneckDay.poiLabel(s.poi!)})' : ''}'),
                     subtitle: Text('About ${s.people.round()} people (safe: ${s.capacity?.round() ?? '-'})\n${s.action ?? ''}'),
                     isThreeLine: true,
                   ),

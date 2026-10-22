@@ -781,7 +781,7 @@ void main() {
     await t.pumpWidget(wrap(DayScreen(day: visit), api));
     await t.pumpAndSettle();
     expect(find.text('Safe limit for this day'), findsOneWidget);
-    expect(find.text('about 290 / 107'), findsOneWidget);       // expected / safe limit
+    expect(find.text('about 290 expected · safe 107'), findsOneWidget);   // expected / safe limit
     expect(find.text('muddy'), findsOneWidget);                  // reported condition
     expect(find.textContaining('More people expected than is safe'), findsOneWidget);
     expect(find.textContaining('68 mm of forecast rain in the last 3 days (wet ground)'), findsWidgets);
@@ -1006,7 +1006,7 @@ void main() {
     await t.pumpWidget(wrap(const Scaffold(body: ForecastCheckTab()), _CountApi()));
     await t.pumpAndSettle();
     expect(find.byKey(const Key('check_summary')), findsOneWidget);
-    expect(find.text('6.5 people'), findsOneWidget);
+    expect(find.text('6.5'), findsOneWidget);
     expect(find.text('50 %'), findsOneWidget);
     expect(find.textContaining('counted 40 · forecast 44'), findsOneWidget);
   });

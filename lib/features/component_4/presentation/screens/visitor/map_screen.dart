@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
@@ -74,7 +75,7 @@ class _MapScreenState extends State<MapScreen> {
             } else if (s.poi.startsWith('head_')) {
               markers.add(_marker(s, Icons.directions_walk, c, 'Start · ${names[s.poi.substring(5)] ?? ''}'));
             } else {
-              markers.add(_marker(s, Icons.landscape_outlined, c, s.poi.replaceAll('_', ' ')));
+              markers.add(_marker(s, Icons.landscape_outlined, c, BottleneckDay.poiLabel(s.poi)));
             }
           }
           final all = [for (final s in segs) for (final p in s.points) _ll(p)];

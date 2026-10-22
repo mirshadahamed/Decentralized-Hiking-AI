@@ -204,7 +204,7 @@ class BottleneckDay {
   List<Section> sectionsOf(String trail) => sections.where((s) => s.trail == trail).toList()
     ..sort((a, b) => b.utilisation(b.peakHourIn(openHours)).compareTo(a.utilisation(a.peakHourIn(openHours))));
 
-  static String poiLabel(String poi) => switch (poi) {
+  static String poiLabel(String poi) => PlaceNames.isKnown(poi) ? PlaceNames.of(poi) : switch (poi) {
         'worlds_end' => "World's End",
         'mini_worlds_end' => "Mini World's End",
         'bakers_falls' => "Baker's Falls",
@@ -214,7 +214,7 @@ class BottleneckDay {
             ? 'Halfway rest · ${poi.substring(5)}'
             : poi.startsWith('head_')
                 ? 'Start · ${poi.substring(5)}'
-                : poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
+                : PlaceNames.of(poi),
       };
 
   static List<int> _span(Set<int> hours) {

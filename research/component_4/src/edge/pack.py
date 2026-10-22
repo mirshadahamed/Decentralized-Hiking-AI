@@ -70,6 +70,7 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
         },
         "segments": [{"id": int(i), "trail": str(t), "poi": p} for i, (t, p) in
                      enumerate(zip(data.segment_trail, poi))],
+        "poi_labels": dict(cfg["area"].get("poi_labels", {})),       # "worlds_end" -> "World's End", per park
         "note": "Occupancy is forecast from a model trained on a SYNTHETIC occupancy target (see the server's "
                 "forecast note).",
     }

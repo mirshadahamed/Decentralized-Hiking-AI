@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../data/api_client.dart';
+import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../../domain/edge_forecaster.dart';
 import '../../../services/edge_store.dart';
@@ -197,6 +199,8 @@ class _DayScreenState extends State<DayScreen> {
       );
 }
 
+final _n = NumberFormat.decimalPattern();
+
 class _Summary extends StatelessWidget {
   const _Summary({required this.plan});
 
@@ -213,7 +217,11 @@ class _Summary extends StatelessWidget {
               CrowdChip(plan.crowdLevel),
             ]),
             const SizedBox(height: 8),
-            Text(peopleRange(plan.p10, plan.p50, plan.p90), style: Theme.of(context).textTheme.headlineSmall),
+            StatValue(
+              value: about(plan.p50).replaceFirst('about ', '~'),
+              label: 'people expected',
+              caption: plan.p10 == plan.p90 ? null : 'Likely between ${_n.format(plan.p10)} and ${_n.format(plan.p90)}',
+            ),
             BasisNote('Confidence: ${plan.confidence}. Estimates from a simulated visitor history until park counts are connected.'),
           ]),
         ),
@@ -284,7 +292,7 @@ class OnDeviceCard extends StatelessWidget {
     final names = {for (final t in trails) t.id: t.name};
     String label(int s) {
       final (trail, poi) = s < forecast.places.length ? forecast.places[s] : ('', '');
-      if (poi.isNotEmpty) return poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase());
+      if (poi.isNotEmpty) return BottleneckDay.poiLabel(poi);
       return '${names[trail] ?? 'Trail'} · section ${s + 1}';
     }
     return Card(
@@ -401,7 +409,9 @@ class SafeLimitCard extends StatelessWidget {
                           backgroundColor: (t.condition.isClosed ? C4Colors.red : C4Colors.amber).withValues(alpha: 0.18),
                         ),
                       ),
-                    Text(t.condition.isClosed ? 'closed' : '${about(t.expected)} / ${t.safeLimit}', style: text.bodyMedium),
+                    Text(t.condition.isClosed ? 'closed' : '${about(t.expected)} expected · safe ${t.safeLimit}',
+                        style: text.bodyMedium?.copyWith(
+                            fontWeight: t.overLimit ? FontWeight.w600 : null, color: t.overLimit ? C4Colors.red : null)),
                   ]),
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
@@ -425,7 +435,7 @@ class SafeLimitCard extends StatelessWidget {
               label: const Text('Why this limit?'),
             ),
           ),
-          BasisNote('expected / safe limit. $_basis'),
+          BasisNote(_basis),
         ]),
       ),
     );
