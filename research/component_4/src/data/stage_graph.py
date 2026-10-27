@@ -49,6 +49,72 @@ def overpass(query: str, cache_name: str, tries: int = 12) -> list:
     raise RuntimeError(f"Overpass failed after {tries} tries ({last})")
 
 
+def nominatim(wanted: list, bbox) -> dict:
+    """{lower-case name: (lon, lat)} from the OSM place search (Nominatim), inside bbox; cached; 1 request/s as its
+    usage policy asks. Names it cannot find are left out (the builder reports them)."""
+    cache = RAW / "osm_stages" / "hotspots_nominatim.json"
+    found = json.loads(cache.read_text(encoding="utf-8")) if cache.exists() else {}
+    left, bottom, right, top = bbox
+    for name in wanted:
+        if name.lower() in found:
+            continue
+        try:
+            r = requests.get("https://nominatim.openstreetmap.org/search", headers=HEADERS, timeout=30, params={
+                "q": name, "format": "json", "limit": 1, "countrycodes": "lk", "bounded": 1,
+                "viewbox": f"{left},{top},{right},{bottom}"})
+            hit = r.json()[0] if r.ok and r.json() else None
+        except (requests.RequestException, ValueError, IndexError):
+            hit = None
+        if hit:
+            found[name.lower()] = (float(hit["lon"]), float(hit["lat"]))
+        time.sleep(1.1)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps(found), encoding="utf-8")
+    return {k: tuple(v) for k, v in found.items()}
+
+
+def stage_chain(rel: dict, anchor=None) -> list:
+    """[(lon, lat), ...] of a route relation whose ways may be listed out of order: merge the ways into pieces, then
+    chain the pieces nearest end to nearest end, starting at the end closest to `anchor` (the previous stage's
+    end) or, for the first stage, at a loose end of the network."""
+    from shapely.ops import linemerge
+    ways, seen = [], set()
+    for m in rel.get("members", []):
+        if m["type"] != "way" or len(m.get("geometry") or []) < 2:
+            continue
+        key = m.get("ref") or tuple((p["lon"], p["lat"]) for p in m["geometry"])
+        if key in seen:                                   # some relations list a way more than once
+            continue
+        seen.add(key)
+        ways.append(LineString([(p["lon"], p["lat"]) for p in m["geometry"]]))
+    if not ways:
+        return []
+    merged = linemerge(ways)
+    parts = [list(p.coords) for p in (merged.geoms if merged.geom_type == "MultiLineString" else [merged])]
+
+    def d2(a, b):
+        return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+
+    ends = [(i, 0) for i in range(len(parts))] + [(i, -1) for i in range(len(parts))]
+    if anchor is not None:
+        i, e = min(ends, key=lambda x: d2(parts[x[0]][x[1]], anchor))
+    else:                                                 # the end farthest from every other piece's ends
+        def loneliness(x):
+            others = [parts[j][k] for j, k in ends if j != x[0]]
+            return min((d2(parts[x[0]][x[1]], o) for o in others), default=0.0)
+        i, e = max(ends, key=lambda x: (loneliness(x), len(parts[x[0]])))
+    coords = parts[i] if e == 0 else parts[i][::-1]
+    left = [j for j in range(len(parts)) if j != i]
+    while left:
+        end = coords[-1]
+        j, flip = min(((j, f) for j in left for f in (False, True)),
+                      key=lambda x: d2(parts[x[0]][-1 if x[1] else 0], end))
+        nxt = parts[j][::-1] if flip else parts[j]
+        coords += nxt[1:] if nxt[0] == end else nxt
+        left.remove(j)
+    return coords
+
+
 def stage_line(rel: dict) -> list:
     """[(lon, lat), ...] of a route relation, ways in member order, each flipped to continue from the last point."""
     coords: list = []
@@ -83,10 +149,23 @@ def build_stage_graph(cfg):
     target = g["target_segment_m"]
     stages = list(area["stage_relations"])
 
-    segs, walks = [], {}
+    rels = {s: overpass(f"[out:json][timeout:180];rel({int(r)});out geom;", f"rel_{r}.json")[0]
+            for s, r in area["stage_relations"].items()}
+    # the first stage has no previous end: start it at its end farthest from the second stage
+    first = stage_chain(rels[stages[0]])
+    if len(stages) > 1:
+        nxt = [(p["lon"], p["lat"]) for m in rels[stages[1]]["members"] if m["type"] == "way"
+               for p in (m.get("geometry") or [])]
+        near = lambda q: min((q[0] - a) ** 2 + (q[1] - b) ** 2 for a, b in nxt)   # noqa: E731
+        if near(first[0]) < near(first[-1]):
+            first = stage_chain(rels[stages[0]], anchor=first[-1])
+    segs, walks, anchor, lengths = [], {}, None, {}
     for k, (stage, rel_id) in enumerate(area["stage_relations"].items()):
-        rel = overpass(f"[out:json][timeout:180];rel({int(rel_id)});out geom;", f"rel_{rel_id}.json")[0]
-        line_m = transform(to_m, LineString(stage_line(rel)))
+        rel = rels[stage]
+        coords = first if k == 0 else stage_chain(rel, anchor)
+        anchor = coords[-1]
+        line_m = transform(to_m, LineString(coords))
+        lengths[stage] = (round(line_m.length / 1000, 1), rel["tags"].get("distance"))
         n = max(1, round(line_m.length / target))
         walks[stage] = []
         for i in range(n):
@@ -102,10 +181,19 @@ def build_stage_graph(cfg):
 
     # hotspots: named places near the trail
     names = {}
-    for stage, rel_id in area["stage_relations"].items():
-        for e in overpass(f"[out:json][timeout:180];rel({int(rel_id)});way(r);node(around:{int(g['poi_snap_m'])})[name];out;",
-                          f"names_{rel_id}.json"):
-            names.setdefault(e["tags"]["name"].strip().lower(), (e["lon"], e["lat"]))
+    wanted = sorted({v for v in (area.get("hotspots") or {}).values()})
+    if wanted:                                         # one light query: just these names, inside the trail's box
+        left, bottom, right, top = area["bbox"]
+        rx = "|".join(n.replace("'", ".").replace("(", ".").replace(")", ".") for n in wanted)
+        q = f'[out:json][timeout:120];nwr["name"~"^({rx})$",i]({bottom},{left},{top},{right});out center;'
+        try:
+            for e in overpass(q, "hotspots.json", tries=4):
+                ll = (e["lon"], e["lat"]) if "lon" in e else (e["center"]["lon"], e["center"]["lat"])
+                names.setdefault(e["tags"]["name"].strip().lower(), ll)
+        except RuntimeError:                           # Overpass busy: the OSM place search, one name a second
+            names = nominatim(wanted, area["bbox"])
+    for alias in list(names):                          # OSM may use a curly apostrophe
+        names.setdefault(alias.replace("’", "'"), names[alias])
     missing = []
     for key, osm_name in (area.get("hotspots") or {}).items():
         p = names.get(osm_name.strip().lower())
@@ -146,4 +234,5 @@ def build_stage_graph(cfg):
     (PROCESSED / "route.json").write_text(json.dumps({"walks": walks, "road_links": []}), encoding="utf-8")
     if missing:
         print("hotspots not found near the trail (check the OSM name):", missing)
+    print("stage km (built, OSM tag):", lengths)
     return gdf, edge_index, walks

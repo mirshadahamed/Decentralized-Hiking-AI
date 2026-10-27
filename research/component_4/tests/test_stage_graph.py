@@ -1,5 +1,12 @@
 """Long-distance trail graph from OSM stage relations (Pekoe Trail): ways joined end to end in member order."""
-from src.data.stage_graph import stage_line
+from src.data.stage_graph import stage_chain, stage_line
+
+
+def test_ways_out_of_order_are_chained_from_the_previous_stage_end():
+    # pieces listed C-D, A-B, B-C (two reversed); the previous stage ended near A
+    rel = {"members": [_way((3, 0), (2, 0)), _way((0, 0), (1, 0)), _way((2, 0), (1, 0))]}
+    assert stage_chain(rel, anchor=(-0.1, 0)) == [(0, 0), (1, 0), (2, 0), (3, 0)]
+    assert stage_chain(rel, anchor=(3.2, 0)) == [(3, 0), (2, 0), (1, 0), (0, 0)]
 
 
 def _way(*pts):
