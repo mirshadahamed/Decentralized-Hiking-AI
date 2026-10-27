@@ -501,6 +501,92 @@ Paired Wilcoxon over days, ST-GNN rule vs:
 the forecast-driven quota by default (`control.default_quota_rule: forecast`); officers can switch the rule per day
 (`booking.resolve_quota`, `POST /admin/quota`).
 
+## RQ13 – Closed-loop control at the gate (MPC) vs day-ahead plans (`src.control.evaluate_mpc`, 27 Oct 2026)
+
+**Runs:** `results/20261027_215804_mpc` (default world) and `results/20261027_220425_mpc_s1` (realistic world S1).
+Horton Plains, 2025, the same groups for every policy.
+
+**The controller** (`src/control/mpc.py`) re-plans entry caps every 30 min:
+- **Input:** only the gate counts so far.
+- **Forecast:** the day's expected visitors, corrected by arrivals so far vs expected.
+- **Constraint:** every section under 90 % of capacity over the next 3 h.
+- **Groups over the cap:** wait up to 2 h, then are offered another trail; the share that accepts is the compliance.
+
+Realistic world (S1):
+
+| Policy | Over-capacity cut | Admitted | Turned away | Sent to another trail | Waited at the gate (mean wait) |
+|---|---|---|---|---|---|
+| B: same daily quota all year | 62.7 % | 57.1 % | 42.9 % | – | – |
+| D: day-ahead slot tickets + moving (needs advance booking) | **99.6 %** | **63.0 %** | 37.0 % | 13.3 % | 35.8 % moved to a later slot in advance |
+| MPC, 50 % accept another trail | 99.3 % | 59.0 % | 41.0 % | 3.1 % | 40.9 % (92 min) |
+| MPC, 75 % accept | 99.3 % | 59.2 % | 40.8 % | 3.4 % | 41.1 % (92 min) |
+| MPC without feedback | 99.3 % | 58.9 % | 41.1 % | 3.1 % | 40.6 % (92 min) |
+
+The default world shows the same pattern: B cut 61 % / admitted 58 %; D 99.6 % / 64.8 %; MPC 99.3 % / 61.5 %.
+
+Paired Wilcoxon tests over days, MPC (50 %) vs:
+- **B:** −191 over-capacity person-hours per day and +12 people admitted per day (p < 10⁻⁴ for both).
+- **D:** +1.4 person-hours per day and −26 admitted per day (p < 10⁻¹⁷); D is better on both.
+- **Without feedback:** no difference (p ≥ 0.3).
+
+**Reading:**
+1. **With only gate counts and no booking, the controller removes 99 % of over-capacity time.** A fixed daily
+   quota removes 61–63 %, while admitting fewer people. This answers "can a forecast-driven, segment-level capacity
+   replace a static quota" for open-access sites, which have no booking system (Adam's Peak, Pekoe Trail, walk-ins).
+2. **Advance booking is still better** (+4 points admitted, half the remaining overcrowding). It knows every
+   group's wish in advance and moves them before they travel. The gate controller learns only when people arrive.
+3. **The cost is waiting:** 4 in 10 visitors wait at the gate, about 1.5 h on average. The next step is to move
+   that wait *before* the trip: tell visitors by phone the start time the controller would give them (N3).
+4. **Feedback and redirect acceptance hardly matter in this setup.** Waiting people get priority over forecast
+   arrivals, so the corrected forecast changes little. On busy days the other trails are full too, so only about
+   3 % can be redirected.
+
+### RQ13b – Start times sent before the trip (N3), on top of gate control
+
+**Run:** `results/20261027_233052_mpc_s1`.
+
+**Setup:**
+- The evening before, groups with the app get the earliest start, at or after the time they wanted, that still has
+  room in the controller's day plan (up to 3 h later). 80 % of them follow it.
+- Everyone then goes through the same gate controller.
+- Realistic world (S1), 2025.
+
+| Policy | Over-capacity cut | Admitted | Moved by advice | Waited at the gate (mean) |
+|---|---|---|---|---|
+| D: advance booking | 99.6 % | 63.0 % | – | – |
+| MPC only | 99.3 % | 59.0 % | – | 40.9 % (92 min) |
+| MPC + start times, 30 % with the app | 99.3 % | 59.9 % | 10.3 % | 42.0 % (95 min) |
+| MPC + start times, 60 % with the app | 99.2 % | 61.6 % | 19.1 % | 43.6 % (92 min) |
+| MPC + start times, 90 % with the app | 99.3 % | 61.9 % | 22.0 % | 42.2 % (88 min) |
+
+Paired tests (60 % with the app):
+- vs MPC only: +17 admitted per day (p < 10⁻²⁹), with slightly more gate waiting (+27 person-hours per day).
+- vs advance booking: −9 admitted per day, **not significant** (p = 0.49).
+
+**Reading:**
+- **With start times on the phone, an open-access site gets as many visitors in as with advance booking**, with no
+  booking system, and still with 99 % less over-capacity time.
+- **But the gate wait does not shrink.** The advice plan is made from the forecast; on the day, the realistic world
+  differs (bursts, busy spells), so the gate still holds people.
+**Priority at the gate for groups on their advised time** (N3p, run `results/20261028_000127_mpc_s1`):
+
+| Policy | Over-capacity cut | Admitted | Gate wait (person-hours/year) | Wait if on advised time | Wait otherwise |
+|---|---|---|---|---|---|
+| MPC + start times, 60 % with the app | 99.2 % | 61.6 % | 158,343 | – | – |
+| MPC + start times + priority, 60 % with the app | 99.3 % | 59.5 % | **85,061** | **0.5 min** | 72 min |
+| MPC + start times + priority, 90 % with the app | 99.4 % | 59.7 % | **78,380** | 0.5 min | 70 min |
+
+Priority vs no priority (60 % with the app), per day:
+- **Gate waiting:** −201 person-hours (p < 10⁻⁵⁸), i.e. it **halves**.
+- **Admitted:** −13.5 people (p < 10⁻²³).
+
+**Reading:** there is a clear trade-off, and the park chooses.
+- **Start times without priority** admit the most (as many as advance booking).
+- **With priority**, waiting halves and people who follow the advice walk straight in. That is a strong reason to
+  use the app. But a few more people are turned away, because the later slots fill up.
+
+**Next:** re-send start times during the morning from the live gate counts, so the advice follows the day.
+
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
 Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE
