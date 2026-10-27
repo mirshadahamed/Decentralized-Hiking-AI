@@ -28,6 +28,22 @@ WET_TWI = 8.0   # cells at or above this TWI are treated as waterlogging-prone (
 def load_dem(cfg):
     """Read the DEM window over the park (cached as data/raw/dem.tif)."""
     path = RAW / ("dem_" + "_".join(f"{v:.3f}" for v in cfg["area"]["dem_bbox"]) + ".tif")
+    left, bottom, right, top = cfg["area"]["dem_bbox"]
+    if not path.exists() and (math.floor(left) != math.floor(right) or math.floor(bottom) != math.floor(top)):
+        # long trails (Pekoe Trail) cross 1-degree tile edges: read every tile and stitch the window
+        from rasterio.merge import merge
+        srcs = [rasterio.open(DEM_TILE.format(lat=la, lon=lo))
+                for la in range(math.floor(bottom), math.floor(top) + 1)
+                for lo in range(math.floor(left), math.floor(right) + 1)]
+        try:
+            z, tr = merge(srcs, bounds=(left, bottom, right, top))
+            profile = srcs[0].profile | {"height": z.shape[1], "width": z.shape[2], "transform": tr,
+                                         "driver": "GTiff", "count": 1}
+        finally:
+            for s in srcs:
+                s.close()
+        with rasterio.open(path, "w", **profile) as dst:
+            dst.write(z[0], 1)
     if not path.exists():
         with rasterio.open(dem_url(cfg["area"]["dem_bbox"])) as src:
             win = from_bounds(*cfg["area"]["dem_bbox"], src.transform)

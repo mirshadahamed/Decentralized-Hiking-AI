@@ -1,0 +1,185 @@
+# The Pekoe Trail (long-distance trail, 22 stages, ~323 km). Overrides configs/default.yaml.
+# Use with:  $env:C4_PARK = "pekoe_trail"
+# Every number marked (A) is an assumption: no visitor counts exist for the trail (the research gap's
+# "no historical sensor record" case). To calibrate with the trail organisation's figures and field counts
+# (docs/assumptions_pekoe_trail.md).
+
+destination:
+  kind: long_distance_trail
+  region: "Central and Uva Provinces · Kandy, Nuwara Eliya and Badulla Districts"
+  summary: "A 300 km walking trail through the tea country in 22 stages, on old estate roads and paths from Kandy past Horton Plains, Haputale and Ella to Nuwara Eliya."
+  elevation: "about 600 m – 2,100 m"
+  best_time: "January to April is driest across the hill country. The western stages get the south-west monsoon (May–September), the eastern stages around Ella the north-east monsoon (November–January)."
+  getting_there: "Stage starts are tea-estate villages and towns reached by road; the hill-country railway stops near many of them (e.g. Nanu Oya, Pattipola, Haputale, Ella)."
+  facts:
+    - "Each stage is 9–21 km, about 4–8 hours of walking"
+    - "Open access: no tickets and no gate; walkers start at any stage"
+    - "The stages around Ella and Haputale share paths with day visitors"
+    - "Walk in daylight and leave early: afternoon rain is common"
+  accent: "#2E7D32"
+
+area:
+  name: "The Pekoe Trail"
+  bbox: [80.55, 6.70, 81.15, 7.35]
+  dem_bbox: [80.55, 6.70, 81.15, 7.35]       # crosses 1-degree tiles: src.data.terrain stitches them
+  weather_point: [6.95, 80.80]               # central (Nuwara Eliya); per-stage weather: P1b
+  crs_metric: "EPSG:32644"
+  stage_relations:                           # OSM route relations (superroute 19413306)
+    __replace__: true
+    s01: 19413305
+    s02: 19413304
+    s03: 19413303
+    s04: 19413302
+    s05: 19413301
+    s06: 19413844
+    s07: 19413900
+    s08: 19414206
+    s09: 19414205
+    s10: 19414315
+    s11: 19414328
+    s12: 19414512
+    s13: 19414511
+    s14: 19414580
+    s15: 19414634
+    s16: 19414688
+    s17: 19414802
+    s18: 19414994
+    s19: 19415123
+    s20: 19415211
+    s21: 19415265
+    s22: 19415325
+  hotspots:                                  # OSM names near the trail (missing ones are reported by the builder)
+    __replace__: true
+    liptons_seat: "Lipton's Seat"
+    little_adams_peak: "Little Adam's Peak"
+    nine_arch_bridge: "Nine Arch Bridge"
+    ella_rock: "Ella Rock"
+    haputale: "Haputale"
+    ella: "Ella"
+  pois: {__replace__: true}
+  routes: {__replace__: true}
+  road_links: []
+  trail_names:
+    __replace__: true
+    s01: "Stage 1 · Hantana – Galaha"
+    s02: "Stage 2 · Galaha – Loolkandura"
+    s03: "Stage 3 · Loolkandura – Tawalantenne"
+    s04: "Stage 4 · Tawalantenne – Pundaloya"
+    s05: "Stage 5 · Pundaloya – Wattagoda"
+    s06: "Stage 6 · Wattagoda – Kotagala"
+    s07: "Stage 7 · Kotagala – Norwood"
+    s08: "Stage 8 · Norwood – Bogawantalawa"
+    s09: "Stage 9 · Bogawantalawa – Dayagama"
+    s10: "Stage 10 · Dayagama – Horton Plains"
+    s11: "Stage 11 · Horton Plains – Udaweriya"
+    s12: "Stage 12 · Udaweriya – Haputale"
+    s13: "Stage 13 · Haputale – St. Catherine"
+    s14: "Stage 14 · Lipton's Seat – Makulella"
+    s15: "Stage 15 · Makulella – Ella"
+    s16: "Stage 16 · Ella – Demodera"
+    s17: "Stage 17 · Demodera – Hali-Ela"
+    s18: "Stage 18 · Hali-Ela – Ettampitiya"
+    s19: "Stage 19 · Ettampitiya – Lunuwatte"
+    s20: "Stage 20 · Lunuwatte – Uda Pussellawa"
+    s21: "Stage 21 · Uda Pussellawa – Kandapola"
+    s22: "Stage 22 · Kandapola – Pedro Estate"
+  trail_info: {__replace__: true}
+  main_trail: s15
+  focus_poi: little_adams_peak
+  poi_roles:
+    __replace__: true
+    viewpoint: [liptons_seat, little_adams_peak, nine_arch_bridge, ella_rock, haputale, ella]
+    access: [start_s01, start_s02, start_s03, start_s04, start_s05, start_s06, start_s07, start_s08, start_s09, start_s10,
+             start_s11, start_s12, start_s13, start_s14, start_s15, start_s16, start_s17, start_s18, start_s19, start_s20,
+             start_s21, start_s22, trail_end]
+  poi_labels:
+    __replace__: true
+    liptons_seat: "Lipton's Seat"
+    little_adams_peak: "Little Adam's Peak"
+    nine_arch_bridge: "Nine Arch Bridge"
+    ella_rock: "Ella Rock"
+    haputale: "Haputale"
+    ella: "Ella"
+    trail_end: "Pedro Estate (trail end)"
+
+graph:
+  target_segment_m: 2000    # 323 km in ~2 km sections: ~160 nodes
+  poi_snap_m: 500
+  stage_join_m: 2000        # a stage's end and the next stage's start closer than this are linked
+  max_grade: 0.30
+
+simulator:
+  base_daily_visitors: 120           # (A) walkers on the whole trail on an ordinary weekday in season
+  dow_multiplier: [1.0, 0.9, 0.9, 0.95, 1.1, 1.6, 1.5]
+  holiday_multiplier: 1.5
+  poya_multiplier: 1.3
+  long_weekend_multiplier: 1.4
+  school_holiday_multiplier: 1.2
+  month_multiplier: [1.4, 1.5, 1.4, 1.3, 0.7, 0.6, 0.8, 1.0, 0.8, 0.7, 0.8, 1.3]   # (A) foreign season Dec-Apr
+  daily_noise_sd: 0.25
+  morning_rain_k: 0.05
+  group_size_poisson_mean: 1.5       # (A) walkers in pairs and small groups
+  arrival_early_share: 0.8           # (A) most walkers start early to finish before the afternoon rain
+  arrival_early_mean_h: 7.0
+  arrival_early_sd_h: 0.75
+  arrival_late_range_h: [8.5, 10.5]
+  gate_open_h: 6.0
+  gate_last_entry_h: 11.0
+  route_share:                       # (A) share of walkers per stage: the Ella / Haputale stages get day visitors
+    __replace__: true
+    s01: 0.05
+    s02: 0.03
+    s03: 0.03
+    s04: 0.03
+    s05: 0.03
+    s06: 0.03
+    s07: 0.03
+    s08: 0.03
+    s09: 0.03
+    s10: 0.05
+    s11: 0.06
+    s12: 0.05
+    s13: 0.07
+    s14: 0.08
+    s15: 0.12
+    s16: 0.08
+    s17: 0.04
+    s18: 0.03
+    s19: 0.03
+    s20: 0.03
+    s21: 0.03
+    s22: 0.04
+  route_last_entry_h: {__replace__: true}
+  route_start_offset_min: {__replace__: true}
+  reversible_routes: []
+  dwell_minutes:
+    __replace__: true
+    liptons_seat: [30, 0.4]          # (A)
+    little_adams_peak: [25, 0.4]
+    nine_arch_bridge: [20, 0.4]
+    ella_rock: [25, 0.4]
+  realism:
+    burst_people: [15, 45]           # (A) a tour group or school trip on one stage
+    burst_window_h: [7.0, 9.5]
+
+task:
+  open_hours: [6, 18]
+
+capacity:
+  space_per_person_m: 2.0            # (A)
+  group_size: 6                      # (A)
+  group_gap_m: 100                   # (A)
+  open_from_h: 6
+  open_hours: 12
+  main_trail: s15
+
+planning:
+  typical_start_h: 7.0
+  later_note: "Start early: most stages take 5-7 hours and afternoon rain is common."
+  access_note: "No tickets: walk any stage. Check the weather for your stage before setting off."
+
+control:
+  first_slot_h: 6.0
+  last_slot_h: 11.0
+  viewpoint_min_at_once: 40          # (A) Lipton's Seat / Little Adam's Peak hold more than a path
+  booking_mode: required             # P4 replaces tickets with stage advice (open-access trail)

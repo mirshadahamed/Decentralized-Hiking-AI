@@ -240,6 +240,9 @@ def tag_halfway(segs, walks, cfg):
 
 
 def build_graph(cfg):
+    if cfg["area"].get("stage_relations"):                 # long-distance trail: one OSM relation per stage
+        from src.data.stage_graph import build_stage_graph
+        return build_stage_graph(cfg)
     G, pois = load_osm(cfg)
     routes, poi_points = find_routes(G, pois, cfg)
     chains, edge_to_chain = build_chains(G, routes)
