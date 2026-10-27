@@ -221,6 +221,9 @@ if __name__ == "__main__":
     week = week_forecasts(data, cfg, seg, model, scale, run, today, build_planner(cfg))
     pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data, week,
                              crowd_calibration(model, data, scale, cfg, run))
+    from src.live.refresh import add_week_weather
+    from src.serve.weather_day import ResearchWeather
+    add_week_weather(ResearchWeather(cfg), pack["map"])               # W-d: the week's weather, offline
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
     pack["expected_people_today"] = [[round(float(x), 5) for x in row]
                                      for row in torch_forecast(model, data, origin - 24, scale)]

@@ -19,6 +19,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c4_i18n.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/weather_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -997,6 +998,32 @@ void main() {
     expect(find.text("World's End: over capacity 11–13 h, 14–15 h"), findsOneWidget);
     expect(find.text("World's End: busiest hour +14 people"), findsOneWidget);
     expect(find.textContaining('Section 3'), findsNothing);                 // tiny changes are not listed
+  });
+
+  testWidgets('weather of the chosen date: forecast with dry hours and effect; typical with the range of past years', (t) async {
+    Map<String, dynamic> j(String basis) => {
+          'basis': basis, 'basis_label': basis, 'open_hours': [6, 7, 8, 9],
+          'hourly': [
+            for (final (h, r) in [(5, 3.0), (6, 0.0), (7, 0.0), (8, 1.2), (9, 0.1)])
+              {'hour': h, 'rain_mm': r, 'temp_c': 12.0 + h, 'wind_kmh': 5.0}
+          ],
+          'summary': {'rain_mm_open_hours': 1.3, 'rainy_open_hours': 1, 'rain_share_open_hours': 0.25, 'temp_min': 18.0,
+            'temp_max': 21.0, 'dry_windows': [{'from': 6, 'to': 8}, {'from': 9, 'to': 10}],
+            'dry_windows_basis': basis == 'typical' ? 'usually driest hours' : 'hours without rain'},
+          'effect': {'text': 'Rain in 25 % of the open hours lowers the safe limit by the same share.'},
+          if (basis == 'typical')
+            'typical_range': {'rain_mm_p10': 0.0, 'rain_mm_p50': 2.7, 'rain_mm_p90': 12.6, 'chance_wet_day': 0.65},
+        };
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: WeatherCard(weather: DayWeather.fromJson(j('forecast'))))));
+    expect(find.text('forecast'), findsOneWidget);
+    expect(find.textContaining('18–21 °C · 1.3 mm rain · 25 % of hours wet'), findsOneWidget);
+    expect(find.text('Best to walk (hours without rain): 06:00–08:00, 09:00–10:00'), findsOneWidget);
+    expect(find.byKey(const Key('weather_effect')), findsOneWidget);
+    expect(find.text('5'), findsNothing);                                         // only the open hours are drawn
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: WeatherCard(weather: DayWeather.fromJson(j('typical'))))));
+    expect(find.text('typical'), findsOneWidget);
+    expect(find.textContaining('usually 0–13 mm rain'), findsOneWidget);
+    expect(find.textContaining('65 % of these dates had rain'), findsOneWidget);
   });
 
   testWidgets('officer forecast check: counts next to the forecast, error and bottlenecks called', (t) async {

@@ -197,6 +197,17 @@ def _plan(c: LiveContext, day: date, inputs: dict) -> dict:
                          conditions={t: v["factor"] for t, v in inputs["conditions"].items()})
 
 
+@app.get("/weather/{day}", tags=["public"])
+def weather_day(day: date):
+    """The weather of a date (hourly and for the open hours) and what it does to the crowd and the safe limit.
+    basis: observed (past), forecast (up to 16 days ahead) or typical (later; with the range of past years)."""
+    from src.serve.weather_day import day_weather
+    try:
+        return day_weather(ctx(), day)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.get("/plan/{day}", tags=["public"])
 def plan_day(day: date):
     """Expected crowd for a day (2-90 days ahead) with suggestions to avoid it."""

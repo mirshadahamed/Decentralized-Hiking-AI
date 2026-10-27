@@ -1,3 +1,4 @@
+import '../models/models.dart';
 import 'edge_forecaster.dart';
 
 /// How full a trail section is at one hour: forecast people ÷ the people it holds at Cifuentes social spacing.
@@ -25,7 +26,11 @@ class BottleneckDay {
     this.reversibleTrails = const [],
     this.mainTrail,
     this.calibration,
+    this.weather,
   });
+
+  /// W-d: the day's weather from the pack (works offline); null in older packs.
+  final DayWeather? weather;
 
   /// A5: chance of really being over capacity for a forecast fullness, from the model's validation year:
   /// (bin lower edges of forecast ÷ capacity, chance). Null in older packs.
@@ -122,6 +127,7 @@ class BottleneckDay {
       rainShare: (summary['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: m['disclaimer'] as String? ?? '',
       calibration: _calibration(m['calibration']),
+      weather: block?['weather'] is Map ? DayWeather.fromJson(Map<String, dynamic>.from(block!['weather'] as Map)) : null,
     );
   }
 

@@ -113,6 +113,20 @@ def publish_slots(ctx: LiveContext, db=None, tomorrow: dict | None = None) -> li
     return alerts
 
 
+def add_week_weather(ctx: LiveContext, m: dict):
+    """W-d: each day of the pack's week gets its weather (the /weather/{day} answer without the extra fields), so
+    the phone shows it offline too."""
+    from src.serve.weather_day import day_weather
+    for d in m.get("days", []):
+        try:
+            w = day_weather(ctx, date.fromisoformat(d["date"]))
+        except ValueError:
+            continue
+        d["weather"] = {k: w[k] for k in ("basis", "basis_label", "summary", "effect", "typical_range") if k in w} | {
+            "hourly": [{k: h[k] for k in ("hour", "rain_mm", "temp_c", "wind_kmh")} for h in w["hourly"]
+                       if h["hour"] in w["open_hours"]]}
+
+
 def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
     """Model + inputs for tomorrow, so phones can run the forecast themselves offline (src/edge/pack.py), plus
     the segment lines and capacities for the bottleneck map (from tomorrow's server forecast, if given).
@@ -139,6 +153,7 @@ def publish_edge_pack(ctx: LiveContext, forecast: dict | None = None) -> bool:
         # FR4 / W7: Module 3 reads the same contract offline, from the pack already on the phone
         from src.serve.module3 import module3_feed
         pack["module3_feed"] = module3_feed(forecast, ctx.cfg)
+        add_week_weather(ctx, pack["map"])
     (PUBLISHED / "edge_pack.json").write_text(json.dumps(pack, separators=(",", ":")), encoding="utf-8")
     return True
 

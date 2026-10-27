@@ -8,6 +8,7 @@ import '../../../domain/edge_forecaster.dart';
 import '../../../services/edge_store.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/weather_card.dart';
 import '../bottleneck_screen.dart';
 import 'ticket_screen.dart';
 
@@ -25,6 +26,7 @@ class DayScreen extends StatefulWidget {
 class _DayScreenState extends State<DayScreen> {
   late Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _future;
   Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
+  Future<DayWeather?>? _weather; // the day's weather (observed / forecast / typical); none on an older server
   String _trail = 'main';
   Map<String, String> _names = const {};
   String? _slot;
@@ -39,6 +41,7 @@ class _DayScreenState extends State<DayScreen> {
 
   Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _load() async {
     final api = C4Scope.of(context);
+    _weather = api.weather(widget.day).then<DayWeather?>((w) => w, onError: (_) => null);
     final ServerStatus status;
     try {
       status = await api.status();
@@ -144,6 +147,12 @@ class _DayScreenState extends State<DayScreen> {
             final canBook = chosen != null && !chosen.closed && chosen.placesLeft >= _size && !_busy;
             return ListView(padding: const EdgeInsets.all(16), children: [
               _Summary(plan: plan),
+              FutureBuilder<DayWeather?>(
+                future: _weather,
+                builder: (context, w) => w.data == null
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: WeatherCard(weather: w.data!)),
+              ),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
               if (_edge != null) _onDevice(trails),
               if (plan.suggestions.isNotEmpty) ...[

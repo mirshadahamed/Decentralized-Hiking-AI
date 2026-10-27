@@ -12,6 +12,7 @@ import '../../models/models.dart';
 import '../../services/edge_store.dart';
 import '../theme/c4_theme.dart';
 import '../widgets/c4_ui.dart';
+import '../widgets/weather_card.dart';
 
 /// Micro-spatial bottlenecks for today and the next 6 days (proposal FR2-FR4, NFR4): every trail section coloured
 /// by how full it is expected to be at the chosen hour, the Cifuentes safe numbers per section and trail, and
@@ -132,6 +133,24 @@ class _BottleneckViewState extends State<BottleneckView> {
                   ),
                 ),
               _SourceBar(day: d),
+              if (d.weather != null)
+                InkWell(
+                  key: const Key('crowd_weather'),
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    showDragHandle: true,
+                    builder: (_) => SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(C4Space.l, 0, C4Space.l, C4Space.l),
+                        child: WeatherCard(weather: d.weather!),
+                      ),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: C4Space.l, vertical: C4Space.xs),
+                    child: WeatherCard(weather: d.weather!, compact: true),
+                  ),
+                ),
               const TabBar(tabs: [
                 Tab(key: Key('tab_bottleneck_map'), icon: Icon(Icons.map_outlined), text: 'Map'),
                 Tab(icon: Icon(Icons.shield_outlined), text: 'Safe numbers'),

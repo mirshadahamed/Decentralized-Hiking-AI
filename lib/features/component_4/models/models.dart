@@ -1154,3 +1154,57 @@ class TodayUpdate {
         basis: j['basis'] as String? ?? '',
       );
 }
+
+// ---------- W-c: the weather of a chosen date (GET /weather/{day}, or the edge pack offline) ----------
+class WeatherHour {
+  WeatherHour({required this.hour, required this.rainMm, required this.tempC, required this.windKmh});
+
+  final int hour;
+  final double rainMm, tempC, windKmh;
+
+  factory WeatherHour.fromJson(Map<String, dynamic> j) => WeatherHour(
+        hour: _int(j['hour']),
+        rainMm: _dbl(j['rain_mm']),
+        tempC: _dbl(j['temp_c']),
+        windKmh: _dbl(j['wind_kmh']),
+      );
+}
+
+class DayWeather {
+  DayWeather({required this.basis, required this.basisLabel, required this.hours, required this.rainMm,
+      required this.rainShare, required this.tempMin, required this.tempMax, required this.dryWindows,
+      required this.dryBasis, required this.effect, this.typicalLow, this.typicalHigh, this.chanceWetDay});
+
+  final String basis, basisLabel, dryBasis, effect; // basis: observed | forecast | typical
+  final List<WeatherHour> hours; // open hours
+  final double rainMm, rainShare, tempMin, tempMax;
+  final List<(int, int)> dryWindows; // (from, to) hours, to exclusive
+  final double? typicalLow, typicalHigh, chanceWetDay; // typical days: rain mm P10-P90, chance of a wet day
+
+  /// 0 dry · 1 showers · 2 wet · 3 very wet (for an icon).
+  int get wetness => rainShare < 0.1 ? 0 : rainShare < 0.3 ? 1 : rainShare < 0.6 ? 2 : 3;
+
+  factory DayWeather.fromJson(Map<String, dynamic> j) {
+    final s = j['summary'] as Map<String, dynamic>? ?? {};
+    final open = {for (final h in j['open_hours'] as List? ?? []) (h as num).toInt()};
+    final t = j['typical_range'] as Map<String, dynamic>?;
+    return DayWeather(
+      basis: j['basis'] as String? ?? 'forecast',
+      basisLabel: j['basis_label'] as String? ?? '',
+      hours: [
+        for (final h in j['hourly'] as List? ?? [])
+          if (open.isEmpty || open.contains(((h as Map)['hour'] as num).toInt())) WeatherHour.fromJson(h as Map<String, dynamic>),
+      ],
+      rainMm: _dbl(s['rain_mm_open_hours']),
+      rainShare: _dbl(s['rain_share_open_hours']),
+      tempMin: _dbl(s['temp_min']),
+      tempMax: _dbl(s['temp_max']),
+      dryWindows: [for (final w in s['dry_windows'] as List? ?? []) (_int((w as Map)['from']), _int(w['to']))],
+      dryBasis: s['dry_windows_basis'] as String? ?? 'hours without rain',
+      effect: (j['effect'] as Map?)?['text'] as String? ?? '',
+      typicalLow: t == null ? null : _dbl(t['rain_mm_p10']),
+      typicalHigh: t == null ? null : _dbl(t['rain_mm_p90']),
+      chanceWetDay: t == null ? null : _dbl(t['chance_wet_day']),
+    );
+  }
+}
