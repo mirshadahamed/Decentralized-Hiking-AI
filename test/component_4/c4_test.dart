@@ -473,6 +473,22 @@ class _CountApi extends FakeApi {
       });
 }
 
+/// N3: the plan is full until 08:30 on the main trail.
+class _StartApi extends FakeApi {
+  (String, String, int)? held;
+
+  @override
+  Future<StartTimeSuggestion> startTime(DateTime d, String trail, String wanted, int size) async =>
+      StartTimeSuggestion.fromJson({'trail': trail, 'wanted': wanted, 'suggested': '08:30', 'later_than_wanted_min': 90,
+        'note': 'Come at this time and you go in first at the gate.'});
+
+  @override
+  Future<String> holdStartTime(DateTime d, String trail, String slot, int size) async {
+    held = (trail, slot, size);
+    return 'K7Q2ZP';
+  }
+}
+
 class _AdvisoryApi extends FakeApi {
   _AdvisoryApi(this.json);
 
@@ -980,6 +996,35 @@ void main() {
     final quiet = GateAdvice.fromJson({'time': '08:00', 'inside': 20, 'basis': 'b', 'over': [], 'advice': []});
     await t.pumpWidget(MaterialApp(home: Scaffold(body: GateAdviceCard(quiet))));
     expect(find.text('Next 2 hours: keep the gate open'), findsOneWidget);
+  });
+
+  testWidgets('start time without a ticket: later slot when full, hold gives a code', (t) async {
+    final api = _StartApi();
+    await t.pumpWidget(wrap(Scaffold(body: SingleChildScrollView(
+        child: StartTimeCard(day: today, trail: 'main', size: 3, trailName: "World's End loop"))), api));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Start at 08:30 instead (90 min later)'), findsOneWidget);
+    await t.tap(find.byKey(const Key('start_hold')));
+    await t.pumpAndSettle();
+    expect(api.held, ('main', '08:30', 3));
+    expect(find.textContaining('show code K7Q2ZP at the gate at 08:30'), findsOneWidget);
+  });
+
+  testWidgets('let in now: places per trail from the closed-loop controller, busier than expected', (t) async {
+    final c = GateControl.fromJson({
+      'slot': '07:30', 'arrivals_vs_expected': 1.4, 'basis': 'Re-planned now from the gate counts',
+      'trails': [
+        {'trail': 'main', 'trail_name': "World's End loop", 'entered_this_slot': 40, 'can_enter_now': 0,
+          'closed_for_entry': false, 'next_slots': []},
+        {'trail': 'kirigalpotta', 'trail_name': 'Kirigalpotta', 'entered_this_slot': 4, 'can_enter_now': 25,
+          'closed_for_entry': false, 'next_slots': []},
+      ],
+    });
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: GateControlCard(c))));
+    expect(find.text('Let in now · slot 07:30'), findsOneWidget);
+    expect(find.textContaining('Busier than expected so far (140 %'), findsOneWidget);
+    expect(find.text('0 more'), findsOneWidget);
+    expect(find.text('25 more'), findsOneWidget);
   });
 
   testWidgets('rest of today: updated with the spot counts, sections now over capacity, what changed', (t) async {

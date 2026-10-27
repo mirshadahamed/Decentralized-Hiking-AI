@@ -506,6 +506,71 @@ def gate_advice(day: date, at: time | None = None, user: dict = Depends(role("ra
     return advise(ec, booking.entries(d), now.hour * 60 + now.minute, rain, plan)
 
 
+def _day_expectation(day: date) -> tuple[float, float]:
+    """(rain share, expected visitors) the controller plans a day with."""
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    try:
+        expected = float(ctx().planner.day((day - timedelta(days=1)).isoformat(), d)["visitors"]["p50"])
+    except (ValueError, KeyError):
+        expected = float(pub.tickets.sum()) if pub is not None else 0.0
+    return rain, expected
+
+
+@app.get("/start-time/{day}", tags=["public"])
+def start_time(day: date, trail: TrailName, wanted: str = "07:00", size: int = 2):
+    """N3: the earliest start at or after `wanted` that still has room in the controller's plan for the day, for
+    visitors without a ticket. Coming at that time means going in first at the gate (RQ13b)."""
+    from src.control.start_times import suggest
+    if not 1 <= size <= 20:
+        raise HTTPException(400, "Group size must be 1-20")
+    try:
+        return suggest(day.isoformat(), trail, wanted, size, *_day_expectation(day))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class StartTimeIn(BaseModel):
+    day: date
+    trail: TrailName
+    slot: str = Slot
+    group_size: int = Field(ge=1, le=20)
+
+
+@app.post("/start-time", tags=["public"], status_code=201)
+def hold_start_time(body: StartTimeIn):
+    """Hold a start time (counted against the plan); returns a short code to show at the gate."""
+    from src.control.start_times import hold
+    try:
+        return hold(body.day.isoformat(), body.trail, body.slot, body.group_size, *_day_expectation(body.day))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/gate/control/{day}", tags=["ranger"])
+def gate_control(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """Closed-loop gate control (MPC, RQ13): how many more people each trail can take in the current slot, and the
+    caps planned for the next slots - re-planned on every call from the gate counts so far and the day's forecast
+    (corrected by how many came so far compared with what was expected)."""
+    from src.control.mpc import MPCController
+    ec = build_control()
+    now = when(datetime.combine(day, at) if at else None)
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    try:                                                       # the day-ahead expectation, made the day before
+        expected = float(ctx().planner.day((day - timedelta(days=1)).isoformat(), d)["visitors"]["p50"])
+        basis = "the day-ahead visitor forecast"
+    except (ValueError, KeyError):
+        expected = float(pub.tickets.sum()) if pub is not None else 0.0
+        basis = "the day's ticket plan"
+    out = MPCController(ec).caps_now(booking.entries(d), now.hour * 60 + now.minute, rain, expected)
+    return out | {"day": d, "time": now.strftime("%H:%M"), "expected_visitors": round(expected),
+                  "basis": f"Re-planned now from the gate counts and {basis}; keeps every section under "
+                           f"{round(100 * ec.c['safety_margin'])} % of its capacity. No sensors on the trail."}
+
+
 class CheckpointIn(BaseModel):
     route: TrailName
     count: int = Field(ge=0, le=5000)

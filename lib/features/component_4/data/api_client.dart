@@ -238,6 +238,20 @@ class C4Api {
   Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(
       await _send('GET', '/gate/advice/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
 
+  /// Visitor without a ticket: the earliest start at or after [wanted] with room in the day's plan (N3).
+  Future<StartTimeSuggestion> startTime(DateTime d, String trail, String wanted, int size) async =>
+      StartTimeSuggestion.fromJson(await _send('GET', '/start-time/${day(d)}',
+          query: {'trail': trail, 'wanted': wanted, 'size': '$size'}) as Map<String, dynamic>);
+
+  /// Hold that start time; returns the short code to show at the gate.
+  Future<String> holdStartTime(DateTime d, String trail, String slot, int size) async =>
+      ((await _send('POST', '/start-time', body: {'day': day(d), 'trail': trail, 'slot': slot, 'group_size': size}))
+          as Map<String, dynamic>)['code'] as String;
+
+  /// Ranger: how many more people each trail can take now, re-planned from the gate counts (MPC, RQ13).
+  Future<GateControl> gateControl(DateTime d, {String? at}) async => GateControl.fromJson(
+      await _send('GET', '/gate/control/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
   /// Ranger: the rest of today, updated with the spot counts made so far (A1).
   Future<TodayUpdate> liveForecast(DateTime d, {String? at}) async => TodayUpdate.fromJson(
       await _send('GET', '/live/forecast/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);

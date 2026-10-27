@@ -309,6 +309,7 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
   late Future<List<LiveSegment>> _future;
   Future<GateAdvice?>? _advice;
   Future<TodayUpdate?>? _today;
+  Future<GateControl?>? _control;
 
   String get _at => '${widget.now.hour.toString().padLeft(2, '0')}:${widget.now.minute.toString().padLeft(2, '0')}';
 
@@ -318,6 +319,8 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
     _advice = api.gateAdvice(widget.day, at: widget.demo ? _at : null).then<GateAdvice?>((a) => a, onError: (_) => null);
     // A1: the rest of today, updated with the rangers' counts (no card if the server has no spot model)
     _today = api.liveForecast(widget.day, at: widget.demo ? _at : null).then<TodayUpdate?>((a) => a, onError: (_) => null);
+    // RQ13: places each trail can take now, re-planned from the gate counts (closed-loop control)
+    _control = api.gateControl(widget.day, at: widget.demo ? _at : null).then<GateControl?>((a) => a, onError: (_) => null);
     return api.live(widget.day, at: widget.demo ? _at : null);
   }
 
@@ -363,6 +366,7 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
                   ),
               ]),
               const SizedBox(height: 12),
+              FutureBuilder<GateControl?>(future: _control, builder: (context, c) => GateControlCard(c.data)),
               FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
               FutureBuilder<TodayUpdate?>(future: _today, builder: (context, u) => TodayUpdateCard(u.data)),
               if (issues.isEmpty)
@@ -490,6 +494,55 @@ class TodayUpdateCard extends StatelessWidget {
           ],
           const SizedBox(height: 4),
           Text(u.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+/// RQ13: closed-loop control at the gate - how many more people each trail can take in this slot, re-planned from
+/// the gate counts every time it is opened.
+class GateControlCard extends StatelessWidget {
+  const GateControlCard(this.c, {super.key});
+
+  final GateControl? c;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = this.c;
+    if (c == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    final more = c.ratio > 1.05, fewer = c.ratio < 0.95;
+    return Card(
+      key: const Key('gate_control'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.door_sliding_outlined, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Let in now · slot ${c.slot}', style: text.titleSmall)),
+          ]),
+          if (more || fewer)
+            Text(
+                '${more ? 'Busier' : 'Quieter'} than expected so far (${(c.ratio * 100).round()} % of the forecast): '
+                'the plan has been adjusted.',
+                style: text.bodySmall),
+          const SizedBox(height: 6),
+          for (final t in c.trails)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(children: [
+                Expanded(child: Text(t['trail_name'] as String, style: text.bodyMedium)),
+                Text(
+                  t['closed_for_entry'] == true ? 'closed for entry' : '${t['can_enter_now']} more',
+                  key: Key('can_enter_${t['trail']}'),
+                  style: text.titleSmall?.copyWith(
+                      color: t['closed_for_entry'] == true || (t['can_enter_now'] as num) == 0 ? C4Colors.red : C4Colors.green),
+                ),
+              ]),
+            ),
+          const SizedBox(height: 4),
+          Text(c.basis, style: text.bodySmall),
         ]),
       ),
     );

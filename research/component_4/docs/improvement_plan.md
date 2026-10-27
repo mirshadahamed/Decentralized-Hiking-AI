@@ -192,3 +192,78 @@ Component 4 is complete when:
 4. requirements are confirmed by at least one DWC / park stakeholder and traced to code and tests;
 5. Module 3 and the team dashboard consume the feed in one integrated build;
 6. it runs offline on a real Android phone within NFR1.
+
+## 7. PP1 panel feedback (27 Oct): weather for the chosen date, and the Pekoe Trail
+
+### 7.1 Weather for a specific date (≈ 2–3 days)
+**Today:** the weather is used inside the model and the safe limit (rain share, wet ground), but a visitor or
+officer never sees it.
+
+**Goal:** wherever a date is chosen, show that date's weather and what it does to the crowd and the safe limit,
+and say which kind of weather it is.
+
+| # | Work | Where |
+|---|---|---|
+| W-a | `GET /weather/{day}`: hourly rain, temperature, wind, cloud and humidity for the open hours; a summary (chance of rain in open hours, total mm, min–max °C, a dry window); the basis: **observed** (past), **forecast** (up to 16 days, Open-Meteo) or **typical** (climatology of 2022–25, given as a range, not a value) | `src/live/inputs.py` already holds `weather` + `weather_source`; new `src/serve/weather_day.py`, `api/app.py` |
+| W-b | Link weather to the decisions: the rain factor of the safe limit (FCpre), wet ground from earlier days, and the crowd forecast's rain effect ("rain usually keeps ~x % of visitors away") | `capacity_panel.py`, `/capacity/{day}` |
+| W-c | App: a weather card on the visitor **day screen** (hourly strip: rain bars, temperature line, best dry hours for walking) and on the **Crowding** day picker (an icon per day); a weather line on the officer **Daily quota** panel | `day_screen.dart`, `bottleneck_screen.dart`, `capacity_screen.dart` |
+| W-d | Offline: the week's weather goes into the edge pack, so the card also works in airplane mode | `edge/pack.py` (`map.days[].weather`) |
+| W-e | Tests: basis switches observed → forecast → typical by date; card and offline pack | `tests/test_weather_day.py`, `c4_test.dart` |
+
+For the Pekoe Trail, the same card is shown **per stage**, because stages span different altitudes and weather (§7.2).
+
+### 7.2 The Pekoe Trail as a new destination (≈ 2–3 weeks)
+**What it is:** a ~300 km long-distance trail through the tea country, in 22 stages, walked over several days by
+some and as single stages by day-trippers. Some stages overlap busy day-visit spots (e.g. around Ella).
+To verify from OSM and the trail's own route data.
+
+**Why it fits the research gap:** it is open access, with **no gate and no counts**. That is the gap's
+"no historical sensor record" condition exactly: the zero-sensor and spot-count settings of RQ10 / RQ11b apply
+directly. It is also a **third, different trail type** (linear, multi-day, many entry points), which tests
+whether the method transfers beyond Horton Plains (a loop) and Adam's Peak (a summit queue).
+
+| Phase | Work | Done when |
+|---|---|---|
+| **P1 Data (3–4 days)** | `configs/parks/pekoe_trail.yaml` (the per-park pattern of Adam's Peak / Yala). Stages from OSM route relations (one walk per stage); trail graph of ~1–2 km sections; DEM slope / wetness; stage start-end points and villages as access points; tourist hotspots on the trail as viewpoints. **Weather at several points** (one per group of stages) | Graph and map of all stages; `build_dataset` runs |
+| **P2 Demand and simulator (3–4 days)** | Assumptions (A) to document in `docs/assumptions_pekoe_trail.md`: walkers per stage by season (Dec–Apr peak in the hill country), day-trippers at hotspot stages, multi-day walkers moving one stage a day (flow carried from stage k to k+1 the next day), start times, stage times from Tobler + stops. Calibrate against what exists (trail organisation figures, guesthouse/booking listings, reviews) | Simulated year looks plausible per stage; assumptions listed |
+| **P3 Model and evaluation (3–4 days + runs)** | Benchmark (temporal + spatial CV); **zero-sensor and spot-count settings** (counts at stage ends / hotspots); bottleneck events; transfer from Horton / Adam's Peak (RQ2-style) | One results table per setting; RQ1 / RQ10 / RQ11b rows for a third trail |
+| **P4 Capacity and advice (2 days)** | Cifuentes per section; advisory mode, no tickets: **best day and start time per stage**, quieter stages nearby, a weather warning per stage; Module 3 feed for the route planner | `/advisory`-style endpoint for stages |
+| **P5 App (3–4 days)** | Pekoe Trail in the trip planner (kind: long-distance trail); a **stage picker** (map of 22 stages, length, climb, time, crowd for the chosen date) → stage day screen with the weather card (§7.1), crowding per section, best start time; offline pack per stage (or the stages of the coming days); a multi-day plan ("stages 18–22 from <date>": crowd and weather each day) | Works offline on the phone; screenshots |
+| **P6 Docs** | Results in `evaluation_results.md`, run guide, slides | – |
+
+**Risks:**
+- No visitor data exists. Make that the point: it is the zero-record case. State every demand number as an assumption, and plan a short field count at one or two hotspot stages, together with the December visit.
+- ~300 km gives a larger graph (~200–300 sections) than the 48 / 57 so far. Check training time and the phone pack size (one pack per stage if needed).
+- Stage geometry in OSM may be incomplete; fall back to the official GPX files.
+
+**Order:** W-a → W-c → W-d (weather is quick and also needed per stage) → P1 → P2 → P3 → P4 → P5.
+
+## 8. Next level: closed-loop crowd control (27 Oct)
+
+**Goal:** from forecasting and advice to *control*. The loop: measure (gate counts, spot counts) → update (ST-GNN,
+calibrated chances) → decide (MPC) → act (gate caps, holds, redirects, nudges) → learn (recalibrate).
+
+| # | Work | Status |
+|---|---|---|
+| N1 | **MPC at the gate**: caps per trail and slot re-planned every slot from the gate counts, a feedback-corrected demand forecast and the response table; holds and redirects | **Done (RQ13):** 99.3 % over-capacity cut vs 62.7 % for a static quota, with more people admitted; booking (D) still better. Cost: 4 in 10 wait ~1.5 h at the gate. Live `GET /gate/control/{day}`; ranger card "Let in now" |
+| N2 | Recalibration loop: each day's counts vs forecast and the advice compliance update the model and the controller | Planned |
+| N3 | Personal nudges with incentives and a compliance model (RQ8 spread). **Next, from RQ13:** send the controller's start time to visitors' phones before they travel, so the gate wait becomes a later start | Next |
+| N4 | Network level: redirect demand across parks / Pekoe stages / days in the trip planner | Planned |
+| N5 | Phone-to-phone sync of counts and advice without a signal (Bluetooth / Wi-Fi Direct) | Planned |
+
+**Inputs needed for more accurate tests (priority order):**
+1. DWC daily ticket totals (past years).
+2. Ticket sale / scan times.
+3. Counts at 3–5 sections for 2–4 weeks: manual counts, infrared counters, an on-device camera counter, or Wi-Fi / Bluetooth counters.
+4. GPS tracks: walking and stop times.
+5. Gate survey: group size, trail and direction.
+6. Archived weather forecasts and Met Department station data.
+7. Section widths and viewpoint platform sizes.
+8. DWC capacity policy.
+9. Advice compliance (app pilot).
+10. Tour bus / school trip bookings and the incident log.
+11. Adam's Peak checkpoint counts and summit queue times on Poya nights.
+12. Pekoe Trail registrations and guesthouse occupancy.
+
+**Strongest evidence:** a field pilot at one park, with control **on and off on alternate days**, measured with
+inputs 3 and 5.

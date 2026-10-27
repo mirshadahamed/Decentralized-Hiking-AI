@@ -1208,3 +1208,36 @@ class DayWeather {
     );
   }
 }
+
+// ---------- RQ13: closed-loop gate control (MPC), re-planned every slot ----------
+class GateControl {
+  GateControl({required this.slot, required this.ratio, required this.trails, required this.basis});
+
+  final String slot, basis;
+  final double ratio; // arrivals so far / expected so far
+  final List<Map<String, dynamic>> trails; // trail, trail_name, entered_this_slot, can_enter_now, closed_for_entry, next_slots
+
+  factory GateControl.fromJson(Map<String, dynamic> j) => GateControl(
+        slot: j['slot'] as String? ?? '',
+        ratio: _dbl(j['arrivals_vs_expected']),
+        trails: [for (final t in j['trails'] as List? ?? []) t as Map<String, dynamic>],
+        basis: j['basis'] as String? ?? '',
+      );
+}
+
+// ---------- N3: a start time for visitors without a ticket (GET /start-time/{day}) ----------
+class StartTimeSuggestion {
+  StartTimeSuggestion({required this.trail, required this.wanted, this.suggested, this.laterMin, required this.note});
+
+  final String trail, wanted, note;
+  final String? suggested; // null: full for the next 3 hours
+  final int? laterMin;
+
+  factory StartTimeSuggestion.fromJson(Map<String, dynamic> j) => StartTimeSuggestion(
+        trail: j['trail'] as String? ?? '',
+        wanted: j['wanted'] as String? ?? '',
+        suggested: j['suggested'] as String?,
+        laterMin: j['later_than_wanted_min'] == null ? null : _int(j['later_than_wanted_min']),
+        note: j['note'] as String? ?? '',
+      );
+}
