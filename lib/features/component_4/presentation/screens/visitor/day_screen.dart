@@ -202,9 +202,110 @@ class _DayScreenState extends State<DayScreen> {
                 label: Text(_slot == null ? 'Pick a time to book' : 'Book $_size place${_size > 1 ? 's' : ''} at $_slot'),
                 style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
               ),
+              const SizedBox(height: 16),
+              StartTimeCard(key: ValueKey('$_trail/$_size'), day: widget.day, trail: _trail, size: _size,
+                  trailName: _names[_trail] ?? _trail),
             ]);
           },
         ),
+      );
+}
+
+/// N3: for visitors without a ticket - the earliest start with room in today's plan; coming then means going in
+/// first at the gate. "Hold" counts it against the plan and gives a code to show.
+class StartTimeCard extends StatefulWidget {
+  const StartTimeCard({super.key, required this.day, required this.trail, required this.size, required this.trailName});
+
+  final DateTime day;
+  final String trail, trailName;
+  final int size;
+
+  @override
+  State<StartTimeCard> createState() => _StartTimeCardState();
+}
+
+class _StartTimeCardState extends State<StartTimeCard> {
+  String _wanted = '07:00';
+  Future<StartTimeSuggestion?>? _future;
+  String? _code;
+
+  void _load() => _future = C4Scope.of(context)
+      .startTime(widget.day, widget.trail, _wanted, widget.size)
+      .then<StartTimeSuggestion?>((s) => s, onError: (_) => null);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_future == null) _load();
+  }
+
+  Future<void> _hold(String slot) async {
+    try {
+      final code = await C4Scope.of(context).holdStartTime(widget.day, widget.trail, slot, widget.size);
+      if (mounted) setState(() => _code = code);
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      setState(_load);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<StartTimeSuggestion?>(
+        future: _future,
+        builder: (context, snap) {
+          final s = snap.data;
+          if (s == null) return const SizedBox.shrink();                 // older server or no plan
+          final text = Theme.of(context).textTheme;
+          return Card(
+            key: const Key('start_time_card'),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Coming without a ticket?', style: text.titleMedium),
+                const SizedBox(height: 4),
+                Row(children: [
+                  const Text('I would like to start at '),
+                  DropdownButton<String>(
+                    key: const Key('start_wanted'),
+                    value: _wanted,
+                    items: [
+                      for (var m = 6 * 60; m <= 12 * 60; m += 30)
+                        '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}'
+                    ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                    onChanged: (v) => setState(() {
+                      _wanted = v!;
+                      _code = null;
+                      _load();
+                    }),
+                  ),
+                ]),
+                if (s.suggested == null)
+                  Text(s.note, style: text.bodyMedium?.copyWith(color: C4Colors.red))
+                else ...[
+                  Text(
+                      s.laterMin == 0
+                          ? 'Start at ${s.suggested} on the ${widget.trailName}: there is room.'
+                          : 'Start at ${s.suggested} instead (${s.laterMin} min later): the ${widget.trailName} is full before then.',
+                      key: const Key('start_suggested'),
+                      style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(s.note, style: text.bodySmall),
+                  const SizedBox(height: 8),
+                  if (_code == null)
+                    OutlinedButton.icon(
+                      key: const Key('start_hold'),
+                      onPressed: () => _hold(s.suggested!),
+                      icon: const Icon(Icons.schedule),
+                      label: Text('Hold ${s.suggested} for ${widget.size}'),
+                    )
+                  else
+                    Text('Held: show code $_code at the gate at ${s.suggested}.',
+                        key: const Key('start_code'), style: text.titleSmall?.copyWith(color: C4Colors.green)),
+                ],
+              ]),
+            ),
+          );
+        },
       );
 }
 
