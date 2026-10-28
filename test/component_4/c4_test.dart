@@ -462,7 +462,7 @@ class _CountApi extends FakeApi {
   @override
   Future<ForecastCheck> forecastCheck(DateTime start, DateTime end) async => ForecastCheck.fromJson({
         'summary': {'counts': 2, 'with_forecast': 2, 'mae': 6.5, 'bias': 2.5, 'within_30pct': 0.5,
-          'counted_over_capacity': 1, 'over_capacity_called': 1, 'false_alarms': 0},
+          'counted_over_capacity': 1, 'over_capacity_called': 1, 'false_alarms': 0, 'mae_corrected': 4.1, 'bias_corrected': 0.3},
         'rows': [
           {'day': C4Api.day(today), 'seg_id': 25, 'name': "World's End", 'time_min': 620, 'count': 40, 'forecast': 44.0,
             'capacity_at_once': 30.0, 'counted_over': true, 'forecast_over': true},
@@ -487,6 +487,11 @@ class _StartApi extends FakeApi {
     held = (trail, slot, size);
     return 'K7Q2ZP';
   }
+
+  @override
+  Future<CheckInResult> checkIn(String code, {DateTime? at}) async => CheckInResult.fromJson({
+        'ok': true, 'reason': 'On time: let in first', 'trail': 'main', 'slot': '08:30', 'group_size': 3,
+        'kind': 'start_time', 'priority': true});
 }
 
 class _AdvisoryApi extends FakeApi {
@@ -585,6 +590,22 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Check in'), findsOneWidget);
     expect(find.text('Walk-ins'), findsOneWidget);
+  });
+
+  testWidgets('gate: a start-time code on time is let in first', (t) async {
+    await t.pumpWidget(MaterialApp(home: Component4Home(api: _StartApi())));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Staff'));
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).first, 'ranger1');
+    await t.enterText(find.byType(TextField).last, 'correct-horse');
+    await t.tap(find.text('Log in'));
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).first, 'k7q2zp');
+    await t.testTextInput.receiveAction(TextInputAction.done);
+    await t.pumpAndSettle();
+    expect(find.text('On time: let in first'), findsOneWidget);
+    expect(find.byKey(const Key('checkin_priority')), findsOneWidget);
   });
 
   test('advisory, checkpoint and map models parse the API JSON', () {
@@ -1078,6 +1099,7 @@ void main() {
     await t.pumpWidget(wrap(const Scaffold(body: ForecastCheckTab()), _CountApi()));
     await t.pumpAndSettle();
     expect(find.byKey(const Key('check_summary')), findsOneWidget);
+    expect(find.textContaining('Corrected by the counts: mean error 4.1'), findsOneWidget);
     expect(find.text('6.5'), findsOneWidget);
     expect(find.text('50 %'), findsOneWidget);
     expect(find.textContaining('counted 40 · forecast 44'), findsOneWidget);

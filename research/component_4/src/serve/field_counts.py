@@ -74,12 +74,14 @@ def forecast_check(cfg, start: str, end: str, db=None) -> dict:
     rows, cache = [], {}
     for r in counts(start, end, db):
         if r["day"] not in cache:
-            cache[r["day"]] = booking.day_forecast(r["day"], db)
-        fc, basis = cache[r["day"]]
+            cache[r["day"]] = booking.day_forecast(r["day"], db, raw=True), booking.day_forecast(r["day"], db)[0]
+        (fc, basis), fcc = cache[r["day"]]
         j = col[r["seg_id"]]
         f = None if fc is None else round(float(fc[r["time_min"] // 60, j]), 1)
+        fcor = None if fcc is None else round(float(fcc[r["time_min"] // 60, j]), 1)
         cap = float(at_once[j])
-        rows.append(r | {"name": names.get(r["seg_id"]), "forecast": f, "forecast_basis": basis,
+        rows.append(r | {"name": names.get(r["seg_id"]), "forecast": f, "forecast_corrected": fcor,
+                         "forecast_basis": basis,
                          "capacity_at_once": round(cap, 1),
                          "counted_over": r["count"] > cap, "forecast_over": None if f is None else f > cap})
     known = [x for x in rows if x["forecast"] is not None]
@@ -93,6 +95,10 @@ def forecast_check(cfg, start: str, end: str, db=None) -> dict:
                     "within_30pct": round(float((np.abs(e) <= np.maximum(0.3 * cnt, 2)).mean()), 3),
                     "counted_over_capacity": int(co.sum()), "over_capacity_called": int((co & fo).sum()),
                     "false_alarms": int((~co & fo).sum())}
+        ec_ = np.array([x["forecast_corrected"] - x["count"] for x in known], float)
+        if not np.allclose(ec_, e):                             # N2: some days had a count-based correction
+            summary |= {"mae_corrected": round(float(np.abs(ec_).mean()), 2),
+                        "bias_corrected": round(float(ec_.mean()), 2)}
     return {"start": start, "end": end, "summary": summary, "rows": rows,
             "note": "Forecast = the day-ahead forecast saved before the day. Spot counts are the park's own sensor "
                     "record; they are also used to check and recalibrate the simulator the model learned from."}

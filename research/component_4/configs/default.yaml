@@ -194,6 +194,8 @@ live:                     # live mode: real dates, refreshed every evening (docs
   calendar_extra_days: 120
   dwc_totals_csv: data/live/dwc_daily_totals.csv   # optional: date,trail,visitors (real counts replace simulated)
   model_input: gate         # G6: the deployed ST-GNN reads only the gate counts (RQ10); "all" = every segment
+  recalibrate: true         # N2: saved forecasts are corrected by the rangers' spot counts (src/live/recalibrate.py)
+  recalibrate_window_days: 14
 
 api:
   allow_time_override: true   # DEMO ONLY: staff may pass a time ('at') for check-in / walk-ins / live status

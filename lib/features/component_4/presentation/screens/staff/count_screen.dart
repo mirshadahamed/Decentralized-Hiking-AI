@@ -223,6 +223,15 @@ class _ForecastCheckTabState extends State<ForecastCheckTab> {
                   'Bias ${s['bias'] ?? '–'} (more than 0 = forecast too high) · over capacity counted ${s['counted_over_capacity'] ?? 0}, '
                   'called by the forecast ${s['over_capacity_called'] ?? 0}, false alarms ${s['false_alarms'] ?? 0}',
                   style: text.bodySmall),
+              if (s['mae_corrected'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: C4Space.s),
+                  child: Text(
+                      key: const Key('check_corrected'),
+                      'Corrected by the counts: mean error ${s['mae_corrected']} people, bias ${s['bias_corrected']}. '
+                      'The forecast learns from every count you enter.',
+                      style: text.bodyMedium),
+                ),
               const Divider(height: C4Space.xl),
               for (final r in c.rows.reversed)
                 ListTile(

@@ -153,7 +153,7 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
           onSubmitted: _check,
           style: const TextStyle(fontSize: 22, letterSpacing: 3),
           decoration: InputDecoration(
-            labelText: 'Or type the 8-letter code',
+            labelText: 'Or type the ticket or start-time code',
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(icon: const Icon(Icons.send), onPressed: () => _check(_code.text)),
           ),
@@ -170,6 +170,11 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
                 Icon(_result!.ok ? Icons.check_circle : Icons.cancel, size: 72, color: _result!.ok ? C4Colors.green : C4Colors.red),
                 const SizedBox(height: 8),
                 Text(_result!.reason, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+                if (_result!.priority)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Chip(key: Key('checkin_priority'), avatar: Icon(Icons.fast_forward), label: Text('Start time · let in first')),
+                  ),
                 if (_result!.trail != null)
                   Text('${trailName(_result!.trail!)} · ${_result!.slot} · ${_result!.groupSize} people',
                       style: Theme.of(context).textTheme.titleMedium),

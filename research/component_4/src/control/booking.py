@@ -60,12 +60,19 @@ def _connect(db=None):
         CREATE TABLE IF NOT EXISTS quota_decisions (
             day TEXT NOT NULL, trail TEXT NOT NULL, rule TEXT NOT NULL, quota REAL,
             decided_by TEXT NOT NULL, decided_at TEXT NOT NULL, PRIMARY KEY (day, trail));
+        CREATE TABLE IF NOT EXISTS start_advice (
+            code TEXT PRIMARY KEY, day TEXT NOT NULL, trail TEXT NOT NULL, slot TEXT NOT NULL,
+            group_size INTEGER NOT NULL, created TEXT NOT NULL);
     """)
     cols = [r[1] for r in con.execute("PRAGMA table_info(bookings)")]
     if "checked_in_at" not in cols:                           # older databases
         con.execute("ALTER TABLE bookings ADD COLUMN checked_in_at TEXT")
     if "wetness" not in [r[1] for r in con.execute("PRAGMA table_info(published_slots)")]:
         con.execute("ALTER TABLE published_slots ADD COLUMN wetness REAL NOT NULL DEFAULT 0")
+    if "correction" not in [r[1] for r in con.execute("PRAGMA table_info(day_forecasts)")]:
+        con.execute("ALTER TABLE day_forecasts ADD COLUMN correction TEXT")    # N2: per-section factors from counts
+    if "arrived_at" not in [r[1] for r in con.execute("PRAGMA table_info(start_advice)")]:
+        con.execute("ALTER TABLE start_advice ADD COLUMN arrived_at TEXT")
     return con
 
 
@@ -126,12 +133,13 @@ def checkpoint_passes(day: str, db=None) -> pd.DataFrame:
 
 
 def entries(day: str, db=None) -> pd.DataFrame:
-    """Everyone who actually went through the gate on a day (checked-in bookings + walk-ins):
+    """Everyone who actually went through the gate on a day (checked-in bookings + walk-ins + start-time holders):
     trail, gate_min (minutes after midnight), size. Input for the live estimate (nowcast)."""
     with closing(_connect(db)) as con:
         rows = con.execute("SELECT trail, checked_in_at, group_size FROM bookings WHERE day=? AND checked_in_at "
-                           "IS NOT NULL UNION ALL SELECT trail, sold_at, group_size FROM walkins WHERE day=?",
-                           (day, day)).fetchall()
+                           "IS NOT NULL UNION ALL SELECT trail, sold_at, group_size FROM walkins WHERE day=? "
+                           "UNION ALL SELECT trail, arrived_at, group_size FROM start_advice WHERE day=? AND "
+                           "arrived_at IS NOT NULL", (day, day, day)).fetchall()
     out = [{"trail": t, "gate_min": datetime.fromisoformat(at).hour * 60 + datetime.fromisoformat(at).minute,
             "size": n} for t, at, n in rows]
     return pd.DataFrame(out, columns=["trail", "gate_min", "size"])
@@ -174,21 +182,30 @@ QUOTA_RULES = {"forecast": "Cifuentes with the crowd forecast (recommended)",
                "manual": "set by an officer"}
 
 
-def save_forecast(day: str, hourly: np.ndarray, basis: str, db=None):
-    """The crowd forecast [24 h, segments] the day's quota is computed from (written by the live refresh)."""
+def save_forecast(day: str, hourly: np.ndarray, basis: str, db=None, correction=None):
+    """The crowd forecast [24 h, segments] the day's quota is computed from (written by the live refresh).
+    correction: per-segment factors learned from the rangers' counts (N2, src/live/recalibrate.py); the raw
+    forecast is kept, so the counts are always checked against what the model itself said."""
     import json
     with closing(_connect(db)) as con:
-        con.execute("INSERT OR REPLACE INTO day_forecasts VALUES (?,?,?,?)",
+        con.execute("INSERT OR REPLACE INTO day_forecasts (day, hourly, basis, saved_at, correction) VALUES (?,?,?,?,?)",
                     (day, json.dumps(np.round(np.asarray(hourly, float), 2).tolist()), basis,
-                     datetime.now().isoformat(timespec="seconds")))
+                     datetime.now().isoformat(timespec="seconds"),
+                     None if correction is None else json.dumps(np.round(np.asarray(correction, float), 3).tolist())))
         con.commit()
 
 
-def day_forecast(day: str, db=None) -> tuple[np.ndarray | None, str | None]:
+def day_forecast(day: str, db=None, raw: bool = False) -> tuple[np.ndarray | None, str | None]:
+    """The saved forecast, corrected by the count-based factors unless raw=True."""
     import json
     with closing(_connect(db)) as con:
-        r = con.execute("SELECT hourly, basis FROM day_forecasts WHERE day=?", (day,)).fetchone()
-    return (np.array(json.loads(r[0])), r[1]) if r else (None, None)
+        r = con.execute("SELECT hourly, basis, correction FROM day_forecasts WHERE day=?", (day,)).fetchone()
+    if r is None:
+        return None, None
+    hourly = np.array(json.loads(r[0]))
+    if r[2] is None or raw:
+        return hourly, r[1]
+    return hourly * np.array(json.loads(r[2]))[None, :], r[1] + ", corrected by the rangers' counts"
 
 
 def quota_decisions(day: str, db=None) -> dict:
@@ -451,7 +468,7 @@ def check_in(code: str, now: datetime, db=None) -> dict:
         row = con.execute("SELECT day, trail, slot, group_size, status FROM bookings WHERE code=?",
                           (code.strip().upper(),)).fetchone()
         if row is None:
-            return {"ok": False, "reason": "Unknown code"}
+            return _check_start_time(con, code.strip().upper(), now, win)
         day, trail, slot, size, status = row
         info = {"day": day, "trail": trail, "slot": slot, "group_size": size}
         if status != "booked":
@@ -466,6 +483,28 @@ def check_in(code: str, now: datetime, db=None) -> dict:
                     (now.isoformat(timespec="seconds"), code.strip().upper()))
         con.commit()
     return {"ok": True, "reason": "Welcome", **info}
+
+
+def _check_start_time(con, code: str, now: datetime, win: int) -> dict:
+    """Gate check for a start-time code (N3, no ticket): on time = within the slot window, and then the group goes
+    in first (RQ13b). Early: come back. Late: no priority, join the queue like everyone else."""
+    row = con.execute("SELECT day, trail, slot, group_size, arrived_at FROM start_advice WHERE code=?",
+                      (code,)).fetchone()
+    if row is None:
+        return {"ok": False, "reason": "Unknown code"}
+    day, trail, slot, size, arrived = row
+    info = {"day": day, "trail": trail, "slot": slot, "group_size": size, "kind": "start_time", "priority": False}
+    if arrived:
+        return {"ok": False, "reason": f"Already used at {arrived[11:16]}", **info}
+    start = datetime.fromisoformat(f"{day}T{slot}")
+    if now < start - timedelta(minutes=win):
+        return {"ok": False, "reason": f"Too early: their start time is {slot} on {day}; let in first from "
+                                       f"{(start - timedelta(minutes=win)):%H:%M}", **info}
+    if now > start + timedelta(minutes=win):
+        return {"ok": False, "reason": "Late for their start time: no priority, join the queue", **info}
+    con.execute("UPDATE start_advice SET arrived_at=? WHERE code=?", (now.isoformat(timespec="seconds"), code))
+    con.commit()
+    return {"ok": True, "reason": "On time: let in first", **info | {"priority": True}}
 
 
 def bookings_for_code(code: str, db=None) -> dict | None:

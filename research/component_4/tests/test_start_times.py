@@ -46,3 +46,29 @@ def test_full_slot_is_refused(client):
         pytest.skip("no nearly full slot")
     r = c.post("/start-time", json={"day": day, "trail": trail, "slot": full["slot"], "group_size": 20})
     assert r.status_code == 409
+
+
+def test_gate_accepts_start_time_codes(tmp_path):
+    """The ranger's normal check-in takes a start-time code: early -> come back, on time -> let in first (and it
+    counts as an entry), a second time -> already used."""
+    from datetime import datetime
+    from src.control import booking
+    db = tmp_path / "b.sqlite"
+    with booking.closing(booking._connect(db)) as con:
+        con.execute("INSERT INTO start_advice (code, day, trail, slot, group_size, created) VALUES "
+                    "('ABC234','2026-11-02','main','08:30',3,'2026-11-01T10:00:00')")
+        con.commit()
+    early = booking.check_in("abc234", datetime(2026, 11, 2, 7, 50), db)
+    assert not early["ok"] and early["kind"] == "start_time" and "Too early" in early["reason"]
+    on_time = booking.check_in("ABC234", datetime(2026, 11, 2, 8, 25), db)
+    assert on_time["ok"] and on_time["priority"]
+    assert booking.entries("2026-11-02", db).to_dict("records") == [{"trail": "main", "gate_min": 505, "size": 3}]
+    assert "Already used" in booking.check_in("ABC234", datetime(2026, 11, 2, 8, 30), db)["reason"]
+    late = tmp_path / "c.sqlite"
+    with booking.closing(booking._connect(late)) as con:
+        con.execute("INSERT INTO start_advice (code, day, trail, slot, group_size, created) VALUES "
+                    "('XYZ234','2026-11-02','main','08:30',2,'2026-11-01T10:00:00')")
+        con.commit()
+    r = booking.check_in("XYZ234", datetime(2026, 11, 2, 9, 0), late)
+    assert not r["ok"] and not r["priority"] and "queue" in r["reason"]
+    assert booking.check_in("NOPE22", datetime(2026, 11, 2, 9, 0), late)["reason"] == "Unknown code"

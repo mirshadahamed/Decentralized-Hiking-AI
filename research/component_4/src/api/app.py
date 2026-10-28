@@ -454,6 +454,16 @@ def forecast_check(start: date, end: date, user: dict = Depends(role("officer"))
     return check(CFG, start.isoformat(), end.isoformat())
 
 
+@app.get("/admin/recalibration", tags=["officer"])
+def recalibration(day: date | None = None, user: dict = Depends(role("officer"))):
+    """N2: how the rangers' counts correct the forecast - the factors for `day` (default tomorrow) and, for the 60
+    days before it, the error of the raw and of the corrected forecast (factors from earlier days only)."""
+    from src.live.recalibrate import backtest, factors
+    d = day or ctx().today + timedelta(days=1)
+    return {"factors": factors(CFG, d.isoformat()),
+            "backtest": backtest(CFG, (d - timedelta(days=60)).isoformat(), (d - timedelta(days=1)).isoformat())}
+
+
 @app.get("/live/forecast/{day}", tags=["ranger"])
 def live_forecast(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
     """A1: the rest of today per section - the morning forecast and the forecast updated with the rangers' spot

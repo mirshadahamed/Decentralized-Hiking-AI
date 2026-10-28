@@ -6,7 +6,8 @@
 The day plan is the MPC's caps per trail and slot from the day's expected visitors (src/control/mpc.py,
 day_plan). Every start time given out is counted against the plan, so later visitors are spread to later slots.
 Visitors who come at their start time are let in first at the gate (RQ13b: they wait ~0.5 min instead of ~70).
-No personal data: a random code, day, trail, slot and group size.
+No personal data: a random code, day, trail, slot and group size. At the gate the ranger's normal check-in
+accepts the code (booking.check_in): on time means let in first, and the group counts as an entry.
 """
 import secrets
 from contextlib import closing
@@ -23,10 +24,7 @@ MAX_SHIFT_MIN = 180
 
 
 def _con(db=None):
-    con = booking._connect(db)
-    con.execute("CREATE TABLE IF NOT EXISTS start_advice (code TEXT PRIMARY KEY, day TEXT NOT NULL, trail TEXT NOT NULL, "
-                "slot TEXT NOT NULL, group_size INTEGER NOT NULL, created TEXT NOT NULL)")
-    return con
+    return booking._connect(db)                     # the start_advice table lives with the bookings
 
 
 @lru_cache(maxsize=64)
@@ -75,7 +73,7 @@ def hold(day: str, trail: str, slot: str, size: int, rain_share: float, expected
         raise ValueError(f"{slot} on this trail is full: try {s['suggested'] or 'another trail or day'}")
     code = "".join(secrets.choice(booking.CODE_ALPHABET) for _ in range(6))
     with closing(_con(db)) as con:
-        con.execute("INSERT INTO start_advice VALUES (?,?,?,?,?,?)",
+        con.execute("INSERT INTO start_advice (code, day, trail, slot, group_size, created) VALUES (?,?,?,?,?,?)",
                     (code, day, trail, slot, size, datetime.now().isoformat(timespec="seconds")))
         con.commit()
     return {"code": code, "day": day, "trail": trail, "slot": slot, "group_size": size}

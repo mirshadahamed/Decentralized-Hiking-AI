@@ -247,12 +247,15 @@ class StaffSession {
 }
 
 class CheckInResult {
-  CheckInResult({required this.ok, required this.reason, this.trail, this.slot, this.groupSize});
+  CheckInResult({required this.ok, required this.reason, this.trail, this.slot, this.groupSize, this.startTime = false, this.priority = false});
 
   final bool ok;
   final String reason;
   final String? trail, slot;
   final int? groupSize;
+
+  /// A start-time code (no ticket) rather than a booking; [priority] = on time, let in first.
+  final bool startTime, priority;
 
   factory CheckInResult.fromJson(Map<String, dynamic> j) => CheckInResult(
         ok: j['ok'] as bool,
@@ -260,6 +263,8 @@ class CheckInResult {
         trail: j['trail'] as String?,
         slot: j['slot'] as String?,
         groupSize: j['group_size'] == null ? null : _int(j['group_size']),
+        startTime: j['kind'] == 'start_time',
+        priority: j['priority'] == true,
       );
 }
 

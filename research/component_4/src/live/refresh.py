@@ -101,6 +101,12 @@ def day_forecasts(ctx: LiveContext, tomorrow: dict | None, db=None):
             continue
         col = {i: hourly[:, j] for j, i in enumerate(seg_ids)}
         booking.save_forecast(d, np.array([col[i] for i in order]).T, "planning model (likely case)", db)
+    if ctx.cfg["live"].get("recalibrate", True):              # N2: correct by the rangers' recent counts
+        from src.live.recalibrate import correct_saved, factors
+        fac = factors(ctx.cfg, (ctx.today + timedelta(days=1)).isoformat(), db=db)
+        if fac["counts"]:
+            for k in range(1, ctx.cfg["live"]["horizon_days"] + 1):
+                correct_saved(ctx.cfg, (ctx.today + timedelta(days=k)).isoformat(), db, fac)
 
 
 def publish_slots(ctx: LiveContext, db=None, tomorrow: dict | None = None) -> list:

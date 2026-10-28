@@ -103,7 +103,7 @@ area:
     trail_end: "Pedro Estate (trail end)"
 
 graph:
-  target_segment_m: 2000    # 323 km in ~2 km sections: ~160 nodes
+  target_segment_m: 6000    # 323 km in ~6 km sections: ~55 nodes (2 km left most sections empty: RQ1 Pekoe, run 20261027_231345)
   poi_snap_m: 500
   stage_join_m: 2000        # a stage's end and the next stage's start closer than this are linked
   max_grade: 0.30
