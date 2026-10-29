@@ -10,6 +10,7 @@ Built from open data only: OpenStreetMap, Copernicus DEM, Open-Meteo weather, Sr
 **Start here:**
 | Doc | For |
 |---|---|
+| `docs/viva_prep.md` | PP1 viva: data sources, the gap answered, how it was built, demo script, file map, Q&A |
 | `docs/pp1_guide.md` | the whole component explained, for the presentation |
 | `docs/qa_pp1.md` | likely examiner questions with short answers and evidence |
 | `docs/user_guide.md`, `RUN_APP.md` | use, test and run the system |
