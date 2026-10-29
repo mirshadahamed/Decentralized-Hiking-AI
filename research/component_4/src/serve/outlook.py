@@ -1,4 +1,4 @@
-"""90-day crowd outlook + plan for one target day, as versioned JSON (roadmap.md, sections 2-4).
+"""90-day crowd outlook + plan for one target day, as versioned JSON (docs/archive/roadmap.md, sections 2-4).
 
     python -m src.serve.outlook --issue 2025-03-01                       # 90-day outlook
     python -m src.serve.outlook --issue 2025-03-01 --target 2025-05-12   # + detail and suggestions for that day

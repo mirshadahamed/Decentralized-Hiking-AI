@@ -50,7 +50,7 @@ k[2].metric("Classic Cifuentes quota (park)", f"{fc['classic_cifuentes_quota']:,
 
 labels = seg.set_index("seg_id").label
 rows = []
-for t, v in fc["trails"].items():
+for v in fc["trails"].values():
     rows.append({"trail": v["name"], "expected": v["expected_visitors"], "quota": v["recommended_daily_quota"],
                  "room left": v["headroom"], "bottleneck segments": v["bottleneck_segments"],
                  "busiest segment peak": v["peak_occupancy"], "limiting segment": labels[v["limiting_segment"]]})

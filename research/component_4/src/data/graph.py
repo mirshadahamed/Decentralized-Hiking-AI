@@ -23,17 +23,21 @@ from shapely.ops import substring, transform
 from src.config import PROCESSED, RAW
 
 TRAIL_FILTER = '["highway"~"path|footway|track|steps"]'
+POI_TAGS = {"tourism": True, "waterway": "waterfall", "natural": "peak"}
 
 
 def load_osm(cfg):
     ox.settings.use_cache = True
     ox.settings.cache_folder = str(RAW / "osm_cache")
     bbox = tuple(cfg["area"]["bbox"])
-    G = ox.graph_from_bbox(bbox, custom_filter=TRAIL_FILTER, simplify=True, retain_all=True)
+    osm_filter = cfg["graph"].get("osm_filter", TRAIL_FILTER)      # safari parks: jeep tracks, not footpaths
+    G = ox.graph_from_bbox(bbox, custom_filter=osm_filter, simplify=True, retain_all=True)
     pois = None
     if cfg["area"].get("pois"):                       # named landmarks (Horton Plains); named-path parks need none
-        pois = ox.features_from_bbox(bbox, tags={"tourism": True, "waterway": "waterfall", "natural": "peak"})
+        pois = ox.features_from_bbox(bbox, tags=cfg["area"].get("poi_tags", POI_TAGS))
     G = ox.convert.to_undirected(G)
+    if cfg["graph"].get("largest_component"):     # safari tracks: drop OSM fragments a jeep cannot reach
+        G = G.subgraph(max(nx.connected_components(G), key=len)).copy()
     if cfg["area"].get("summit_link"):
         add_summit_link(G, cfg)
     return G, pois
@@ -79,7 +83,7 @@ def _named_route(G, osm_name: str, summit: int):
     try:
         return nx.shortest_path(G, head, summit, weight=weight)
     except nx.NetworkXNoPath:
-        raise ValueError(f"'{osm_name}' is not connected to the summit in OSM (add a GPS track)")
+        raise ValueError(f"'{osm_name}' is not connected to the summit in OSM (add a GPS track)") from None
 
 
 def find_routes(G, pois, cfg):
@@ -143,7 +147,7 @@ def build_chains(G, routes: dict):
 
 def _steps_share(edges, a: float, b: float) -> float:
     """Share of the stretch [a, b] (fractions 0..1 of the chain length) that is OSM highway=steps."""
-    total = sum(l for l, _ in edges) or 1.0
+    total = sum(length for length, _ in edges) or 1.0
     pos, steps = 0.0, 0.0
     for length, is_steps in edges:
         lo, hi = pos / total, (pos + length) / total
@@ -222,7 +226,7 @@ def tag_pois(segs, poi_points, cfg):
 
 def tag_halfway(segs, walks, cfg):
     """Halfway checkpoint of each named route (out and back to a summit): the first untagged segment at or after
-    half of the way up. Officers hold groups there when the summit is full (adams_peak_plan.md)."""
+    half of the way up. Officers hold groups there when the summit is full (docs/archive/adams_peak_plan.md)."""
     for r, spec in cfg["area"]["routes"].items():
         if not isinstance(spec, dict):
             continue

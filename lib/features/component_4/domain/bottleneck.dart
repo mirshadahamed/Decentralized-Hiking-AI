@@ -24,7 +24,24 @@ class BottleneckDay {
     this.lastEntryHour,
     this.reversibleTrails = const [],
     this.mainTrail,
+    this.calibration,
   });
+
+  /// A5: chance of really being over capacity for a forecast fullness, from the model's validation year:
+  /// (bin lower edges of forecast ÷ capacity, chance). Null in older packs.
+  final (List<double>, List<double>)? calibration;
+
+  /// Chance (0..1) that a section is really over capacity at an hour, given its forecast. Null without a table.
+  double? chanceOver(Section s, int hour) {
+    final c = calibration;
+    if (c == null) return null;
+    final u = s.utilisation(hour);
+    var i = 0;
+    while (i + 1 < c.$1.length && u >= c.$1[i + 1]) {
+      i++;
+    }
+    return c.$2[i];
+  }
 
   final double? lastEntryHour; // gate closes for new walkers (e.g. 13:00)
   final List<String> reversibleTrails; // loops that can be walked either way
@@ -104,7 +121,13 @@ class BottleneckDay {
       classicQuota: (summary['classic_cifuentes_quota'] as num?)?.toInt(),
       rainShare: (summary['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: m['disclaimer'] as String? ?? '',
+      calibration: _calibration(m['calibration']),
     );
+  }
+
+  static (List<double>, List<double>)? _calibration(dynamic j) {
+    if (j is! Map || j['bins'] is! List || j['p_over'] is! List) return null;
+    return ([for (final v in j['bins'] as List) (v as num).toDouble()], [for (final v in j['p_over'] as List) (v as num).toDouble()]);
   }
 
   /// From GET /forecast/tomorrow and the segment lines of GET /trails/geometry (when no edge pack is available).

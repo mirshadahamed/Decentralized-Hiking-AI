@@ -45,6 +45,6 @@ async def forward(park: str, path: str, request: Request):
             r = await client.request(request.method, url, params=request.query_params, headers=headers,
                                      content=await request.body())
         except httpx.ConnectError:
-            raise HTTPException(503, f"The {park} service is not running")
+            raise HTTPException(503, f"The {park} service is not running") from None
     return Response(content=r.content, status_code=r.status_code,
                     media_type=r.headers.get("content-type", "application/json"))

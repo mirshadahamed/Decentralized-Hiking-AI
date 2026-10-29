@@ -18,7 +18,7 @@ from pptx import Presentation  # noqa: E402
 from pptx.dml.color import RGBColor  # noqa: E402
 from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE  # noqa: E402
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN  # noqa: E402
-from pptx.util import Emu, Inches, Pt  # noqa: E402
+from pptx.util import Inches, Pt  # noqa: E402
 
 from src.config import ROOT, load_config  # noqa: E402
 
@@ -237,15 +237,18 @@ def fig_rq5():
     for ax, park, title in ((axes[0], "horton_plains", "Horton Plains"), (axes[1], "adams_peak", "Adam's Peak")):
         g = m[m.park == park].set_index("model").MAE
         x = np.arange(len(ks))
-        sc = [g[f"scratch_{k}"] for k in ks]
-        pt = [g[f"pretrained_{k}"] for k in ks]
+        bars = [("scratch", "Trained from scratch", "#9DB8D9"), ("pretrained", "Pretrained on traffic + fine-tuned", GREEN)]
+        if f"frozen_{ks[0]}" in g:
+            bars.append(("frozen", "Pretrained, core frozen", "#8FBF9F"))
+        wd = 0.8 / len(bars)
+        for j, (kind, lab, col) in enumerate(bars):
+            v = [g[f"{kind}_{k}"] for k in ks]
+            off = (j - (len(bars) - 1) / 2) * wd
+            ax.bar(x + off, v, wd, color=col, label=lab)
+            for xi, val in zip(x, v):
+                ax.text(xi + off, val, f"{val:.2f}", ha="center", va="bottom", fontsize=6)
         ha = [g[f"HA_{k}"] if k != "full" else g["HA"] for k in ks]
-        ax.bar(x - 0.2, sc, 0.4, color="#9DB8D9", label="Trained from scratch")
-        ax.bar(x + 0.2, pt, 0.4, color=GREEN, label="Pretrained on traffic + fine-tuned")
         ax.plot(x, ha, "k_", markersize=26, mew=2.2, label="Historical average, same days")
-        for xi, a, b in zip(x, sc, pt):
-            ax.text(xi - 0.2, a, f"{a:.2f}", ha="center", va="bottom", fontsize=7)
-            ax.text(xi + 0.2, b, f"{b:.2f}", ha="center", va="bottom", fontsize=7)
         ax.set_xticks(x, ["30 days", "90 days", "365 days", "all (2 y)"])
         ax.set_title(f"{title}  (zero-shot: {g['traffic_zero_shot']:.1f})", fontsize=10)
         ax.set_ylabel("MAE (people per segment-hour)", fontsize=8.5)
@@ -293,6 +296,60 @@ def fig_rq4():
     return _save(fig, "rq4.png")
 
 
+def fig_rq9():
+    """Over-capacity person-hours under each daily-quota rule, all admitting as many visitors as the static quota."""
+    rules = [("static", "Same all year\n(today)", "#9E9E9E"), ("weather", "Weather\nonly", "#C9B79C"),
+             ("ha", "+ hist. average\nforecast", "#9DB8D9"), ("stgnn", "+ ST-GNN\nforecast", GREEN),
+             ("oracle", "Perfect\nforecast", DARK)]
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.6))
+    for ax, folder, title in ((axes[0], RES, "Horton Plains"), (axes[1], RES_AP, "Adam's Peak")):
+        q = pd.read_csv(latest(folder, "LATEST_QUOTA") / "summary.csv").set_index("rule")
+        base = q.loc["static", "person_hours_over"]
+        v = [q.loc[r, "person_hours_over"] / 1000 for r, _, _ in rules]
+        ax.bar(range(len(rules)), v, color=[c for *_, c in rules])
+        for i, (r, _, _) in enumerate(rules):
+            cut = 100 * (q.loc[r, "person_hours_over"] / base - 1)
+            lab = f"{v[i]:.1f}k" + ("" if r == "static" else f"\n{cut:+.0f} %".replace("-", "−"))
+            ax.text(i, v[i], lab, ha="center", va="bottom", fontsize=7.5)
+        ax.set_xticks(range(len(rules)), [lab for _, lab, _ in rules], fontsize=7.5)
+        ax.set_ylim(0, max(v) * 1.3)
+        ax.set_title(f"{title}  (every rule admits {q.loc['static', 'admitted_pct']:.0f} % of arrivals)", fontsize=10)
+        ax.set_ylabel("Over-capacity person-hours, 2025 (k)", fontsize=8.5)
+        _style(ax)
+    return _save(fig, "rq9.png")
+
+
+def fig_rq10():
+    """Interior-segment MAE when the model sees only gate counts, or no counts at all."""
+    models = ["HA", "lstm", "gru_nograph", "stgnn"]
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.5))
+    tabs = {}
+    for ax, folder, title in ((axes[0], RES, "Horton Plains"), (axes[1], RES_AP, "Adam's Peak")):
+        m = pd.read_csv(latest(folder, "LATEST_SPARSE") / "metrics.csv").groupby(["model", "setting"]).MAE.mean()
+        x = np.arange(len(models))
+        for off, setting, hatch, lab in ((-0.2, "gate", None, "Only gate counts"), (0.2, "zero", "///", "No counts at all")):
+            v = [m[(k, setting)] for k in models]
+            ax.bar(x + off, v, 0.4, color=[MODEL_COLORS[k] for k in models], hatch=hatch, edgecolor="white", label=lab)
+            for xi, val in zip(x, v):
+                ax.text(xi + off, val, f"{val:.2f}", ha="center", va="bottom", fontsize=7)
+        ax.set_xticks(x, [MODEL_NAMES[k] for k in models], rotation=12)
+        ax.set_title(title, fontsize=11)
+        ax.set_ylabel("MAE on interior segments", fontsize=8.5)
+        _style(ax)
+        tabs[title] = m
+    axes[0].legend(fontsize=8, frameon=False)
+    return _save(fig, "rq10.png"), tabs
+
+
+def crop_top(path, px, name):
+    """A copy of a screenshot without its top `px` pixels (e.g. a date strip that does not match the fixture)."""
+    from PIL import Image
+    im = Image.open(path)
+    FIG.mkdir(parents=True, exist_ok=True)
+    im.crop((0, px, im.width, im.height)).save(FIG / name)
+    return FIG / name
+
+
 # ======================================================================= slide helpers
 class Deck:
     W, H = Inches(13.333), Inches(7.5)
@@ -302,17 +359,17 @@ class Deck:
         self.prs.slide_width, self.prs.slide_height = self.W, self.H
         self.blank = self.prs.slide_layouts[6]
         self.n = 0
+        self.titles = []        # one per slide, in creation order (finish() reorders by these)
 
     def slide(self, title, kicker="", notes=""):
         s = self.prs.slides.add_slide(self.blank)
         self.n += 1
+        self.titles.append(title)
         bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(0.18), self.H)
         self._fill(bar, GREEN)
         if kicker:
             self.text(s, kicker.upper(), Inches(0.55), Inches(0.32), Inches(9), Inches(0.35), 12, GREEN, bold=True)
         self.text(s, title, Inches(0.55), Inches(0.62), Inches(12.3), Inches(0.8), 28, DARK, bold=True)
-        self.text(s, f"Component 4 · IT23343948 · {self.n}", Inches(9.8), Inches(7.05), Inches(3.3), Inches(0.3), 9,
-                  GREY, align=PP_ALIGN.RIGHT)
         if notes:
             s.notes_slide.notes_text_frame.text = notes
         return s
@@ -414,8 +471,38 @@ class Deck:
     def callout(self, s, txt, x, y, w, h, fill=GREEN, size=17):
         return self.box(s, txt, x, y, w, h, fill=fill, color="#FFFFFF", size=size, bold=True)
 
+    def finish(self, order):
+        """Put the slides whose titles start with `order` first, in that order; every other slide follows as a
+        backup (B1, B2, ...). Then add the page footers."""
+        slides, lst = list(self.prs.slides), self.prs.slides._sldIdLst
+        ids = list(lst)
+        picked = []
+        for prefix in order:
+            hit = [i for i, t in enumerate(self.titles) if t.startswith(prefix) and i not in picked]
+            if not hit:
+                raise KeyError(f"no slide titled {prefix!r}")
+            picked.append(hit[0])
+        rest = [i for i in range(len(ids)) if i not in picked]
+        for el in ids:
+            lst.remove(el)
+        for k, i in enumerate(picked + rest):
+            lst.append(ids[i])
+            if self.titles[i].startswith("__"):
+                continue
+            label = str(k + 1) if i in picked else f"Backup B{k + 1 - len(picked)}"
+            self.text(slides[i], f"Component 4 · IT23343948 · {label}", Inches(9.8), Inches(7.05), Inches(3.3),
+                      Inches(0.3), 9, GREY, align=PP_ALIGN.RIGHT)
+
 
 # ======================================================================= the deck
+# Main presentation, in this order (title prefixes, ~15 min); every other slide becomes a backup after "Thank you".
+ORDER = ["__title__", "Crowding is managed", "The research gap, claim by claim", "Proposal objectives", "System overview",
+         "The ST-GNN and the technologies", "Evaluation protocol", "RQ1 –", "RQ10 –", "RQ9 –",
+         "From forecast to control – Horton", "Adam's Peak – no tickets", "RQ5 –", "RQ6 –", "The proposal's output",
+         "Working prototype – officers", "RQ7 –", "Requirements and", "Risks and", "Who would use",
+         "Progress against", "Next steps", "__thanks__"]
+
+
 def build():
     maps = fig_maps()
     f_rq1, f_hc, f_ap = fig_rq1(), fig_control_horton(), fig_control_ap()
@@ -442,6 +529,7 @@ def build():
     # 1 ---------------------------------------------------------------- title
     s = d.prs.slides.add_slide(d.blank)
     d.n += 1
+    d.titles.append("__title__")
     bg = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, W, Deck.H)
     d._fill(bg, DARK)
     band = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, Inches(5.25), W, Inches(0.08))
@@ -487,11 +575,11 @@ def build():
                 "the decisions it improves. (~60 s)")
     d.table(s, [
         ["Proposal objective", "What was built", "Status"],
-        ["O1  Trail graph + terrain + weather (open data)", "OSM graph, Copernicus DEM (slope, TWI), Open-Meteo/ERA5, calendar; 2 parks", "Done – CHIRPS / NASA POWER next"],
+        ["O1  Trail graph + terrain + weather (open data)", "OSM graph, Copernicus DEM (slope, TWI), Open-Meteo/ERA5, calendar; 2 parks", "Done – NASA POWER checked, CHIRPS next"],
         ["O2  Synthetic target, validated with field counts", "Group-walking simulator; agreement criteria fixed before the visits", "Method done – counts Dec"],
-        ["O3  Pretrain on traffic, adapt to the trail", "METR-LA → PEMS-BAY pretraining, fine-tuned on both parks (RQ5)", "Done – PeMS04/08 next"],
+        ["O3  Pretrain on traffic, adapt to the trail", "METR-LA → PEMS-BAY; fine-tuning and frozen core on both parks (RQ5)", "Done – PeMS04/08 next"],
         ["O4  Benchmark vs HA, ARIMA, LSTM, paired t-test", "3 seeds, spatial block CV, Holm-corrected tests (RQ1)", "Done"],
-        ["O5  Cifuentes PCC → RCC → ECC with the forecast", "Daily safe limit per trail: rain, wet ground, crowding, trail condition", "Done"],
+        ["O5  Cifuentes PCC → RCC → ECC with the forecast", "Forecast enters RCC (FCcrowd); drives the ticket quota; beats a static quota (RQ9)", "Done"],
         ["O6  Package for on-device inference", "ONNX + int8 tested; ST-GNN runs in Dart on the phone, offline (RQ6)", "Done – phone timing next"],
     ], Inches(0.6), Inches(1.6), Inches(12.1), [4.3, 5.3, 2.5], 12)
     d.box(s, "Novelty 1\nST-GNN on a tiny (48–57 node), sensor-free trail graph – tested against baselines, not assumed",
@@ -589,9 +677,11 @@ def build():
         "Clean ablation::  the same network with the graph removed (GRU-no-graph) isolates what the graph adds",
         "Decision-focused::  forecasts also judged by the waiting / overcrowding they prevent (RQ3)",
         "Pre-registered::  field agreement criteria (A1–A3) fixed on 20 Oct, before any counts are taken",
-        "Reproducible::  seeds logged; every run = results/<time>_<tag>/ with config + git hash; 65 Python + 24 Flutter tests",
+        "Bottleneck events::  over-capacity segment-hours scored with precision / recall / F1 (RQ1b), not only MAE",
+        "Reproducible::  seeds logged; every run = results/<time>_<tag>/ with config + git hash",
+        "Quality::  101 Python + 34 Flutter tests, ruff lint, GitHub Actions CI; model + data card; requirements traced to tests",
         "Secure & ethical::  roles checked on the server, hashed passwords, lockout, audit log; no personal visitor data",
-    ], Inches(0.6), Inches(1.6), Inches(12.2), Inches(5.3), 16, 9)
+    ], Inches(0.6), Inches(1.55), Inches(12.2), Inches(5.4), 15, 7)
 
     # 8 ---------------------------------------------------------------- RQ1
     def sp(df, m):
@@ -614,7 +704,7 @@ def build():
     ap_sp, ap_sd = p_vs(RES_AP, "*_benchmark_p04s", "spatial", "lstm")
     ap_word = ("better" if ap_sd is not None and ap_sd < 0 and ap_sp < 0.05 else
                "worse" if ap_sd is not None and ap_sd > 0 and ap_sp < 0.05 else "not different")
-    s = d.slide("RQ1 – Does the graph help?  On ordinary trail without counts, yes", "Proof of concept",
+    s = d.slide("RQ1 – The graph helps on unseen trail, not for bottleneck calls", "Proof of concept",
                 f"Hatched bars are the deployment case: segments with no counts. At Horton Plains the ST-GNN is best "
                 f"there ({sp(hp_s, 'stgnn'):.2f} vs LSTM {sp(hp_s, 'lstm'):.2f} vs historical average "
                 f"{sp(hp_s, 'HA'):.2f}, {ptxt(hp_p)}). With counts on every segment the networks tie at both parks "
@@ -622,8 +712,10 @@ def build():
                 f"An ST-GNN with an LSTM cell was tried and was worse, so it was dropped. At Adam's Peak on unseen "
                 f"segments the ST-GNN is {ap_word} vs the LSTM ({ptxt(ap_sp)}) overall: it is best on the two blocks "
                 f"of ordinary trail but loses on the block with the summit queue, which forms from the capacity "
-                f"of the final steps, not from what neighbouring segments look like. Next: give the model the queue "
-                f"state. (~75 s)")
+                f"of the final steps, not from what neighbouring segments look like. Then the honest part (RQ1b): "
+                f"scored as bottleneck detection (is an over-capacity segment-hour flagged?), the ST-GNN ties with "
+                f"counts and is slightly WORSE on unseen segments - it smooths peaks from its neighbours. That is "
+                f"why the app shows a calibrated chance of crowding, and a peak-aware loss is next. (~75 s)")
     d.image(s, f_rq1, Inches(0.45), Inches(1.45), w=Inches(12.4))
     d.bullets(s, [
         f"Horton, unseen segments::  ST-GNN {sp(hp_s, 'stgnn'):.2f} · LSTM {sp(hp_s, 'lstm'):.2f} · GRU without graph "
@@ -634,7 +726,9 @@ def build():
         f"Every segment counted (3 seeds)::  tie with the LSTM – Horton {hp_t.loc['stgnn', 'MAE']:.2f} vs "
         f"{hp_t.loc['lstm', 'MAE']:.2f} ({ptxt(hp_tp)}), Adam's Peak {ap_t.loc['stgnn', 'MAE']:.2f} vs "
         f"{ap_t.loc['lstm', 'MAE']:.2f} ({ptxt(ap_tp)})",
-    ], Inches(0.6), Inches(5.6), Inches(12.2), Inches(1.4), 13, 3)
+        "Bottleneck detection (RQ1b)::  over-capacity F1 0.80 / 0.85 with counts (all tie); on unseen segments ST-GNN "
+        "0.29 vs LSTM 0.32 (Horton) – it smooths peaks → calibrated chance of crowding, peak-aware loss next",
+    ], Inches(0.6), Inches(5.5), Inches(12.2), Inches(1.5), 12, 2)
 
     # 8b --------------------------------------------------------------- one day
     ty, bz = day_stats["A typical busy day"], day_stats["The busiest day"]
@@ -729,14 +823,17 @@ def build():
                 f"and {gain('horton_plains', '90')}% vs scratch, p < 0.001). Not at Adam's Peak - a night "
                 f"pilgrimage with a summit queue looks nothing like road traffic. Zero-shot fails everywhere. With a "
                 f"full year the pretrained start slightly hurts (negative transfer). Honest, publishable answer to "
-                f"the gap. Next: freeze layers / gradual unfreezing and PeMS04/08. (~75 s)")
+                f"the gap. Freezing the core (domain adaptation) was added: it helps only Horton at 365 days. Next: "
+                f"the same test where SENSORS are scarce (only gate counts), PeMS04/08, and one adversarial method. "
+                f"(~60 s)")
     d.image(s, f_rq5, Inches(0.45), Inches(1.45), w=Inches(8.4))
     d.bullets(s, [
         f"Horton Plains::  pretraining helps with 30 days ({gain('horton_plains', '30')}%) and 90 days "
         f"({gain('horton_plains', '90')}%), p < 0.001",
         f"Adam's Peak::  no help at any amount of data ({gain('adams_peak', '30')}% at 30 days)",
-        f"Zero-shot::  traffic weights unchanged are 4–5× worse than the historical average",
+        "Zero-shot::  traffic weights unchanged are 4–5× worse than the historical average",
         "But::  ≤ 90 days of counts → a historical average still wins at both parks",
+        "Frozen core::  keeping the traffic GCN + GRU fixed helps only Horton at 365 days (1.65 vs 1.69); worst at Adam's Peak",
         "So::  start a new park on the average; pretraining shortens the wait only where crowds behave like traffic peaks",
     ], Inches(9.0), Inches(1.55), Inches(4.1), Inches(5.3), 13, 9)
     d.text(s, "METR-LA → PEMS-BAY pretraining · 3 seeds · paired t-tests over 365 test days, Holm-corrected",
@@ -891,8 +988,9 @@ def build():
     s = d.slide("Requirements and their status", "User & functional requirements",
                 "Numbered exactly as in the proposal (section 5). Two are partial and say why: FR4 needs the data "
                 "contract agreed with Module 3, NFR1 is measured on a laptop and in the Dart engine but not yet on "
-                "a real phone. Extensions beyond the proposal are listed separately. Requirements are still "
-                "provisional until the surveys come back - say this before you are asked. (~45 s)")
+                "a real phone. FR6-FR13 were added during the build; every requirement is traced to its code, test "
+                "and result in docs/requirements.md. Requirements are still provisional until the surveys come back - "
+                "say this before you are asked. (~45 s)")
     d.table(s, [
         ["ID", "Requirement (proposal, section 5)", "Status", "Evidence"],
         ["FR1", "Trail graph from OSM with terrain + weather per node", "Done", "2 parks, 48 / 57 segments"],
@@ -905,8 +1003,8 @@ def build():
         ["NFR3", "Other OSM parks without architectural change", "Done", "Adam's Peak = 1 config file"],
         ["NFR4", "Actionable for a non-technical official", "Done", "safe limit + 'why', night plan, HOLD"],
         ["NFR5", "No personally identifiable data", "Done", "booking code only, no names"],
-        ["Ext.", "Slot tickets (Horton) · start times + halfway holds (Adam's Peak)", "Done", "−99.6 % overcrowding; final steps cleared"],
-        ["Ext.", "90-day planning outlook, staff roles, Sinhala / Tamil", "Done", "P10–P90; ranger / officer / admin"],
+        ["FR6–9", "Slot tickets · officer quota rule · gate advice · ranger spot counts", "Done", "−99.6 % (tickets); RQ9; offline counts"],
+        ["FR10–13", "Chance of crowding · 90-day outlook · Adam's Peak advice · records", "Done", "calibrated; P10–P90; −42 % waiting"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [0.8, 5.4, 1.6, 4.3], 12, row_h=0.4)
     d.text(s, "Requirements are provisional until the stakeholder surveys return (DWC, rangers, operators, hikers).",
            Inches(0.6), Inches(6.75), Inches(9), Inches(0.3), 11, GREY)
@@ -919,9 +1017,9 @@ def build():
     d.table(s, [
         ["#", "Risk", "Impact", "Mitigation (status)"],
         ["R1", "No real segment-level counts: the target is synthetic", "High",
-         "Assumptions listed; RQ4 sensitivity; agreement criteria fixed and tool built; counts Dec (Horton) + 23 Dec (Adam's Peak)"],
-        ["R2", "ST-GNN not better than the LSTM", "Medium",
-         "Reported either way: better on segments without counts, tie elsewhere (3 seeds); periodic inputs + tuning next"],
+         "Assumptions listed; S1 realistic world; criteria fixed, counting tool in the app; counts Dec (Horton) + 23 Dec (Adam's Peak)"],
+        ["R2", "Graph adds little over an LSTM", "High",
+         "Reported either way (RQ1, RQ1b, RQ10); tested in the gap's own setting on the realistic world (running)"],
         ["R3", "Last part of the Adam's Peak trail missing in OSM", "Medium",
          "Approximate link flagged; replace with a GPS track"],
         ["R4", "Authorities do not adopt tickets / advice", "Medium",
@@ -930,9 +1028,9 @@ def build():
         ["R6", "CPU-only training time", "Low", "Small graph, early stopping; seeds run overnight"],
         ["R7", "Translations inaccurate", "Low", "Marked as drafts; native-speaker review"],
         ["R8", "Traffic pretraining does not transfer", "Medium",
-         "Happened at Adam's Peak (RQ5) – reported as a finding; layer freezing and PeMS04/08 next"],
+         "Happened at Adam's Peak (RQ5) – reported as a finding; frozen core tested; sparse-sensor test + PeMS04/08 next"],
         ["R9", "Module 3 integration late (FR4)", "Medium",
-         "Versioned JSON already served; agree a JSON Schema + contract tests with the Module 3 owner in Nov"],
+         "JSON Schema + contract tests done, feed inside the offline pack; Module 3 owner sign-off in Nov"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.0, 1.0, 6.6], 11, row_h=0.47)
 
     # 16 --------------------------------------------------------------- commercialisation
@@ -952,7 +1050,8 @@ def build():
         "Model::  licence per site (authority) + small booking fee per ticket",
         "Scales::  a new destination = one config file + open data – no sensors to buy or maintain",
         "Next sites::  Ella Rock, Knuckles, Sigiriya, Sinharaja, Adam's Peak minor routes",
-        "Low cost::  open data, CPU-only, offline-capable app",
+        "Low cost::  open data, CPU-only, no sensors to buy; one small server per park (cost per park: W11)",
+        "Evidence next::  letters of interest from a tour operator and DWC / Sri Pada Trust",
     ], Inches(8.4), Inches(1.7), Inches(4.7), Inches(5.0), 15, 12)
 
     # 17 --------------------------------------------------------------- progress & next steps
@@ -963,16 +1062,16 @@ def build():
     d.table(s, [
         ["#", "WBS task (proposal section 8)", "Status", "Evidence"],
         ["1", "Literature review and gap", "Done", "proposal; RQ5 answers the gap"],
-        ["2", "Trail graph + features (OSM / DEM / weather)", "Done", "2 parks; CHIRPS / NASA POWER next"],
+        ["2", "Trail graph + features (OSM / DEM / weather)", "Done", "2 parks; NASA POWER checked, CHIRPS next"],
         ["3", "Synthetic target + field calibration", "Target done · counts Dec", "criteria fixed, tool built"],
         ["4", "Baselines (HA, ARIMA, LSTM)", "Done", "+ GRU without graph (ablation)"],
         ["5", "Pretraining on public benchmarks", "Done", "METR-LA → PEMS-BAY"],
-        ["6", "Domain adaptation onto the trail", "Done (fine-tuning)", "layer freezing next"],
+        ["6", "Domain adaptation onto the trail", "Done (fine-tune, frozen)", "sparse-sensor test, PeMS04/08 next"],
         ["7", "Benchmarking (RMSE / MAE / t-test)", "Done", "3 seeds, spatial CV, Holm"],
         ["8", "Cifuentes cascade + integration", "Done", "safe limit in API and app"],
         ["9", "On-device quantisation + inference", "Done", "ONNX, int8 tested, Dart engine"],
-        ["10", "Cross-module integration (shared data layer)", "Contract ready", "JSON Schema + /module3/feed; M3 sign-off"],
-        ["11", "Field validation + system / QA testing", "Planned Dec", "65 + 24 automated tests"],
+        ["10", "Cross-module integration (shared data layer)", "Contract ready", "Schema, /module3/feed, offline pack"],
+        ["11", "Field validation + system / QA testing", "Planned Dec", "101 + 34 tests, lint, CI"],
         ["12", "Thesis documentation", "Ongoing", "docs/, evaluation_results.md"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [0.5, 4.9, 2.6, 4.1], 12, row_h=0.4)
 
@@ -981,30 +1080,137 @@ def build():
                 "the surveys and the Module 3 schema - are started first because they take elapsed time. (~45 s)")
     d.table(s, [
         ["When", "Work", "Done when"],
-        ["26 Oct – 8 Nov", "Beat the LSTM where it matters: daily / weekly periodic inputs, tuning; real-phone timing; CI",
-         "paired tests reported; NFR1 on a phone"],
-        ["by 1 Nov", "Send the stakeholder surveys (DWC, rangers, operators, hikers); book 2–3 interviews",
-         "responses mapped to FR / NFR"],
-        ["9 – 22 Nov", "Domain adaptation beyond fine-tuning (layer freezing, PeMS04/08); feature ablation; lead time",
-         "RQ5 and RQ1b tables"],
-        ["23 Nov – 6 Dec", "Module 3 owner adopts the feed (schema ready, FR4); CHIRPS / NASA POWER (O1)",
-         "Module 3 owner signs off"],
+        ["26 Oct – 8 Nov", "Finish gate-only tests on the realistic world (S2); live forecast from gate counts only; "
+         "send DWC data request + surveys", "RQ10 on S1; requests sent"],
+        ["9 – 22 Nov", "Pretraining where sensors are scarce; PeMS04/08; one adversarial / gradual-unfreezing method; "
+         "real-phone timing", "RQ5 extended; NFR1 on a phone"],
+        ["23 Nov – 6 Dec", "Peak-aware loss / periodic inputs where RQ1b shows misses; robustness of conclusions; "
+         "Module 3 sign-off; CHIRPS", "paired tests; robustness table"],
         ["7 – 24 Dec", "Field counts: Horton Plains 2–3 days; Adam's Peak 23 Dec (Unduvap Poya)", "RQ7 report (A1–A3)"],
-        ["28 Dec – 10 Jan", "Recalibrate the simulator; re-run RQ1–RQ5; survey summary", "results for PP2"],
+        ["28 Dec – 10 Jan", "Recalibrate the simulator; re-run RQ1–RQ10; survey summary", "results for PP2"],
     ], Inches(0.6), Inches(1.5), Inches(12.1), [1.9, 6.9, 3.3], 13, row_h=0.62)
     d.text(s, "Frozen until these are done: new screens, new parks, new booking features.", Inches(0.6),
            Inches(6.15), Inches(12), Inches(0.4), 14, BROWN, bold=True)
 
+    # G ---------------------------------------------------------------- the gap, claim by claim
+    rq9 = {k: pd.read_csv(latest(f, "LATEST_QUOTA") / "summary.csv").set_index("rule")
+           for k, f in (("hp", RES), ("ap", RES_AP))}
+
+    def q_cut(k, rule):
+        return 100 * (1 - rq9[k].loc[rule, "person_hours_over"] / rq9[k].loc["static", "person_hours_over"])
+
+    f_rq10, rq10 = fig_rq10()
+    hp10, ap10 = rq10["Horton Plains"], rq10["Adam's Peak"]
+    s = d.slide("The research gap, claim by claim", "Proven gap",
+                "Section 1.3 of the proposal, split into five claims an examiner can check. This is the honest map of "
+                "where the evidence stands today: C5 (forecast to capacity beats a static quota) and C4 (works with "
+                "no sensor record) are shown; C1 (the graph adds value) and C3 (bottlenecks) are only partly shown; "
+                "C2 (traffic pretraining) has a mostly negative but clear answer. The next phase tests each claim in "
+                "the gap's own setting, and the December counts validate the target. (~60 s)")
+    d.table(s, [
+        ["Claim (proposal 1.3)", "Evidence today (simulation, 2025 test year, 3 seeds)", "Status"],
+        ["C1  Graph learning adds value on a trail",
+         f"Unseen segments, Horton: ST-GNN {sp(hp_s, 'stgnn'):.2f} vs LSTM {sp(hp_s, 'lstm'):.2f} MAE (p < 0.001), "
+         "~2 %; tie with counts; worse at the summit queue", "Partly"],
+        ["C2  Traffic pretraining + domain adaptation",
+         "Helps Horton with 30–90 days (−5 / −12 %); frozen core +2 % at 365 d; no help at Adam's Peak",
+         "Partly (clear answer)"],
+        ["C3  Defensible bottleneck forecast",
+         "Over-capacity F1 0.80 / 0.85 with counts; ≤ 0.56 on unseen segments – peaks smoothed", "Shown with counts"],
+        ["C4  Tiny graph, no sensor record",
+         f"Gate counts only: interior MAE {hp10[('stgnn', 'gate')]:.2f} (all counted 1.42), F1 unchanged",
+         "Shown (feasible)"],
+        ["C5  Forecast → capacity beats a static quota",
+         f"At equal visitors: −{q_cut('hp', 'stgnn'):.0f} % (Horton), −{q_cut('ap', 'stgnn'):.0f} % (Adam's Peak, "
+         "p < 0.001) over-capacity time", "Shown"],
+        ["Main objective: field-validated pilot trail", "Criteria A1–A3 fixed 20 Oct; counting tool in the app",
+         "December"],
+    ], Inches(0.6), Inches(1.5), Inches(12.1), [3.6, 6.6, 1.9], 12, row_h=0.62)
+    d.text(s, "Core result chapters = C1–C5 + field validation.  Booking, Adam's Peak advice and the 90-day planner "
+              "show the system works end to end.", Inches(0.6), Inches(6.2), Inches(12.1), Inches(0.6), 13, BROWN,
+           bold=True)
+
+    # R10 -------------------------------------------------------------- sparse sensors
+    s = d.slide("RQ10 – No sensor record: forecasting from gate counts only", "Proof of concept – the gap's condition",
+                "The gap says 'no historical sensor record'. A real park only knows who passes the gate (bookings, "
+                "check-ins, walk-ins). So the model is trained on the calibrated simulation of every segment, but as "
+                "input it sees only the gate counts - or nothing at all. Result: interior error is almost the same "
+                "as with a counter on every segment, at both parks, and far better than the historical average. But "
+                "the graph and the gate counts add nothing here, and the reason matters: in the default simulator a "
+                "day's crowd is fully set by calendar + weather. So I built a realistic world (S1) with tour-bus "
+                "bursts, busy spells, shifted peaks, incidents and forecast weather; that run is going now. (~60 s)")
+    d.image(s, f_rq10, Inches(0.45), Inches(1.45), w=Inches(8.4))
+    d.bullets(s, [
+        f"Horton, gate only::  ST-GNN {hp10[('stgnn', 'gate')]:.2f} · LSTM {hp10[('lstm', 'gate')]:.2f} · "
+        f"historical average {hp10[('HA', 'gate')]:.2f}  (all segments counted: 1.42)",
+        f"Adam's Peak, gate only::  ST-GNN {ap10[('stgnn', 'gate')]:.2f} · LSTM {ap10[('lstm', 'gate')]:.2f} · "
+        f"historical average {ap10[('HA', 'gate')]:.2f}",
+        "Deployable::  no counters inside the trail are needed",
+        "But::  graph and gate counts add ≤ 3 % – the simulated crowd has nothing unpredictable to detect",
+        "Fix::  realistic world S1 (bursts, spells, incidents, forecast weather) – re-run in progress",
+    ], Inches(9.0), Inches(1.55), Inches(4.1), Inches(5.3), 13, 9)
+
+    # R9 --------------------------------------------------------------- quota vs static
+    q_hp, q_ap = rq9["hp"], rq9["ap"]
+    s = d.slide("RQ9 – Does the forecast make the daily quota better than a static one?", "Proof of concept – claim C5",
+                f"This is the proposal's promise: replace the static quota with a forecast-driven capacity. Every "
+                f"rule is tuned to admit exactly as many visitors as the static quota, so only WHO gets in on WHICH "
+                f"day changes. Feeding the ST-GNN forecast into Cifuentes cuts over-capacity time by "
+                f"{q_cut('hp', 'stgnn'):.0f} % at Horton and {q_cut('ap', 'stgnn'):.0f} % at Adam's Peak. At Adam's "
+                f"Peak it is significant against static, weather-only and a historical-average forecast. At Horton "
+                f"the historical average does as well, and per-day tests are not significant: most days change "
+                f"little. Lesson: no daily number stops crowding on most days, because crowding is about WHEN people "
+                f"walk - so the forecast also drives the slot tickets and gate advice. (~75 s)")
+    d.image(s, fig_rq9(), Inches(0.45), Inches(1.45), w=Inches(8.4))
+    d.bullets(s, [
+        f"Static → ST-GNN quota::  −{q_cut('hp', 'stgnn'):.0f} % Horton, −{q_cut('ap', 'stgnn'):.0f} % Adam's Peak, "
+        "same number of visitors",
+        f"Share of a perfect forecast's gain::  {q_hp.loc['stgnn', 'share_of_oracle_gain_pct']:.0f} % / "
+        f"{q_ap.loc['stgnn', 'share_of_oracle_gain_pct']:.0f} %",
+        "Significant::  Adam's Peak vs static, weather-only and HA (Wilcoxon over days); Horton not per day",
+        "In the product::  the ticket plan uses the forecast quota by default; officers can choose or override",
+        "Lesson::  timing beats totals – slot tickets cut 99.6 %",
+    ], Inches(9.0), Inches(1.55), Inches(4.1), Inches(5.3), 13, 9)
+
+    # P2 --------------------------------------------------------------- staff tools
+    s = d.slide("Working prototype – officers and rangers act on the forecast",
+                "Proof of concept – the problem, solved in the product",
+                "Left: the officer's daily quota for a busy Sunday - with the crowd forecast 261 for the World's End "
+                "loop, weather only 347, the same-all-year number 287 - and why: Baker's Falls is expected over "
+                "capacity 08-11. Choosing a rule re-plans the tickets. Second: gate advice on a crowded morning - "
+                "hold entries to the loop or send the next groups to Kirigalpotta / Thotupola. Third: a ranger counts "
+                "walkers with no signal; counts sync later. Fourth: the officer's forecast check - counts next to "
+                "the forecast. These counts are the park's first sensor record and feed field validation. Gate and "
+                "count screens use demo data. (~60 s)")
+    quota_png = crop_top(screens / "15_daily_quota.png", 150, "15_daily_quota_cropped.png")
+    for i, (path, cap) in enumerate([(quota_png, "Officer: daily quota –\nforecast vs weather vs static"),
+                                     (screens / "16_gate_advice.png", "Gate: hold or redirect\nin the next 2 h (demo)"),
+                                     (screens / "17_spot_count.png", "Ranger: count walkers,\nworks offline"),
+                                     (screens / "18_forecast_check.png", "Officer: counts vs forecast\n(demo counts)")]):
+        x = Inches(0.55) + i * Inches(2.3)
+        pic = d.image(s, path, x, Inches(1.45), w=Inches(2.1))             # same width; the cropped one is shorter
+        pic.line.color.rgb = rgb("#C9D3CD")
+        pic.line.width = Pt(1)
+        d.text(s, cap, x - Inches(0.05), Inches(6.05), Inches(2.25), Inches(0.9), 11, DARK, align=PP_ALIGN.CENTER)
+    d.bullets(s, [
+        "Static vs dynamic::  the same day, side by side, with the limiting section and its hours",
+        "Officer decides::  forecast (default), weather only, same all year, or own number – audited",
+        "No trail sensors::  gate counts + spot counts only",
+        "Basis shown::  every number says what it is based on (FR5)",
+    ], Inches(9.8), Inches(1.6), Inches(3.3), Inches(5.0), 13, 10)
+
     # 18 --------------------------------------------------------------- thanks
     s = d.prs.slides.add_slide(d.blank)
     d.n += 1
+    d.titles.append("__thanks__")
     bg = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, W, Deck.H)
     d._fill(bg, DARK)
     d.text(s, "Thank you", Inches(0.8), Inches(2.4), Inches(11), Inches(1.2), 48, "#FFFFFF", bold=True)
     d.text(s, "Questions?", Inches(0.8), Inches(3.5), Inches(11), Inches(0.8), 26, AMBER)
     d.text(s, "Weerasekera J.V. · IT23343948 · Component 4", Inches(0.8), Inches(5.6), Inches(11), Inches(0.5), 16,
            "#CFE3D7")
-    s.notes_slide.notes_text_frame.text = "Backup slides follow: limitations, planning model."
+    s.notes_slide.notes_text_frame.text = ("Backup slides follow: study sites, one forecast day, RQ2-RQ4, RQ8, "
+                                           "visitor and Adam's Peak screens, limitations, records.")
 
     # B1 --------------------------------------------------------------- limitations (backup)
     s = d.slide("Backup – Limitations (stated before you are asked)", "Backup",
@@ -1013,9 +1219,10 @@ def build():
         "Synthetic target::  all results test the method on a simulator, not the real parks; every assumption is in "
         "docs/assumptions*.md with what would replace it",
         "Same simulator::  the control results (RQ3, RQ4) use the simulator that made the data",
-        "Seeds::  RQ1 and RQ5 use three seeds; park-to-park transfer (RQ2) and Horton spatial CV use one",
+        "Seeds::  every result uses three seeds except park-to-park transfer (RQ2)",
         "Advice model::  RQ3 / RQ4 were run before crowd-dependent climb times and evening starts were added",
-        "Weather::  the day-ahead test uses observed weather (a perfect forecast) – an upper bound",
+        "Weather::  the main benchmark uses observed weather (an upper bound); the S1 world uses a noisy forecast",
+        "Graph value::  in the default simulator the calendar explains crowds, so sensors and the graph add little (RQ10)",
         "OSM gaps::  the last ~350 m to the Adam's Peak summit is an approximate link; minor routes not mapped",
         "Planning model::  daily totals no better than the calendar average (MAE ≈ 110 vs 108); "
         "segment-hour occupancy better (1.44 vs 1.65)",
@@ -1037,6 +1244,7 @@ def build():
         "Keep::  copy as CSV in the app, or /admin/records?format=csv (Excel); works offline from the last copy",
     ], Inches(3.4), Inches(1.6), Inches(9.6), Inches(5.0), 15, 12)
 
+    d.finish(ORDER)
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "PP1_Component4.pptx"
     d.prs.save(path)

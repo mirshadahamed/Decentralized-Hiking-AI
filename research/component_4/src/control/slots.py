@@ -1,4 +1,4 @@
-"""Entry control: how many tickets each trail can sell for each entry slot (upgrade_plan.md, section 2).
+"""Entry control: how many tickets each trail can sell for each entry slot (docs/archive/upgrade_plan.md, section 2).
 
 Logic in one line: a ticket = a trail + an entry time, so we know where its holder will be over the day;
 only sell tickets while every segment stays under its safe capacity in every half hour.
@@ -77,11 +77,14 @@ class EntryControl:
             C = np.where(np.isin(poi, list(access_points(self.cfg))), np.inf, C)
         return C
 
-    def daily_quota(self, rain_share: float = 0.0, wetness: float = 0.0, conditions: dict | None = None) -> dict:
-        """Classic Cifuentes daily quota per trail (no forecast needed) for this day's rain, ground wetness and
-        reported trail conditions, scaled by the same capacity standard as the half-hour limits."""
+    def daily_quota(self, rain_share: float = 0.0, wetness: float = 0.0, conditions: dict | None = None,
+                    forecast: np.ndarray | None = None) -> dict:
+        """Cifuentes daily quota per trail for this day's rain, ground wetness and reported trail conditions,
+        scaled by the same capacity standard as the half-hour limits.
+        forecast: [24, segments] people; adds FCcrowd (share of open hours over capacity). None = classic."""
         from src.capacity.cifuentes import capacity
-        cap = capacity(self.seg, np.zeros((24, len(self.seg))), None, {}, self.cfg["capacity"],
+        fc = np.zeros((24, len(self.seg))) if forecast is None else np.asarray(forecast)
+        cap = capacity(self.seg, fc, None, {}, self.cfg["capacity"],
                        self.cfg["simulator"], rain_share=rain_share, wetness=wetness, conditions=conditions)
         scale = self.c.get("capacity_scale", 1.0)
         return {t: v["recommended_daily_quota"] * scale for t, v in cap["trails"].items()}

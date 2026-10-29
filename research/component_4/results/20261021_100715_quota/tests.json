@@ -1,0 +1,28 @@
+{
+  "stgnn_vs_static": {
+    "mean_diff_person_h_per_day": -44.98972602739726,
+    "wilcoxon_p": 0.8882300070165348
+  },
+  "stgnn_vs_weather": {
+    "mean_diff_person_h_per_day": -5.846476217656011,
+    "wilcoxon_p": 0.2795072997794378
+  },
+  "stgnn_vs_ha": {
+    "mean_diff_person_h_per_day": 0.46135064687975735,
+    "wilcoxon_p": 0.5054485327596834
+  },
+  "oracle_vs_stgnn": {
+    "mean_diff_person_h_per_day": -3.1889739345509915,
+    "wilcoxon_p": 0.8170586483115859
+  },
+  "weather_vs_static": {
+    "mean_diff_person_h_per_day": -39.143249809741256,
+    "wilcoxon_p": 0.23745784955071192
+  },
+  "ha_vs_static": {
+    "mean_diff_person_h_per_day": -45.45107667427701,
+    "wilcoxon_p": 0.9306686704455409
+  },
+  "matched_admitted_pct": 57.65251154478277,
+  "no_control_person_hours_over": 159714.3640277778
+}

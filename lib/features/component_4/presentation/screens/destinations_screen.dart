@@ -102,7 +102,7 @@ class _DestinationCardState extends State<_DestinationCard> {
               if (p.summary.isNotEmpty) Text(p.summary, style: text.bodyMedium),
               const SizedBox(height: C4Space.s),
               Wrap(spacing: C4Space.s, runSpacing: C4Space.xs, children: [
-                _Fact(icon: Icons.route, label: tr(context, p.isAdvisory ? 'routes_n' : 'trails_n', {'n': nTrails})),
+                _Fact(icon: Icons.route, label: tr(context, p.isAdvisory || p.kind == 'safari' ? 'routes_n' : 'trails_n', {'n': nTrails})),
                 if (p.elevation.isNotEmpty) _Fact(icon: Icons.terrain, label: p.elevation),
                 _Fact(
                   icon: p.isAdvisory ? Icons.schedule : Icons.confirmation_number_outlined,

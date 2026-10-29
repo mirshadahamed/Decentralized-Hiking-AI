@@ -1,0 +1,26 @@
+{
+  "cap 15 / 15 min vs none: over_ph_at_sightings": {
+    "mean_diff_per_day": -10.437992675781251,
+    "wilcoxon_p": 3.0378670005630563e-35
+  },
+  "cap 15 / 15 min vs none: over_ph_park": {
+    "mean_diff_per_day": -14.411258138020822,
+    "wilcoxon_p": 2.6176997313820096e-11
+  },
+  "cap 10 / 10 min vs none: over_ph_at_sightings": {
+    "mean_diff_per_day": -15.354560546875001,
+    "wilcoxon_p": 3.514360649349405e-41
+  },
+  "cap 10 / 10 min vs none: over_ph_park": {
+    "mean_diff_per_day": -19.657688964843757,
+    "wilcoxon_p": 1.4296795779546816e-19
+  },
+  "cap 5 / 10 min vs none: over_ph_at_sightings": {
+    "mean_diff_per_day": -20.452098470052086,
+    "wilcoxon_p": 1.3020437307288383e-41
+  },
+  "cap 5 / 10 min vs none: over_ph_park": {
+    "mean_diff_per_day": -25.217580403645833,
+    "wilcoxon_p": 1.869663451683582e-21
+  }
+}

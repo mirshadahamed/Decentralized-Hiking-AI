@@ -10,8 +10,16 @@ from shapely.ops import transform
 
 from src.config import PROCESSED, RAW
 
-DEM_URL = ("https://copernicus-dem-30m.s3.amazonaws.com/"
-           "Copernicus_DSM_COG_10_N06_00_E080_00_DEM/Copernicus_DSM_COG_10_N06_00_E080_00_DEM.tif")
+DEM_TILE = ("https://copernicus-dem-30m.s3.amazonaws.com/"
+            "Copernicus_DSM_COG_10_N{lat:02d}_00_E{lon:03d}_00_DEM/Copernicus_DSM_COG_10_N{lat:02d}_00_E{lon:03d}_00_DEM.tif")
+
+
+def dem_url(bbox) -> str:
+    """The 1x1 degree Copernicus GLO-30 tile that holds the park (Horton Plains / Adam's Peak: N06 E080; Yala: N06 E081)."""
+    left, bottom, right, top = bbox
+    if math.floor(left) != math.floor(right) or math.floor(bottom) != math.floor(top):
+        raise ValueError("dem_bbox crosses a 1-degree tile edge: mosaic two tiles first")
+    return DEM_TILE.format(lat=math.floor(bottom), lon=math.floor(left))
 PROFILE_STEP_M = 30.0
 MAX_GRADE = 0.25
 WET_TWI = 8.0   # cells at or above this TWI are treated as waterlogging-prone (erodible when wet)
@@ -21,7 +29,7 @@ def load_dem(cfg):
     """Read the DEM window over the park (cached as data/raw/dem.tif)."""
     path = RAW / ("dem_" + "_".join(f"{v:.3f}" for v in cfg["area"]["dem_bbox"]) + ".tif")
     if not path.exists():
-        with rasterio.open(DEM_URL) as src:
+        with rasterio.open(dem_url(cfg["area"]["dem_bbox"])) as src:
             win = from_bounds(*cfg["area"]["dem_bbox"], src.transform)
             z = src.read(1, window=win)
             profile = src.profile | {"height": z.shape[0], "width": z.shape[1],
@@ -107,7 +115,10 @@ def segment_terrain(cfg):
         dh = grade * dx
         fwd_min = float(np.sum(dx / 1000 / tobler_kmh(grade)) * 60)
         bwd_min = float(np.sum(dx / 1000 / tobler_kmh(-grade)) * 60)
-        if stairs and f_steps > 0:
+        vehicle_kmh = cfg.get("terrain", {}).get("vehicle_kmh")
+        if vehicle_kmh:                             # safari jeeps: speed set by the park rules, not the slope
+            fwd_min = bwd_min = float(line.length / 1000 / vehicle_kmh * 60)
+        elif stairs and f_steps > 0:
             # Steps: Tobler is for slopes, not stairs. Time = level walking + metres climbed / climb rate
             # + metres descended / descent rate; blended by the share of the segment that is steps.
             climb, drop = float(np.clip(dh, 0, None).sum()), float(np.clip(-dh, 0, None).sum())

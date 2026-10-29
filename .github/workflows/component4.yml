@@ -31,6 +31,8 @@ jobs:
           cache-dependency-path: research/component_4/requirements.txt
       - name: Install (CPU PyTorch)
         run: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+      - name: Lint (ruff.toml)
+        run: python -m ruff check src tests dashboard
       - name: Tests (shapes, leakage, seeds, capacity, control, API, contracts)
         run: python -m pytest -q
 

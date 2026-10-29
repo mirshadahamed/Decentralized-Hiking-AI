@@ -7,8 +7,20 @@ Turns the forecast into a carrying capacity and quota per trail (Cifuentes casca
 days, start times or trails.
 Built from open data only: OpenStreetMap, Copernicus DEM, Open-Meteo weather, Sri Lankan holiday/Poya calendar.
 
-**Start here:** `docs/user_guide.md` (use, test and understand the system) · `RUN_APP.md` (run the app) ·
-`docs/evaluation_results.md` (RQ1–RQ7) · `docs/improvement_plan.md` (proposal vs built, plan).
+**Start here:**
+| Doc | For |
+|---|---|
+| `docs/pp1_guide.md` | the whole component explained, for the presentation |
+| `docs/qa_pp1.md` | likely examiner questions with short answers and evidence |
+| `docs/user_guide.md`, `RUN_APP.md` | use, test and run the system |
+| `docs/technical_design.md` | architecture, model internals, why each technology |
+| `docs/requirements.md` | FR / NFR traced to code, tests and results; risk register |
+| `docs/evaluation_results.md` | every research question (RQ1–RQ10) with numbers |
+| `docs/research_gap_study.md`, `docs/improvement_plan.md` | the gap claim by claim; the plan to finish |
+| `docs/model_card.md` | model and data card (sources, licences, limits) |
+| `docs/assumptions*.md`, `docs/decisions.md`, `docs/field_validation_protocol.md` | assumptions, decision log, field protocol |
+
+Older phase plans are in `docs/archive/`.
 
 ## Pipeline
 ```
@@ -25,6 +37,7 @@ OSM trails -> 48-segment network (3 trails) -> DEM slope/TWI/Tobler time -> weat
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 .venv\Scripts\python.exe -m src.data.build_dataset        # downloads + simulation (~1 min after first run)
 .venv\Scripts\python.exe -m pytest -q                     # shape, leakage and seed tests
+.venv\Scripts\python.exe -m ruff check src tests dashboard  # lint (ruff.toml)
 .venv\Scripts\python.exe -m src.run_benchmark             # all models, both protocols (long, CPU)
 .venv\Scripts\python.exe -m src.serve.predict --date 2025-05-12
 .venv\Scripts\python.exe -m src.planning.backtest                 # planning accuracy by lead time
@@ -59,6 +72,17 @@ Remove-Item Env:C4_PARK                                    # back to Horton Plai
 Gateway: `GET /parks`, and `/parks/<park>/...` forwards to that park's API (ports 8101, 8102, …).
 Adam's Peak assumptions: `docs/assumptions_adams_peak.md`.
 
+**Yala National Park, Block 1 (jeep safaris; branch `feature/component-4-yala`).** The same pipeline with vehicles:
+jeep tracks from OSM (35 sections of ~1.2 km, 3 circuits from the Palatupana and Katagamuwa entrances), jeeps of
+~4.5 people at safari pace, morning and afternoon sessions, the annual drought closure, and **leopard-sighting jams**
+that hold every passing jeep – a bottleneck no calendar predicts. Assumptions: `docs/assumptions_yala.md`.
+```powershell
+$env:C4_PARK = "yala"
+.venv\Scripts\python.exe -m src.data.build_dataset          # graph, terrain (DEM tile N06 E081), weather, simulation
+.venv\Scripts\python.exe -m src.run_benchmark               # models (RQ1 for Yala)
+.venv\Scripts\python.exe -m src.live.refresh                # live outlook, slot plans, phone pack
+```
+
 **Adding a destination** (no app change needed: the app's trip planner lists whatever `/parks` returns):
 1. Copy `configs/parks/adams_peak.yaml` to `configs/parks/<new_id>.yaml`; set `destination` (kind, region,
    summary, elevation, best_time, getting_there, facts, accent), `area` (bbox, routes, trail names) and
@@ -88,7 +112,7 @@ the forecast page uses the historical-average fallback.
 the terrace). Pilgrims get **recommended start times** per route (expected wait ≤ 20 min, summit before sunrise,
 spread so the advice does not create a new peak), and officers at each route's **halfway checkpoint** count
 passers and hold groups when the expected queue is too long (`src/control/advisory.py`, `GET /advisory/{day}`,
-`POST /checkpoints`). 2025 season (simulation): start times cut waiting by 22 %; halfway checks remove the waiting
+`POST /checkpoints`). 2025 season (simulation): start times cut waiting by 42 %; halfway checks remove the waiting
 on the final steps (`results/adams_peak/*_advisory/`).
 
 ## Research evaluation
@@ -131,7 +155,15 @@ Protocol and pre-registered criteria: `docs/field_validation_protocol.md`. The l
 ## Results
 See the newest `results/<run>/metrics_temporal.csv`, `metrics_spatial.csv` and `stats.json`.
 
+## Data sources and credits
+- Trails: © OpenStreetMap contributors, ODbL 1.0 (credited on every map in the app).
+- Terrain: Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under
+  COPERNICUS by the European Union and ESA.
+- Weather: Open-Meteo.com (CC BY 4.0), ERA5 archive; NASA POWER for the rain cross-check.
+- Pretraining: METR-LA and PEMS-BAY (Li et al., DCRNN, ICLR 2018).
+Details and personal-data notes: `docs/model_card.md`.
+
 ## Limitations
 The training target is synthetic (no segment counts exist for the park). Every assumption is listed in
 `docs/assumptions.md`, and field counts will be used to calibrate it. Weather for the forecast day is
-currently the observed weather (a perfect forecast).
+the observed weather (a perfect forecast) in the main benchmark, and a noisy forecast in the S1 world.

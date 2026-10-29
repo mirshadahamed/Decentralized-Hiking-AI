@@ -22,10 +22,10 @@ attr = st.selectbox("Colour segments by", list(ATTR))
 col = ATTR[attr]
 if col == "trail":
     colors = [TRAIL_COLOR[t] for t in seg.trail]
-    extra = [{"value": names[t], "length": f"{l:.0f}"} for t, l in zip(seg.trail, seg.length_m)]
+    extra = [{"value": names[t], "length": f"{m:.0f}"} for t, m in zip(seg.trail, seg.length_m)]
 else:
     colors = gradient(seg[col])
-    extra = [{"value": f"{v:.2f}", "length": f"{l:.0f}"} for v, l in zip(seg[col], seg.length_m)]
+    extra = [{"value": f"{v:.2f}", "length": f"{m:.0f}"} for v, m in zip(seg[col], seg.length_m)]
 layers = [road_link_layer(seg), segment_layer(seg, colors, extra), poi_layer(seg)]
 st.pydeck_chart(deck(layers, "<b>{name}</b><br/>" + attr + ": {value}<br/>length {length} m"), height=500)
 s = summary().get("segments_by_trail", {})

@@ -1,6 +1,6 @@
 """Plan a visit: crowd outlook for one target day and ranked suggestions to avoid the crowd.
 
-Suggestions (roadmap.md, section 4), all park-specific names come from the config:
+Suggestions (docs/archive/roadmap.md, section 4), all park-specific names come from the config:
   date       a nearby day (+-7 days, inside the outlook) with clearly fewer people on the main trail
   later      the earliest start time at which you meet at most half of the peak at the focus place
   reverse    walking a loop the other way round (only for loops in simulator.reversible_routes)

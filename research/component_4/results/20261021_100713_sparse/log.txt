@@ -1,0 +1,472 @@
+gates: [26, 30]; scored interior segments: 46
+  lstm seed=42 ep=00 train=0.2326 val=0.3741 (48.7s)
+  lstm seed=42 ep=01 train=0.1856 val=0.3026 (46.5s)
+  lstm seed=42 ep=02 train=0.1504 val=0.2542 (41.6s)
+  lstm seed=42 ep=03 train=0.1306 val=0.2310 (41.7s)
+  lstm seed=42 ep=04 train=0.1216 val=0.2176 (40.4s)
+  lstm seed=42 ep=05 train=0.1149 val=0.2085 (41.2s)
+  lstm seed=42 ep=06 train=0.1089 val=0.1988 (41.8s)
+  lstm seed=42 ep=07 train=0.1048 val=0.1920 (40.9s)
+  lstm seed=42 ep=08 train=0.1015 val=0.1877 (41.2s)
+  lstm seed=42 ep=09 train=0.0979 val=0.1856 (41.0s)
+  lstm seed=42 ep=10 train=0.0970 val=0.1792 (40.8s)
+  lstm seed=42 ep=11 train=0.0943 val=0.1766 (40.9s)
+  lstm seed=42 ep=12 train=0.0931 val=0.1743 (41.4s)
+  lstm seed=42 ep=13 train=0.0924 val=0.1732 (41.1s)
+  lstm seed=42 ep=14 train=0.0914 val=0.1703 (42.5s)
+  lstm seed=42 ep=15 train=0.0898 val=0.1679 (41.4s)
+  lstm seed=42 ep=16 train=0.0893 val=0.1699 (40.9s)
+  lstm seed=42 ep=17 train=0.0887 val=0.1699 (40.9s)
+  lstm seed=42 ep=18 train=0.0878 val=0.1665 (41.5s)
+  lstm seed=42 ep=19 train=0.0871 val=0.1655 (40.9s)
+[gate] lstm seed=42 MAE=1.440 RMSE=5.020
+  lstm seed=43 ep=00 train=0.2074 val=0.3202 (45.1s)
+  lstm seed=43 ep=01 train=0.1542 val=0.2618 (47.4s)
+  lstm seed=43 ep=02 train=0.1311 val=0.2325 (42.9s)
+  lstm seed=43 ep=03 train=0.1198 val=0.2151 (37.9s)
+  lstm seed=43 ep=04 train=0.1109 val=0.2043 (38.2s)
+  lstm seed=43 ep=05 train=0.1044 val=0.1947 (37.9s)
+  lstm seed=43 ep=06 train=0.0996 val=0.1847 (37.9s)
+  lstm seed=43 ep=07 train=0.0968 val=0.1791 (38.6s)
+  lstm seed=43 ep=08 train=0.0934 val=0.1744 (38.1s)
+  lstm seed=43 ep=09 train=0.0915 val=0.1709 (37.7s)
+  lstm seed=43 ep=10 train=0.0896 val=0.1705 (38.4s)
+  lstm seed=43 ep=11 train=0.0885 val=0.1688 (38.0s)
+  lstm seed=43 ep=12 train=0.0870 val=0.1656 (37.8s)
+  lstm seed=43 ep=13 train=0.0864 val=0.1659 (38.1s)
+  lstm seed=43 ep=14 train=0.0851 val=0.1647 (37.5s)
+  lstm seed=43 ep=15 train=0.0849 val=0.1643 (37.5s)
+  lstm seed=43 ep=16 train=0.0846 val=0.1617 (38.2s)
+  lstm seed=43 ep=17 train=0.0838 val=0.1617 (38.0s)
+  lstm seed=43 ep=18 train=0.0836 val=0.1614 (37.9s)
+  lstm seed=43 ep=19 train=0.0832 val=0.1617 (38.4s)
+[gate] lstm seed=43 MAE=1.418 RMSE=4.776
+  lstm seed=44 ep=00 train=0.2303 val=0.3669 (39.0s)
+  lstm seed=44 ep=01 train=0.1843 val=0.3088 (37.7s)
+  lstm seed=44 ep=02 train=0.1556 val=0.2636 (37.8s)
+  lstm seed=44 ep=03 train=0.1351 val=0.2372 (37.6s)
+  lstm seed=44 ep=04 train=0.1227 val=0.2211 (37.3s)
+  lstm seed=44 ep=05 train=0.1160 val=0.2099 (37.6s)
+  lstm seed=44 ep=06 train=0.1092 val=0.1992 (37.8s)
+  lstm seed=44 ep=07 train=0.1040 val=0.1928 (37.5s)
+  lstm seed=44 ep=08 train=0.1004 val=0.1853 (37.7s)
+  lstm seed=44 ep=09 train=0.0974 val=0.1818 (38.7s)
+  lstm seed=44 ep=10 train=0.0961 val=0.1792 (38.1s)
+  lstm seed=44 ep=11 train=0.0946 val=0.1753 (38.0s)
+  lstm seed=44 ep=12 train=0.0932 val=0.1746 (38.9s)
+  lstm seed=44 ep=13 train=0.0921 val=0.1737 (37.8s)
+  lstm seed=44 ep=14 train=0.0912 val=0.1730 (38.0s)
+  lstm seed=44 ep=15 train=0.0902 val=0.1720 (39.9s)
+  lstm seed=44 ep=16 train=0.0902 val=0.1697 (40.3s)
+  lstm seed=44 ep=17 train=0.0889 val=0.1716 (39.3s)
+  lstm seed=44 ep=18 train=0.0884 val=0.1679 (47.7s)
+  lstm seed=44 ep=19 train=0.0880 val=0.1657 (46.4s)
+[gate] lstm seed=44 MAE=1.448 RMSE=4.912
+  gru_nograph seed=42 ep=00 train=0.2185 val=0.3427 (51.5s)
+  gru_nograph seed=42 ep=01 train=0.1635 val=0.2651 (46.9s)
+  gru_nograph seed=42 ep=02 train=0.1337 val=0.2327 (46.3s)
+  gru_nograph seed=42 ep=03 train=0.1187 val=0.2123 (46.2s)
+  gru_nograph seed=42 ep=04 train=0.1102 val=0.1998 (47.0s)
+  gru_nograph seed=42 ep=05 train=0.1035 val=0.1887 (46.4s)
+  gru_nograph seed=42 ep=06 train=0.0989 val=0.1839 (47.2s)
+  gru_nograph seed=42 ep=07 train=0.0957 val=0.1773 (45.8s)
+  gru_nograph seed=42 ep=08 train=0.0942 val=0.1758 (47.4s)
+  gru_nograph seed=42 ep=09 train=0.0921 val=0.1730 (46.2s)
+  gru_nograph seed=42 ep=10 train=0.0912 val=0.1703 (47.9s)
+  gru_nograph seed=42 ep=11 train=0.0898 val=0.1699 (46.0s)
+  gru_nograph seed=42 ep=12 train=0.0887 val=0.1676 (46.2s)
+  gru_nograph seed=42 ep=13 train=0.0883 val=0.1651 (45.8s)
+  gru_nograph seed=42 ep=14 train=0.0877 val=0.1644 (45.5s)
+  gru_nograph seed=42 ep=15 train=0.0865 val=0.1635 (45.6s)
+  gru_nograph seed=42 ep=16 train=0.0855 val=0.1641 (45.9s)
+  gru_nograph seed=42 ep=17 train=0.0857 val=0.1642 (45.7s)
+  gru_nograph seed=42 ep=18 train=0.0844 val=0.1618 (46.1s)
+  gru_nograph seed=42 ep=19 train=0.0840 val=0.1602 (45.0s)
+[gate] gru_nograph seed=42 MAE=1.416 RMSE=4.707
+  gru_nograph seed=43 ep=00 train=0.2095 val=0.3188 (49.0s)
+  gru_nograph seed=43 ep=01 train=0.1558 val=0.2607 (46.1s)
+  gru_nograph seed=43 ep=02 train=0.1314 val=0.2313 (45.6s)
+  gru_nograph seed=43 ep=03 train=0.1200 val=0.2144 (46.3s)
+  gru_nograph seed=43 ep=04 train=0.1112 val=0.2044 (46.4s)
+  gru_nograph seed=43 ep=05 train=0.1044 val=0.1928 (46.7s)
+  gru_nograph seed=43 ep=06 train=0.1014 val=0.1865 (46.5s)
+  gru_nograph seed=43 ep=07 train=0.0975 val=0.1800 (46.5s)
+  gru_nograph seed=43 ep=08 train=0.0948 val=0.1754 (45.7s)
+  gru_nograph seed=43 ep=09 train=0.0935 val=0.1730 (46.1s)
+  gru_nograph seed=43 ep=10 train=0.0914 val=0.1710 (46.3s)
+  gru_nograph seed=43 ep=11 train=0.0899 val=0.1701 (47.5s)
+  gru_nograph seed=43 ep=12 train=0.0891 val=0.1675 (47.6s)
+  gru_nograph seed=43 ep=13 train=0.0883 val=0.1680 (46.7s)
+  gru_nograph seed=43 ep=14 train=0.0874 val=0.1665 (46.2s)
+  gru_nograph seed=43 ep=15 train=0.0868 val=0.1670 (45.8s)
+  gru_nograph seed=43 ep=16 train=0.0866 val=0.1636 (46.6s)
+  gru_nograph seed=43 ep=17 train=0.0855 val=0.1628 (46.5s)
+  gru_nograph seed=43 ep=18 train=0.0850 val=0.1622 (46.1s)
+  gru_nograph seed=43 ep=19 train=0.0852 val=0.1633 (45.9s)
+[gate] gru_nograph seed=43 MAE=1.428 RMSE=4.805
+  gru_nograph seed=44 ep=00 train=0.2238 val=0.3508 (47.3s)
+  gru_nograph seed=44 ep=01 train=0.1739 val=0.2877 (45.8s)
+  gru_nograph seed=44 ep=02 train=0.1458 val=0.2530 (45.9s)
+  gru_nograph seed=44 ep=03 train=0.1323 val=0.2369 (45.6s)
+  gru_nograph seed=44 ep=04 train=0.1233 val=0.2240 (46.1s)
+  gru_nograph seed=44 ep=05 train=0.1169 val=0.2168 (46.3s)
+  gru_nograph seed=44 ep=06 train=0.1124 val=0.2054 (46.1s)
+  gru_nograph seed=44 ep=07 train=0.1070 val=0.1986 (45.7s)
+  gru_nograph seed=44 ep=08 train=0.1035 val=0.1924 (45.6s)
+  gru_nograph seed=44 ep=09 train=0.1011 val=0.1880 (45.4s)
+  gru_nograph seed=44 ep=10 train=0.0986 val=0.1856 (47.2s)
+  gru_nograph seed=44 ep=11 train=0.0973 val=0.1791 (46.0s)
+  gru_nograph seed=44 ep=12 train=0.0938 val=0.1766 (46.2s)
+  gru_nograph seed=44 ep=13 train=0.0927 val=0.1750 (45.8s)
+  gru_nograph seed=44 ep=14 train=0.0913 val=0.1741 (45.5s)
+  gru_nograph seed=44 ep=15 train=0.0906 val=0.1718 (45.5s)
+  gru_nograph seed=44 ep=16 train=0.0889 val=0.1683 (45.7s)
+  gru_nograph seed=44 ep=17 train=0.0885 val=0.1748 (46.9s)
+  gru_nograph seed=44 ep=18 train=0.0887 val=0.1671 (46.3s)
+  gru_nograph seed=44 ep=19 train=0.0871 val=0.1656 (47.0s)
+[gate] gru_nograph seed=44 MAE=1.444 RMSE=5.052
+  stgnn seed=42 ep=00 train=0.2128 val=0.3328 (49.3s)
+  stgnn seed=42 ep=01 train=0.1630 val=0.2669 (47.9s)
+  stgnn seed=42 ep=02 train=0.1353 val=0.2358 (47.6s)
+  stgnn seed=42 ep=03 train=0.1225 val=0.2189 (47.6s)
+  stgnn seed=42 ep=04 train=0.1140 val=0.2091 (47.6s)
+  stgnn seed=42 ep=05 train=0.1079 val=0.1977 (46.9s)
+  stgnn seed=42 ep=06 train=0.1040 val=0.1934 (47.2s)
+  stgnn seed=42 ep=07 train=0.0997 val=0.1847 (46.4s)
+  stgnn seed=42 ep=08 train=0.0969 val=0.1802 (46.9s)
+  stgnn seed=42 ep=09 train=0.0947 val=0.1768 (47.1s)
+  stgnn seed=42 ep=10 train=0.0934 val=0.1745 (46.1s)
+  stgnn seed=42 ep=11 train=0.0922 val=0.1737 (46.3s)
+  stgnn seed=42 ep=12 train=0.0913 val=0.1720 (46.9s)
+  stgnn seed=42 ep=13 train=0.0907 val=0.1700 (46.6s)
+  stgnn seed=42 ep=14 train=0.0893 val=0.1684 (47.7s)
+  stgnn seed=42 ep=15 train=0.0889 val=0.1664 (46.7s)
+  stgnn seed=42 ep=16 train=0.0876 val=0.1661 (46.9s)
+  stgnn seed=42 ep=17 train=0.0886 val=0.1678 (47.0s)
+  stgnn seed=42 ep=18 train=0.0861 val=0.1644 (46.6s)
+  stgnn seed=42 ep=19 train=0.0853 val=0.1624 (47.5s)
+[gate] stgnn seed=42 MAE=1.428 RMSE=4.900
+  stgnn seed=43 ep=00 train=0.2160 val=0.3461 (50.2s)
+  stgnn seed=43 ep=01 train=0.1727 val=0.2887 (47.1s)
+  stgnn seed=43 ep=02 train=0.1460 val=0.2530 (49.9s)
+  stgnn seed=43 ep=03 train=0.1316 val=0.2360 (49.7s)
+  stgnn seed=43 ep=04 train=0.1228 val=0.2222 (47.9s)
+  stgnn seed=43 ep=05 train=0.1156 val=0.2107 (48.3s)
+  stgnn seed=43 ep=06 train=0.1098 val=0.2023 (48.9s)
+  stgnn seed=43 ep=07 train=0.1081 val=0.1959 (47.5s)
+  stgnn seed=43 ep=08 train=0.1024 val=0.1913 (48.0s)
+  stgnn seed=43 ep=09 train=0.1002 val=0.1866 (47.4s)
+  stgnn seed=43 ep=10 train=0.0981 val=0.1829 (47.1s)
+  stgnn seed=43 ep=11 train=0.0950 val=0.1820 (47.0s)
+  stgnn seed=43 ep=12 train=0.0937 val=0.1761 (46.5s)
+  stgnn seed=43 ep=13 train=0.0936 val=0.1759 (47.2s)
+  stgnn seed=43 ep=14 train=0.0909 val=0.1721 (46.8s)
+  stgnn seed=43 ep=15 train=0.0896 val=0.1730 (51.0s)
+  stgnn seed=43 ep=16 train=0.0891 val=0.1699 (47.5s)
+  stgnn seed=43 ep=17 train=0.0893 val=0.1696 (46.5s)
+  stgnn seed=43 ep=18 train=0.0878 val=0.1664 (47.3s)
+  stgnn seed=43 ep=19 train=0.0866 val=0.1667 (46.5s)
+[gate] stgnn seed=43 MAE=1.454 RMSE=5.147
+  stgnn seed=44 ep=00 train=0.2128 val=0.3288 (48.9s)
+  stgnn seed=44 ep=01 train=0.1612 val=0.2674 (47.8s)
+  stgnn seed=44 ep=02 train=0.1359 val=0.2383 (47.4s)
+  stgnn seed=44 ep=03 train=0.1242 val=0.2226 (47.2s)
+  stgnn seed=44 ep=04 train=0.1174 val=0.2113 (47.0s)
+  stgnn seed=44 ep=05 train=0.1111 val=0.2061 (46.5s)
+  stgnn seed=44 ep=06 train=0.1052 val=0.1920 (47.0s)
+  stgnn seed=44 ep=07 train=0.1024 val=0.1904 (47.3s)
+  stgnn seed=44 ep=08 train=0.0994 val=0.1834 (47.6s)
+  stgnn seed=44 ep=09 train=0.0969 val=0.1804 (48.5s)
+  stgnn seed=44 ep=10 train=0.0950 val=0.1788 (47.8s)
+  stgnn seed=44 ep=11 train=0.0949 val=0.1760 (47.9s)
+  stgnn seed=44 ep=12 train=0.0932 val=0.1750 (47.4s)
+  stgnn seed=44 ep=13 train=0.0922 val=0.1731 (47.9s)
+  stgnn seed=44 ep=14 train=0.0919 val=0.1743 (48.0s)
+  stgnn seed=44 ep=15 train=0.0903 val=0.1717 (47.8s)
+  stgnn seed=44 ep=16 train=0.0901 val=0.1702 (48.2s)
+  stgnn seed=44 ep=17 train=0.0891 val=0.1736 (40.6s)
+  stgnn seed=44 ep=18 train=0.0882 val=0.1673 (34.3s)
+  stgnn seed=44 ep=19 train=0.0875 val=0.1677 (26.7s)
+[gate] stgnn seed=44 MAE=1.459 RMSE=5.136
+  lstm seed=42 ep=00 train=0.2326 val=0.3741 (23.6s)
+  lstm seed=42 ep=01 train=0.1856 val=0.3025 (23.4s)
+  lstm seed=42 ep=02 train=0.1502 val=0.2540 (22.8s)
+  lstm seed=42 ep=03 train=0.1305 val=0.2310 (24.2s)
+  lstm seed=42 ep=04 train=0.1216 val=0.2179 (22.9s)
+  lstm seed=42 ep=05 train=0.1152 val=0.2081 (23.3s)
+  lstm seed=42 ep=06 train=0.1093 val=0.1995 (23.2s)
+  lstm seed=42 ep=07 train=0.1045 val=0.1912 (23.2s)
+  lstm seed=42 ep=08 train=0.1012 val=0.1859 (23.7s)
+  lstm seed=42 ep=09 train=0.0986 val=0.1837 (22.8s)
+  lstm seed=42 ep=10 train=0.0957 val=0.1774 (23.2s)
+  lstm seed=42 ep=11 train=0.0935 val=0.1752 (22.6s)
+  lstm seed=42 ep=12 train=0.0929 val=0.1753 (22.7s)
+  lstm seed=42 ep=13 train=0.0923 val=0.1716 (22.8s)
+  lstm seed=42 ep=14 train=0.0910 val=0.1722 (24.1s)
+  lstm seed=42 ep=15 train=0.0900 val=0.1684 (22.7s)
+  lstm seed=42 ep=16 train=0.0904 val=0.1671 (22.7s)
+  lstm seed=42 ep=17 train=0.0894 val=0.1683 (22.7s)
+  lstm seed=42 ep=18 train=0.0877 val=0.1649 (22.5s)
+  lstm seed=42 ep=19 train=0.0870 val=0.1641 (22.6s)
+[zero] lstm seed=42 MAE=1.444 RMSE=5.011
+  lstm seed=43 ep=00 train=0.2074 val=0.3202 (24.5s)
+  lstm seed=43 ep=01 train=0.1542 val=0.2617 (22.5s)
+  lstm seed=43 ep=02 train=0.1312 val=0.2324 (22.2s)
+  lstm seed=43 ep=03 train=0.1198 val=0.2156 (22.7s)
+  lstm seed=43 ep=04 train=0.1114 val=0.2043 (23.1s)
+  lstm seed=43 ep=05 train=0.1045 val=0.1944 (22.8s)
+  lstm seed=43 ep=06 train=0.0995 val=0.1853 (23.0s)
+  lstm seed=43 ep=07 train=0.0960 val=0.1788 (22.7s)
+  lstm seed=43 ep=08 train=0.0932 val=0.1744 (22.6s)
+  lstm seed=43 ep=09 train=0.0911 val=0.1709 (23.2s)
+  lstm seed=43 ep=10 train=0.0896 val=0.1695 (22.3s)
+  lstm seed=43 ep=11 train=0.0884 val=0.1689 (22.7s)
+  lstm seed=43 ep=12 train=0.0870 val=0.1654 (23.2s)
+  lstm seed=43 ep=13 train=0.0864 val=0.1663 (23.2s)
+  lstm seed=43 ep=14 train=0.0852 val=0.1644 (23.2s)
+  lstm seed=43 ep=15 train=0.0848 val=0.1638 (23.3s)
+  lstm seed=43 ep=16 train=0.0843 val=0.1620 (22.4s)
+  lstm seed=43 ep=17 train=0.0836 val=0.1615 (22.8s)
+  lstm seed=43 ep=18 train=0.0838 val=0.1609 (23.0s)
+  lstm seed=43 ep=19 train=0.0830 val=0.1618 (23.3s)
+[zero] lstm seed=43 MAE=1.413 RMSE=4.732
+  lstm seed=44 ep=00 train=0.2303 val=0.3669 (24.7s)
+  lstm seed=44 ep=01 train=0.1843 val=0.3088 (22.9s)
+  lstm seed=44 ep=02 train=0.1563 val=0.2642 (23.1s)
+  lstm seed=44 ep=03 train=0.1357 val=0.2387 (22.7s)
+  lstm seed=44 ep=04 train=0.1237 val=0.2222 (23.2s)
+  lstm seed=44 ep=05 train=0.1155 val=0.2107 (23.0s)
+  lstm seed=44 ep=06 train=0.1084 val=0.1986 (22.8s)
+  lstm seed=44 ep=07 train=0.1035 val=0.1946 (22.8s)
+  lstm seed=44 ep=08 train=0.1001 val=0.1852 (22.9s)
+  lstm seed=44 ep=09 train=0.0990 val=0.1829 (23.0s)
+  lstm seed=44 ep=10 train=0.0958 val=0.1791 (23.0s)
+  lstm seed=44 ep=11 train=0.0942 val=0.1775 (22.7s)
+  lstm seed=44 ep=12 train=0.0934 val=0.1741 (22.8s)
+  lstm seed=44 ep=13 train=0.0916 val=0.1742 (22.9s)
+  lstm seed=44 ep=14 train=0.0916 val=0.1730 (23.2s)
+  lstm seed=44 ep=15 train=0.0906 val=0.1723 (23.8s)
+  lstm seed=44 ep=16 train=0.0897 val=0.1688 (22.7s)
+  lstm seed=44 ep=17 train=0.0894 val=0.1729 (22.8s)
+  lstm seed=44 ep=18 train=0.0887 val=0.1703 (22.7s)
+  lstm seed=44 ep=19 train=0.0880 val=0.1672 (22.7s)
+[zero] lstm seed=44 MAE=1.467 RMSE=4.918
+  gru_nograph seed=42 ep=00 train=0.2185 val=0.3426 (27.2s)
+  gru_nograph seed=42 ep=01 train=0.1635 val=0.2646 (25.9s)
+  gru_nograph seed=42 ep=02 train=0.1336 val=0.2326 (26.3s)
+  gru_nograph seed=42 ep=03 train=0.1195 val=0.2120 (26.6s)
+  gru_nograph seed=42 ep=04 train=0.1090 val=0.1980 (26.2s)
+  gru_nograph seed=42 ep=05 train=0.1027 val=0.1876 (26.5s)
+  gru_nograph seed=42 ep=06 train=0.0982 val=0.1829 (26.4s)
+  gru_nograph seed=42 ep=07 train=0.0966 val=0.1774 (26.3s)
+  gru_nograph seed=42 ep=08 train=0.0933 val=0.1750 (25.8s)
+  gru_nograph seed=42 ep=09 train=0.0921 val=0.1729 (26.6s)
+  gru_nograph seed=42 ep=10 train=0.0916 val=0.1710 (26.0s)
+  gru_nograph seed=42 ep=11 train=0.0900 val=0.1697 (26.4s)
+  gru_nograph seed=42 ep=12 train=0.0889 val=0.1684 (26.1s)
+  gru_nograph seed=42 ep=13 train=0.0883 val=0.1644 (26.1s)
+  gru_nograph seed=42 ep=14 train=0.0869 val=0.1638 (26.0s)
+  gru_nograph seed=42 ep=15 train=0.0870 val=0.1649 (25.8s)
+  gru_nograph seed=42 ep=16 train=0.0856 val=0.1629 (25.7s)
+  gru_nograph seed=42 ep=17 train=0.0858 val=0.1649 (26.2s)
+  gru_nograph seed=42 ep=18 train=0.0843 val=0.1617 (26.6s)
+  gru_nograph seed=42 ep=19 train=0.0842 val=0.1606 (25.7s)
+[zero] gru_nograph seed=42 MAE=1.419 RMSE=4.727
+  gru_nograph seed=43 ep=00 train=0.2095 val=0.3188 (27.3s)
+  gru_nograph seed=43 ep=01 train=0.1558 val=0.2611 (27.0s)
+  gru_nograph seed=43 ep=02 train=0.1315 val=0.2319 (24.9s)
+  gru_nograph seed=43 ep=03 train=0.1194 val=0.2143 (26.1s)
+  gru_nograph seed=43 ep=04 train=0.1112 val=0.2048 (24.8s)
+  gru_nograph seed=43 ep=05 train=0.1048 val=0.1925 (26.1s)
+  gru_nograph seed=43 ep=06 train=0.1007 val=0.1858 (25.4s)
+  gru_nograph seed=43 ep=07 train=0.0975 val=0.1817 (25.9s)
+  gru_nograph seed=43 ep=08 train=0.0959 val=0.1765 (26.3s)
+  gru_nograph seed=43 ep=09 train=0.0932 val=0.1725 (25.0s)
+  gru_nograph seed=43 ep=10 train=0.0920 val=0.1709 (25.3s)
+  gru_nograph seed=43 ep=11 train=0.0898 val=0.1708 (25.9s)
+  gru_nograph seed=43 ep=12 train=0.0885 val=0.1669 (24.8s)
+  gru_nograph seed=43 ep=13 train=0.0883 val=0.1688 (25.8s)
+  gru_nograph seed=43 ep=14 train=0.0882 val=0.1663 (25.0s)
+  gru_nograph seed=43 ep=15 train=0.0867 val=0.1657 (25.8s)
+  gru_nograph seed=43 ep=16 train=0.0861 val=0.1639 (24.8s)
+  gru_nograph seed=43 ep=17 train=0.0857 val=0.1631 (24.7s)
+  gru_nograph seed=43 ep=18 train=0.0849 val=0.1617 (25.9s)
+  gru_nograph seed=43 ep=19 train=0.0845 val=0.1622 (26.0s)
+[zero] gru_nograph seed=43 MAE=1.435 RMSE=4.787
+  gru_nograph seed=44 ep=00 train=0.2238 val=0.3509 (27.1s)
+  gru_nograph seed=44 ep=01 train=0.1740 val=0.2878 (25.3s)
+  gru_nograph seed=44 ep=02 train=0.1460 val=0.2527 (26.2s)
+  gru_nograph seed=44 ep=03 train=0.1323 val=0.2370 (24.8s)
+  gru_nograph seed=44 ep=04 train=0.1234 val=0.2243 (25.9s)
+  gru_nograph seed=44 ep=05 train=0.1167 val=0.2165 (24.6s)
+  gru_nograph seed=44 ep=06 train=0.1118 val=0.2062 (25.3s)
+  gru_nograph seed=44 ep=07 train=0.1078 val=0.1988 (26.0s)
+  gru_nograph seed=44 ep=08 train=0.1045 val=0.1936 (25.8s)
+  gru_nograph seed=44 ep=09 train=0.1022 val=0.1888 (24.5s)
+  gru_nograph seed=44 ep=10 train=0.0996 val=0.1859 (25.8s)
+  gru_nograph seed=44 ep=11 train=0.0974 val=0.1812 (25.0s)
+  gru_nograph seed=44 ep=12 train=0.0949 val=0.1790 (26.2s)
+  gru_nograph seed=44 ep=13 train=0.0932 val=0.1765 (24.8s)
+  gru_nograph seed=44 ep=14 train=0.0926 val=0.1763 (25.9s)
+  gru_nograph seed=44 ep=15 train=0.0922 val=0.1752 (25.9s)
+  gru_nograph seed=44 ep=16 train=0.0907 val=0.1715 (25.7s)
+  gru_nograph seed=44 ep=17 train=0.0902 val=0.1745 (24.8s)
+  gru_nograph seed=44 ep=18 train=0.0892 val=0.1703 (26.2s)
+  gru_nograph seed=44 ep=19 train=0.0885 val=0.1681 (24.9s)
+[zero] gru_nograph seed=44 MAE=1.462 RMSE=5.139
+  stgnn seed=42 ep=00 train=0.2128 val=0.3327 (27.5s)
+  stgnn seed=42 ep=01 train=0.1629 val=0.2669 (26.9s)
+  stgnn seed=42 ep=02 train=0.1355 val=0.2362 (27.7s)
+  stgnn seed=42 ep=03 train=0.1233 val=0.2195 (26.6s)
+  stgnn seed=42 ep=04 train=0.1137 val=0.2086 (26.9s)
+  stgnn seed=42 ep=05 train=0.1075 val=0.1972 (27.0s)
+  stgnn seed=42 ep=06 train=0.1032 val=0.1922 (26.8s)
+  stgnn seed=42 ep=07 train=0.1002 val=0.1860 (26.9s)
+  stgnn seed=42 ep=08 train=0.0973 val=0.1820 (26.1s)
+  stgnn seed=42 ep=09 train=0.0951 val=0.1789 (26.2s)
+  stgnn seed=42 ep=10 train=0.0937 val=0.1760 (26.6s)
+  stgnn seed=42 ep=11 train=0.0924 val=0.1753 (26.4s)
+  stgnn seed=42 ep=12 train=0.0918 val=0.1725 (26.4s)
+  stgnn seed=42 ep=13 train=0.0906 val=0.1694 (26.4s)
+  stgnn seed=42 ep=14 train=0.0892 val=0.1685 (26.7s)
+  stgnn seed=42 ep=15 train=0.0885 val=0.1673 (26.4s)
+  stgnn seed=42 ep=16 train=0.0882 val=0.1694 (26.5s)
+  stgnn seed=42 ep=17 train=0.0878 val=0.1684 (26.7s)
+  stgnn seed=42 ep=18 train=0.0860 val=0.1651 (26.4s)
+  stgnn seed=42 ep=19 train=0.0859 val=0.1647 (26.2s)
+[zero] stgnn seed=42 MAE=1.426 RMSE=4.954
+  stgnn seed=43 ep=00 train=0.2160 val=0.3456 (27.5s)
+  stgnn seed=43 ep=01 train=0.1728 val=0.2899 (27.1s)
+  stgnn seed=43 ep=02 train=0.1463 val=0.2543 (28.5s)
+  stgnn seed=43 ep=03 train=0.1329 val=0.2390 (26.9s)
+  stgnn seed=43 ep=04 train=0.1229 val=0.2233 (28.1s)
+  stgnn seed=43 ep=05 train=0.1163 val=0.2126 (26.4s)
+  stgnn seed=43 ep=06 train=0.1109 val=0.2028 (27.3s)
+  stgnn seed=43 ep=07 train=0.1059 val=0.1952 (27.1s)
+  stgnn seed=43 ep=08 train=0.1031 val=0.1895 (27.2s)
+  stgnn seed=43 ep=09 train=0.1003 val=0.1834 (27.2s)
+  stgnn seed=43 ep=10 train=0.0977 val=0.1817 (27.1s)
+  stgnn seed=43 ep=11 train=0.0951 val=0.1805 (27.1s)
+  stgnn seed=43 ep=12 train=0.0935 val=0.1755 (26.7s)
+  stgnn seed=43 ep=13 train=0.0933 val=0.1780 (27.0s)
+  stgnn seed=43 ep=14 train=0.0916 val=0.1724 (27.1s)
+  stgnn seed=43 ep=15 train=0.0905 val=0.1719 (26.6s)
+  stgnn seed=43 ep=16 train=0.0897 val=0.1714 (27.8s)
+  stgnn seed=43 ep=17 train=0.0886 val=0.1692 (27.2s)
+  stgnn seed=43 ep=18 train=0.0888 val=0.1689 (27.2s)
+  stgnn seed=43 ep=19 train=0.0874 val=0.1683 (26.6s)
+[zero] stgnn seed=43 MAE=1.466 RMSE=5.228
+  stgnn seed=44 ep=00 train=0.2128 val=0.3291 (28.4s)
+  stgnn seed=44 ep=01 train=0.1613 val=0.2672 (26.7s)
+  stgnn seed=44 ep=02 train=0.1360 val=0.2386 (27.0s)
+  stgnn seed=44 ep=03 train=0.1246 val=0.2245 (26.5s)
+  stgnn seed=44 ep=04 train=0.1177 val=0.2114 (27.4s)
+  stgnn seed=44 ep=05 train=0.1112 val=0.2049 (26.9s)
+  stgnn seed=44 ep=06 train=0.1061 val=0.1930 (27.3s)
+  stgnn seed=44 ep=07 train=0.1021 val=0.1885 (26.8s)
+  stgnn seed=44 ep=08 train=0.0993 val=0.1837 (26.5s)
+  stgnn seed=44 ep=09 train=0.0977 val=0.1818 (27.4s)
+  stgnn seed=44 ep=10 train=0.0960 val=0.1794 (26.3s)
+  stgnn seed=44 ep=11 train=0.0942 val=0.1760 (27.1s)
+  stgnn seed=44 ep=12 train=0.0925 val=0.1744 (26.9s)
+  stgnn seed=44 ep=13 train=0.0916 val=0.1743 (27.1s)
+  stgnn seed=44 ep=14 train=0.0919 val=0.1739 (27.3s)
+  stgnn seed=44 ep=15 train=0.0909 val=0.1723 (26.5s)
+  stgnn seed=44 ep=16 train=0.0899 val=0.1694 (27.0s)
+  stgnn seed=44 ep=17 train=0.0891 val=0.1751 (26.3s)
+  stgnn seed=44 ep=18 train=0.0889 val=0.1695 (27.2s)
+  stgnn seed=44 ep=19 train=0.0878 val=0.1681 (26.7s)
+[zero] stgnn seed=44 MAE=1.455 RMSE=5.094
+                       MAE          RMSE       
+                      mean    std   mean    std
+setting model                                  
+gate    HA           1.629    NaN  5.446    NaN
+        gru_nograph  1.429  0.014  4.855  0.178
+        lstm         1.435  0.015  4.903  0.122
+        stgnn        1.447  0.017  5.061  0.139
+zero    HA           1.629    NaN  5.446    NaN
+        gru_nograph  1.438  0.022  4.884  0.223
+        lstm         1.441  0.027  4.887  0.142
+        stgnn        1.449  0.021  5.092  0.137
+setting       model  precision  recall     F1
+   gate          HA     0.8341  0.6885 0.7543
+   gate        lstm     0.8739  0.7568 0.8109
+   gate gru_nograph     0.8757  0.7475 0.8065
+   gate       stgnn     0.8631  0.7546 0.8052
+   zero          HA     0.8341  0.6885 0.7543
+   zero        lstm     0.8671  0.7616 0.8107
+   zero gru_nograph     0.8692  0.7516 0.8061
+   zero       stgnn     0.8707  0.7437 0.8021
+{
+ "gate": [
+  {
+   "baseline": "HA",
+   "n_days": 365,
+   "mean_diff_MAE": -0.18163013458251953,
+   "t": -7.312180995941162,
+   "p": 1.68520221648788e-12,
+   "wilcoxon_p": 7.596165450124426e-13,
+   "cohens_dz": -0.38273710012435913,
+   "p_holm": 5.05560664946364e-12,
+   "significant_0.05": true
+  },
+  {
+   "baseline": "lstm",
+   "n_days": 365,
+   "mean_diff_MAE": 0.011925240978598595,
+   "t": 3.731447696685791,
+   "p": 0.00022079308109823614,
+   "wilcoxon_p": 0.00024277264310512692,
+   "cohens_dz": 0.19531291723251343,
+   "p_holm": 0.00022079308109823614,
+   "significant_0.05": false
+  },
+  {
+   "baseline": "gru_nograph",
+   "n_days": 365,
+   "mean_diff_MAE": 0.018103063106536865,
+   "t": 5.509084701538086,
+   "p": 6.83409950852365e-08,
+   "wilcoxon_p": 1.8628229270234442e-07,
+   "cohens_dz": 0.2883586883544922,
+   "p_holm": 1.36681990170473e-07,
+   "significant_0.05": false
+  }
+ ],
+ "zero": [
+  {
+   "baseline": "HA",
+   "n_days": 365,
+   "mean_diff_MAE": -0.1797700673341751,
+   "t": -7.148599147796631,
+   "p": 4.831196206978028e-12,
+   "wilcoxon_p": 3.847124008249381e-12,
+   "cohens_dz": -0.37417474389076233,
+   "p_holm": 1.4493588620934084e-11,
+   "significant_0.05": true
+  },
+  {
+   "baseline": "lstm",
+   "n_days": 365,
+   "mean_diff_MAE": 0.007872357033193111,
+   "t": 2.280543565750122,
+   "p": 0.023152945563197136,
+   "wilcoxon_p": 0.04117797315120697,
+   "cohens_dz": 0.11936911195516586,
+   "p_holm": 0.023152945563197136,
+   "significant_0.05": false
+  },
+  {
+   "baseline": "gru_nograph",
+   "n_days": 365,
+   "mean_diff_MAE": 0.010813913308084011,
+   "t": 3.2702202796936035,
+   "p": 0.001177183585241437,
+   "wilcoxon_p": 0.005249635316431522,
+   "cohens_dz": 0.1711711436510086,
+   "p_holm": 0.002354367170482874,
+   "significant_0.05": false
+  }
+ ]
+}
+done -> D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\20261021_100713_sparse

@@ -1,4 +1,4 @@
-"""Advisory crowd control for a pilgrimage summit (Adam's Peak): nobody is refused (adams_peak_plan.md, section 4).
+"""Advisory crowd control for a pilgrimage summit (Adam's Peak): nobody is refused (docs/archive/adams_peak_plan.md, section 4).
 
 A "night" is named after its sunrise date and runs from `night_start_h` (18:00) the evening before; times before
 midnight are negative minutes (e.g. 21:00 the evening before = -180).
@@ -175,7 +175,6 @@ class Advisory:
         total = float(sum(visitors_by_trail.values()))
         self.use_crowd(total)
         sunrise = self.sunrise_for(day)
-        late = self.median_arrival > sunrise
         D = self.demand(visitors_by_trail)
         W = self.wait_by_start(D)
         a, q, w = self.queue(D)

@@ -6,8 +6,9 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
+import 'count_screen.dart';
+import 'sightings_screen.dart';
 
-const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
 /// Gate tools: check in tickets, sell walk-in places, live traffic lights.
 /// A "demo time" lets the prototype be shown on any date (the server must allow time override).
@@ -20,6 +21,15 @@ class RangerHome extends StatefulWidget {
 
 class _RangerHomeState extends State<RangerHome> {
   DateTime? _demo; // null = real time
+  bool _sightings = false; // safari parks (Yala): the Sightings tab
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    C4Scope.of(context).status().then((s) {
+      if (mounted && s.sightings != _sightings) setState(() => _sightings = s.sightings);
+    }, onError: (_) {});
+  }
 
   DateTime get _now => _demo ?? DateTime.now();
   DateTime get _day => DateTime(_now.year, _now.month, _now.day);
@@ -36,7 +46,8 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 4,
+      key: ValueKey(_sightings),
+      length: _sightings ? 6 : 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
@@ -56,11 +67,13 @@ class _RangerHomeState extends State<RangerHome> {
               },
             ),
           ],
-          bottom: const TabBar(tabs: [
+          bottom: TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.qr_code_scanner), text: 'Check in'),
             Tab(icon: Icon(Icons.point_of_sale), text: 'Walk-ins'),
             Tab(icon: Icon(Icons.traffic), text: 'Live'),
             Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
+            Tab(icon: Icon(Icons.exposure_plus_1), text: 'Count'),
+            if (_sightings) Tab(icon: Icon(Icons.pets), text: 'Sightings'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -68,6 +81,8 @@ class _RangerHomeState extends State<RangerHome> {
           _WalkInTab(day: _day, at: () => _demo),
           _LiveTab(day: _day, now: _now, demo: _demo != null),
           const BottleneckView(), // where and when sections get crowded this week, also offline
+          CountTab(now: () => _now), // A4: spot counts, the park's own sensor record
+          if (_sightings) SightingsTab(now: () => _now, demo: _demo != null), // jeeps at wildlife sightings
         ]),
       ),
     );
@@ -84,7 +99,7 @@ class _CheckInTab extends StatefulWidget {
   State<_CheckInTab> createState() => _CheckInTabState();
 }
 
-class _CheckInTabState extends State<_CheckInTab> {
+class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   final _code = TextEditingController();
   CheckInResult? _result;
   String? _error;
@@ -155,7 +170,7 @@ class _CheckInTabState extends State<_CheckInTab> {
                 const SizedBox(height: 8),
                 Text(_result!.reason, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
                 if (_result!.trail != null)
-                  Text('${_trailNames[_result!.trail] ?? _result!.trail} · ${_result!.slot} · ${_result!.groupSize} people',
+                  Text('${trailName(_result!.trail!)} · ${_result!.slot} · ${_result!.groupSize} people',
                       style: Theme.of(context).textTheme.titleMedium),
               ]),
             ),
@@ -197,9 +212,9 @@ class _WalkInTab extends StatefulWidget {
   State<_WalkInTab> createState() => _WalkInTabState();
 }
 
-class _WalkInTabState extends State<_WalkInTab> {
+class _WalkInTabState extends State<_WalkInTab> with ParkTrails {
   late Future<List<WalkInSlot>> _future;
-  String _trail = 'main';
+  String? _trail;
 
   @override
   void didChangeDependencies() {
@@ -219,7 +234,7 @@ class _WalkInTabState extends State<_WalkInTab> {
       context: context,
       builder: (d) => StatefulBuilder(
         builder: (d, set) => AlertDialog(
-          title: Text('Walk-in · ${_trailNames[s.trail]} · ${s.slot}'),
+          title: Text('Walk-in · ${trailName(s.trail)} · ${s.slot}'),
           content: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             IconButton.outlined(onPressed: size > 1 ? () => set(() => size--) : null, icon: const Icon(Icons.remove)),
             Padding(padding: const EdgeInsets.all(16), child: Text('$size', style: Theme.of(d).textTheme.headlineMedium)),
@@ -253,15 +268,17 @@ class _WalkInTabState extends State<_WalkInTab> {
             return ErrorRetry(error: snap.error!, onRetry: () => setState(() { _future = C4Scope.of(context).walkIns(widget.day); }));
           }
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          final slots = snap.data!.where((s) => s.trail == _trail).toList();
+          final trail = pickTrail(_trail);
+          final slots = snap.data!.where((s) => s.trail == trail).toList();
           return ListView(padding: const EdgeInsets.all(16), children: [
             Text('Walk-in places on ${niceDate(widget.day)}', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: [for (final e in _trailNames.entries) ButtonSegment(value: e.key, label: Text(e.value))],
-              selected: {_trail},
-              onSelectionChanged: (s) => setState(() => _trail = s.first),
-            ),
+            if (trail != null)
+              SegmentedButton<String>(
+                segments: [for (final e in trailNames.entries) ButtonSegment(value: e.key, label: Text(e.value))],
+                selected: {trail},
+                onSelectionChanged: (s) => setState(() => _trail = s.first),
+              ),
             const SizedBox(height: 8),
             for (final s in slots)
               Card(
@@ -287,12 +304,21 @@ class _LiveTab extends StatefulWidget {
   State<_LiveTab> createState() => _LiveTabState();
 }
 
-class _LiveTabState extends State<_LiveTab> {
+class _LiveTabState extends State<_LiveTab> with ParkTrails {
   late Future<List<LiveSegment>> _future;
+  Future<GateAdvice?>? _advice;
+  Future<TodayUpdate?>? _today;
 
   String get _at => '${widget.now.hour.toString().padLeft(2, '0')}:${widget.now.minute.toString().padLeft(2, '0')}';
 
-  Future<List<LiveSegment>> _load() => C4Scope.of(context).live(widget.day, at: widget.demo ? _at : null);
+  Future<List<LiveSegment>> _load() {
+    final api = C4Scope.of(context);
+    // A3: advice for the gate (booking parks); a server without it just shows no card
+    _advice = api.gateAdvice(widget.day, at: widget.demo ? _at : null).then<GateAdvice?>((a) => a, onError: (_) => null);
+    // A1: the rest of today, updated with the rangers' counts (no card if the server has no spot model)
+    _today = api.liveForecast(widget.day, at: widget.demo ? _at : null).then<TodayUpdate?>((a) => a, onError: (_) => null);
+    return api.live(widget.day, at: widget.demo ? _at : null);
+  }
 
   @override
   void didChangeDependencies() {
@@ -336,13 +362,15 @@ class _LiveTabState extends State<_LiveTab> {
                   ),
               ]),
               const SizedBox(height: 12),
+              FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
+              FutureBuilder<TodayUpdate?>(future: _today, builder: (context, u) => TodayUpdateCard(u.data)),
               if (issues.isEmpty)
                 const Card(child: ListTile(leading: Icon(Icons.check_circle, color: C4Colors.green), title: Text('All clear: no action needed.'))),
               for (final s in issues)
                 Card(
                   child: ListTile(
                     leading: CircleAvatar(backgroundColor: C4Colors.light(s.light)),
-                    title: Text('${_trailNames[s.trail]} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
+                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
                     subtitle: Text('About ${s.people.round()} people (safe: ${s.capacity?.round() ?? '-'})\n${s.action ?? ''}'),
                     isThreeLine: true,
                   ),
@@ -352,4 +380,117 @@ class _LiveTabState extends State<_LiveTab> {
           );
         },
       );
+}
+
+/// A3: what to do at the gate so no section goes over capacity in the next two hours.
+class GateAdviceCard extends StatelessWidget {
+  const GateAdviceCard(this.a, {super.key});
+
+  final GateAdvice? a;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = this.a;
+    if (a == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    if (a.advice.isEmpty) {
+      return Card(
+        key: const Key('gate_advice'),
+        child: ListTile(
+          leading: const Icon(Icons.door_front_door_outlined, color: C4Colors.green),
+          title: const Text('Next 2 hours: keep the gate open'),
+          subtitle: Text('No section is expected over capacity. ${a.basis}'),
+        ),
+      );
+    }
+    return Card(
+      key: const Key('gate_advice'),
+      color: const Color(0xFFFFF3E0),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Next 2 hours: act at the gate', style: text.titleMedium),
+          const SizedBox(height: 4),
+          for (final x in a.advice)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Icon(Icons.pan_tool_outlined, size: 18, color: C4Colors.amber),
+                const SizedBox(width: 8),
+                Expanded(child: Text(x['text'] as String, style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+              ]),
+            ),
+          const SizedBox(height: 4),
+          for (final o in a.over.take(4))
+            Text('${o['name']}: about ${(o['people'] as num).round()} people at ${o['at']} (holds ${(o['capacity'] as num).round()})',
+                style: text.bodySmall),
+          const SizedBox(height: 4),
+          Text(a.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+/// A1: the rest of today, updated from the rangers' spot counts (the graph model carries them to every section).
+class TodayUpdateCard extends StatelessWidget {
+  const TodayUpdateCard(this.u, {super.key});
+
+  final TodayUpdate? u;
+
+  static String _hours(List<dynamic> hs) {
+    final h = [for (final x in hs) (x as num).toInt()];
+    if (h.isEmpty) return '';
+    final runs = <String>[];
+    var start = h.first;
+    for (var i = 0; i < h.length; i++) {
+      if (i == h.length - 1 || h[i + 1] != h[i] + 1) {
+        runs.add('${start.toString().padLeft(2, '0')}–${(h[i] + 1).toString().padLeft(2, '0')} h');
+        if (i + 1 < h.length) start = h[i + 1];
+      }
+    }
+    return runs.join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final u = this.u;
+    if (u == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    final moved = u.changes.where((c) => ((c['change'] as num).abs()) >= 1).take(4).toList();
+    return Card(
+      key: const Key('today_update'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.update, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                  u.countsUsed == 0
+                      ? 'Rest of today from ${u.fromHour.toString().padLeft(2, '0')}:00 · no counts yet'
+                      : 'Rest of today from ${u.fromHour.toString().padLeft(2, '0')}:00 · updated with ${u.countsUsed} count${u.countsUsed == 1 ? '' : 's'}',
+                  style: text.titleSmall),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          if (u.over.isEmpty)
+            Text('No section expected over capacity for the rest of the day.', style: text.bodyMedium)
+          else
+            for (final o in u.over.take(5))
+              Text('${o['name']}: over capacity ${_hours(o['over_hours'] as List)}',
+                  style: text.bodyMedium?.copyWith(color: C4Colors.red)),
+          if (moved.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Changed most by the counts:', style: text.bodySmall),
+            for (final c in moved)
+              Text('${c['name']}: busiest hour ${(c['change'] as num) > 0 ? '+' : ''}${(c['change'] as num).round()} people',
+                  style: text.bodySmall),
+          ],
+          const SizedBox(height: 4),
+          Text(u.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
 }

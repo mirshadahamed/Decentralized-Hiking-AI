@@ -11,7 +11,10 @@ import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dar
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/advisory_officer_home.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/capacity_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/ranger_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/day_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
@@ -88,6 +91,20 @@ class FixtureApi extends C4Api {
 
   @override
   Future<CheckpointStatus> checkpoints(DateTime d, {String? at}) async => CheckpointStatus.fromJson(_j(_p, 'checkpoints'));
+
+  @override
+  Future<CapacityPanel> capacityPanel(DateTime d) async => CapacityPanel.fromJson(_j(_p, 'capacity_panel'));
+
+  @override
+  Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(_j(_p, 'gate_advice'));
+
+  @override
+  Future<List<SegmentInfo>> segments() async =>
+      [for (final s in _j(_p, 'segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
+
+  @override
+  Future<ForecastCheck> forecastCheck(DateTime start, DateTime end) async =>
+      ForecastCheck.fromJson(_j(_p, 'forecast_check'));
 
   @override
   Future<List<SeasonNight>> season() async =>
@@ -231,5 +248,40 @@ void main() {
     final n = nights.firstWhere((x) => x.date == DateTime(2026, 12, 25));
     await t.pumpWidget(_scoped(NightPlanScreen(day: n.date, night: n), api));
     await _shot(t, '09_night_plan');
+  }, skip: skip);
+
+  // 15-18: staff screens from src.report.app_fixtures (Horton Plains only)
+  Future<FixtureApi> staff(WidgetTester t, String role) async {
+    await phone(t);
+    return FixtureApi()
+      ..usePark('horton_plains')
+      ..session = StaffSession(token: 't', username: '${role}1', role: role);
+  }
+
+  Widget tab(Widget child) => Scaffold(body: SafeArea(child: child));
+
+  testWidgets('15 officer daily quota', (t) async {
+    final api = await staff(t, 'officer');
+    await t.pumpWidget(_scoped(tab(const CapacityTab()), api));
+    await _shot(t, '15_daily_quota');
+  }, skip: skip);
+
+  testWidgets('16 gate advice', (t) async {
+    final api = await staff(t, 'ranger');
+    final a = await api.gateAdvice(DateTime.now());
+    await t.pumpWidget(_scoped(tab(SingleChildScrollView(padding: const EdgeInsets.all(16), child: GateAdviceCard(a))), api));
+    await _shot(t, '16_gate_advice');
+  }, skip: skip);
+
+  testWidgets('17 ranger spot count', (t) async {
+    final api = await staff(t, 'ranger');
+    await t.pumpWidget(_scoped(tab(CountTab(now: () => DateTime(2026, 10, 22, 9, 30))), api));
+    await _shot(t, '17_spot_count');
+  }, skip: skip);
+
+  testWidgets('18 officer forecast check', (t) async {
+    final api = await staff(t, 'officer');
+    await t.pumpWidget(_scoped(tab(const ForecastCheckTab()), api));
+    await _shot(t, '18_forecast_check');
   }, skip: skip);
 }

@@ -1,4 +1,4 @@
-"""Component 4 API: live forecasts, slot booking and staff operations (live_and_ux_plan.md, phase 2).
+"""Component 4 API: live forecasts, slot booking and staff operations (docs/archive/live_and_ux_plan.md, phase 2).
 
     .venv\\Scripts\\python.exe -m uvicorn src.api.app:app --port 8000      (docs at http://localhost:8000/docs)
 
@@ -46,7 +46,7 @@ def ctx() -> LiveContext:
             try:
                 _ctx = LiveContext(rebuild=False)
             except FileNotFoundError:
-                raise HTTPException(503, "No live data yet: run python -m src.live.refresh")
+                raise HTTPException(503, "No live data yet: run python -m src.live.refresh") from None
         return _ctx
 
 
@@ -115,7 +115,8 @@ def health():
 def status():
     s = published("status.json")
     return {k: v for k, v in s.items() if k != "alerts"} | {
-        "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required"}
+        "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required",
+        "sightings": bool(CFG["simulator"].get("sightings"))}
 
 
 @app.get("/destination", tags=["public"])
@@ -273,8 +274,9 @@ def create_booking(body: BookingIn):
     except booking.SlotFull as e:
         return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
     except ValueError as e:
-        raise HTTPException(400, str(e))
-    return {"code": code, **booking.bookings_for_code(code), "window_minutes": build_control().c["slot_window_min"]}
+        raise HTTPException(400, str(e)) from e
+    return {"code": code, **with_trail_name(booking.bookings_for_code(code)),
+            "window_minutes": build_control().c["slot_window_min"]}
 
 
 @app.get("/bookings/{code}", tags=["public"])
@@ -282,7 +284,12 @@ def get_booking(code: str):
     b = booking.bookings_for_code(code)
     if b is None:
         raise HTTPException(404, "Unknown code")
-    return {"code": code.strip().upper(), **b}
+    return {"code": code.strip().upper(), **with_trail_name(b)}
+
+
+def with_trail_name(b: dict) -> dict:
+    """A booking with its trail's name, so a ticket kept on the phone shows the right park's trail offline."""
+    return b | {"trail_name": CFG["area"]["trail_names"].get(b["trail"], b["trail"])}
 
 
 @app.delete("/bookings/{code}", tags=["public"])
@@ -331,6 +338,126 @@ def sell(body: WalkInIn, user: dict = Depends(role("ranger"))):
     return {"left": left}
 
 
+@app.get("/segments", tags=["public"])
+def segment_list():
+    """Sections of the trails (id, name, trail): what a ranger can count on."""
+    from src.live.intraday import model_sections
+    from src.serve.field_counts import segments
+    try:
+        used = model_sections(ctx())
+    except HTTPException:
+        used = set()
+    return segments(CFG, used)
+
+
+class SpotCountIn(BaseModel):
+    day: date
+    seg_id: int
+    time: str = Slot
+    count: int = Field(ge=0, le=5000)
+    client_id: str | None = Field(default=None, max_length=64)
+
+
+@app.post("/counts", tags=["ranger"], status_code=201)
+def add_spot_count(body: SpotCountIn, user: dict = Depends(role("ranger"))):
+    """A ranger's headcount on a section (the park's own sensor record, A4). Re-sending the same client_id
+    (a count saved offline and synced later) stores it once."""
+    from src.serve.field_counts import add_count
+    h, m = (int(x) for x in body.time.split(":"))
+    try:
+        r = add_count(body.day.isoformat(), body.seg_id, h * 60 + m, body.count, user["username"], body.client_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    auth.audit(user["username"], "spot_count", f"{body.day} seg {body.seg_id} {body.time} {body.count}")
+    return r
+
+
+@app.get("/counts/{day}", tags=["ranger"])
+def day_counts(day: date, user: dict = Depends(role("ranger"))):
+    from src.serve.field_counts import counts
+    return {"day": day.isoformat(), "counts": counts(day.isoformat(), day.isoformat())}
+
+
+class SightingIn(BaseModel):
+    day: date
+    seg_id: int
+    time: str = Slot
+    species: str = Field(default="leopard", max_length=40)
+    client_id: str | None = Field(default=None, max_length=64)
+
+
+class SightingEndIn(BaseModel):
+    time: str = Slot
+
+
+def require_sightings():
+    if not CFG["simulator"].get("sightings"):
+        raise HTTPException(400, "Sighting management is used at safari parks")
+
+
+@app.post("/sightings", tags=["ranger"], status_code=201)
+def report_sighting(body: SightingIn, user: dict = Depends(role("ranger"))):
+    """A ranger / tracker reports an animal by the track (safari parks). Re-sending the same client_id stores it once."""
+    from src.serve.sightings import add
+    require_sightings()
+    h, m = (int(x) for x in body.time.split(":"))
+    try:
+        sid = add(body.day.isoformat(), body.seg_id, h * 60 + m, body.species, user["username"], body.client_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    auth.audit(user["username"], "sighting", f"{body.day} seg {body.seg_id} {body.time} {body.species}")
+    return sighting_status(body.day, time(h, m), user) | {"id": sid}
+
+
+@app.post("/sightings/{sighting_id}/end", tags=["ranger"])
+def end_sighting(sighting_id: int, body: SightingEndIn, user: dict = Depends(role("ranger"))):
+    from src.serve.sightings import end
+    require_sightings()
+    h, m = (int(x) for x in body.time.split(":"))
+    if not end(sighting_id, h * 60 + m):
+        raise HTTPException(404, "No open sighting with that id")
+    auth.audit(user["username"], "sighting_end", f"{sighting_id} {body.time}")
+    return {"ended": sighting_id}
+
+
+@app.get("/sightings/{day}", tags=["ranger"])
+def sighting_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """Active sightings with the rule (at most N jeeps stopped, M minutes each) and the jeeps near each one,
+    estimated from the gate entries; when it is crowded, which circuits avoid it."""
+    from src.serve.sightings import advice
+    require_sightings()
+    now = when(datetime.combine(day, at) if at else None)
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    return advice(CFG, d, now.hour * 60 + now.minute, rain)
+
+
+@app.get("/admin/forecast-check", tags=["officer"])
+def forecast_check(start: date, end: date, user: dict = Depends(role("officer"))):
+    """Rangers' spot counts next to the day-ahead forecast of that section and hour: error, bias, share within
+    30 %, over-capacity called right / false alarms (A4, field validation)."""
+    from src.serve.field_counts import forecast_check as check
+    if end < start or (end - start).days > 400:
+        raise HTTPException(400, "Choose an end date after the start date, at most 400 days apart")
+    return check(CFG, start.isoformat(), end.isoformat())
+
+
+@app.get("/live/forecast/{day}", tags=["ranger"])
+def live_forecast(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """A1: the rest of today per section - the morning forecast and the forecast updated with the rangers' spot
+    counts so far (ST-GNN of the spot setting, RQ11b) - and the sections now expected over capacity."""
+    from src.live.intraday import update_today
+    from src.serve.field_counts import counts
+    now = when(datetime.combine(day, at) if at else None)
+    try:
+        return update_today(ctx(), day, now.hour * 60 + now.minute, counts(day.isoformat(), day.isoformat()))
+    except LookupError as e:
+        raise HTTPException(503, str(e)) from e
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
 @app.get("/live/{day}", tags=["ranger"])
 def live_status(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
     """Traffic light per segment from the people who went through the gate (no trail sensors)."""
@@ -351,6 +478,21 @@ def live_status(day: date, at: time | None = None, user: dict = Depends(role("ra
                     "action": {"green": None, "amber": "Offer a later slot or another trail at the gate",
                                "red": "Pause entries to this trail for the next slot; send a ranger"}[light]})
     return {"day": day.isoformat(), "time": now.strftime("%H:%M"), "segments": out}
+
+
+@app.get("/gate/advice/{day}", tags=["ranger"])
+def gate_advice(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """A3: sections expected over capacity in the next 2 hours (from the gate counts and the coming slots) and what
+    to do at the gate: hold entries to a trail for N minutes, or send the next groups to a trail with room."""
+    from src.control.gate_advice import gate_advice as advise
+    require_booking()
+    ec = build_control()
+    now = when(datetime.combine(day, at) if at else None)
+    d = day.isoformat()
+    pub = booking._published(d)
+    rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    plan = None if pub is None else pub.pivot(index="slot", columns="trail", values="tickets")
+    return advise(ec, booking.entries(d), now.hour * 60 + now.minute, rain, plan)
 
 
 class CheckpointIn(BaseModel):
@@ -380,7 +522,7 @@ def night_of(at: datetime) -> tuple[date, int]:
     return at.date(), m
 
 
-def night_passes(night: date) -> "pd.DataFrame":
+def night_passes(night: date):
     """Halfway counts of one night: its own date before the evening, plus the evening before (shifted < 0)."""
     import pandas as pd
     cut = NIGHT_START_H * 60
@@ -487,6 +629,41 @@ def records(start: date, end: date, trail: str | None = None, format: Literal["j
         return Response(to_csv(out["rows"]), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="{name}"'})
     return out
+
+
+@app.get("/admin/capacity/{day}", tags=["officer"])
+def capacity_panel(day: date, user: dict = Depends(role("officer"))):
+    """The day's quota per trail under each rule (forecast-driven Cifuentes, weather only, one fixed number, an
+    officer's number), the rule the ticket plan uses, and the sections expected over capacity with their hours."""
+    from src.serve.capacity_panel import day_panel
+    require_booking()
+    c = ctx()
+    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    return day_panel(c, day, live_inputs(c, day))
+
+
+class QuotaIn(BaseModel):
+    day: date
+    trail: TrailName
+    rule: Literal["forecast", "classic", "static", "manual"]
+    quota: int | None = Field(default=None, ge=0, le=100000)
+
+
+@app.post("/admin/quota", tags=["officer"])
+def set_quota(body: QuotaIn, user: dict = Depends(role("officer"))):
+    """Choose the quota rule (or a number) for a trail and day. The day's tickets are re-published at once;
+    existing bookings are never cancelled (alerts list the slots now over the safe plan)."""
+    require_booking()
+    c = ctx()
+    if not c.today + timedelta(days=1) <= body.day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    try:
+        alerts = booking.set_quota(body.day.isoformat(), body.trail, body.rule, body.quota, user["username"])
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    auth.audit(user["username"], "quota", f"{body.day} {body.trail} {body.rule} {body.quota}")
+    return {"alerts": alerts}
 
 
 @app.get("/admin/season", tags=["officer"])

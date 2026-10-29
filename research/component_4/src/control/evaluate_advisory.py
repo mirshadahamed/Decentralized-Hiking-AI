@@ -115,8 +115,6 @@ def sweep(year: str = "2025", seed: int = 7, compliances=(0.25, 0.5, 0.75, 1.0),
     precip = weather.precipitation.values.reshape(len(cal), 24)
     demand = daily_demand(cal, precip, cfg["simulator"], np.random.default_rng(seed))
     nights = np.where((cal.index.year == int(year)) & (cal.is_season == 1))[0]
-    walk = sim.options[sim.option_of_trail(cfg["area"]["main_trail"])][1]
-    final_steps = walk[sim._turnaround(walk) - 2][0]
     old = sim.flow
     rows = []
     try:

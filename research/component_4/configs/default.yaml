@@ -110,6 +110,25 @@ simulator:
     kirigalpotta_peak: [20, 0.4]
     thotupola_peak: [15, 0.4]
   obs_noise_sd: 0.10
+  # S1 "realistic world" (research_gap_study.md section 5): what the calendar and weather cannot predict.
+  # Off for the main dataset (results stay reproducible); on in `build_dataset --world s1` -> dataset_s1.npz.
+  realism:
+    enabled: false
+    demand_ar_phi: 0.7                # day-to-day persistence of busier / quieter spells
+    demand_sd: 0.25                   # their size (lognormal sd), replaces daily_noise_sd
+    arrival_shift_sd_min: 40          # the morning peak comes earlier or later on some days
+    route_share_concentration: 40     # Dirichlet: how much the trail split varies day to day
+    bursts_per_day: 0.4               # tour buses / school trips (Poisson)
+    burst_people: [30, 90]
+    burst_window_h: [6.5, 10.5]
+    burst_main_share: 0.8
+    incident_prob: 0.08               # a slow group, a fallen tree, a rescue: one segment slowed
+    incident_start_h: [7, 12]
+    incident_hours: [1, 4]
+    incident_speed: 0.3
+    forecast_rain_sd: 0.7             # model input: day-ahead rain forecast = observed x lognormal error
+    forecast_rain_shift_prob: 0.25    # ... and its timing off by up to 3 h
+    forecast_temp_sd: 1.5
 
 task:
   input_steps: 24
@@ -151,7 +170,7 @@ capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
     partly_closed: 0.5
     closed: 1.0
 
-control:                  # entry control: timed tickets per trail and slot (upgrade_plan.md, section 2)
+control:                  # entry control: timed tickets per trail and slot (docs/archive/upgrade_plan.md, section 2)
   slot_minutes: 30
   first_slot_h: 6.0       # gate opens
   last_slot_h: 12.5       # last slot starts 12:30 (last entry 13:00)
@@ -159,6 +178,7 @@ control:                  # entry control: timed tickets per trail and slot (upg
   viewpoint_min_at_once: 50   # placeholder: viewpoints are platforms, not 1-m-wide trail; measure on a field visit
   exempt_access_points: true  # Visitor Center / trailhead are facilities, not trail
   use_daily_quota: true   # also respect the Cifuentes daily quota per trail
+  default_quota_rule: forecast   # forecast | classic | static (RQ9: forecast-driven beats static); officers can override
   safety_margin: 0.9      # plan to 90 % of capacity (crowd slowdown is not in the linear model)
   capacity_scale: 1.0     # multiplies segment capacity; DWC's choice of standard (see the trade-off sweep)
   walk_in_share: 0.2      # share of every slot kept for visitors without a booking
@@ -168,11 +188,12 @@ control:                  # entry control: timed tickets per trail and slot (upg
   accept_trail_swap: 0.3  # evaluation: share who accept another trail when their trail is full
   booking_horizon_days: 90
 
-live:                     # live mode: real dates, refreshed every evening (live_and_ux_plan.md, section 2)
+live:                     # live mode: real dates, refreshed every evening (docs/archive/live_and_ux_plan.md, section 2)
   horizon_days: 90        # outlook and bookings
   forecast_days: 16       # Open-Meteo forecast horizon; climatology after this
   calendar_extra_days: 120
   dwc_totals_csv: data/live/dwc_daily_totals.csv   # optional: date,trail,visitors (real counts replace simulated)
+  model_input: gate         # G6: the deployed ST-GNN reads only the gate counts (RQ10); "all" = every segment
 
 api:
   allow_time_override: true   # DEMO ONLY: staff may pass a time ('at') for check-in / walk-ins / live status

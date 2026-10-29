@@ -9,9 +9,16 @@ from src.models.stgnn import STGNN
 from src.utils import set_seed
 
 
-def masked_l1(pred, y, open_mask, node_mask):
+def masked_l1(pred, y, open_mask, node_mask, peak=None):
+    """Mean absolute error over open hours and the given segments. peak=(threshold [N] in scaled units, weight):
+    errors where the target is at or above the threshold count `weight` times more (G8: over-capacity hours are
+    rare, so a plain MAE is happy to smooth them away)."""
     m = open_mask[:, :, None] & node_mask[None, None, :]
-    return (pred - y).abs()[m].mean()
+    e = (pred - y).abs()
+    if peak is not None:
+        thr, w = peak
+        e = e * (1 + (w - 1) * (y >= thr[None, None, :]).float())
+    return e[m].mean()
 
 
 def build_model(data, kind, hidden):
@@ -43,17 +50,22 @@ def load_weights(model, state: dict):
 FREEZE_CORE = ("g1.", "g2.", "rnn.", "g_out.")   # graph + recurrent core; inp / fut / head stay trainable
 
 
-def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=()):
-    """sensed: bool [N]; unsensed nodes give no input history and no training loss.
+def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=(),
+          loss_nodes=None, peak=None):
+    """sensed: bool [N]; unsensed nodes give no input history and (by default) no training loss.
+    loss_nodes: bool [N] segments scored in the loss, if not the sensed ones (sensor-sparse protocol G1: the
+    synthetic target covers every segment, while as input the model sees only what the park measures).
     init_state: start from these weights (fine-tuning a model trained on another park).
     select_on_val=False: no early stopping on the validation year; train `epochs` and keep the last weights
     (few-shot: a new park does not have a year of counts to choose the model with).
     freeze: parameter-name prefixes kept fixed (domain adaptation: e.g. FREEZE_CORE keeps the pretrained
-    spatio-temporal core and adapts only the input and output layers to the new domain)."""
+    spatio-temporal core and adapts only the input and output layers to the new domain).
+    peak: (threshold [N] in persons, weight) - peak-aware loss for training and model selection (G8)."""
     tc = cfg["train"]
     set_seed(seed)
     rng = np.random.default_rng(seed)
-    scale = data.y_scale(sensed)
+    loss_nodes = sensed if loss_nodes is None else loss_nodes
+    scale = data.y_scale(loss_nodes)
     model = build_model(data, kind, tc["hidden"])
     if init_state is not None:
         load_weights(model, init_state)
@@ -62,7 +74,8 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
             p.requires_grad_(False)
     opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=tc["lr"])
     tr_o, va_o = data.origins("train", tc["train_origin_stride"]), data.origins("val")
-    node_mask = torch.from_numpy(sensed)
+    node_mask = torch.from_numpy(loss_nodes)
+    pk = None if peak is None else (torch.as_tensor(np.asarray(peak[0]) / scale, dtype=torch.float32), float(peak[1]))
 
     best, best_state, bad = np.inf, None, 0
     for ep in range(epochs or tc["epochs"]):
@@ -74,7 +87,7 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
             xp, xf, y, om = data.batch(perm[i:i + tc["batch_size"]], sensed, scale)
             # Train on every hour (so the model learns the trail is empty at night);
             # validation and test are scored on open hours only.
-            loss = masked_l1(model(xp, xf), y, torch.ones_like(om), node_mask)
+            loss = masked_l1(model(xp, xf), y, torch.ones_like(om), node_mask, pk)
             opt.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
@@ -86,7 +99,7 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
         model.eval()
         with torch.no_grad():
             xp, xf, y, om = data.batch(va_o, sensed, scale)
-            val = masked_l1(model(xp, xf), y, om, node_mask).item()
+            val = masked_l1(model(xp, xf), y, om, node_mask, pk).item()
         log(f"  {kind} seed={seed} ep={ep:02d} train={np.mean(losses):.4f} val={val:.4f} ({time.time() - t0:.1f}s)")
         if val < best - 1e-4:
             best, best_state, bad = val, copy.deepcopy(model.state_dict()), 0

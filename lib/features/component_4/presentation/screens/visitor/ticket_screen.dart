@@ -7,7 +7,6 @@ import '../../../models/models.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
 
-const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
 /// Step 3: the ticket. Shown from the phone's memory, so it works without a signal at the gate.
 class TicketScreen extends StatelessWidget {
@@ -60,7 +59,7 @@ class TicketScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Center(child: SelectableText(booking.code, style: Theme.of(context).textTheme.headlineMedium?.copyWith(letterSpacing: 4))),
         const SizedBox(height: 24),
-        _row(context, Icons.hiking, _trailNames[booking.trail] ?? booking.trail),
+        _row(context, Icons.hiking, booking.trailName ?? booking.trail),
         _row(context, Icons.event, niceDate(booking.day)),
         _row(context, Icons.groups, '${booking.groupSize} people'),
         _row(context, Icons.login, 'Show this at the gate between ${t.format(booking.gateOpens)} and ${t.format(booking.gateCloses)}'),

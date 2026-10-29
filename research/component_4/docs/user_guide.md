@@ -421,11 +421,12 @@ desktop, and the whole model is ~100 lines that can be read and tested.
 | 18 Oct | PP1 slides and app screenshots |
 | 19 Oct | Moved to the team layout (`research/component_4`, `lib/features/component_4/{models,data,services,domain,presentation}`); daily safe limit with wet ground and trail conditions; crowd-dependent start times, evening starts, real sunrise; improvement plan |
 | 20 Oct | Research gaps: 3 seeds + LSTM-cell variant; ONNX export; edge pack + Dart engine + offline card; traffic pretraining (RQ5); field-validation protocol and tool |
+| 21 Oct | Research-gap study (C1–C5); bottleneck events (RQ1b); sparse sensors (RQ10); forecast-driven quota (RQ9) in the ticket plan + officer quota panel; gate advice; ranger spot counts + forecast check; chance of over-capacity; realistic simulated world (S1); lint (ruff), requirements, design and model / data cards; PP1 guide and Q&A |
 
 ### 6.2 How each piece was built (the method)
 1. **Plan first.** Every phase started as a plan in `docs/`, with decisions logged in `docs/decisions.md`:
-   - `development_plan.md`, `upgrade_plan.md`, `live_and_ux_plan.md`, `adams_peak_plan.md`;
-   - `next_steps_plan.md`, `improvement_plan.md`.
+   - earlier phase plans are kept in `docs/archive/` (development, upgrade, live and UX, Adam's Peak, roadmap, …);
+   - the current plan is `improvement_plan.md`, with `research_gap_study.md` for the gap work.
 2. **Assumptions in one place.** Every simulator number is in a YAML config and explained in `assumptions*.md`,
    with what would replace it (real counts, DWC data).
 3. **Research before features.** Each feature has an evaluation script that replays 2025 and saves its numbers

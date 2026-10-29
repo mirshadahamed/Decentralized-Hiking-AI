@@ -24,6 +24,7 @@ class _DayScreenState extends State<DayScreen> {
   late Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _future;
   Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
   String _trail = 'main';
+  Map<String, String> _names = const {};
   String? _slot;
   int _size = 2;
   bool _busy = false;
@@ -54,7 +55,10 @@ class _DayScreenState extends State<DayScreen> {
     } on ApiException {
       cap = null; // older server: the screen still works without the safe limit
     }
-    return (plan, await api.slots(widget.day), await api.trails(), cap);
+    final trails = await api.trails();
+    _names = {for (final t in trails) t.id: t.name};
+    if (!_names.containsKey(_trail) && trails.isNotEmpty) _trail = trails.first.id;   // each park has its own trails
+    return (plan, await api.slots(widget.day), trails, cap);
   }
 
   /// Tomorrow's ST-GNN forecast computed on this device from the daily edge pack (works offline).
@@ -108,7 +112,7 @@ class _DayScreenState extends State<DayScreen> {
             Card(
               child: ListTile(
                 leading: Icon(switch (a.kind) { 'trail' => Icons.hiking, 'day' => Icons.event, _ => Icons.schedule }),
-                title: Text('${a.trail == 'main' ? "World's End loop" : a.trail[0].toUpperCase() + a.trail.substring(1)} · ${a.slot}'),
+                title: Text('${_names[a.trail] ?? a.trail} · ${a.slot}'),
                 subtitle: Text('${shortDate(a.day)} · ${a.left} places left'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {

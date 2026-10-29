@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -5,6 +6,26 @@ import '../../data/api_client.dart';
 import '../../models/models.dart';
 import '../l10n/c4_i18n.dart';
 import '../theme/c4_theme.dart';
+
+/// The park's trails as id -> name (from /trails), for screens that list or label trails: every park has its own.
+mixin ParkTrails<T extends StatefulWidget> on State<T> {
+  Map<String, String> trailNames = const {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    C4Scope.of(context).trailNames().then((n) {
+      if (mounted && !mapEquals(n, trailNames)) setState(() => trailNames = n);
+    }, onError: (_) {});
+  }
+
+  String trailName(String id) => trailNames[id] ?? id;
+
+  /// The chosen trail, or the park's first one until the officer / ranger picks.
+  String? pickTrail(String? chosen) => chosen != null && trailNames.containsKey(chosen)
+      ? chosen
+      : (trailNames.isEmpty ? null : trailNames.keys.first);
+}
 
 /// Gives every Component 4 screen the same API client and language (and lets tests inject a fake API).
 /// Screens that use [tr] rebuild when the language changes.
@@ -151,6 +172,7 @@ class ErrorRetry extends StatelessWidget {
 IconData kindIcon(String kind) => switch (kind) {
       'pilgrimage' => Icons.temple_buddhist_outlined,
       'national_park' => Icons.forest_outlined,
+      'safari' => Icons.directions_car_outlined,
       'waterfall' => Icons.water_outlined,
       _ => Icons.landscape_outlined,
     };

@@ -27,11 +27,30 @@ DISCLAIMER = ("Occupancy is forecast by a model trained on a calibrated SYNTHETI
 
 
 def load_model(data, cfg, run_name=None, kind="stgnn", seed=42):
-    run = RESULTS / (run_name or (RESULTS / "LATEST").read_text(encoding="utf-8").strip())
-    ck = torch.load(run / "models" / f"temporal_{kind}_s{seed}.pt", weights_only=False)
+    """The deployed model. live.model_input = "gate" (G6): the sensor-sparse model of RQ10, which reads only the
+    counts at the gates (what a park really has), from the latest sparse run; "all": the benchmark model that reads
+    every segment. The model carries the segments it reads as `model.sensed`."""
+    gate = run_name is None and cfg.get("live", {}).get("model_input") == "gate" and (RESULTS / "LATEST_SPARSE").exists()
+    run = RESULTS / (run_name or (RESULTS / ("LATEST_SPARSE" if gate else "LATEST")).read_text(encoding="utf-8").strip())
+    path = run / "models" / f"temporal_{kind}_s{seed}.pt"
+    if not path.exists() and (run / "models" / f"gate_{kind}_s{seed}.pt").exists():
+        path = run / "models" / f"gate_{kind}_s{seed}.pt"
+    ck = torch.load(path, weights_only=False)
     model = build_model(data, kind, cfg["train"]["hidden"])
     model.load_state_dict(ck["state_dict"])
+    model.sensed = np.asarray(ck.get("sensed", np.ones(data.N, bool)), bool)
     return model, ck["scale"], run.name
+
+
+def model_inputs(model, data) -> np.ndarray:
+    """Segments whose counts the model reads: only the gates (sensor-sparse model) or every segment."""
+    sensed = getattr(model, "sensed", None)
+    return np.ones(data.N, bool) if sensed is None else np.asarray(sensed, bool)
+
+
+def inputs_note(model, data) -> str:
+    s = model_inputs(model, data)
+    return "every section's counts" if s.all() else f"gate counts only ({int(s.sum())} of {data.N} sections)"
 
 
 def expected_visitors(data, day_idx) -> dict:
@@ -50,14 +69,12 @@ def build_forecast(data, cfg, seg, date: str, model=None, scale=None, run=None) 
     origin = int(np.searchsorted(data.times, pd.Timestamp(date)))
     if origin >= data.T or data.times[origin] != pd.Timestamp(date) or origin < data.L:
         raise ValueError(f"{date} is outside the dataset")
-    sensed = np.ones(data.N, bool)
-
     if model is not None:
-        fc = predict(model, data, np.array([origin]), sensed, scale)[0]       # [24, N]
-        source = {"model": "stgnn", "run": run}
+        fc = predict(model, data, np.array([origin]), model_inputs(model, data), scale)[0]       # [24, N]
+        source = {"model": "stgnn", "run": run, "inputs": inputs_note(model, data)}
         rain = np.expm1(data.cov[origin:origin + 24, data.cov_names.index("precip_log1p")])
     else:                                                                    # NFR2 graceful fallback
-        fc = HistoricalAverage().fit(data, sensed).predict(data, np.array([origin]))[0]
+        fc = HistoricalAverage().fit(data, np.ones(data.N, bool)).predict(data, np.array([origin]))[0]
         source = {"model": "historical_average", "reason": "no fresh weather forecast"}
         rain = np.zeros(24)
     cap = capacity(seg, fc, rain, expected_visitors(data, origin // 24), cfg["capacity"], cfg["simulator"],
@@ -89,7 +106,7 @@ if __name__ == "__main__":
     out, path = forecast_day(a.date, not a.no_weather, a.run)
     print(f"{path}\npark: expected={out['expected_visitors']} quota={out['recommended_daily_quota']} "
           f"(classic Cifuentes {out['classic_cifuentes_quota']})")
-    for t, v in out["trails"].items():
+    for v in out["trails"].values():
         print(f"  {v['name']:<18} expected={v['expected_visitors']:>5} quota={v['recommended_daily_quota']:>5} "
               f"classic={v['classic_cifuentes_quota']:>5} limiting seg={v['limiting_segment']:>2} "
               f"bottlenecks={v['bottleneck_segments']} peak={v['peak_occupancy']}")

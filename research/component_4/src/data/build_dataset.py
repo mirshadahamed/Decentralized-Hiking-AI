@@ -80,8 +80,32 @@ def static_features(seg: gpd.GeoDataFrame, walks: dict, cfg) -> pd.DataFrame:
     return st
 
 
+def forecast_weather(weather: pd.DataFrame, r: dict, rng) -> pd.DataFrame:
+    """S1: what a day-ahead weather forecast would have said - the observed weather with errors. The model's
+    inputs use this; the simulated walkers still meet the observed weather. Each day: rain scaled by a lognormal
+    error, sometimes shifted by up to 3 h; temperature off by a normal error."""
+    w = weather.copy()
+    days = len(w) // 24
+    rain = w.precipitation.values.reshape(days, 24).copy()
+    scale = rng.lognormal(0.0, r["forecast_rain_sd"], days)
+    shift = np.where(rng.random(days) < r["forecast_rain_shift_prob"], rng.integers(-3, 4, days), 0)
+    for d in range(days):
+        rain[d] = np.roll(rain[d], shift[d]) * scale[d]
+    w["precipitation"] = rain.reshape(-1)
+    w["temperature_2m"] = w.temperature_2m.values + np.repeat(rng.normal(0, r["forecast_temp_sd"], days), 24)
+    return w
+
+
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--world", choices=["default", "s1"], default="default",
+                    help="s1: the realistic world (simulator.realism on, forecast weather as input) -> dataset_s1.npz")
+    a = ap.parse_args()
     cfg = load_config()
+    s1 = a.world == "s1"
+    if s1:
+        cfg["simulator"]["realism"]["enabled"] = True
     set_seed(cfg["seed"])
     seg, edge_index, walks = build_graph(cfg)
     seg = segment_terrain(cfg)
@@ -90,11 +114,14 @@ def main():
     assert len(weather) == len(cal) * 24, "weather must cover whole days"
 
     out = simulate(seg, walks, weather, cal, cfg["simulator"], seed=cfg["seed"])
-    cov = hourly_covariates(weather.index, cal, weather, cfg)
+    model_weather = (forecast_weather(weather, cfg["simulator"]["realism"], np.random.default_rng(cfg["seed"] + 1))
+                     if s1 else weather)
+    cov = hourly_covariates(weather.index, cal, model_weather, cfg)
     st = static_features(seg, walks, cfg)
+    suffix = "_s1" if s1 else ""
 
     np.savez_compressed(
-        PROCESSED / "dataset.npz",
+        PROCESSED / f"dataset{suffix}.npz",
         occ_obs=out["occ_obs"].astype(np.float32), occ_true=out["occ_true"].astype(np.float32),
         cov=cov.values.astype(np.float32), cov_names=np.array(cov.columns),
         static=st.values.astype(np.float32), static_names=np.array(st.columns),
@@ -105,7 +132,8 @@ def main():
         segment_poi=seg.poi.fillna("").values.astype(str),
         segment_walk_position=seg.walk_position.values.astype(np.float32),
         median_loop_min=out["median_loop_min"])
-    cal.to_csv(PROCESSED / "calendar.csv")
+    if not s1:
+        cal.to_csv(PROCESSED / "calendar.csv")
 
     by_trail = out["daily_visitors_by_trail"]
     years = len(cal) / 365.25
@@ -122,7 +150,7 @@ def main():
         "median_loop_hours": float(np.nanmedian(out["median_loop_min"]) / 60),
         "peak_occupancy_by_segment": {int(i): float(v) for i, v in enumerate(out["occ_true"].max(0).round(1))},
     }
-    (PROCESSED / "dataset_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (PROCESSED / f"dataset{suffix}_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in summary.items() if k != "peak_occupancy_by_segment"}, indent=2))
 
 

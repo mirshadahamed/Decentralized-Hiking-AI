@@ -94,7 +94,11 @@ class C4Api {
       }
       return decoded;
     }
-    final detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
+    var detail = decoded is Map && decoded['detail'] is String ? decoded['detail'] as String : 'Error ${r.statusCode}';
+    if (r.statusCode == 404 && detail == 'Not Found') {
+      // FastAPI's own 404: the route does not exist, i.e. the server runs older code than this app
+      detail = 'The park server does not have this feature yet ($path). Restart the server with the latest code.';
+    }
     final alts = decoded is Map && decoded['alternatives'] is List
         ? (decoded['alternatives'] as List).map((a) => Alternative.fromJson(a as Map<String, dynamic>)).toList()
         : <Alternative>[];
@@ -158,6 +162,12 @@ class C4Api {
   Future<Outlook> outlook({String? forPark}) async => Outlook.fromJson(await _send('GET', '/outlook', forPark: forPark));
 
   Future<ParkInfo> destination() async => ParkInfo.fromJson(await _send('GET', '/destination') as Map<String, dynamic>);
+
+  final _trailNames = <String, Map<String, String>>{};
+
+  /// Trail id -> name of the park in use (cached per park: trails do not change while the app runs).
+  Future<Map<String, String>> trailNames() async =>
+      _trailNames[park ?? ''] ??= {for (final t in await trails()) t.id: t.name};
 
   Future<List<TrailInfo>> trails() async =>
       (await _send('GET', '/trails') as List).map((t) => TrailInfo.fromJson(t as Map<String, dynamic>)).toList();
@@ -223,6 +233,47 @@ class C4Api {
   Future<CrowdRecords> records(DateTime start, DateTime end, {String? trail}) async => CrowdRecords.fromJson(
       await _send('GET', '/admin/records', query: {'start': day(start), 'end': day(end), 'trail': ?trail})
           as Map<String, dynamic>);
+
+  /// Ranger: sections expected over capacity in the next 2 h and what to do at the gate (A3).
+  Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(
+      await _send('GET', '/gate/advice/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
+  /// Ranger: the rest of today, updated with the spot counts made so far (A1).
+  Future<TodayUpdate> liveForecast(DateTime d, {String? at}) async => TodayUpdate.fromJson(
+      await _send('GET', '/live/forecast/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
+  /// Sections a ranger can count on.
+  Future<List<SegmentInfo>> segments() async =>
+      [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
+
+  /// Ranger (safari parks): active wildlife sightings with the rule and the jeeps near each one.
+  Future<SightingStatus> sightings(DateTime d, {String? at}) async =>
+      SightingStatus.fromJson(await _send('GET', '/sightings/${day(d)}', query: at == null ? null : {'at': at}));
+
+  /// Ranger: report an animal by the track; returns the updated list.
+  Future<SightingStatus> reportSighting(DateTime d, int segId, String time, String species, String clientId) async =>
+      SightingStatus.fromJson(await _send('POST', '/sightings',
+          body: {'day': day(d), 'seg_id': segId, 'time': time, 'species': species, 'client_id': clientId}));
+
+  /// Ranger: the animal has gone.
+  Future<void> endSighting(int id, String time) async => _send('POST', '/sightings/$id/end', body: {'time': time});
+
+  /// Ranger: send one spot count (A4). Re-sending the same clientId is harmless (stored once).
+  Future<void> addCount(SpotCount c) async => _send('POST', '/counts', body: c.toJson());
+
+  /// Officer: spot counts next to the day-ahead forecast of their section and hour.
+  Future<ForecastCheck> forecastCheck(DateTime start, DateTime end) async => ForecastCheck.fromJson(
+      await _send('GET', '/admin/forecast-check', query: {'start': day(start), 'end': day(end)}) as Map<String, dynamic>);
+
+  /// Officer capacity panel: the day's quota per trail under each rule and the one the ticket plan uses.
+  Future<CapacityPanel> capacityPanel(DateTime d) async =>
+      CapacityPanel.fromJson(await _send('GET', '/admin/capacity/${day(d)}') as Map<String, dynamic>);
+
+  /// Officer: choose the quota rule (forecast | classic | static | manual) for a trail and day. Returns alerts.
+  Future<List<Map<String, dynamic>>> setQuota(DateTime d, String trail, String rule, {int? quota}) async =>
+      ((await _send('POST', '/admin/quota', body: {'day': day(d), 'trail': trail, 'rule': rule, 'quota': quota}))['alerts']
+              as List)
+          .cast<Map<String, dynamic>>();
 
   Future<List<SeasonNight>> season() async => ((await _send('GET', '/admin/season'))['days'] as List)
       .map((d) => SeasonNight.fromJson(d as Map<String, dynamic>))

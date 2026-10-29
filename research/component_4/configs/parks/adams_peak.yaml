@@ -107,6 +107,10 @@ simulator:
     flow_per_min: 25                 # (A) people per minute up the final steps onto the summit
     summit_dwell_min: [45, 0.4]      # (A) median stay on the summit (sunrise, worship), log-sd
     hold: false                      # status quo: no halfway checks
+  realism:                           # S1: pilgrim buses arrive at night; incidents on the climb before dawn
+    burst_people: [40, 150]
+    burst_window_h: [0.0, 3.0]
+    incident_start_h: [1, 6]
 
 task:
   open_hours: [0, 23]                # people are on the trail day and night

@@ -4,10 +4,11 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../bottleneck_screen.dart';
+import 'capacity_screen.dart';
+import 'count_screen.dart';
 import 'ranger_home.dart';
 import 'records_screen.dart';
 
-const _trailNames = {'main': "World's End loop", 'kirigalpotta': 'Kirigalpotta', 'thotupola': 'Thotupola Kanda'};
 
 /// Park officer: the week ahead, closures, alerts from the freeze rule, and a manual refresh.
 class OfficerHome extends StatelessWidget {
@@ -17,7 +18,7 @@ class OfficerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      length: 6,
+      length: 8,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Park office · ${api.session?.username ?? ''}'),
@@ -38,16 +39,18 @@ class OfficerHome extends StatelessWidget {
           ],
           bottom: const TabBar(isScrollable: true, tabs: [
             Tab(icon: Icon(Icons.groups_outlined), text: 'Bottlenecks'),
+            Tab(icon: Icon(Icons.tune), text: 'Daily quota'),
             Tab(icon: Icon(Icons.calendar_view_week), text: 'This week'),
             Tab(icon: Icon(Icons.report_outlined), text: 'Trail condition'),
             Tab(icon: Icon(Icons.block), text: 'Close trail'),
             Tab(icon: Icon(Icons.notifications), text: 'Alerts'),
             Tab(icon: Icon(Icons.table_chart_outlined), text: 'Records'),
+            Tab(icon: Icon(Icons.fact_check_outlined), text: 'Forecast check'),
           ]),
         ),
         body: const TabBarView(
           physics: NeverScrollableScrollPhysics(), // the bottleneck map pans with a drag
-          children: [BottleneckView(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab()],
+          children: [BottleneckView(), CapacityTab(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab(), ForecastCheckTab()],
         ),
       ),
     );
@@ -61,7 +64,7 @@ class _WeekTab extends StatefulWidget {
   State<_WeekTab> createState() => _WeekTabState();
 }
 
-class _WeekTabState extends State<_WeekTab> {
+class _WeekTabState extends State<_WeekTab> with ParkTrails {
   late Future<(Outlook, List<int>)> _future;
   bool _refreshing = false;
 
@@ -119,7 +122,7 @@ class _WeekTabState extends State<_WeekTab> {
                   leading: CircleAvatar(backgroundColor: C4Colors.level(o.days[i].crowdLevel)),
                   title: Text(shortDate(o.days[i].date)),
                   subtitle: Text('${peopleRange(o.days[i].p10, o.days[i].p50, o.days[i].p90)} · ${o.days[i].weatherBasis}\n'
-                      '${_trailNames.entries.map((e) => '${e.value} ${o.days[i].byTrail[e.key] ?? 0}').join(' · ')}'),
+                      '${o.days[i].byTrail.entries.map((e) => '${trailName(e.key)} ${e.value}').join(' · ')}'),
                   isThreeLine: true,
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text('${booked[i]}', style: Theme.of(context).textTheme.titleLarge),
@@ -140,7 +143,7 @@ class ConditionTab extends StatefulWidget {
   State<ConditionTab> createState() => _ConditionTabState();
 }
 
-class _ConditionTabState extends State<ConditionTab> {
+class _ConditionTabState extends State<ConditionTab> with ParkTrails {
   static const _levels = {
     'good': ('Good', Icons.check_circle_outline, C4Colors.green),
     'muddy': ('Muddy', Icons.water_drop_outlined, C4Colors.amber),
@@ -149,7 +152,8 @@ class _ConditionTabState extends State<ConditionTab> {
   };
   DateTime _from = DateTime.now().add(const Duration(days: 1));
   DateTime _to = DateTime.now().add(const Duration(days: 1));
-  String _trail = 'main', _level = 'muddy';
+  String? _trail;
+  String _level = 'muddy';
   final _note = TextEditingController();
   List<Map<String, dynamic>>? _alerts;
   DayCapacity? _cap;
@@ -159,7 +163,9 @@ class _ConditionTabState extends State<ConditionTab> {
     setState(() => _busy = true);
     final api = C4Scope.of(context);
     try {
-      final a = await api.setCondition(_trail, _from, _to, _level, _note.text.trim());
+      final trail = pickTrail(_trail);
+      if (trail == null) return;
+      final a = await api.setCondition(trail, _from, _to, _level, _note.text.trim());
       DayCapacity? cap;
       try {
         cap = await api.capacity(_from);
@@ -204,9 +210,10 @@ class _ConditionTabState extends State<ConditionTab> {
             'days go down at once. "Good" clears a report. Existing bookings are kept and listed below.'),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
-          initialValue: _trail,
+          key: ValueKey(trailNames.length),
+          initialValue: pickTrail(_trail),
           decoration: const InputDecoration(labelText: 'Trail', border: OutlineInputBorder()),
-          items: [for (final e in _trailNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+          items: [for (final e in trailNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
           onChanged: (v) => setState(() => _trail = v!),
         ),
         const SizedBox(height: 12),
@@ -254,7 +261,7 @@ class _ConditionTabState extends State<ConditionTab> {
           const SizedBox(height: 8),
           Text(_alerts!.isEmpty ? 'Saved. No existing bookings are over the new limit.' : '${_alerts!.length} booked slot(s) now over the limit:',
               style: Theme.of(context).textTheme.titleMedium),
-          for (final a in _alerts!) _AlertTile(a),
+          for (final a in _alerts!) _AlertTile(a, trailName),
         ],
       ]);
 }
@@ -266,10 +273,32 @@ class _ClosureTab extends StatefulWidget {
   State<_ClosureTab> createState() => _ClosureTabState();
 }
 
-class _ClosureTabState extends State<_ClosureTab> {
-  static final _slots = [for (var m = 6 * 60; m <= 12 * 60 + 30; m += 30) '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}'];
+class _ClosureTabState extends State<_ClosureTab> with ParkTrails {
   DateTime _day = DateTime.now().add(const Duration(days: 1));
-  String _trail = 'main', _from = '06:00', _to = '12:30';
+  List<String> _slots = const []; // the park's entry slots on that day (from /slots)
+  String? _trail, _from, _to;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_slots.isEmpty) _loadSlots();
+  }
+
+  Future<void> _loadSlots() async {
+    try {
+      final s = await C4Scope.of(context).slots(_day);
+      final times = {for (final x in s.slots) x.slot}.toList()..sort();
+      if (mounted) {
+        setState(() {
+          _slots = times;
+          if (!times.contains(_from)) _from = times.firstOrNull;
+          if (!times.contains(_to)) _to = times.lastOrNull;
+        });
+      }
+    } on ApiException {
+      // no slots that day (outside the booking window): the form waits for another day
+    }
+  }
   final _reason = TextEditingController();
   List<Map<String, dynamic>>? _alerts;
   bool _busy = false;
@@ -281,7 +310,9 @@ class _ClosureTabState extends State<_ClosureTab> {
     }
     setState(() => _busy = true);
     try {
-      final a = await C4Scope.of(context).closeTrail(_day, _trail, _from, _to, _reason.text.trim());
+      final trail = pickTrail(_trail);
+      if (trail == null || _from == null || _to == null) return;
+      final a = await C4Scope.of(context).closeTrail(_day, trail, _from!, _to!, _reason.text.trim());
       setState(() => _alerts = a);
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
@@ -309,19 +340,23 @@ class _ClosureTabState extends State<_ClosureTab> {
           trailing: const Icon(Icons.edit_calendar),
           onTap: () async {
             final d = await showDatePicker(context: context, initialDate: _day, firstDate: DateTime(2025), lastDate: DateTime(2028));
-            if (d != null) setState(() => _day = d);
+            if (d == null) return;
+            setState(() => _day = d);
+            _loadSlots();
           },
         ),
         DropdownButtonFormField<String>(
-          initialValue: _trail,
+          key: ValueKey(trailNames.length),
+          initialValue: pickTrail(_trail),
           decoration: const InputDecoration(labelText: 'Trail', border: OutlineInputBorder()),
-          items: [for (final e in _trailNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+          items: [for (final e in trailNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
           onChanged: (v) => setState(() => _trail = v!),
         ),
         const SizedBox(height: 12),
         Row(children: [
           Expanded(
             child: DropdownButtonFormField<String>(
+              key: ValueKey('from$_slots'),
               initialValue: _from,
               decoration: const InputDecoration(labelText: 'From', border: OutlineInputBorder()),
               items: [for (final s in _slots) DropdownMenuItem(value: s, child: Text(s))],
@@ -331,6 +366,7 @@ class _ClosureTabState extends State<_ClosureTab> {
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField<String>(
+              key: ValueKey('to$_slots'),
               initialValue: _to,
               decoration: const InputDecoration(labelText: 'To', border: OutlineInputBorder()),
               items: [for (final s in _slots) DropdownMenuItem(value: s, child: Text(s))],
@@ -351,7 +387,7 @@ class _ClosureTabState extends State<_ClosureTab> {
           const SizedBox(height: 16),
           Text(_alerts!.isEmpty ? 'Closed. No existing bookings affected.' : '${_alerts!.length} booked slot(s) affected:',
               style: Theme.of(context).textTheme.titleMedium),
-          for (final a in _alerts!) _AlertTile(a),
+          for (final a in _alerts!) _AlertTile(a, trailName),
         ],
       ]);
 }
@@ -363,7 +399,7 @@ class _AlertsTab extends StatefulWidget {
   State<_AlertsTab> createState() => _AlertsTabState();
 }
 
-class _AlertsTabState extends State<_AlertsTab> {
+class _AlertsTabState extends State<_AlertsTab> with ParkTrails {
   late Future<List<Map<String, dynamic>>> _future;
 
   @override
@@ -386,22 +422,23 @@ class _AlertsTabState extends State<_AlertsTab> {
             const BasisNote('A slot has more bookings than its safe capacity after the weather got worse or a closure. '
                 'Bookings are never cancelled automatically: offer those visitors another time.'),
             if (a.isEmpty) const Card(child: ListTile(leading: Icon(Icons.check_circle, color: C4Colors.green), title: Text('No alerts'))),
-            for (final x in a) _AlertTile(x),
+            for (final x in a) _AlertTile(x, trailName),
           ]);
         },
       );
 }
 
 class _AlertTile extends StatelessWidget {
-  const _AlertTile(this.a);
+  const _AlertTile(this.a, this.trailName);
 
   final Map<String, dynamic> a;
+  final String Function(String) trailName;
 
   @override
   Widget build(BuildContext context) => Card(
         child: ListTile(
           leading: const Icon(Icons.warning_amber, color: C4Colors.amber),
-          title: Text('${a['day']} · ${_trailNames[a['trail']] ?? a['trail']} · ${a['slot']}'),
+          title: Text('${a['day']} · ${trailName('${a['trail']}')} · ${a['slot']}'),
           subtitle: Text('${a['booked']} booked, ${a['safe_places']} safe places · ${a['reason']}'),
         ),
       );

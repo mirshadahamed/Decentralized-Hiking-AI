@@ -106,9 +106,11 @@ class Booking {
     required this.groupSize,
     required this.status,
     this.windowMinutes = 15,
+    this.trailName,
   });
 
   final String code, trail, slot, status;
+  final String? trailName; // the park's name for the trail (server sends it; older tickets have none)
   final DateTime day;
   final int groupSize, windowMinutes;
 
@@ -128,6 +130,7 @@ class Booking {
         groupSize: _int(j['group_size']),
         status: j['status'] as String? ?? 'booked',
         windowMinutes: _int(j['window_minutes'] ?? 15),
+        trailName: j['trail_name'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -138,6 +141,7 @@ class Booking {
         'group_size': groupSize,
         'status': status,
         'window_minutes': windowMinutes,
+        if (trailName != null) 'trail_name': trailName,
       };
 }
 
@@ -306,11 +310,13 @@ class ServerStatus {
     this.park = 'horton_plains',
     this.site = 'Horton Plains',
     this.bookingMode = 'required',
+    this.sightings = false,
   });
 
   final DateTime today;
   final String refreshedAt, note, park, site;
   final String bookingMode; // required = slot tickets | advisory = recommended start times (pilgrim sites)
+  final bool sightings; // safari parks: rangers report wildlife sightings and manage the jeeps at them
 
   bool get isAdvisory => bookingMode == 'advisory';
 
@@ -321,6 +327,55 @@ class ServerStatus {
         park: j['park'] as String? ?? 'horton_plains',
         site: j['site'] as String? ?? 'Horton Plains',
         bookingMode: j['booking_mode'] as String? ?? 'required',
+        sightings: j['sightings'] as bool? ?? false,
+      );
+}
+
+// ---------- wildlife sightings (safari parks, /sightings/{day}) ----------
+class Sighting {
+  Sighting({
+    required this.id,
+    required this.segId,
+    required this.place,
+    required this.since,
+    required this.species,
+    required this.jeepsNear,
+    required this.capJeeps,
+    required this.rotationMin,
+    required this.advice,
+    required this.circuitsAvoiding,
+  });
+
+  final int id, segId, jeepsNear, capJeeps, rotationMin;
+  final String place, since, species, advice;
+  final List<String> circuitsAvoiding;
+
+  bool get crowded => jeepsNear > capJeeps;
+
+  factory Sighting.fromJson(Map<String, dynamic> j) => Sighting(
+        id: _int(j['id']),
+        segId: _int(j['seg_id']),
+        place: j['place'] as String? ?? '',
+        since: j['since'] as String? ?? '',
+        species: j['species'] as String? ?? '',
+        jeepsNear: _int(j['jeeps_near']),
+        capJeeps: _int(j['cap_jeeps']),
+        rotationMin: _int(j['rotation_min']),
+        advice: j['advice'] as String? ?? '',
+        circuitsAvoiding: [for (final c in j['circuits_avoiding'] as List? ?? []) '$c'],
+      );
+}
+
+class SightingStatus {
+  SightingStatus({required this.time, required this.sightings, required this.note});
+
+  final String time, note;
+  final List<Sighting> sightings;
+
+  factory SightingStatus.fromJson(Map<String, dynamic> j) => SightingStatus(
+        time: j['time'] as String? ?? '',
+        note: j['note'] as String? ?? '',
+        sightings: [for (final s in j['sightings'] as List? ?? []) Sighting.fromJson(s as Map<String, dynamic>)],
       );
 }
 
@@ -902,4 +957,200 @@ class CrowdRecords {
   }
 
   String toCsv() => [RecordRow.csvHeader, for (final r in rows) r.toCsv()].join('\n');
+}
+
+// ---------- officer capacity panel (A2): the day's quota under each rule ----------
+class QuotaOptions {
+  QuotaOptions({required this.forecast, required this.classic, required this.statik, this.manual, required this.rule,
+      required this.applied, this.decidedBy});
+
+  final int forecast, classic, statik, applied;
+  final int? manual;
+  final String rule;
+  final String? decidedBy;
+
+  int? of(String r) => switch (r) { 'forecast' => forecast, 'classic' => classic, 'static' => statik, _ => manual };
+
+  factory QuotaOptions.fromJson(Map<String, dynamic> j) => QuotaOptions(
+        forecast: _int(j['forecast']),
+        classic: _int(j['classic']),
+        statik: _int(j['static']),
+        manual: j['manual'] == null ? null : _int(j['manual']),
+        rule: j['rule'] as String? ?? 'forecast',
+        applied: _int(j['applied']),
+        decidedBy: j['decided_by'] as String?,
+      );
+}
+
+class TrailQuota {
+  TrailQuota({required this.trail, required this.name, required this.expected, required this.quota,
+      required this.limitingSection, required this.reason, required this.sectionsOver});
+
+  final String trail, name, limitingSection, reason;
+  final int expected, sectionsOver;
+  final QuotaOptions quota;
+
+  factory TrailQuota.fromJson(Map<String, dynamic> j) => TrailQuota(
+        trail: j['trail'] as String,
+        name: j['name'] as String? ?? j['trail'] as String,
+        expected: _int(j['expected_visitors']),
+        quota: QuotaOptions.fromJson(j['quota'] as Map<String, dynamic>),
+        limitingSection: j['limiting_section'] as String? ?? '',
+        reason: j['reason'] as String? ?? '',
+        sectionsOver: _int(j['sections_over_capacity']),
+      );
+}
+
+class SectionOver {
+  SectionOver({required this.segId, required this.trail, required this.name, required this.hours,
+      required this.peakPeople, required this.capacityAtOnce});
+
+  final int segId;
+  final String trail, name;
+  final List<int> hours;
+  final double peakPeople, capacityAtOnce;
+
+  factory SectionOver.fromJson(Map<String, dynamic> j) => SectionOver(
+        segId: _int(j['seg_id']),
+        trail: j['trail'] as String? ?? '',
+        name: j['name'] as String? ?? '',
+        hours: [for (final h in j['hours'] as List? ?? []) _int(h)],
+        peakPeople: _dbl(j['peak_people']),
+        capacityAtOnce: _dbl(j['capacity_at_once']),
+      );
+}
+
+class CapacityPanel {
+  CapacityPanel({required this.day, required this.rules, required this.defaultRule, required this.trails,
+      required this.over, required this.basis});
+
+  final DateTime day;
+  final Map<String, String> rules, basis;
+  final String defaultRule;
+  final List<TrailQuota> trails;
+  final List<SectionOver> over;
+
+  factory CapacityPanel.fromJson(Map<String, dynamic> j) => CapacityPanel(
+        day: DateTime.parse(j['day'] as String),
+        rules: {for (final e in (j['rules'] as Map? ?? {}).entries) e.key as String: e.value as String},
+        defaultRule: j['default_rule'] as String? ?? 'forecast',
+        trails: [for (final t in j['trails'] as List? ?? []) TrailQuota.fromJson(t as Map<String, dynamic>)],
+        over: [for (final o in j['over_capacity'] as List? ?? []) SectionOver.fromJson(o as Map<String, dynamic>)],
+        basis: {for (final e in (j['basis'] as Map? ?? {}).entries) e.key as String: e.value as String},
+      );
+}
+// ---------- A4: rangers' spot counts and the forecast check ----------
+class SegmentInfo {
+  SegmentInfo({required this.segId, required this.name, required this.trail, required this.trailName, this.modelInput = false});
+
+  final int segId;
+  final String name, trail, trailName;
+  final bool modelInput; // A1: a count here updates today's forecast
+
+  factory SegmentInfo.fromJson(Map<String, dynamic> j) => SegmentInfo(
+        segId: _int(j['seg_id']),
+        name: j['name'] as String? ?? '',
+        trail: j['trail'] as String? ?? '',
+        trailName: j['trail_name'] as String? ?? '',
+        modelInput: j['model_input'] == true,
+      );
+}
+
+/// A count made on the phone; kept until the server has it (offline-first).
+class SpotCount {
+  SpotCount({required this.day, required this.segId, required this.time, required this.count, required this.clientId});
+
+  final DateTime day;
+  final int segId, count;
+  final String time, clientId; // 'HH:MM'
+
+  Map<String, dynamic> toJson() => {
+        'day': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
+        'seg_id': segId,
+        'time': time,
+        'count': count,
+        'client_id': clientId,
+      };
+
+  factory SpotCount.fromJson(Map<String, dynamic> j) => SpotCount(
+        day: DateTime.parse(j['day'] as String),
+        segId: _int(j['seg_id']),
+        time: j['time'] as String,
+        count: _int(j['count']),
+        clientId: j['client_id'] as String,
+      );
+}
+
+class CheckRow {
+  CheckRow({required this.day, required this.segId, required this.name, required this.timeMin, required this.count,
+      this.forecast, required this.capacity, required this.countedOver, this.forecastOver});
+
+  final DateTime day;
+  final int segId, timeMin, count;
+  final String name;
+  final double? forecast;
+  final double capacity;
+  final bool countedOver;
+  final bool? forecastOver;
+
+  factory CheckRow.fromJson(Map<String, dynamic> j) => CheckRow(
+        day: DateTime.parse(j['day'] as String),
+        segId: _int(j['seg_id']),
+        name: j['name'] as String? ?? 'section ${j['seg_id']}',
+        timeMin: _int(j['time_min']),
+        count: _int(j['count']),
+        forecast: j['forecast'] == null ? null : _dbl(j['forecast']),
+        capacity: _dbl(j['capacity_at_once']),
+        countedOver: j['counted_over'] == true,
+        forecastOver: j['forecast_over'] as bool?,
+      );
+}
+
+class ForecastCheck {
+  ForecastCheck({required this.summary, required this.rows, required this.note});
+
+  final Map<String, num> summary;
+  final List<CheckRow> rows;
+  final String note;
+
+  factory ForecastCheck.fromJson(Map<String, dynamic> j) => ForecastCheck(
+        summary: {for (final e in (j['summary'] as Map? ?? {}).entries) e.key as String: e.value as num},
+        rows: [for (final r in j['rows'] as List? ?? []) CheckRow.fromJson(r as Map<String, dynamic>)],
+        note: j['note'] as String? ?? '',
+      );
+}
+// ---------- A3: what to do at the gate in the next two hours ----------
+class GateAdvice {
+  GateAdvice({required this.time, required this.over, required this.advice, required this.inside, required this.basis});
+
+  final String time, basis;
+  final int inside;
+  final List<Map<String, dynamic>> over; // seg_id, name, trail, at, people, capacity
+  final List<Map<String, dynamic>> advice; // trail, trail_name, hold_min, send_to, text
+
+  factory GateAdvice.fromJson(Map<String, dynamic> j) => GateAdvice(
+        time: j['time'] as String? ?? '',
+        over: [for (final o in j['over'] as List? ?? []) o as Map<String, dynamic>],
+        advice: [for (final a in j['advice'] as List? ?? []) a as Map<String, dynamic>],
+        inside: _int(j['inside']),
+        basis: j['basis'] as String? ?? '',
+      );
+}
+
+// ---------- A1: the rest of today, updated from the rangers' spot counts ----------
+class TodayUpdate {
+  TodayUpdate({required this.fromHour, required this.countsUsed, required this.changes, required this.over, required this.basis});
+
+  final int fromHour, countsUsed;
+  final List<Map<String, dynamic>> changes; // seg_id, name, change (peak people, updated - morning), over_hours
+  final List<Map<String, dynamic>> over; // seg_id, name, over_hours, capacity_at_once
+  final String basis;
+
+  factory TodayUpdate.fromJson(Map<String, dynamic> j) => TodayUpdate(
+        fromHour: _int(j['from_hour']),
+        countsUsed: _int(j['counts_used']),
+        changes: [for (final c in j['biggest_changes'] as List? ?? []) c as Map<String, dynamic>],
+        over: [for (final o in j['over_capacity'] as List? ?? []) o as Map<String, dynamic>],
+        basis: j['basis'] as String? ?? '',
+      );
 }

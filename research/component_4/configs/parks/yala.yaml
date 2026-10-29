@@ -1,0 +1,155 @@
+# Yala National Park, Block 1 (jeep safaris). Overrides configs/default.yaml. Use with:  $env:C4_PARK = "yala"
+# Every number marked (A) is an assumption to calibrate with DWC gate records or a field visit
+# (docs/assumptions_yala.md). "Groups" are jeeps; occupancy is people on a road section.
+
+destination:
+  kind: safari
+  region: "Southern and Uva Provinces · Hambantota and Monaragala Districts"
+  summary: "Dry-zone scrub, lagoons and tanks on the south-east coast; jeep safaris for leopard, elephant and sloth bear."
+  elevation: "sea level – about 100 m"
+  best_time: "February to July. Morning (from 06:00) and late afternoon are best for animals. Closed for about six weeks a year, usually September to mid-October."
+  getting_there: "Tissamaharama → Kirinda → Palatupana entrance (about 20 km); Katagamuwa entrance from Kataragama."
+  facts:
+    - "Safari jeeps only: book a licensed jeep and tracker"
+    - "Stay inside the jeep and keep to the tracks"
+    - "When a leopard is seen, jeeps gather fast: keep your distance and switch off the engine"
+    - "Closed every year in the dry season (usually September to mid-October)"
+  accent: "#B5651D"
+
+area:
+  name: "Yala National Park (Block 1)"
+  bbox: [81.360, 6.250, 81.560, 6.420]
+  dem_bbox: [81.355, 6.245, 81.565, 6.425]
+  weather_point: [6.330, 81.450]
+  crs_metric: "EPSG:32644"                  # UTM 44N covers 78-84 E
+  poi_tags: {natural: water, water: true, tourism: information, barrier: gate}
+  pois:                                     # OSM names (tanks, lagoons, the two entrances)
+    __replace__: true
+    palatupana: "Yala National Park"        # information point at the Palatupana entrance
+    katagamuwa: "Katagamuwa Entrance"
+    bembewa: "Bembewa Tank"
+    maliththa: "Maliththa Tank"
+    buthawa: "Buthawa Tank"
+    patanangala: "Patanangala Lagoon"
+    seethala: "Seethala Pokuna"
+    heenwewa: "Heenwewa Tank"
+    gonagala: "Gonagala Tank"
+    arangamuwa: "Arangamuwa Tank"
+    panagammana: "Panagammana Tank"
+  routes:                                   # typical safari circuits (A): shortest jeep track between the stops
+    __replace__: true
+    patanangala: [palatupana, seethala, heenwewa, gonagala, buthawa, patanangala, buthawa, gonagala, heenwewa, seethala, palatupana]
+    southern: [palatupana, bembewa, maliththa, seethala, palatupana]
+    katagamuwa: [katagamuwa, arangamuwa, panagammana, heenwewa, katagamuwa]
+  road_links: []
+  trail_names:
+    __replace__: true
+    patanangala: "Patanangala and Buthawa"
+    southern: "Southern tanks (Bembewa, Maliththa)"
+    katagamuwa: "Katagamuwa circuit"
+  trail_info:
+    __replace__: true
+    patanangala: "The classic Block 1 safari from Palatupana past Heenwewa and Gonagala to the beach stop at Patanangala; busiest"
+    southern: "Short loop near the Palatupana entrance past Bembewa and Maliththa tanks; leopard country"
+    katagamuwa: "From the Katagamuwa entrance (Kataragama side) to Heenwewa; the quietest start"
+  main_trail: patanangala
+  focus_poi: patanangala
+  poi_roles:
+    __replace__: true
+    viewpoint: [patanangala, buthawa, heenwewa, gonagala, bembewa, maliththa, seethala, arangamuwa, panagammana]
+    access: [palatupana, katagamuwa]
+  poi_labels:
+    __replace__: true
+    palatupana: "Palatupana entrance"
+    katagamuwa: "Katagamuwa entrance"
+    bembewa: "Bembewa Tank"
+    maliththa: "Maliththa Tank"
+    buthawa: "Buthawa Tank"
+    patanangala: "Patanangala (beach stop)"
+    seethala: "Seethala Pokuna"
+    heenwewa: "Heenwewa Tank"
+    gonagala: "Gonagala Tank"
+    arangamuwa: "Arangamuwa Tank"
+    panagammana: "Panagammana Tank"
+
+graph:
+  osm_filter: '["highway"~"track|unclassified|tertiary|service|path"]'   # jeep tracks and park roads
+  largest_component: true   # OSM has small unconnected track pieces; keep the network jeeps can drive
+  target_segment_m: 1200    # long circuits: ~1.2 km sections keep the graph under ~100 nodes
+  poi_snap_m: 800           # tank / lagoon centroids lie away from the track
+  max_grade: 0.25
+
+terrain:
+  vehicle_kmh: 15           # (A) safari pace with stops for animals; the park limit is 25 km/h
+
+simulator:
+  base_daily_visitors: 900           # (A) people on an ordinary weekday (~200 jeeps); calibrate with DWC gate totals
+  dow_multiplier: [1.0, 0.9, 0.9, 0.95, 1.1, 1.6, 1.7]
+  holiday_multiplier: 1.6
+  poya_multiplier: 1.5
+  long_weekend_multiplier: 1.25
+  school_holiday_multiplier: 1.15   # busiest days ~3,500 people (~780 jeeps) (A)
+  month_multiplier: [1.3, 1.25, 1.2, 1.25, 1.0, 0.9, 1.0, 1.2, 1.0, 0.7, 0.8, 1.3]   # (A) foreign season Dec-Apr, Esala in Aug
+  closed: [["09-01", "10-15"]]       # (A) annual drought closure; DWC announces the exact dates each year
+  daily_noise_sd: 0.20
+  morning_rain_k: 0.04
+  group_size_poisson_mean: 3.5       # (A) people per jeep = 1 + Poisson(3.5), about 4.5
+  arrival_early_share: 0.65          # (A) morning safari; jeeps queue at the gate before it opens at 06:00
+  arrival_early_mean_h: 6.0
+  arrival_early_sd_h: 0.25
+  arrival_late_range_h: [14.0, 15.5] # (A) afternoon safari
+  gate_open_h: 6.0
+  gate_last_entry_h: 15.5
+  route_share:
+    __replace__: true
+    patanangala: 0.60                # (A)
+    southern: 0.25
+    katagamuwa: 0.15
+  route_last_entry_h: {__replace__: true}
+  route_start_offset_min: {__replace__: true}
+  reversible_routes: [southern]
+  standard_direction_share: 0.6      # (A)
+  walker_speed_sd: 0.15              # jeep-to-jeep spread of pace
+  leisure_speed_factor: 1.0          # the speed is already the safari pace
+  crowd_rho0_per_m: 0.08             # (A) people per metre of track at which jeeps halve their speed
+  crowd_min_speed: 0.3
+  dwell_minutes:
+    __replace__: true
+    patanangala: [25, 0.4]           # (A) the beach stop where visitors may leave the jeep
+  sightings:                         # leopard / bear by the track: every passing jeep stops (not in any calendar)
+    per_day: 5                       # (A)
+    windows_h: [[6.0, 9.5], [15.0, 17.5]]
+    duration_min: [30, 0.4]          # (A) median minutes the animal stays visible, log-sd
+    stop_min: [12, 0.4]              # (A) median minutes a jeep stays, log-sd
+    hotspots: [heenwewa, gonagala, seethala, maliththa, bembewa, buthawa]
+    hotspot_weight: 4.0
+  realism:                           # S1: tour groups arrive as convoys at opening time
+    burst_people: [30, 90]
+    burst_window_h: [6.0, 6.5]
+
+task:
+  open_hours: [6, 18]
+
+capacity:
+  space_per_person_m: 2.0            # (A) a ~9 m jeep shared by its passengers
+  group_size: 5                      # (A) people per jeep in the Cifuentes social factor
+  group_gap_m: 150                   # (A) distance kept between jeeps on a track
+  open_from_h: 6
+  open_hours: 12
+  main_trail: patanangala
+
+planning:
+  typical_start_h: 6.0
+  later_note: "Animals are most active in the first hours after 06:00 and after 15:00; the afternoon safari is usually quieter."
+  access_note: "Book a licensed safari jeep; check the annual closure dates with DWC."
+
+control:
+  first_slot_h: 6.0
+  last_slot_h: 15.5
+  viewpoint_min_at_once: 60          # (A) Patanangala beach stop and tank bunds hold more than a track
+  walk_in_share: 0.3                 # (A) many jeeps still arrive without booking
+  booking_mode: required             # entry tickets per circuit and slot (a jeep cap per slot)
+  sighting_rule:                     # ranger's rule at a sighting (src/control/evaluate_sightings.py) (A)
+    cap_jeeps: 10                    # at most 10 jeeps stopped at once: -33 % jam time, 65 % still stop (2025 replay)
+    rotation_min: 10
+    expire_min: 90                   # a report not ended by a ranger expires after this
