@@ -13,6 +13,14 @@
 weather expectation of the day; the gate counts are their only live input.
 Metrics: over-capacity person-hours, people admitted / turned away / sent to another trail / held, mean wait.
 Outputs results/<timestamp>_mpc[_s1]/: daily.csv, summary.csv, tests.json
+
+Stress tests (item 9):  python -m src.control.evaluate_mpc --world s1 --stress
+the same year under conditions the controllers did not plan for (STRESS), fewer policies (STRESS_POLICIES):
+  surge          50 % more people come than the calendar says, every day (a festival season, a viral post)
+  forecast_low   the controllers' visitor expectation is 30 % too low
+  forecast_high  ... 30 % too high (the cost of a cautious forecast: people kept out for nothing)
+  sudden_rain    the day is planned as dry; the real rain (and lower capacity) arrives anyway
+Outputs results/<timestamp>_mpc_stress/: summary.csv (one block per scenario), daily.csv
 """
 import argparse
 import copy
@@ -34,9 +42,14 @@ from src.utils import new_run_dir
 COMPLIANCE = (0.25, 0.5, 0.75)
 APP_SHARE = (0.3, 0.6, 0.9)        # N3: share of groups with the app who get a start time the evening before
 FOLLOW = 0.8                       # ... of whom this share come at that time
+STRESS = {"none": {}, "surge": {"demand": 1.5}, "forecast_low": {"expected": 0.7},
+          "forecast_high": {"expected": 1.3}, "sudden_rain": {"planned_dry": True}}
+STRESS_POLICIES = ["A", "B", "D", "MPC0.5", "N3p_0.6"]
 
 
-def run(world="default", year="2025", seed=11, max_days=None, write=True, log=print):
+def run(world="default", year="2025", seed=11, max_days=None, write=True, log=print, stress=None, policies=None):
+    """stress: a STRESS entry (demand / expected multipliers, planned_dry); policies: a subset to run."""
+    stress = stress or {}
     ec = build_control()
     cfg, sim = ec.cfg, ec.sim
     p = sim.p
@@ -46,15 +59,15 @@ def run(world="default", year="2025", seed=11, max_days=None, write=True, log=pr
     weather, cal = load_weather(cfg), build_calendar(cfg)
     precip = weather.precipitation.values.reshape(len(cal), 24)
     rng = np.random.default_rng(seed)
-    demand = daily_demand(cal, precip, p_world, rng)                       # what really comes
+    demand = daily_demand(cal, precip, p_world, rng) * stress.get("demand", 1.0)   # what really comes
     expected = daily_demand(cal, precip, p | {"daily_noise_sd": 0.0, "realism": {"enabled": False}},
-                            np.random.default_rng(0))                       # what the calendar + weather say
+                            np.random.default_rng(0)) * stress.get("expected", 1.0)   # what the calendar + weather say
     open_h = (cfg["capacity"].get("open_from_h", 6) + np.arange(cfg["capacity"]["open_hours"])) % 24
     rain_share_all = (precip[:, open_h] >= cfg["capacity"]["rain_mm"]).mean(1)
     train = cal.index <= pd.Timestamp(cfg["dates"]["train_end"])
     static = ec.daily_quota(float(rain_share_all[train].mean()))
-    policies = (["A", "B", "D"] + [f"MPC{c}" for c in COMPLIANCE] + ["MPC-nf"] + [f"N3_{a}" for a in APP_SHARE]
-                + [f"N3p_{a}" for a in APP_SHARE])
+    policies = policies or (["A", "B", "D"] + [f"MPC{c}" for c in COMPLIANCE] + ["MPC-nf"]
+                            + [f"N3_{a}" for a in APP_SHARE] + [f"N3p_{a}" for a in APP_SHARE])
     ctrl = {f"MPC{c}": MPCController(ec, compliance=c) for c in COMPLIANCE}
     ctrl["MPC-nf"] = MPCController(ec, compliance=0.5, feedback=False)
     rows = []
@@ -62,8 +75,8 @@ def run(world="default", year="2025", seed=11, max_days=None, write=True, log=pr
     for n, di in enumerate(days):
         ev = day_events(p_world, rng, sim.S, sim.trails[0]) if world == "s1" else {}
         size, gate, option = sim.sample_day(int(round(demand[di])), rng, events=ev)
-        r = float(rain_share_all[di])
-        C = ec.capacity(r)
+        C = ec.capacity(float(rain_share_all[di]))                        # the real day's capacity
+        r = 0.0 if stress.get("planned_dry") else float(rain_share_all[di])   # what the controllers plan with
         fin = np.isfinite(C)
         quota = ec.daily_quota(r)
         plan = ec.plan(r, quota)
@@ -124,6 +137,8 @@ def run(world="default", year="2025", seed=11, max_days=None, write=True, log=pr
     } for pol in policies])
     by = {pol: g.get_group(pol).sort_values("date") for pol in policies}
     tests = {}
+    if stress or len(policies) < 10:                                   # stress runs: summary only
+        return summary, tests, df
     for d in by.values():
         d["gate_wait_h"] = d.wait_min * d.held / 60
     for a, b in (("MPC0.5", "D"), ("MPC0.5", "B"), ("MPC0.5", "MPC-nf"), ("MPC0.75", "D"), ("N3_0.6", "MPC0.5"),
@@ -147,7 +162,22 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--world", choices=["default", "s1"], default="default")
     ap.add_argument("--max-days", type=int)
+    ap.add_argument("--stress", action="store_true")
     a = ap.parse_args()
+    if a.stress:
+        from src.config import load_config
+        blocks, daily = [], []
+        for name, st in STRESS.items():
+            s, _, df = run(a.world, max_days=a.max_days, stress=st, policies=STRESS_POLICIES)
+            blocks.append(s.assign(scenario=name))
+            daily.append(df.assign(scenario=name))
+            print(name, s[["policy", "person_hours_over", "cut_vs_no_control_pct", "admitted_pct",
+                           "gate_wait_person_hours", "days_overcrowded"]].round(1).to_string(index=False), sep="\n")
+        d = new_run_dir("mpc_stress" + ("_s1" if a.world == "s1" else ""), load_config())
+        pd.concat(blocks).to_csv(d / "summary.csv", index=False)
+        pd.concat(daily).to_csv(d / "daily.csv", index=False)
+        print(d)
+        raise SystemExit
     s, t, d = run(a.world, max_days=a.max_days)
     print(s.round(2).to_string(index=False))
     print(json.dumps(t, indent=1))

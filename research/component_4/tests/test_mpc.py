@@ -84,3 +84,22 @@ def test_feedback_raises_the_forecast_when_more_come_than_expected(ec):
     # both stay within the same people, and feedback changes the decisions
     assert with_fb[0].sum() + with_fb[3]["refused"] == pytest.approx(size.sum())
     assert not np.isclose(with_fb[0].sum(), no_fb[0].sum()) or not np.allclose(np.sort(with_fb[1]), np.sort(no_fb[1]))
+
+
+def test_reported_condition_lowers_live_caps_and_closure_stops_entry(ec):
+    import pandas as pd
+    from src.control.mpc import MPCController
+    m = MPCController(ec)
+    main = ec.trails[0]
+    none = pd.DataFrame(columns=["trail", "gate_min", "size"])
+    k = int(np.argmax(ec.allowed[0]))
+    at = int(ec.slots[k]) + 5
+    def caps(cond):
+        t = next(x for x in m.caps_now(none, at, 0.0, 900.0, cond)["trails"] if x["trail"] == main)
+        return t["can_enter_now"] + sum(s["cap"] for s in t["next_slots"]), t
+    full, _ = caps({})
+    muddy, _ = caps({main: 0.5})
+    closed, t = caps({main: 1.0})
+    assert closed == 0 and t["closed_for_entry"] and t["capacity_removed"] == 1.0
+    assert muddy < full
+    assert np.all(m.day_plan(0.0, 900.0, {main: 1.0})[0] == 0)

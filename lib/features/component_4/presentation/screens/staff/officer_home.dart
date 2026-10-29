@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../data/api_client.dart';
 import '../../../models/models.dart';
@@ -46,11 +47,12 @@ class OfficerHome extends StatelessWidget {
             Tab(icon: Icon(Icons.notifications), text: 'Alerts'),
             Tab(icon: Icon(Icons.table_chart_outlined), text: 'Records'),
             Tab(icon: Icon(Icons.fact_check_outlined), text: 'Forecast check'),
+            Tab(icon: Icon(Icons.summarize_outlined), text: 'Day report'),
           ]),
         ),
         body: const TabBarView(
           physics: NeverScrollableScrollPhysics(), // the bottleneck map pans with a drag
-          children: [BottleneckView(), CapacityTab(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab(), ForecastCheckTab()],
+          children: [BottleneckView(), CapacityTab(), _WeekTab(), ConditionTab(), _ClosureTab(), _AlertsTab(), RecordsTab(), ForecastCheckTab(), DayReportTab()],
         ),
       ),
     );
@@ -441,5 +443,62 @@ class _AlertTile extends StatelessWidget {
           title: Text('${a['day']} · ${trailName('${a['trail']}')} · ${a['slot']}'),
           subtitle: Text('${a['booked']} booked, ${a['safe_places']} safe places · ${a['reason']}'),
         ),
+      );
+}
+
+/// Item 12: what happened today, in a few lines to copy into the park's daily log.
+class DayReportTab extends StatefulWidget {
+  const DayReportTab({super.key});
+
+  @override
+  State<DayReportTab> createState() => _DayReportTabState();
+}
+
+class _DayReportTabState extends State<DayReportTab> {
+  DateTime _day = DateTime.now();
+  Future<DayReport>? _future;
+
+  void _load() => _future = C4Scope.of(context).dayReport(_day);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ?? _load();
+  }
+
+  void _shift(int days) => setState(() {
+        _day = _day.add(Duration(days: days));
+        _load();
+      });
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<DayReport>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.hasError) return ErrorRetry(error: snap.error!, onRetry: () => setState(_load));
+          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          final r = snap.data!;
+          return ListView(padding: const EdgeInsets.all(16), children: [
+            Row(children: [
+              IconButton(onPressed: () => _shift(-1), icon: const Icon(Icons.chevron_left)),
+              Expanded(child: Text('Day report · ${r.day}', key: const Key('report_day'),
+                  textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium)),
+              IconButton(onPressed: () => _shift(1), icon: const Icon(Icons.chevron_right)),
+            ]),
+            for (final l in r.lines) ListTile(dense: true, leading: const Icon(Icons.chevron_right), title: Text(l)),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('report_copy'),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: 'Day report ${r.day}\n${r.lines.map((l) => '- $l').join('\n')}'));
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied')));
+              },
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy for the daily log'),
+            ),
+            const BasisNote('From the gate check-ins, walk-ins, start-time codes, rangers\' counts and reported trail '
+                'conditions. A printable page: /admin/day-report/<day>?format=html.'),
+          ]);
+        },
       );
 }

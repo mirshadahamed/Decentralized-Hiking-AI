@@ -27,6 +27,7 @@ class _DayScreenState extends State<DayScreen> {
   late Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _future;
   Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
   Future<DayWeather?>? _weather; // the day's weather (observed / forecast / typical); none on an older server
+  Future<StageOutlook?>? _stages; // P4: stage advice (only trails built from stages, e.g. Pekoe)
   String _trail = 'main';
   Map<String, String> _names = const {};
   String? _slot;
@@ -42,6 +43,7 @@ class _DayScreenState extends State<DayScreen> {
   Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _load() async {
     final api = C4Scope.of(context);
     _weather = api.weather(widget.day).then<DayWeather?>((w) => w, onError: (_) => null);
+    _stages = api.stages(widget.day).then<StageOutlook?>((s) => s, onError: (_) => null);
     final ServerStatus status;
     try {
       status = await api.status();
@@ -153,6 +155,12 @@ class _DayScreenState extends State<DayScreen> {
                     ? const SizedBox.shrink()
                     : Padding(padding: const EdgeInsets.only(top: 12), child: WeatherCard(weather: w.data!)),
               ),
+              FutureBuilder<StageOutlook?>(
+                future: _stages,
+                builder: (context, s) => s.data == null || s.data!.stages.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: StagesCard(outlook: s.data!, selected: _trail)),
+              ),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
               if (_edge != null) _onDevice(trails),
               if (plan.suggestions.isNotEmpty) ...[
@@ -227,7 +235,33 @@ class StartTimeCard extends StatefulWidget {
 class _StartTimeCardState extends State<StartTimeCard> {
   String _wanted = '07:00';
   Future<StartTimeSuggestion?>? _future;
-  String? _code;
+  String? _code, _slot;
+  StartTimeCheck? _check;
+
+  Future<void> _recheck() async {
+    final api = C4Scope.of(context);
+    try {
+      final c = await api.recheckStartTime(_code!);
+      if (mounted) setState(() => _check = c);
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _move(String slot) async {
+    final api = C4Scope.of(context);
+    try {
+      await api.moveStartTime(_code!, slot);
+      if (mounted) {
+        setState(() {
+          _slot = slot;
+          _check = null;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
 
   void _load() => _future = C4Scope.of(context)
       .startTime(widget.day, widget.trail, _wanted, widget.size)
@@ -242,7 +276,13 @@ class _StartTimeCardState extends State<StartTimeCard> {
   Future<void> _hold(String slot) async {
     try {
       final code = await C4Scope.of(context).holdStartTime(widget.day, widget.trail, slot, widget.size);
-      if (mounted) setState(() => _code = code);
+      if (mounted) {
+        setState(() {
+          _code = code;
+          _slot = slot;
+          _check = null;
+        });
+      }
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       setState(_load);
@@ -298,9 +338,25 @@ class _StartTimeCardState extends State<StartTimeCard> {
                       icon: const Icon(Icons.schedule),
                       label: Text('Hold ${s.suggested} for ${widget.size}'),
                     )
-                  else
-                    Text('Held: show code $_code at the gate at ${s.suggested}.',
+                  else ...[
+                    Text('Held: show code $_code at the gate at ${_slot ?? s.suggested}.',
                         key: const Key('start_code'), style: text.titleSmall?.copyWith(color: C4Colors.green)),
+                    TextButton.icon(
+                      key: const Key('start_recheck'),
+                      onPressed: _recheck,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Check before you leave'),
+                    ),
+                    if (_check != null)
+                      Text(_check!.note, key: const Key('start_check_note'),
+                          style: text.bodyMedium?.copyWith(color: _check!.status == 'ok' ? C4Colors.green : C4Colors.red)),
+                    if (_check?.suggested != null)
+                      OutlinedButton(
+                        key: const Key('start_move'),
+                        onPressed: () => _move(_check!.suggested!),
+                        child: Text('Move to ${_check!.suggested}'),
+                      ),
+                  ],
                 ],
               ]),
             ),
@@ -546,6 +602,48 @@ class SafeLimitCard extends StatelessWidget {
             ),
           ),
           BasisNote(_basis),
+        ]),
+      ),
+    );
+  }
+}
+
+/// P4: which stages of a long trail get busy that day, where and when, and when to start instead (advice only).
+class StagesCard extends StatelessWidget {
+  const StagesCard({super.key, required this.outlook, required this.selected});
+
+  final StageOutlook outlook;
+  final String selected;
+
+  static Color _color(String level) => switch (level) { 'crowded' => C4Colors.red, 'busy' => C4Colors.amber, _ => C4Colors.green };
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final names = {for (final s in outlook.stages) s.stage: s.name};
+    final mine = outlook.stages.where((s) => s.stage == selected).firstOrNull;
+    final busy = outlook.stages.where((s) => s.level != 'quiet' && s.stage != selected).toList()
+      ..sort((a, b) => b.fullness.compareTo(a.fullness));
+    final quiet = outlook.stages.where((s) => s.level == 'quiet').length;
+    Widget row(StageInfo s) => ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.circle, size: 14, color: _color(s.level)),
+          title: Text('${s.name} · ${s.lengthKm.toStringAsFixed(0)} km · ${s.level}'),
+          subtitle: Text(s.advice +
+              (s.quieterNeighbour != null ? ' Quieter that day: ${names[s.quieterNeighbour] ?? s.quieterNeighbour}.' : '')),
+        );
+    return Card(
+      key: const Key('stages_card'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Stages this day', style: text.titleMedium),
+          if (mine != null) row(mine),
+          for (final s in busy.take(4)) row(s),
+          Text('$quiet of ${outlook.stages.length} stages quiet all day.', style: text.bodyMedium),
+          const SizedBox(height: 4),
+          Text(outlook.basis, style: text.bodySmall),
         ]),
       ),
     );

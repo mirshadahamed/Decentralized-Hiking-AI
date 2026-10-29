@@ -28,8 +28,8 @@ def _con(db=None):
 
 
 @lru_cache(maxsize=64)
-def _plan(day: str, rain_share: float, expected: float) -> np.ndarray:
-    return MPCController(build_control()).day_plan(rain_share, expected)
+def _plan(day: str, rain_share: float, expected: float, cond: tuple = ()) -> np.ndarray:
+    return MPCController(build_control()).day_plan(rain_share, expected, dict(cond))
 
 
 def _given(day: str, db=None) -> dict:
@@ -47,7 +47,7 @@ def suggest(day: str, trail: str, wanted: str, size: int, rain_share: float, exp
     labels = [f"{s // 60:02d}:{s % 60:02d}" for s in ec.slots]
     r = ec.trails.index(trail)
     k0 = int(ec.slot_of(np.array([h * 60 + m]))[0])
-    caps = _plan(day, round(rain_share, 3), round(expected))
+    caps = _plan(day, round(rain_share, 3), round(expected), tuple(sorted(booking.condition_factors(day, db).items())))
     given = _given(day, db)
     options = []
     for k in range(k0, len(ec.slots)):
@@ -77,3 +77,47 @@ def hold(day: str, trail: str, slot: str, size: int, rain_share: float, expected
                     (code, day, trail, slot, size, datetime.now().isoformat(timespec="seconds")))
         con.commit()
     return {"code": code, "day": day, "trail": trail, "slot": slot, "group_size": size}
+
+
+def held(code: str, db=None) -> dict | None:
+    with closing(_con(db)) as con:
+        r = con.execute("SELECT code, day, trail, slot, group_size, arrived_at FROM start_advice WHERE code=?",
+                        (code.strip().upper(),)).fetchone()
+    return dict(zip(["code", "day", "trail", "slot", "group_size", "arrived_at"], r)) if r else None
+
+
+def recheck(code: str, now: datetime, rain_share: float, expected: float, db=None) -> dict:
+    """Morning re-check before leaving: re-plan from the gate counts so far, the day's forecast (corrected by how
+    many came so far) and any trail condition reported today. If the held slot no longer has room for the group,
+    suggest the earliest later slot that has (move() changes the hold)."""
+    h = held(code, db)
+    if h is None:
+        raise KeyError("Unknown code")
+    out = {k: h[k] for k in ("code", "day", "trail", "slot", "group_size")}
+    if h["arrived_at"]:
+        return out | {"status": "used", "note": "Already through the gate."}
+    if h["day"] != now.date().isoformat():
+        return out | {"status": "ok", "note": "Check again on the morning of your walk: the plan is updated from "
+                                               "the gate counts during the day."}
+    cond = booking.condition_factors(h["day"], db)
+    live = MPCController(build_control()).caps_now(booking.entries(h["day"], db), now.hour * 60 + now.minute,
+                                                   rain_share, expected, cond)
+    t = next(x for x in live["trails"] if x["trail"] == h["trail"])
+    caps = {live["slot"]: t["can_enter_now"]} | {x["slot"]: x["cap"] for x in t["next_slots"]}
+    if caps.get(h["slot"], h["group_size"]) >= h["group_size"] or h["slot"] < live["slot"]:
+        return out | {"status": "ok", "note": f"Your start at {h['slot']} still has room. Come on time and you go in first."}
+    later = next((s for s, c in sorted(caps.items()) if s > h["slot"] and c >= h["group_size"]), None)
+    why = "the trail is closed today" if cond.get(h["trail"], 0) >= 1 else "more people came than expected"
+    return out | {"status": "later" if later else "full", "suggested": later,
+                  "note": (f"Busier than planned ({why}): start at {later} instead and you still go in first."
+                           if later else f"No room on this trail in the next hours ({why}): choose another trail.")}
+
+
+def move(code: str, slot: str, db=None) -> dict:
+    with closing(_con(db)) as con:
+        n = con.execute("UPDATE start_advice SET slot=? WHERE code=? AND arrived_at IS NULL",
+                        (slot, code.strip().upper())).rowcount
+        con.commit()
+    if not n:
+        raise KeyError("Unknown or already used code")
+    return held(code, db)

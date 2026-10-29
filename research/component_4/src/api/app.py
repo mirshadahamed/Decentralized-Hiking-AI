@@ -208,6 +208,20 @@ def weather_day(day: date):
         raise HTTPException(400, str(e))
 
 
+@app.get("/stages/{day}", tags=["public"])
+def stages(day: date):
+    """P4: stage advice on a long open-access trail (Pekoe): how busy each stage gets, where and when, and when to
+    start. Only for parks built from stages (area.stage_relations)."""
+    from src.serve.stages import stage_outlook
+    if not CFG["area"].get("stage_relations"):
+        raise HTTPException(404, "This site has no stages")
+    c = ctx()
+    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    hourly = np.array(_plan(c, day, live_inputs(c, day))["hourly"]["p50"])
+    return stage_outlook(CFG, c.seg, hourly, day.isoformat())
+
+
 @app.get("/plan/{day}", tags=["public"])
 def plan_day(day: date):
     """Expected crowd for a day (2-90 days ahead) with suggestions to avoid it."""
@@ -454,6 +468,15 @@ def forecast_check(start: date, end: date, user: dict = Depends(role("officer"))
     return check(CFG, start.isoformat(), end.isoformat())
 
 
+@app.get("/admin/day-report/{day}", tags=["officer"])
+def day_report(day: date, format: Literal["json", "html"] = "json", user: dict = Depends(role("officer"))):
+    """End-of-day report: entries per trail (tickets, walk-ins, start times, no-shows), the busiest gate hour,
+    trail conditions reported and the forecast checked against the spot counts. format=html: printable page."""
+    from src.serve.day_report import day_report as report, to_html
+    r = report(CFG, day.isoformat())
+    return Response(to_html(r), media_type="text/html") if format == "html" else r
+
+
 @app.get("/admin/recalibration", tags=["officer"])
 def recalibration(day: date | None = None, user: dict = Depends(role("officer"))):
     """N2: how the rangers' counts correct the forecast - the factors for `day` (default tomorrow) and, for the 60
@@ -558,6 +581,45 @@ def hold_start_time(body: StartTimeIn):
         raise HTTPException(409, str(e))
 
 
+@app.get("/start-time/check/{code}", tags=["public"])
+def recheck_start_time(code: str, at: datetime | None = None):
+    """Before leaving on the day: is the held start still fine, given the gate counts so far and any incident?"""
+    from src.control.start_times import held, recheck
+    h = held(code)
+    if h is None:
+        raise HTTPException(404, "Unknown code")
+    return recheck(code, when(at), *_day_expectation(date.fromisoformat(h["day"])))
+
+
+class MoveIn(BaseModel):
+    slot: str = Slot
+
+
+@app.post("/start-time/{code}/move", tags=["public"])
+def move_start_time(code: str, body: MoveIn):
+    from src.control.start_times import move
+    try:
+        return move(code, body.slot)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
+class IncidentIn(BaseModel):
+    trail: TrailName
+    level: Literal["good", "muddy", "partly_closed", "closed"]
+    note: str = Field(default="", max_length=200)
+
+
+@app.post("/incident", tags=["ranger"])
+def report_incident(body: IncidentIn, user: dict = Depends(role("ranger"))):
+    """A ranger reports what they see on a trail now (fallen tree, flooding, an injured walker...) for today.
+    Gate control, start times and today's tickets use the lower capacity at once; 'good' clears it."""
+    d = when(None).date().isoformat()
+    alerts = booking.set_condition(d, d, body.trail, body.level, body.note, user["username"])
+    auth.audit(user["username"], "incident", f"{body.trail} {body.level}: {body.note}")
+    return {"day": d, "trail": body.trail, "level": body.level, "alerts": alerts}
+
+
 @app.get("/gate/control/{day}", tags=["ranger"])
 def gate_control(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
     """Closed-loop gate control (MPC, RQ13): how many more people each trail can take in the current slot, and the
@@ -575,10 +637,17 @@ def gate_control(day: date, at: time | None = None, user: dict = Depends(role("r
     except (ValueError, KeyError):
         expected = float(pub.tickets.sum()) if pub is not None else 0.0
         basis = "the day's ticket plan"
-    out = MPCController(ec).caps_now(booking.entries(d), now.hour * 60 + now.minute, rain, expected)
-    return out | {"day": d, "time": now.strftime("%H:%M"), "expected_visitors": round(expected),
-                  "basis": f"Re-planned now from the gate counts and {basis}; keeps every section under "
-                           f"{round(100 * ec.c['safety_margin'])} % of its capacity. No sensors on the trail."}
+    cond = booking.conditions(d)
+    out = MPCController(ec).caps_now(booking.entries(d), now.hour * 60 + now.minute, rain, expected,
+                                     {t: v["factor"] for t, v in cond.items()})
+    names = CFG["area"]["trail_names"]
+    alerts = [f"{names.get(t, t)}: {v['level'].replace('_', ' ')}" + (f" ({v['note']})" if v["note"] else "")
+              + (" - no entry" if v["factor"] >= 1 else f" - {round(100 * v['factor'])} % less room")
+              for t, v in cond.items()]
+    return out | {"day": d, "time": now.strftime("%H:%M"), "expected_visitors": round(expected), "alerts": alerts,
+                  "basis": f"Re-planned now from the gate counts, {basis} and any reported trail conditions; keeps "
+                           f"every section under {round(100 * ec.c['safety_margin'])} % of its capacity. "
+                           f"No sensors on the trail."}
 
 
 class CheckpointIn(BaseModel):

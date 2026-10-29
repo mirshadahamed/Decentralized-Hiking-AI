@@ -1216,17 +1216,34 @@ class DayWeather {
 
 // ---------- RQ13: closed-loop gate control (MPC), re-planned every slot ----------
 class GateControl {
-  GateControl({required this.slot, required this.ratio, required this.trails, required this.basis});
+  GateControl({required this.slot, required this.ratio, required this.trails, required this.basis, this.alerts = const []});
 
   final String slot, basis;
   final double ratio; // arrivals so far / expected so far
   final List<Map<String, dynamic>> trails; // trail, trail_name, entered_this_slot, can_enter_now, closed_for_entry, next_slots
+  final List<String> alerts; // trail conditions / incidents reported today
 
   factory GateControl.fromJson(Map<String, dynamic> j) => GateControl(
         slot: j['slot'] as String? ?? '',
         ratio: _dbl(j['arrivals_vs_expected']),
         trails: [for (final t in j['trails'] as List? ?? []) t as Map<String, dynamic>],
         basis: j['basis'] as String? ?? '',
+        alerts: [for (final a in j['alerts'] as List? ?? []) a as String],
+      );
+}
+
+/// Morning re-check of a held start time (GET /start-time/check/{code}): ok, later (move to [suggested]), full, used.
+class StartTimeCheck {
+  StartTimeCheck({required this.status, required this.slot, required this.note, this.suggested});
+
+  final String status, slot, note;
+  final String? suggested;
+
+  factory StartTimeCheck.fromJson(Map<String, dynamic> j) => StartTimeCheck(
+        status: j['status'] as String? ?? 'ok',
+        slot: j['slot'] as String? ?? '',
+        note: j['note'] as String? ?? '',
+        suggested: j['suggested'] as String?,
       );
 }
 
@@ -1244,5 +1261,53 @@ class StartTimeSuggestion {
         suggested: j['suggested'] as String?,
         laterMin: j['later_than_wanted_min'] == null ? null : _int(j['later_than_wanted_min']),
         note: j['note'] as String? ?? '',
+      );
+}
+// ---------- P4: stage advice on a long open-access trail (GET /stages/{day}) ----------
+class StageInfo {
+  StageInfo({required this.stage, required this.name, required this.lengthKm, required this.level, required this.fullness,
+      required this.busiestHour, required this.busiestKm, required this.advice, this.quieterNeighbour});
+
+  final String stage, name, level, busiestHour, advice; // level: quiet / busy / crowded
+  final double lengthKm, fullness, busiestKm;
+  final String? quieterNeighbour;
+
+  factory StageInfo.fromJson(Map<String, dynamic> j) => StageInfo(
+        stage: j['stage'] as String,
+        name: j['name'] as String? ?? j['stage'] as String,
+        lengthKm: _dbl(j['length_km']),
+        level: j['level'] as String? ?? 'quiet',
+        fullness: _dbl(j['fullness']),
+        busiestHour: j['busiest_hour'] as String? ?? '',
+        busiestKm: _dbl(j['busiest_km']),
+        advice: j['advice'] as String? ?? '',
+        quieterNeighbour: j['quieter_neighbour'] as String?,
+      );
+}
+
+class StageOutlook {
+  StageOutlook({required this.stages, required this.basis});
+
+  final List<StageInfo> stages;
+  final String basis;
+
+  factory StageOutlook.fromJson(Map<String, dynamic> j) => StageOutlook(
+        stages: [for (final s in j['stages'] as List? ?? []) StageInfo.fromJson(s as Map<String, dynamic>)],
+        basis: j['basis'] as String? ?? '',
+      );
+}
+
+// ---------- item 12: end-of-day report (GET /admin/day-report/{day}) ----------
+class DayReport {
+  DayReport({required this.day, required this.entered, required this.lines});
+
+  final String day;
+  final int entered;
+  final List<String> lines;
+
+  factory DayReport.fromJson(Map<String, dynamic> j) => DayReport(
+        day: j['day'] as String? ?? '',
+        entered: _int(j['entered']),
+        lines: [for (final l in j['lines'] as List? ?? []) l as String],
       );
 }

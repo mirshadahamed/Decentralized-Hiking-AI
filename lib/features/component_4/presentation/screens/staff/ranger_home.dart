@@ -371,7 +371,14 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
                   ),
               ]),
               const SizedBox(height: 12),
-              FutureBuilder<GateControl?>(future: _control, builder: (context, c) => GateControlCard(c.data)),
+              FutureBuilder<GateControl?>(
+                  future: _control,
+                  builder: (context, c) => GateControlCard(c.data, onReport: () async {
+                        final api = C4Scope.of(context);
+                        if (await showDialog<bool>(context: context, builder: (_) => IncidentDialog(api: api)) == true) {
+                          setState(() => _future = _load());
+                        }
+                      })),
               FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
               FutureBuilder<TodayUpdate?>(future: _today, builder: (context, u) => TodayUpdateCard(u.data)),
               if (issues.isEmpty)
@@ -507,9 +514,10 @@ class TodayUpdateCard extends StatelessWidget {
 /// RQ13: closed-loop control at the gate - how many more people each trail can take in this slot, re-planned from
 /// the gate counts every time it is opened.
 class GateControlCard extends StatelessWidget {
-  const GateControlCard(this.c, {super.key});
+  const GateControlCard(this.c, {super.key, this.onReport});
 
   final GateControl? c;
+  final VoidCallback? onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -532,6 +540,15 @@ class GateControlCard extends StatelessWidget {
                 '${more ? 'Busier' : 'Quieter'} than expected so far (${(c.ratio * 100).round()} % of the forecast): '
                 'the plan has been adjusted.',
                 style: text.bodySmall),
+          for (final a in c.alerts)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(children: [
+                const Icon(Icons.warning_amber, size: 18, color: C4Colors.red),
+                const SizedBox(width: 6),
+                Expanded(child: Text(a, key: const Key('gate_alert'), style: text.bodyMedium)),
+              ]),
+            ),
           const SizedBox(height: 6),
           for (final t in c.trails)
             Padding(
@@ -548,8 +565,91 @@ class GateControlCard extends StatelessWidget {
             ),
           const SizedBox(height: 4),
           Text(c.basis, style: text.bodySmall),
+          if (onReport != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('report_incident'),
+                onPressed: onReport,
+                icon: const Icon(Icons.report_outlined),
+                label: const Text('Report a problem on a trail'),
+              ),
+            ),
         ]),
       ),
     );
   }
+}
+
+/// A ranger reports what they see on a trail now (today only): the gate limits and start times drop at once.
+class IncidentDialog extends StatefulWidget {
+  const IncidentDialog({super.key, required this.api});
+
+  /// Passed in: a dialog's route sits above the screen's C4Scope.
+  final C4Api api;
+
+  @override
+  State<IncidentDialog> createState() => _IncidentDialogState();
+}
+
+class _IncidentDialogState extends State<IncidentDialog> {
+  static const _levels = {'muddy': 'Muddy / slow', 'partly_closed': 'Partly closed', 'closed': 'Closed', 'good': 'All clear again'};
+  String? _trail;
+  String _level = 'partly_closed';
+  final _note = TextEditingController();
+  String? _error;
+  Map<String, String> _names = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.api.trailNames().then((n) {
+      if (mounted) setState(() => _names = n);
+    }, onError: (_) {});
+  }
+
+  String? get _pick => _trail ?? (_names.isEmpty ? null : _names.keys.first);
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    try {
+      await widget.api.reportIncident(_pick!, _level, _note.text.trim());
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Problem on a trail'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          DropdownButton<String>(
+            key: const Key('incident_trail'),
+            isExpanded: true,
+            value: _pick,
+            items: [for (final e in _names.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+            onChanged: (v) => setState(() => _trail = v),
+          ),
+          DropdownButton<String>(
+            key: const Key('incident_level'),
+            isExpanded: true,
+            value: _level,
+            items: [for (final e in _levels.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+            onChanged: (v) => setState(() => _level = v!),
+          ),
+          TextField(controller: _note, maxLength: 200, decoration: const InputDecoration(labelText: 'What happened (optional)')),
+          const Text("For today only. Entry limits and visitors' start times change at once."),
+          if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          FilledButton(key: const Key('incident_send'), onPressed: _pick == null ? null : _send, child: const Text('Report')),
+        ],
+      );
 }

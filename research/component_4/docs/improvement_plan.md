@@ -246,10 +246,13 @@ calibrated chances) → decide (MPC) → act (gate caps, holds, redirects, nudge
 | # | Work | Status |
 |---|---|---|
 | N1 | **MPC at the gate**: caps per trail and slot re-planned every slot from the gate counts, a feedback-corrected demand forecast and the response table; holds and redirects | **Done (RQ13):** 99.3 % over-capacity cut vs 62.7 % for a static quota, with more people admitted; booking (D) still better. Cost: 4 in 10 wait ~1.5 h at the gate. Live `GET /gate/control/{day}`; ranger card "Let in now" |
-| N2 | Recalibration loop: each day's counts vs forecast and the advice compliance update the model and the controller | Planned |
-| N3 | Personal nudges with incentives and a compliance model (RQ8 spread). **Next, from RQ13:** send the controller's start time to visitors' phones before they travel, so the gate wait becomes a later start | Next |
-| N4 | Network level: redirect demand across parks / Pekoe stages / days in the trip planner | Planned |
-| N5 | Phone-to-phone sync of counts and advice without a signal (Bluetooth / Wi-Fi Direct) | Planned |
+| N2 | Recalibration loop: each day's counts vs forecast and the advice compliance update the model and the controller | **Done (28 Oct):** per-section factors from the last 14 days of spot counts (shrunk to the park factor, clipped 0.5–2) correct the saved forecasts; raw kept for checking; `GET /admin/recalibration` with a leakage-free backtest; officer sees the corrected error. Compliance not yet used |
+| N3 | Personal nudges with incentives and a compliance model (RQ8 spread). **Next, from RQ13:** send the controller's start time to visitors' phones before they travel, so the gate wait becomes a later start | **Done (RQ13b, 28–29 Oct):** start-time card with a held code; the gate check-in accepts the code (on time = let in first, counted as an entry); morning re-check from the gate counts and incidents, with "Move to HH:MM" |
+| N4 | Network level: redirect demand across parks / Pekoe stages / days in the trip planner | **Partly:** gate advice sends groups to a trail with room (A3); Pekoe `GET /stages/{day}` gives each stage's busiest place / hour, when to start and a quieter neighbouring stage (P4). Cross-park redirects not done |
+| N5 | Phone-to-phone sync of counts and advice without a signal (Bluetooth / Wi-Fi Direct) | Planned (counts already queue offline and resend once, by client id) |
+| E1 | Events: a ranger reports a problem on a trail (`POST /incident`, today only); gate control, start times and today's tickets use the lower capacity at once, and the gate card shows the alert | **Done (29 Oct)** |
+| E2 | Stress tests of the controllers: demand surge, forecast ±30 %, rain not planned for (`evaluate_mpc --stress`) | **Done (29 Oct)**, results in `evaluation_results.md` |
+| E3 | End-of-day report for the park office (`GET /admin/day-report/{day}`, printable HTML; officer tab "Day report") | **Done (29 Oct)** |
 
 **Inputs needed for more accurate tests (priority order):**
 1. DWC daily ticket totals (past years).

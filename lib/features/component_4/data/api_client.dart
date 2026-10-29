@@ -248,6 +248,16 @@ class C4Api {
       ((await _send('POST', '/start-time', body: {'day': day(d), 'trail': trail, 'slot': slot, 'group_size': size}))
           as Map<String, dynamic>)['code'] as String;
 
+  /// On the day, before leaving: is the held start still fine after the gate counts and any incident so far?
+  Future<StartTimeCheck> recheckStartTime(String code) async =>
+      StartTimeCheck.fromJson(await _send('GET', '/start-time/check/$code') as Map<String, dynamic>);
+
+  Future<void> moveStartTime(String code, String slot) async => _send('POST', '/start-time/$code/move', body: {'slot': slot});
+
+  /// Ranger: report a problem on a trail now (today only); gate control and start times use it at once.
+  Future<void> reportIncident(String trail, String level, String note) async =>
+      _send('POST', '/incident', body: {'trail': trail, 'level': level, 'note': note});
+
   /// Ranger: how many more people each trail can take now, re-planned from the gate counts (MPC, RQ13).
   Future<GateControl> gateControl(DateTime d, {String? at}) async => GateControl.fromJson(
       await _send('GET', '/gate/control/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
@@ -259,6 +269,14 @@ class C4Api {
   /// The weather of a date: observed, forecast or typical, and what it does to the crowd and the safe limit.
   Future<DayWeather> weather(DateTime d) async =>
       DayWeather.fromJson(await _send('GET', '/weather/${day(d)}') as Map<String, dynamic>);
+
+  /// Long open-access trails (Pekoe): how busy each stage gets and when to start (404 on other parks).
+  Future<StageOutlook> stages(DateTime d) async =>
+      StageOutlook.fromJson(await _send('GET', '/stages/${day(d)}') as Map<String, dynamic>);
+
+  /// Officer: the end-of-day report (entries, start times, no-shows, conditions, forecast check).
+  Future<DayReport> dayReport(DateTime d) async =>
+      DayReport.fromJson(await _send('GET', '/admin/day-report/${day(d)}') as Map<String, dynamic>);
 
   /// Sections a ranger can count on.
   Future<List<SegmentInfo>> segments() async =>

@@ -72,3 +72,24 @@ def test_gate_accepts_start_time_codes(tmp_path):
     r = booking.check_in("XYZ234", datetime(2026, 11, 2, 9, 0), late)
     assert not r["ok"] and not r["priority"] and "queue" in r["reason"]
     assert booking.check_in("NOPE22", datetime(2026, 11, 2, 9, 0), late)["reason"] == "Unknown code"
+
+
+def test_morning_recheck_moves_a_hold_when_the_trail_is_closed(tmp_path):
+    """An incident closes the trail on the day: the re-check says no room (or later) instead of 'still fine'."""
+    from datetime import datetime
+    from src.control import booking
+    from src.control.slots import build_control
+    from src.control.start_times import held, move, recheck
+    db = tmp_path / "b.sqlite"
+    trail = build_control().trails[0]
+    with booking.closing(booking._connect(db)) as con:
+        con.execute("INSERT INTO start_advice (code, day, trail, slot, group_size, created) VALUES "
+                    "('QWE234','2026-11-02',?,'09:00',2,'2026-11-01T10:00:00')", (trail,))
+        con.commit()
+    now = datetime(2026, 11, 2, 7, 0)
+    assert recheck("QWE234", now, 0.0, 600.0, db)["status"] == "ok"
+    assert recheck("QWE234", datetime(2026, 11, 1, 20, 0), 0.0, 600.0, db)["status"] == "ok"   # not the day yet
+    booking.set_condition("2026-11-02", "2026-11-02", trail, "closed", "fallen tree", "r1", db)
+    r = recheck("QWE234", now, 0.0, 600.0, db)
+    assert r["status"] == "full" and "closed" in r["note"]
+    assert move("QWE234", "10:00", db)["slot"] == "10:00" and held("qwe234", db)["slot"] == "10:00"

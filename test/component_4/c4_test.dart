@@ -488,10 +488,31 @@ class _StartApi extends FakeApi {
     return 'K7Q2ZP';
   }
 
+  String? moved;
+  (String, String)? incident;
+
+  @override
+  Future<StartTimeCheck> recheckStartTime(String code) async => StartTimeCheck.fromJson({
+        'status': 'later', 'slot': '08:30', 'suggested': '09:30',
+        'note': 'Busier than planned (more people came than expected): start at 09:30 instead and you still go in first.'});
+
+  @override
+  Future<void> moveStartTime(String code, String slot) async => moved = slot;
+
+  @override
+  Future<void> reportIncident(String trail, String level, String note) async => incident = (trail, level);
+
   @override
   Future<CheckInResult> checkIn(String code, {DateTime? at}) async => CheckInResult.fromJson({
         'ok': true, 'reason': 'On time: let in first', 'trail': 'main', 'slot': '08:30', 'group_size': 3,
         'kind': 'start_time', 'priority': true});
+}
+
+class _ReportApi extends FakeApi {
+  @override
+  Future<DayReport> dayReport(DateTime d) async => DayReport.fromJson({
+        'day': C4Api.day(d), 'entered': 132,
+        'lines': ['132 people entered; busiest hour at the gate 07:00 (60 people).', 'No spot counts today.']});
 }
 
 class _AdvisoryApi extends FakeApi {
@@ -1029,6 +1050,62 @@ void main() {
     await t.pumpAndSettle();
     expect(api.held, ('main', '08:30', 3));
     expect(find.textContaining('show code K7Q2ZP at the gate at 08:30'), findsOneWidget);
+    await t.tap(find.byKey(const Key('start_recheck')));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Busier than planned'), findsOneWidget);
+    await t.tap(find.byKey(const Key('start_move')));
+    await t.pumpAndSettle();
+    expect(api.moved, '09:30');
+    expect(find.textContaining('show code K7Q2ZP at the gate at 09:30'), findsOneWidget);
+  });
+
+  testWidgets('day report: the lines of the day and a copy button', (t) async {
+    await t.pumpWidget(wrap(const Scaffold(body: DayReportTab()), _ReportApi()));
+    await t.pumpAndSettle();
+    expect(find.text('132 people entered; busiest hour at the gate 07:00 (60 people).'), findsOneWidget);
+    expect(find.byKey(const Key('report_copy')), findsOneWidget);
+  });
+
+  testWidgets('stages: the chosen stage first, busy stages with a quieter neighbour, the rest counted', (t) async {
+    final o = StageOutlook.fromJson({
+      'basis': 'Planning model',
+      'stages': [
+        {'stage': 's14', 'name': 'Stage 14', 'length_km': 15.2, 'level': 'quiet', 'fullness': 0.2, 'busiest_hour': '09:00',
+          'busiest_km': 3.0, 'advice': 'Quiet all day.'},
+        {'stage': 's15', 'name': 'Stage 15', 'length_km': 12.0, 'level': 'crowded', 'fullness': 1.4, 'busiest_hour': '10:00',
+          'busiest_km': 6.0, 'advice': 'Crowded from about 09:00 to 12:00.', 'quieter_neighbour': 's14'},
+        {'stage': 's10', 'name': 'Stage 10', 'length_km': 14.0, 'level': 'busy', 'fullness': 0.7, 'busiest_hour': '08:00',
+          'busiest_km': 2.0, 'advice': 'Busy from about 08:00.'},
+      ],
+    });
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: StagesCard(outlook: o, selected: 's10')))));
+    expect(find.textContaining('Stage 10 · 14 km · busy'), findsOneWidget);
+    expect(find.textContaining('Quieter that day: Stage 14'), findsOneWidget);
+    expect(find.text('1 of 3 stages quiet all day.'), findsOneWidget);
+  });
+
+  testWidgets('incident: a ranger reports a closed trail; gate control shows the alert', (t) async {
+    final api = _StartApi();
+    var reported = false;
+    final c = GateControl.fromJson({
+      'slot': '07:30', 'arrivals_vs_expected': 1.0, 'basis': 'Re-planned now',
+      'alerts': ['Kirigalpotta: closed (fallen tree) - no entry'],
+      'trails': [
+        {'trail': 'kirigalpotta', 'trail_name': 'Kirigalpotta', 'entered_this_slot': 0, 'can_enter_now': 0,
+          'closed_for_entry': true, 'next_slots': []},
+      ],
+    });
+    await t.pumpWidget(wrap(Scaffold(body: Builder(builder: (context) => GateControlCard(c, onReport: () async {
+          reported = await showDialog<bool>(context: context, builder: (_) => IncidentDialog(api: api)) ?? false;
+        }))), api));
+    expect(find.textContaining('fallen tree'), findsOneWidget);
+    expect(find.text('closed for entry'), findsOneWidget);
+    await t.tap(find.byKey(const Key('report_incident')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('incident_send')));
+    await t.pumpAndSettle();
+    expect(reported, isTrue);
+    expect(api.incident?.$2, 'partly_closed');
   });
 
   testWidgets('let in now: places per trail from the closed-loop controller, busier than expected', (t) async {

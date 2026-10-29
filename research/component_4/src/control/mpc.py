@@ -126,10 +126,20 @@ class MPCController:
             stats["refused"] += size[g]
         return (np.array(out_size, float), np.array(out_gate, float), np.array(out_opt, int), stats)
 
-    def day_plan(self, rain_share: float, expected_visitors: float) -> np.ndarray:
+    def _capacity(self, rain_share: float, conditions: dict | None = None) -> np.ndarray:
+        """Section capacity for the day's rain, lowered on trails with a reported condition (share removed:
+        capacity.condition_levels; 1.0 = closed). An incident reported now changes the next plan at once."""
+        C = self.ec.capacity(rain_share)
+        for t, f in (conditions or {}).items():
+            on = self.ec.seg.trail.values == t
+            C = np.where(on & np.isfinite(C), np.where(np.isfinite(C), C, 0.0) * max(0.0, 1.0 - f),
+                         np.where(on & (f >= 1.0), 0.0, C))
+        return C
+
+    def day_plan(self, rain_share: float, expected_visitors: float, conditions: dict | None = None) -> np.ndarray:
         """Caps [trail, slot] for the whole day from the forecast alone (planned the evening before)."""
         ec = self.ec
-        K, C = ec.response(rain_share), ec.capacity(rain_share)
+        K, C = ec.response(rain_share), self._capacity(rain_share, conditions)
         H, self.H = self.H, len(ec.slots)
         try:
             return self._plan(0, np.zeros((ec.sim.S, ec.n_bins)), self.pattern * expected_visitors, K, C)
@@ -167,11 +177,14 @@ class MPCController:
                 on_plan[g] = True
         return gate, {"advised": advised, "moved_by_advice": moved, "on_plan": on_plan}
 
-    def caps_now(self, admitted, now_min: int, rain_share: float, expected_visitors: float) -> dict:
+    def caps_now(self, admitted, now_min: int, rain_share: float, expected_visitors: float,
+                 conditions: dict | None = None) -> dict:
         """Live use at the gate: from everyone through the gate so far (DataFrame trail, gate_min, size), the places
-        each trail can still take in the current slot and the caps planned for the next slots."""
+        each trail can still take in the current slot and the caps planned for the next slots.
+        conditions: {trail: share of capacity removed} reported today (mud, incident, closure)."""
         ec = self.ec
-        K, C = ec.response(rain_share), ec.capacity(rain_share)
+        K, C = ec.response(rain_share), self._capacity(rain_share, conditions)
+        conditions = conditions or {}
         R, S_ = len(ec.trails), len(ec.slots)
         k = int(ec.slot_of(np.array([now_min]))[0])
         inside = np.zeros((ec.sim.S, ec.n_bins))
@@ -197,9 +210,11 @@ class MPCController:
         names = ec.cfg["area"]["trail_names"]
         return {"slot": lbl[k], "arrivals_vs_expected": round(ratio, 2),
                 "trails": [{"trail": t, "trail_name": names.get(t, t), "entered_this_slot": int(used[r]),
-                            "can_enter_now": int(max(0.0, np.floor(a[r, k] - used[r]))) if ec.allowed[r, k] else 0,
-                            "closed_for_entry": not bool(ec.allowed[r, k]),
-                            "next_slots": [{"slot": lbl[j], "cap": int(np.floor(a[r, j]))}
+                            "can_enter_now": int(max(0.0, np.floor(a[r, k] - used[r])))
+                            if ec.allowed[r, k] and conditions.get(t, 0.0) < 1.0 else 0,
+                            "closed_for_entry": not bool(ec.allowed[r, k]) or conditions.get(t, 0.0) >= 1.0,
+                            "capacity_removed": conditions.get(t, 0.0),
+                            "next_slots": [{"slot": lbl[j], "cap": int(np.floor(a[r, j])) if conditions.get(t, 0.0) < 1.0 else 0}
                                            for j in range(k + 1, min(k + self.H, S_))]}
                            for r, t in enumerate(ec.trails)]}
 
