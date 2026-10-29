@@ -587,6 +587,46 @@ Priority vs no priority (60 % with the app), per day:
 
 **Next:** re-send start times during the morning from the live gate counts, so the advice follows the day.
 
+### RQ13c – Stress tests: what the controllers did not plan for (`evaluate_mpc --world s1 --stress`, 29 Oct 2026)
+Realistic world, 2025, run `20261029_232929_mpc_stress_s1`. Over-capacity cut vs no control / people admitted / gate
+wait (person-hours):
+
+| scenario | B static quota | D booking | MPC (gate control) | N3p (start times + priority) |
+|---|---|---|---|---|
+| none | 62.7 % / 57.1 % / 0 | 99.6 % / 63.0 % / 0 | 99.3 % / 59.0 % / 148k | 99.3 % / 59.5 % / 85k |
+| surge: 50 % more people every day | 76.6 % / 44.3 % / 0 | 99.8 % / 52.0 % / 0 | 99.6 % / 47.8 % / 197k | 99.6 % / 48.3 % / 125k |
+| visitor forecast 30 % too low | = none | = none | 99.3 % / 58.9 % / 148k | 99.3 % / 59.6 % / 97k |
+| visitor forecast 30 % too high | = none | = none | 99.3 % / 59.0 % / 148k | 99.3 % / 59.5 % / 77k |
+| rain not planned for (day planned dry) | = none | 90.3 % / 70.5 % / 0 | 89.0 % / 67.0 % / 158k | 89.0 % / 67.4 % / 92k |
+
+- **Surges and wrong visitor forecasts:** gate control still cuts over-capacity by 99 % or more; the gate counts
+  correct the forecast (feedback). A wrong forecast only changes how long people wait for start times (a too-low
+  forecast gives out too many early start times: 97k vs 85k person-hours).
+- **Rain the plan did not expect is the weak spot:** every controller lets ~10 % of the overcrowding through
+  (18–21k person-hours), because capacity drops and nobody told the plan. Remedy in the live system: the rain
+  forecast is refreshed every evening, and a ranger can lower the limits during the day (`POST /incident`, E1).
+- B and D do not use the visitor forecast, so the forecast scenarios leave them unchanged.
+
+## RQ1 on the Pekoe Trail – a long, sparse trail (`C4_PARK=pekoe_trail`, `src.run_benchmark`, 28 Oct 2026)
+323 km, 22 stages, ~163 walkers a day (simulated, `docs/assumptions_pekoe_trail.md`); seed 42, no ARIMA.
+
+| sections | model | temporal MAE | temporal RMSE | spatial MAE (4 folds) |
+|---|---|---|---|---|
+| 161 × 2 km (`20261027_231345_benchmark`) | HA | 0.415 | 1.01 | 0.53 |
+| | LSTM / GRU / ST-GNN | 0.348 | 1.25 | 0.35 |
+| 54 × 6 km (`20261028_214959_benchmark_6km`) | HA | 0.993 | 2.12 | 1.32 |
+| | LSTM | 0.846 | 2.21 | **0.98** |
+| | GRU (no graph) | 0.843 | 2.17 | 1.39 |
+| | ST-GNN | 0.844 | 2.18 | 1.28 |
+
+- **2 km sections are too fine:** most sections are empty most hours, every network learned "empty" (flat validation
+  loss) and lost to HA on RMSE and at the busy places.
+- **6 km sections:** the networks learn and beat HA by ~15 % on MAE over time (p_holm < 0.001); ST-GNN = LSTM = GRU
+  (n.s.). On held-out sections the ST-GNN beats the no-graph GRU (−0.11, p < 0.001) but not the LSTM; fold 2
+  (the busy Haputale–Ella stages) is where every network struggles (MAE 1.8–3.4 vs ~0.7 on other folds).
+- **Meaning:** on a trail with few walkers the graph adds little; the bottleneck problem is at the few busy stages.
+  Pekoe forecasts should be read per stage, and its control is advisory stage advice (P4), not section quotas.
+
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
 Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE

@@ -1,0 +1,390 @@
+{
+  "tag": "benchmark",
+  "git": "bd04e0bb",
+  "created": "2026-10-27T23:13:45.169098",
+  "config": {
+    "seed": 42,
+    "destination": {
+      "kind": "long_distance_trail",
+      "region": "Central and Uva Provinces \u00b7 Kandy, Nuwara Eliya and Badulla Districts",
+      "summary": "A 300 km walking trail through the tea country in 22 stages, on old estate roads and paths from Kandy past Horton Plains, Haputale and Ella to Nuwara Eliya.",
+      "elevation": "about 600 m \u2013 2,100 m",
+      "best_time": "January to April is driest across the hill country. The western stages get the south-west monsoon (May\u2013September), the eastern stages around Ella the north-east monsoon (November\u2013January).",
+      "getting_there": "Stage starts are tea-estate villages and towns reached by road; the hill-country railway stops near many of them (e.g. Nanu Oya, Pattipola, Haputale, Ella).",
+      "facts": [
+        "Each stage is 9\u201321 km, about 4\u20138 hours of walking",
+        "Open access: no tickets and no gate; walkers start at any stage",
+        "The stages around Ella and Haputale share paths with day visitors",
+        "Walk in daylight and leave early: afternoon rain is common"
+      ],
+      "accent": "#2E7D32"
+    },
+    "area": {
+      "name": "The Pekoe Trail",
+      "bbox": [
+        80.55,
+        6.7,
+        81.15,
+        7.35
+      ],
+      "dem_bbox": [
+        80.55,
+        6.7,
+        81.15,
+        7.35
+      ],
+      "weather_point": [
+        6.95,
+        80.8
+      ],
+      "crs_metric": "EPSG:32644",
+      "pois": {},
+      "routes": {},
+      "road_links": [],
+      "trail_names": {
+        "s01": "Stage 1 \u00b7 Hantana \u2013 Galaha",
+        "s02": "Stage 2 \u00b7 Galaha \u2013 Loolkandura",
+        "s03": "Stage 3 \u00b7 Loolkandura \u2013 Tawalantenne",
+        "s04": "Stage 4 \u00b7 Tawalantenne \u2013 Pundaloya",
+        "s05": "Stage 5 \u00b7 Pundaloya \u2013 Wattagoda",
+        "s06": "Stage 6 \u00b7 Wattagoda \u2013 Kotagala",
+        "s07": "Stage 7 \u00b7 Kotagala \u2013 Norwood",
+        "s08": "Stage 8 \u00b7 Norwood \u2013 Bogawantalawa",
+        "s09": "Stage 9 \u00b7 Bogawantalawa \u2013 Dayagama",
+        "s10": "Stage 10 \u00b7 Dayagama \u2013 Horton Plains",
+        "s11": "Stage 11 \u00b7 Horton Plains \u2013 Udaweriya",
+        "s12": "Stage 12 \u00b7 Udaweriya \u2013 Haputale",
+        "s13": "Stage 13 \u00b7 Haputale \u2013 St. Catherine",
+        "s14": "Stage 14 \u00b7 Lipton's Seat \u2013 Makulella",
+        "s15": "Stage 15 \u00b7 Makulella \u2013 Ella",
+        "s16": "Stage 16 \u00b7 Ella \u2013 Demodera",
+        "s17": "Stage 17 \u00b7 Demodera \u2013 Hali-Ela",
+        "s18": "Stage 18 \u00b7 Hali-Ela \u2013 Ettampitiya",
+        "s19": "Stage 19 \u00b7 Ettampitiya \u2013 Lunuwatte",
+        "s20": "Stage 20 \u00b7 Lunuwatte \u2013 Uda Pussellawa",
+        "s21": "Stage 21 \u00b7 Uda Pussellawa \u2013 Kandapola",
+        "s22": "Stage 22 \u00b7 Kandapola \u2013 Pedro Estate"
+      },
+      "trail_info": {},
+      "main_trail": "s15",
+      "focus_poi": "little_adams_peak",
+      "poi_roles": {
+        "viewpoint": [
+          "liptons_seat",
+          "little_adams_peak",
+          "nine_arch_bridge",
+          "ella_rock",
+          "haputale",
+          "ella"
+        ],
+        "access": [
+          "start_s01",
+          "start_s02",
+          "start_s03",
+          "start_s04",
+          "start_s05",
+          "start_s06",
+          "start_s07",
+          "start_s08",
+          "start_s09",
+          "start_s10",
+          "start_s11",
+          "start_s12",
+          "start_s13",
+          "start_s14",
+          "start_s15",
+          "start_s16",
+          "start_s17",
+          "start_s18",
+          "start_s19",
+          "start_s20",
+          "start_s21",
+          "start_s22",
+          "trail_end"
+        ]
+      },
+      "poi_labels": {
+        "liptons_seat": "Lipton's Seat",
+        "little_adams_peak": "Little Adam's Peak",
+        "nine_arch_bridge": "Nine Arch Bridge",
+        "ella_rock": "Ella Rock",
+        "haputale": "Haputale",
+        "ella": "Ella",
+        "trail_end": "Pedro Estate (trail end)"
+      },
+      "stage_relations": {
+        "s01": 19413305,
+        "s02": 19413304,
+        "s03": 19413303,
+        "s04": 19413302,
+        "s05": 19413301,
+        "s06": 19413844,
+        "s07": 19413900,
+        "s08": 19414206,
+        "s09": 19414205,
+        "s10": 19414315,
+        "s11": 19414328,
+        "s12": 19414512,
+        "s13": 19414511,
+        "s14": 19414580,
+        "s15": 19414634,
+        "s16": 19414688,
+        "s17": 19414802,
+        "s18": 19414994,
+        "s19": 19415123,
+        "s20": 19415211,
+        "s21": 19415265,
+        "s22": 19415325
+      },
+      "hotspots": {
+        "liptons_seat": "Lipton's Seat",
+        "little_adams_peak": "Little Adam's Peak",
+        "nine_arch_bridge": "Nine Arch Bridge",
+        "ella_rock": "Ella Rock",
+        "haputale": "Haputale",
+        "ella": "Ella"
+      }
+    },
+    "graph": {
+      "target_segment_m": 2000,
+      "poi_snap_m": 500,
+      "max_grade": 0.3,
+      "stage_join_m": 2000
+    },
+    "dates": {
+      "start": "2022-01-01",
+      "end": "2025-12-31",
+      "train_end": "2023-12-31",
+      "val_end": "2024-12-31"
+    },
+    "simulator": {
+      "base_daily_visitors": 120,
+      "dow_multiplier": [
+        1.0,
+        0.9,
+        0.9,
+        0.95,
+        1.1,
+        1.6,
+        1.5
+      ],
+      "holiday_multiplier": 1.5,
+      "poya_multiplier": 1.3,
+      "long_weekend_multiplier": 1.4,
+      "school_holiday_multiplier": 1.2,
+      "month_multiplier": [
+        1.4,
+        1.5,
+        1.4,
+        1.3,
+        0.7,
+        0.6,
+        0.8,
+        1.0,
+        0.8,
+        0.7,
+        0.8,
+        1.3
+      ],
+      "daily_noise_sd": 0.25,
+      "morning_rain_k": 0.05,
+      "min_rain_multiplier": 0.35,
+      "group_size_poisson_mean": 1.5,
+      "arrival_early_share": 0.8,
+      "arrival_early_mean_h": 7.0,
+      "arrival_early_sd_h": 0.75,
+      "arrival_late_range_h": [
+        8.5,
+        10.5
+      ],
+      "gate_open_h": 6.0,
+      "gate_last_entry_h": 11.0,
+      "route_share": {
+        "s01": 0.05,
+        "s02": 0.03,
+        "s03": 0.03,
+        "s04": 0.03,
+        "s05": 0.03,
+        "s06": 0.03,
+        "s07": 0.03,
+        "s08": 0.03,
+        "s09": 0.03,
+        "s10": 0.05,
+        "s11": 0.06,
+        "s12": 0.05,
+        "s13": 0.07,
+        "s14": 0.08,
+        "s15": 0.12,
+        "s16": 0.08,
+        "s17": 0.04,
+        "s18": 0.03,
+        "s19": 0.03,
+        "s20": 0.03,
+        "s21": 0.03,
+        "s22": 0.04
+      },
+      "route_last_entry_h": {},
+      "route_start_offset_min": {},
+      "reversible_routes": [],
+      "standard_direction_share": 0.85,
+      "walker_speed_sd": 0.12,
+      "leisure_speed_factor": 0.75,
+      "rain_light_mm": 0.5,
+      "rain_heavy_mm": 3.0,
+      "rain_light_speed": 0.85,
+      "rain_heavy_speed": 0.7,
+      "crowd_rho0_per_m": 0.4,
+      "crowd_min_speed": 0.4,
+      "dwell_minutes": {
+        "liptons_seat": [
+          30,
+          0.4
+        ],
+        "little_adams_peak": [
+          25,
+          0.4
+        ],
+        "nine_arch_bridge": [
+          20,
+          0.4
+        ],
+        "ella_rock": [
+          25,
+          0.4
+        ]
+      },
+      "obs_noise_sd": 0.1,
+      "realism": {
+        "enabled": false,
+        "demand_ar_phi": 0.7,
+        "demand_sd": 0.25,
+        "arrival_shift_sd_min": 40,
+        "route_share_concentration": 40,
+        "bursts_per_day": 0.4,
+        "burst_people": [
+          15,
+          45
+        ],
+        "burst_window_h": [
+          7.0,
+          9.5
+        ],
+        "burst_main_share": 0.8,
+        "incident_prob": 0.08,
+        "incident_start_h": [
+          7,
+          12
+        ],
+        "incident_hours": [
+          1,
+          4
+        ],
+        "incident_speed": 0.3,
+        "forecast_rain_sd": 0.7,
+        "forecast_rain_shift_prob": 0.25,
+        "forecast_temp_sd": 1.5
+      }
+    },
+    "task": {
+      "input_steps": 24,
+      "horizon": 24,
+      "open_hours": [
+        6,
+        18
+      ],
+      "spatial_blocks": 4
+    },
+    "train": {
+      "hidden": 32,
+      "batch_size": 64,
+      "lr": 0.002,
+      "epochs": 20,
+      "patience": 4,
+      "train_origin_stride": 4,
+      "seeds": [
+        42
+      ],
+      "spatial_seeds": [
+        42
+      ],
+      "peak_hours": [
+        7,
+        11
+      ]
+    },
+    "planning": {
+      "typical_start_h": 7.0,
+      "later_note": "Start early: most stages take 5-7 hours and afternoon rain is common.",
+      "access_note": "No tickets: walk any stage. Check the weather for your stage before setting off."
+    },
+    "capacity": {
+      "space_per_person_m": 2.0,
+      "group_size": 6,
+      "group_gap_m": 100,
+      "open_from_h": 6,
+      "open_hours": 12,
+      "rain_mm": 0.5,
+      "management_capacity": 0.7,
+      "busy_utilisation": 0.8,
+      "wet_ground": {
+        "days": 3,
+        "saturation_mm": 60
+      },
+      "condition_levels": {
+        "good": 0.0,
+        "muddy": 0.2,
+        "partly_closed": 0.5,
+        "closed": 1.0
+      },
+      "main_trail": "s15"
+    },
+    "control": {
+      "slot_minutes": 30,
+      "first_slot_h": 6.0,
+      "last_slot_h": 11.0,
+      "bin_minutes": 30,
+      "viewpoint_min_at_once": 40,
+      "exempt_access_points": true,
+      "use_daily_quota": true,
+      "default_quota_rule": "forecast",
+      "safety_margin": 0.9,
+      "capacity_scale": 1.0,
+      "walk_in_share": 0.2,
+      "slot_window_min": 15,
+      "response_walkers": 300,
+      "max_slot_shift_h": 2,
+      "accept_trail_swap": 0.3,
+      "booking_horizon_days": 90,
+      "booking_mode": "required"
+    },
+    "live": {
+      "horizon_days": 90,
+      "forecast_days": 16,
+      "calendar_extra_days": 120,
+      "dwc_totals_csv": "data/live/dwc_daily_totals.csv",
+      "model_input": "gate"
+    },
+    "api": {
+      "allow_time_override": true,
+      "cors_origins": [
+        "*"
+      ]
+    },
+    "arima": {
+      "order": [
+        1,
+        0,
+        1
+      ],
+      "seasonal_order": [
+        1,
+        1,
+        1,
+        24
+      ],
+      "fit_days": 60,
+      "history_days": 14
+    },
+    "park": "pekoe_trail"
+  }
+}
