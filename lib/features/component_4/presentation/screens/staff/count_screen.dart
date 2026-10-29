@@ -1,20 +1,25 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../../services/count_store.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/scan_page.dart';
 
 /// Ranger: count the walkers on a section (A4). Works without a signal: counts wait on the phone and are sent
 /// when it is back. These counts are the park's first sensor record and check the forecast.
 class CountTab extends StatefulWidget {
-  const CountTab({super.key, this.store, this.now});
+  const CountTab({super.key, this.store, this.now, this.scan});
 
   final CountStore? store;
   final DateTime Function()? now;
+
+  /// Reads a QR code (default: the camera); tests pass a fake.
+  final Future<String?> Function(BuildContext context)? scan;
 
   @override
   State<CountTab> createState() => _CountTabState();
@@ -86,6 +91,49 @@ class _CountTabState extends State<CountTab> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sent $sent · waiting $left')));
   }
 
+  /// N5: show the waiting counts as a QR code for another ranger's phone.
+  Future<void> _share() async {
+    final counts = await _store.pending();
+    if (!mounted || counts.isEmpty) return;
+    final n = counts.length.clamp(0, CountStore.shareMax);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Share $n count${n == 1 ? '' : 's'}'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          SizedBox(
+            width: 260,
+            height: 260,
+            child: QrImageView(key: const Key('count_share_qr'), data: CountStore.shareCode(counts), size: 260),
+          ),
+          const SizedBox(height: C4Space.s),
+          const Text('The other ranger taps "Receive by QR" and scans this. Whichever phone gets a signal first sends '
+              'the counts; each is stored once.'),
+          if (counts.length > CountStore.shareMax)
+            Text('Only the first ${CountStore.shareMax}: share again after sending them.'),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done'))],
+      ),
+    );
+  }
+
+  /// N5: take counts from another ranger's phone (their QR code) into this phone's queue.
+  Future<void> _receive() async {
+    final code = await (widget.scan?.call(context) ??
+        Navigator.of(context).push<String>(
+            MaterialPageRoute(builder: (_) => const ScanPage(title: "Scan the other ranger's counts"))));
+    if (code == null || !mounted) return;
+    try {
+      final added = await _store.receive(code);
+      final w = (await _store.pending()).length;
+      if (!mounted) return;
+      setState(() => _waiting = w);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$added new count${added == 1 ? '' : 's'} received')));
+    } on FormatException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -150,6 +198,13 @@ class _CountTabState extends State<CountTab> {
         const SizedBox(width: 6),
         Expanded(child: Text(_waiting == 0 ? 'All counts sent' : '$_waiting waiting to be sent', key: const Key('count_waiting'))),
         if (_waiting > 0) TextButton(onPressed: _sync, child: const Text('Send now')),
+      ]),
+      Wrap(spacing: C4Space.s, children: [
+        if (_waiting > 0)
+          TextButton.icon(key: const Key('count_share'), onPressed: _share, icon: const Icon(Icons.qr_code), label: const Text('Share by QR')),
+        if (canScanQr || widget.scan != null)
+          TextButton.icon(
+              key: const Key('count_receive'), onPressed: _receive, icon: const Icon(Icons.qr_code_scanner), label: const Text('Receive by QR')),
       ]),
       const IconNote(
           icon: Icons.star,

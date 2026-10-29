@@ -6,6 +6,7 @@ import 'package:decentralized_hiking_ai/app/app.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/component4_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/data/api_client.dart';
 import 'package:decentralized_hiking_ai/features/component_4/models/models.dart';
+import 'package:decentralized_hiking_ai/features/component_4/services/count_store.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/bottleneck_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/capacity_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
@@ -970,6 +971,10 @@ void main() {
     expect(find.byKey(const Key('walk_pick')), findsOneWidget);
     expect(find.text('What most visitors will do'), findsOneWidget);
     expect(find.textContaining('Fullest place on the way'), findsWidgets);
+    await t.tap(find.byKey(const Key('tab_heat')));                      // whole day: sections x hours
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('heat_grid')), findsOneWidget);
+    expect(find.textContaining('sections stay quiet all day'), findsOneWidget);
 
     api.online = false;                                                  // airplane mode: the stored pack
     await open();
@@ -1057,6 +1062,50 @@ void main() {
     await t.pumpAndSettle();
     expect(api.moved, '09:30');
     expect(find.textContaining('show code K7Q2ZP at the gate at 09:30'), findsOneWidget);
+  });
+
+  testWidgets('network: a busy park shows a quieter day and another park with room', (t) async {
+    final n = NetworkAdvice.fromJson({'for_park': {
+      'level': 'full', 'note': "Horton Plains is expected to be over its safe limit on 2027-01-10.",
+      'other_days': [{'day': '2027-01-09', 'load': 0.7}],
+      'other_parks': [{'park': 'yala', 'name': 'Yala', 'load': 0.55}]}});
+    expect(n.busy, isTrue);
+    await t.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: NetworkCard(advice: n)))));
+    expect(find.text('Expected to be over its limit'), findsOneWidget);
+    expect(find.text('2027-01-09'), findsOneWidget);
+    expect(find.text('55 % of the safe limit that day'), findsOneWidget);
+  });
+
+  test('count share: a QR code carries the waiting counts; receiving skips ones already on the phone', () async {
+    final store = CountStore();
+    final a = SpotCount(day: DateTime(2026, 12, 12), segId: 25, time: '08:15', count: 64, clientId: 'a1');
+    final b = SpotCount(day: DateTime(2026, 12, 12), segId: 3, time: '08:40', count: 12, clientId: 'b2');
+    final code = CountStore.shareCode([a, b]);
+    expect(code.startsWith(CountStore.sharePrefix), isTrue);
+    await store.add(a);                                                   // this phone already has one of them
+    expect(await store.receive(code), 1);
+    final p = await store.pending();
+    expect([for (final c in p) c.clientId], ['a1', 'b2']);
+    expect(p.last.count, 12);
+    expect(p.last.time, '08:40');
+    expect(() => store.receive('AAAA2222'), throwsFormatException);
+  });
+
+  testWidgets('count tab: share waiting counts by QR, receive from another phone', (t) async {
+    t.view.physicalSize = const Size(1179, 2556);
+    t.view.devicePixelRatio = 3;
+    addTearDown(t.view.reset);
+    final other = CountStore.shareCode([SpotCount(day: DateTime(2026, 10, 22), segId: 25, time: '09:00', count: 30, clientId: 'x9')]);
+    final api = _CountApi()..online = false;
+    await t.pumpWidget(wrap(Scaffold(body: CountTab(now: () => DateTime(2026, 10, 22, 10, 15), scan: (_) async => other)), api));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('count_receive')));
+    await t.pumpAndSettle();
+    expect(find.text('1 new count received'), findsOneWidget);
+    expect(find.text('1 waiting to be sent'), findsOneWidget);
+    await t.tap(find.byKey(const Key('count_share')));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('count_share_qr')), findsOneWidget);
   });
 
   testWidgets('day report: the lines of the day and a copy button', (t) async {

@@ -107,7 +107,7 @@ class _BottleneckViewState extends State<BottleneckView> {
           final d = _model != null && _date != null ? _dayFor(_date!) : snap.data!;
           final hour = _hour ?? d.worstHour;
           return DefaultTabController(
-            length: 3,
+            length: 4,
             child: Column(children: [
               if (_days.length > 1)
                 SizedBox(
@@ -155,12 +155,14 @@ class _BottleneckViewState extends State<BottleneckView> {
                 Tab(key: Key('tab_bottleneck_map'), icon: Icon(Icons.map_outlined), text: 'Map'),
                 Tab(icon: Icon(Icons.shield_outlined), text: 'Safe numbers'),
                 Tab(icon: Icon(Icons.directions_walk), text: 'Your walk'),
+                Tab(key: Key('tab_heat'), icon: Icon(Icons.grid_on), text: 'All day'),
               ]),
               Expanded(
                 child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
                   _MapTab(day: d, hour: hour, onHour: (h) => setState(() => _hour = h), showTiles: widget.showTiles),
                   _CapacityTab(day: d),
                   _WalkTab(day: d, seed: Object.hash(_device, d.day)),
+                  _HeatTab(day: d, hour: hour, onHour: (h) => setState(() => _hour = h)),
                 ]),
               ),
             ]),
@@ -168,6 +170,80 @@ class _BottleneckViewState extends State<BottleneckView> {
         },
       );
 }
+// ---------- item 11: the whole day at a glance (sections x hours) ----------
+class _HeatTab extends StatelessWidget {
+  const _HeatTab({required this.day, required this.hour, required this.onHour});
+
+  final BottleneckDay day;
+  final int hour;
+  final ValueChanged<int> onHour;
+
+  static const _rows = 25;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final hours = day.openHours;
+    double peak(Section s) => hours.map(s.utilisation).fold(0.0, (a, b) => a > b ? a : b);
+    final active = day.sections.where((s) => hours.any((h) => day.level(s, h) != Crowding.quiet)).toList()
+      ..sort((a, b) => peak(b).compareTo(peak(a)));
+    final shown = active.take(_rows).toList();
+    final quiet = day.sections.length - active.length;
+    return ListView(key: const Key('heat_grid'), padding: const EdgeInsets.all(C4Space.l), children: [
+      Text('Where and when it fills up, ${_nice(day.day)}', style: text.titleMedium),
+      const SizedBox(height: C4Space.xs),
+      Text('One row per section, one column per hour. Tap a square to see it on the map hour.', style: text.bodySmall),
+      const SizedBox(height: C4Space.s),
+      if (shown.isEmpty) Text('Every section is quiet all day.', style: text.bodyMedium),
+      if (shown.isNotEmpty)
+        Row(children: [
+          const SizedBox(width: 120),
+          for (final h in hours)
+            Expanded(child: Text(h % 2 == 0 ? '$h' : '', textAlign: TextAlign.center, style: text.labelSmall)),
+        ]),
+      for (final s in shown)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 1),
+          child: Row(children: [
+            SizedBox(width: 120, child: Text(day.nameOf(s), overflow: TextOverflow.ellipsis, style: text.bodySmall)),
+            for (final h in hours)
+              Expanded(
+                child: GestureDetector(
+                  key: Key('heat_${s.id}_$h'),
+                  onTap: () {
+                    onHour(h);
+                    _showSection(context, day, s, h);
+                  },
+                  child: Container(
+                    height: 18,
+                    margin: const EdgeInsets.all(0.5),
+                    decoration: BoxDecoration(
+                      color: _levelColor[day.level(s, h)]!.withValues(alpha: day.level(s, h) == Crowding.quiet ? 0.25 : 1),
+                      border: h == hour ? Border.all(color: Colors.black, width: 1) : null,
+                    ),
+                  ),
+                ),
+              ),
+          ]),
+        ),
+      const SizedBox(height: C4Space.s),
+      Text(
+          '${active.length > _rows ? '${active.length - _rows} more sections fill up a little; ' : ''}'
+          '$quiet of ${day.sections.length} sections stay quiet all day.',
+          style: text.bodyMedium),
+      const SizedBox(height: C4Space.xs),
+      Wrap(spacing: C4Space.m, children: [
+        for (final c in Crowding.values)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 12, height: 12, color: _levelColor[c]),
+            const SizedBox(width: C4Space.xs),
+            Text(_levelText[c]!, style: text.bodySmall),
+          ]),
+      ]),
+    ]);
+  }
+}
+
 // ---------- shared ----------
 const _levelColor = {
   Crowding.quiet: Color(0xFF2E7D32),

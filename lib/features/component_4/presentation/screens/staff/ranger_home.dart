@@ -1,11 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../data/api_client.dart';
 import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/scan_page.dart';
 import '../bottleneck_screen.dart';
 import 'count_screen.dart';
 import 'sightings_screen.dart';
@@ -106,7 +105,7 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   String? _error;
   bool _busy = false;
 
-  bool get _canScan => kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _canScan => canScanQr;
 
   Future<void> _check(String code) async {
     if (code.trim().isEmpty) return;
@@ -127,7 +126,7 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   }
 
   Future<void> _scan() async {
-    final code = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const _ScanPage()));
+    final code = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (code != null) await _check(code);
   }
 
@@ -182,29 +181,6 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
             ),
           ),
       ]);
-}
-
-class _ScanPage extends StatefulWidget {
-  const _ScanPage();
-
-  @override
-  State<_ScanPage> createState() => _ScanPageState();
-}
-
-class _ScanPageState extends State<_ScanPage> {
-  bool _done = false;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Point at the ticket QR code')),
-        body: MobileScanner(onDetect: (capture) {
-          final v = capture.barcodes.isEmpty ? null : capture.barcodes.first.rawValue;
-          if (v != null && !_done) {
-            _done = true;
-            Navigator.of(context).pop(v);
-          }
-        }),
-      );
 }
 
 // ---------- walk-ins ----------

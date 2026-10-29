@@ -28,6 +28,7 @@ class _DayScreenState extends State<DayScreen> {
   Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
   Future<DayWeather?>? _weather; // the day's weather (observed / forecast / typical); none on an older server
   Future<StageOutlook?>? _stages; // P4: stage advice (only trails built from stages, e.g. Pekoe)
+  Future<NetworkAdvice?>? _network; // N4: other parks / days when this one is busy (gateway only)
   String _trail = 'main';
   Map<String, String> _names = const {};
   String? _slot;
@@ -44,6 +45,7 @@ class _DayScreenState extends State<DayScreen> {
     final api = C4Scope.of(context);
     _weather = api.weather(widget.day).then<DayWeather?>((w) => w, onError: (_) => null);
     _stages = api.stages(widget.day).then<StageOutlook?>((s) => s, onError: (_) => null);
+    _network = api.network(widget.day).then<NetworkAdvice?>((n) => n, onError: (_) => null);
     final ServerStatus status;
     try {
       status = await api.status();
@@ -154,6 +156,12 @@ class _DayScreenState extends State<DayScreen> {
                 builder: (context, w) => w.data == null
                     ? const SizedBox.shrink()
                     : Padding(padding: const EdgeInsets.only(top: 12), child: WeatherCard(weather: w.data!)),
+              ),
+              FutureBuilder<NetworkAdvice?>(
+                future: _network,
+                builder: (context, n) => n.data == null || !n.data!.busy
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: NetworkCard(advice: n.data!)),
               ),
               FutureBuilder<StageOutlook?>(
                 future: _stages,
@@ -644,6 +652,42 @@ class StagesCard extends StatelessWidget {
           Text('$quiet of ${outlook.stages.length} stages quiet all day.', style: text.bodyMedium),
           const SizedBox(height: 4),
           Text(outlook.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+
+/// N4: this park is busy that day - quieter days here, and other parks with room.
+class NetworkCard extends StatelessWidget {
+  const NetworkCard({super.key, required this.advice});
+
+  final NetworkAdvice advice;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    String pct(double l) => '${(l * 100).round()} % of the safe limit';
+    return Card(
+      key: const Key('network_card'),
+      color: C4Colors.amber.withValues(alpha: 0.12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.alt_route, color: C4Colors.amber),
+            const SizedBox(width: 8),
+            Expanded(child: Text(advice.level == 'full' ? 'Expected to be over its limit' : 'Expected to be busy',
+                style: text.titleMedium)),
+          ]),
+          const SizedBox(height: 4),
+          Text(advice.note, style: text.bodyMedium),
+          for (final d in advice.otherDays)
+            ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.event_available),
+                title: Text(d.$1), subtitle: Text(pct(d.$2))),
+          for (final p in advice.otherParks)
+            ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.park_outlined),
+                title: Text(p.$2), subtitle: Text('${pct(p.$3)} that day')),
         ]),
       ),
     );

@@ -2,6 +2,8 @@
 bookings and staff accounts stay separate per park. The gateway lists the parks and forwards
 /parks/{park}/... to that park's worker. Start everything with:  python -m src.api.serve_all
 """
+from datetime import date, timedelta
+
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +34,32 @@ def health():
 def list_parks():
     """Every destination with what the trip planner shows (from configs/parks/*.yaml: adding a park = adding a file)."""
     return [destination_info(load_config(park=p)) for p in PARKS]
+
+
+async def _capacity(client: httpx.AsyncClient, park: str, day: str) -> dict | None:
+    try:
+        r = await client.get(f"http://127.0.0.1:{PORTS[park]}/capacity/{day}")
+        return r.json() if r.status_code == 200 else None
+    except httpx.HTTPError:
+        return None                                              # a park that is down is listed as unknown
+
+
+@app.get("/network/{day}")
+async def network(day: date, park: str | None = None, around: int = 3):
+    """N4: every park's expected load that day (expected visitors / safe limit) and, for `park`, other parks with
+    room and quieter days within `around` days."""
+    import asyncio
+    from src.api.network import advice, park_row
+    if park is not None and park not in PORTS:
+        raise HTTPException(404, f"Unknown park '{park}'")
+    info = {p: destination_info(load_config(park=p)) for p in PARKS}
+    near = [day + timedelta(days=k) for k in range(-around, around + 1) if k] if park else []
+    async with httpx.AsyncClient(timeout=120) as client:
+        caps = await asyncio.gather(*[_capacity(client, p, day.isoformat()) for p in PARKS],
+                                    *[_capacity(client, park, d.isoformat()) for d in near])
+    rows = [park_row(p, info[p], c) for p, c in zip(PARKS, caps)]
+    days = [(d.isoformat(), park_row(park, info[park], c)) for d, c in zip(near, caps[len(PARKS):])]
+    return advice(day.isoformat(), rows, park, days)
 
 
 @app.api_route("/parks/{park}/{path:path}", methods=["GET", "POST", "DELETE"])

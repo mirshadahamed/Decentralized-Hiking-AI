@@ -106,6 +106,13 @@ class C4Api {
   }
 
   // ---------- gateway ----------
+  /// N4: is this park busy that day, and which other parks / days have room? Null without the gateway.
+  Future<NetworkAdvice?> network(DateTime d) async {
+    if (park == null) return null;
+    return NetworkAdvice.fromJson(
+        await _send('GET', '/network/${day(d)}', gateway: true, query: {'park': park!}) as Map<String, dynamic>);
+  }
+
   /// Parks served by the gateway; null when the server is a single-park API (no gateway).
   Future<List<ParkInfo>?> parks() async {
     try {

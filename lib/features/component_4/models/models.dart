@@ -1311,3 +1311,27 @@ class DayReport {
         lines: [for (final l in j['lines'] as List? ?? []) l as String],
       );
 }
+
+// ---------- N4: other parks and days when the chosen one is busy (gateway GET /network/{day}) ----------
+class NetworkAdvice {
+  NetworkAdvice({required this.level, required this.note, required this.otherParks, required this.otherDays});
+
+  final String level, note; // level: room / busy / full / unknown
+  final List<(String, String, double)> otherParks; // (park id, name, load)
+  final List<(String, double)> otherDays; // (date, load)
+
+  bool get busy => level == 'busy' || level == 'full';
+
+  factory NetworkAdvice.fromJson(Map<String, dynamic> j) {
+    final p = j['for_park'] as Map<String, dynamic>? ?? const {};
+    return NetworkAdvice(
+      level: p['level'] as String? ?? 'unknown',
+      note: p['note'] as String? ?? '',
+      otherParks: [
+        for (final o in p['other_parks'] as List? ?? [])
+          ((o as Map)['park'] as String, o['name'] as String? ?? o['park'] as String, _dbl(o['load']))
+      ],
+      otherDays: [for (final d in p['other_days'] as List? ?? []) ((d as Map)['day'] as String, _dbl(d['load']))],
+    );
+  }
+}
