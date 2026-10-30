@@ -26,15 +26,31 @@ TRAIL_FILTER = '["highway"~"path|footway|track|steps"]'
 POI_TAGS = {"tourism": True, "waterway": "waterfall", "natural": "peak"}
 
 
+def with_mirrors(fetch, tries: int = 12):
+    """Run an osmnx download, moving to the next Overpass mirror (with backoff) while the servers are busy."""
+    import time
+    from src.data.stage_graph import URLS
+    last = None
+    for k in range(tries):
+        ox.settings.overpass_url = URLS[k % len(URLS)].removesuffix("/interpreter")
+        try:
+            return fetch()
+        except Exception as e:                          # osmnx raises its own HTTP / timeout errors
+            last = e
+            print(f"  overpass busy ({ox.settings.overpass_url}: {str(e)[:80]}); retrying", flush=True)
+            time.sleep(min(120, 5 * 2 ** (k // len(URLS))))
+    raise RuntimeError(f"Overpass failed after {tries} tries ({last})")
+
+
 def load_osm(cfg):
     ox.settings.use_cache = True
     ox.settings.cache_folder = str(RAW / "osm_cache")
     bbox = tuple(cfg["area"]["bbox"])
     osm_filter = cfg["graph"].get("osm_filter", TRAIL_FILTER)      # safari parks: jeep tracks, not footpaths
-    G = ox.graph_from_bbox(bbox, custom_filter=osm_filter, simplify=True, retain_all=True)
+    G = with_mirrors(lambda: ox.graph_from_bbox(bbox, custom_filter=osm_filter, simplify=True, retain_all=True))
     pois = None
     if cfg["area"].get("pois"):                       # named landmarks (Horton Plains); named-path parks need none
-        pois = ox.features_from_bbox(bbox, tags=cfg["area"].get("poi_tags", POI_TAGS))
+        pois = with_mirrors(lambda: ox.features_from_bbox(bbox, tags=cfg["area"].get("poi_tags", POI_TAGS)))
     G = ox.convert.to_undirected(G)
     if cfg["graph"].get("largest_component"):     # safari tracks: drop OSM fragments a jeep cannot reach
         G = G.subgraph(max(nx.connected_components(G), key=len)).copy()
@@ -243,6 +259,9 @@ def build_graph(cfg):
     if cfg["area"].get("stage_relations"):                 # long-distance trail: one OSM relation per stage
         from src.data.stage_graph import build_stage_graph
         return build_stage_graph(cfg)
+    if cfg["area"].get("waypoint_trails"):                 # incomplete OSM paths: trails from waypoints (Knuckles)
+        from src.data.waypoint_graph import build_waypoint_graph
+        return build_waypoint_graph(cfg)
     G, pois = load_osm(cfg)
     routes, poi_points = find_routes(G, pois, cfg)
     chains, edge_to_chain = build_chains(G, routes)
