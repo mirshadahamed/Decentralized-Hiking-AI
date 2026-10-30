@@ -63,6 +63,12 @@ def _connect(db=None):
         CREATE TABLE IF NOT EXISTS start_advice (
             code TEXT PRIMARY KEY, day TEXT NOT NULL, trail TEXT NOT NULL, slot TEXT NOT NULL,
             group_size INTEGER NOT NULL, created TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS gate_queue (
+            code TEXT PRIMARY KEY, day TEXT NOT NULL, queued_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS gate_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, code TEXT NOT NULL, trail TEXT NOT NULL,
+            kind TEXT NOT NULL, priority INTEGER NOT NULL, group_size INTEGER NOT NULL, queued_at TEXT,
+            let_in_at TEXT NOT NULL);
     """)
     cols = [r[1] for r in con.execute("PRAGMA table_info(bookings)")]
     if "checked_in_at" not in cols:                           # older databases
@@ -481,8 +487,48 @@ def check_in(code: str, now: datetime, db=None) -> dict:
             return {"ok": False, "reason": "Too late for this slot: ask at the counter for a walk-in place", **info}
         con.execute("UPDATE bookings SET status='checked_in', checked_in_at=? WHERE code=?",
                     (now.isoformat(timespec="seconds"), code.strip().upper()))
+        _log_gate(con, code.strip().upper(), day, trail, "ticket", False, size, now)
         con.commit()
     return {"ok": True, "reason": "Welcome", **info}
+
+
+# ---------- R7: gate waiting time, measured ----------
+def queue_join(code: str, now: datetime, db=None) -> dict:
+    """A ranger scans a code at the back of the queue: the group's queue-join time (the first scan counts).
+    At check-in the wait is let-in time minus this, so the day report can compare start-time holders with others."""
+    code = code.strip().upper()
+    with closing(_connect(db)) as con:
+        known = con.execute("SELECT day FROM bookings WHERE code=? UNION SELECT day FROM start_advice WHERE code=?",
+                            (code, code)).fetchone()
+        if known is None:
+            return {"ok": False, "reason": "Unknown code"}
+        con.execute("INSERT OR IGNORE INTO gate_queue VALUES (?, ?, ?)", (code, known[0], now.isoformat(timespec="seconds")))
+        con.commit()
+        at = con.execute("SELECT queued_at FROM gate_queue WHERE code=?", (code,)).fetchone()[0]
+    return {"ok": True, "reason": f"In the queue since {at[11:16]}", "queued_at": at}
+
+
+def _log_gate(con, code, day, trail, kind, priority, size, now):
+    q = con.execute("SELECT queued_at FROM gate_queue WHERE code=?", (code,)).fetchone()
+    con.execute("INSERT INTO gate_log (day, code, trail, kind, priority, group_size, queued_at, let_in_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (day, code, trail, kind, int(priority), size, q[0] if q else None, now.isoformat(timespec="seconds")))
+
+
+def gate_waits(day: str, db=None) -> dict:
+    """Measured waits at the gate (groups scanned on joining the queue): start-time holders let in first vs tickets.
+    The live counterpart of the simulated RQ13b."""
+    with closing(_connect(db)) as con:
+        rows = con.execute("SELECT priority, group_size, queued_at, let_in_at FROM gate_log WHERE day=? AND "
+                           "queued_at IS NOT NULL", (day,)).fetchall()
+        n_all = con.execute("SELECT COUNT(*) FROM gate_log WHERE day=?", (day,)).fetchone()[0]
+    out = {"day": day, "groups_let_in": n_all, "groups_timed": len(rows)}
+    for key, pri in (("start_time_first", 1), ("others", 0)):
+        w = sorted(max(0.0, (datetime.fromisoformat(b) - datetime.fromisoformat(a)).total_seconds() / 60)
+                   for p, _, a, b in rows if p == pri)
+        out[key] = {"groups": len(w), "median_min": round(w[len(w) // 2], 1) if w else None,
+                    "mean_min": round(sum(w) / len(w), 1) if w else None}
+    return out
 
 
 def _check_start_time(con, code: str, now: datetime, win: int) -> dict:
@@ -503,6 +549,7 @@ def _check_start_time(con, code: str, now: datetime, win: int) -> dict:
     if now > start + timedelta(minutes=win):
         return {"ok": False, "reason": "Late for their start time: no priority, join the queue", **info}
     con.execute("UPDATE start_advice SET arrived_at=? WHERE code=?", (now.isoformat(timespec="seconds"), code))
+    _log_gate(con, code, day, trail, "start_time", True, size, now)
     con.commit()
     return {"ok": True, "reason": "On time: let in first", **info | {"priority": True}}
 

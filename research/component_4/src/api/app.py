@@ -117,6 +117,7 @@ def status():
     return {k: v for k, v in s.items() if k != "alerts"} | {
         "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required",
         "sightings": bool(CFG["simulator"].get("sightings")),
+        "walk_register": bool(CFG["control"].get("walk_register", False)),
         "trail_modes": modes.trail_modes(CFG), "modes": modes.park_modes(CFG)}
 
 
@@ -213,7 +214,7 @@ def weather_day(day: date):
     try:
         return day_weather(ctx(), day)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from None
 
 
 @app.get("/stages/{day}", tags=["public"])
@@ -285,7 +286,7 @@ def request_permit(body: PermitIn):
     except PermitFull as e:
         return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from None
 
 
 class PermitTimeIn(BaseModel):
@@ -300,9 +301,9 @@ def permit_out(code: str, body: PermitTimeIn, user: dict = Depends(role("ranger"
     try:
         r = check_out(CFG, code, now, rain)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e)) from None
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from None
     auth.audit(user["username"], "permit_out", code.upper())
     return r
 
@@ -313,10 +314,32 @@ def permit_back(code: str, body: PermitTimeIn, user: dict = Depends(role("ranger
     try:
         r = check_back(code, when(body.at))
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e)) from None
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from None
     auth.audit(user["username"], "permit_back", code.upper())
+    return r
+
+
+class WalkOutIn(BaseModel):
+    trail: TrailName
+    group_size: int = Field(ge=1, le=40)
+    at: datetime | None = None
+
+
+@app.post("/walks/out", tags=["ranger"])
+def walk_out(body: WalkOutIn, user: dict = Depends(role("ranger"))):
+    """§6.2.7 safety, any park with control.walk_register: a group starts a long walk; it is due back after the
+    trail's walking time and shows as overdue like a guided trek."""
+    from src.control.permits import register_walk
+    if not CFG["control"].get("walk_register"):
+        raise HTTPException(404, "This site has no walk register")
+    now = when(body.at)
+    try:
+        r = register_walk(CFG, body.trail, body.group_size, now, _day_expectation(now.date())[0])
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from None
+    auth.audit(user["username"], "walk_out", f"{r['code']} {body.trail} x{body.group_size}")
     return r
 
 
@@ -324,7 +347,8 @@ def permit_back(code: str, body: PermitTimeIn, user: dict = Depends(role("ranger
 def overdue_groups(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
     """K5: guided groups still out past their expected return + margin (shorter in rain)."""
     from src.control.permits import overdue
-    _require_mode("guided_permit")
+    if not (modes.trails_with(CFG, "guided_permit") or CFG["control"].get("walk_register")):
+        raise HTTPException(404, "This site has no guided treks or walk register")
     now = when(datetime.combine(day, at) if at else None)
     return overdue(CFG, day.isoformat(), now, _day_expectation(day)[0])
 
@@ -364,9 +388,9 @@ def book_campsite(body: CampIn):
     try:
         return book(CFG, body.night.isoformat(), body.site, body.pitches, body.people)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e)) from None
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from None
 
 
 @app.get("/plan/{day}", tags=["public"])
@@ -484,6 +508,17 @@ def checkin(body: CheckInIn, user: dict = Depends(role("ranger"))):
     r = booking.check_in(body.code, when(body.at))
     auth.audit(user["username"], "checkin", f"{body.code.upper()} {r['reason']}")
     return r
+
+
+@app.post("/gate/queue", tags=["ranger"])
+def gate_queue(body: CheckInIn, user: dict = Depends(role("ranger"))):
+    """R7: scan a code at the back of the queue; the wait is measured at check-in."""
+    return booking.queue_join(body.code, when(body.at))
+
+
+@app.get("/admin/gate-waits/{day}", tags=["officer"])
+def gate_waits(day: date, user: dict = Depends(role("officer"))):
+    return booking.gate_waits(day.isoformat())
 
 
 class WalkInIn(BaseModel):
@@ -626,6 +661,16 @@ def day_report(day: date, format: Literal["json", "html"] = "json", user: dict =
     return Response(to_html(r), media_type="text/html") if format == "html" else r
 
 
+@app.get("/admin/trends", tags=["officer"])
+def trends(end: date | None = None, days: int = 28, user: dict = Depends(role("officer"))):
+    """§6.2.10: week by week from the day reports - entries, no-shows, start times kept, forecast error (raw and
+    corrected by counts), over capacity counted."""
+    from src.serve.day_report import trends as t
+    if not 7 <= days <= 120:
+        raise HTTPException(400, "days must be 7-120")
+    return t(CFG, (end or when(None).date()).isoformat(), days)
+
+
 @app.get("/admin/recalibration", tags=["officer"])
 def recalibration(day: date | None = None, user: dict = Depends(role("officer"))):
     """N2: how the rangers' counts correct the forecast - the factors for `day` (default tomorrow) and, for the 60
@@ -712,7 +757,7 @@ def start_time(day: date, trail: TrailName, wanted: str = "07:00", size: int = 2
     try:
         return suggest(day.isoformat(), trail, wanted, size, *_day_expectation(day))
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from None
 
 
 class StartTimeIn(BaseModel):
@@ -730,7 +775,7 @@ def hold_start_time(body: StartTimeIn):
     try:
         return hold(body.day.isoformat(), body.trail, body.slot, body.group_size, *_day_expectation(body.day))
     except ValueError as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from None
 
 
 @app.get("/start-time/check/{code}", tags=["public"])
@@ -753,7 +798,7 @@ def move_start_time(code: str, body: MoveIn):
     try:
         return move(code, body.slot)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e)) from None
 
 
 class IncidentIn(BaseModel):
@@ -783,6 +828,16 @@ def gate_control(day: date, at: time | None = None, user: dict = Depends(role("r
     d = day.isoformat()
     pub = booking._published(d)
     rain = float(pub.rain_share.iloc[0]) if pub is not None else booking.typical_rain_share(d)
+    rain_basis = ""
+    if day == date.today():                                    # §6.1.4: the rain so far and the next 2 hours
+        from src.control.mpc import blend_rain_share
+        from src.live.nowcast import rain_today
+        hourly = rain_today(CFG, day)
+        if hourly is not None:
+            planned, rain = rain, blend_rain_share(rain, hourly, now.hour * 60 + now.minute, CFG["capacity"])
+            if abs(rain - planned) >= 0.05:
+                rain_basis = (f" Rain today so far and in the next 2 hours: rainy share {round(100 * rain)} % of the "
+                              f"open hours (planned {round(100 * planned)} %).")
     try:                                                       # the day-ahead expectation, made the day before
         expected = float(ctx().planner.day((day - timedelta(days=1)).isoformat(), d)["visitors"]["p50"])
         basis = "the day-ahead visitor forecast"
@@ -790,16 +845,24 @@ def gate_control(day: date, at: time | None = None, user: dict = Depends(role("r
         expected = float(pub.tickets.sum()) if pub is not None else 0.0
         basis = "the day's ticket plan"
     cond = booking.conditions(d)
-    out = MPCController(ec).caps_now(booking.entries(d), now.hour * 60 + now.minute, rain, expected,
+    from src.control.chance import live_kwargs
+    cc = live_kwargs(CFG)
+    out = MPCController(ec, **cc).caps_now(booking.entries(d), now.hour * 60 + now.minute, rain, expected,
                                      {t: v["factor"] for t, v in cond.items()})
     names = CFG["area"]["trail_names"]
     alerts = [f"{names.get(t, t)}: {v['level'].replace('_', ' ')}" + (f" ({v['note']})" if v["note"] else "")
               + (" - no entry" if v["factor"] >= 1 else f" - {round(100 * v['factor'])} % less room")
               for t, v in cond.items()]
+    from src.control.mpc import why_line
+    why = why_line(out["arrivals_vs_expected"], rain, booking.typical_rain_share(d),
+                   {t: v["factor"] for t, v in cond.items() if v["factor"] > 0}, names)
     return out | {"day": d, "time": now.strftime("%H:%M"), "expected_visitors": round(expected), "alerts": alerts,
+                  "why": why,
                   "basis": f"Re-planned now from the gate counts, {basis} and any reported trail conditions; keeps "
-                           f"every section under {round(100 * ec.c['safety_margin'])} % of its capacity. "
-                           f"No sensors on the trail."}
+                           + (f"the chance of any section going over capacity under "
+                              f"{round(100 * cc['chance']['eps'])} % (RQ15). " if cc else
+                              f"every section under {round(100 * ec.c['safety_margin'])} % of its capacity. ")
+                           + f"No sensors on the trail.{rain_basis}"}
 
 
 class CheckpointIn(BaseModel):
