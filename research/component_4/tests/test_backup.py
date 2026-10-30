@@ -33,3 +33,37 @@ def test_gateway_cache_expires(monkeypatch):
     t[0] += gateway.CACHE_S + 1
     assert gateway._cached(("p", "capacity/2026-11-02", "")) is None
     assert "capacity/2026-11-02".startswith(gateway.CACHED) and not "bookings/X".startswith(gateway.CACHED)
+
+
+def test_network_and_forward_share_one_cache_entry():
+    """/network and /parks/{park}/capacity/{day} use the same key: each must read what the other stored."""
+    import asyncio
+
+    from fastapi.testclient import TestClient
+
+    from src.api import gateway
+    gateway._cache.clear()
+    park = gateway.PARKS[0]
+    gateway._store((park, "capacity/2026-11-02", ""), (b'{"total_expected": 5}', "application/json"))
+    assert asyncio.run(gateway._capacity(None, park, "2026-11-02")) == {"total_expected": 5}
+    r = TestClient(gateway.app).get(f"/parks/{park}/capacity/2026-11-02")
+    assert r.status_code == 200 and r.json() == {"total_expected": 5} and r.headers["x-cache"] == "hit"
+    gateway._cache.clear()
+
+
+def test_config_is_parsed_once_per_change(tmp_path, monkeypatch):
+    """§6.3.12: load_config keeps the parsed YAML until the file changes, and hands out copies."""
+    import os
+
+    from src import config
+    (tmp_path / "parks").mkdir()
+    f = tmp_path / "default.yaml"
+    f.write_text("a: {b: 1}\n", encoding="utf-8")
+    monkeypatch.setattr(config, "CONFIGS", tmp_path)
+    c = config.load_config(park=config.DEFAULT_PARK)
+    c["a"]["b"] = 9
+    assert config.load_config(park=config.DEFAULT_PARK)["a"]["b"] == 1
+    f.write_text("a: {b: 2}\n", encoding="utf-8")
+    st = f.stat()
+    os.utime(f, ns=(st.st_atime_ns, st.st_mtime_ns + 10**9))
+    assert config.load_config(park=config.DEFAULT_PARK)["a"]["b"] == 2
