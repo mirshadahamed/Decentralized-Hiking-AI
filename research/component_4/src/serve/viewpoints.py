@@ -1,14 +1,16 @@
 """K6 / K7: open viewpoints with parking, and campsites (control modes open_viewpoint and campsite; Knuckles).
 
     GET /viewpoints/{day}        per open viewpoint: people at the busiest hour vs what the place holds, cars
-                                 needed vs parking spaces, and when to come instead (advice only: open access)
+                                 needed vs parking spaces, and when to come instead (advice only: open access);
+                                 today too, so a ranger's "parking full" report sends drivers elsewhere at once
     GET /campsites/{night}       pitches left per campsite
     POST /campsites              {night, site, pitches, people} -> code (409 when full)
 
 A viewpoint is full when the people on its sections at once reach their capacity (the viewpoint's own section
 uses control.viewpoint_min_at_once). Parking: the people on the walk at once came by car, so cars parked at once =
 people / people per vehicle; a ranger's "parking full" report (POST /incident, level partly_closed with a note)
-shows as an alert. No personal data.
+shows as an alert. Parking redirect (§6.2.6): when a car park is full (forecast, or reported today), the advice
+names the other viewpoint with the most free spaces in those hours. No personal data.
 """
 import secrets
 from contextlib import closing
@@ -49,16 +51,40 @@ def viewpoint_outlook(cfg, seg, hourly: np.ndarray, trails: list, day: str, cond
                       + (f", car park full {park_full[0]:02d}:00–{park_full[-1] + 1:02d}:00" if park_full else "")
                       + f". Come before {max(6, first - 1):02d}:00 or after {min(17, last + 1):02d}:00.")
         cond = (conditions or {}).get(t)
-        out.append({"trail": t, "name": names.get(t, t), "level": level, "fullness": round(float(full.max()), 2),
+        reported_full = cond is not None and ("park" in (cond.get("note") or "").lower() or cond["level"] == "closed")
+        out.append({"_cars": cars, "_full": park_full or (list(range(6, 18)) if reported_full else []), "trail": t, "name": names.get(t, t), "level": level, "fullness": round(float(full.max()), 2),
                     "busiest_hour": f"{h:02d}:00", "people_at_busiest_hour": round(float(people[h]), 1),
                     "cars_at_busiest_hour": round(float(cars.max()), 1), "parking_spaces": spaces,
                     "parking_full_hours": [f"{x:02d}:00" for x in park_full], "advice": advice,
                     "reported": None if cond is None else f"{cond['level'].replace('_', ' ')}"
                                                           + (f" - {cond['note']}" if cond.get("note") else ""),
                     "hourly_people": [round(float(x), 1) for x in people]})
+    _redirect(out, cfg, conditions or {})
     return {"day": day, "viewpoints": out,
             "basis": "Crowd forecast per section; parking = people there at once / people per car. Open access: "
                      "advice only, nobody is turned away."}
+
+
+def _redirect(out: list, cfg, conditions: dict):
+    """For each viewpoint whose car park is full: the other one with the most free spaces at those hours."""
+    vp = cfg["control"].get("viewpoints", {})
+    for v in out:
+        v["instead"] = None
+        if not v["_full"]:
+            continue
+        best, room = None, 0.0
+        for u in out:
+            sp = vp.get(u["trail"], {}).get("parking_spaces")
+            if u is v or not sp or u["trail"] in conditions:
+                continue
+            free = float(min(sp - u["_cars"][h] for h in v["_full"]))
+            if free >= 1 and free > room:
+                best, room = u, free
+        if best is not None:
+            v["instead"] = {"trail": best["trail"], "name": best["name"], "free_spaces": int(room)}
+            v["instead"]["text"] = f"Car park full: go to {best['name']} instead (about {int(room)} spaces free then)."
+    for v in out:
+        del v["_cars"], v["_full"]
 
 
 # ---------- campsites ----------

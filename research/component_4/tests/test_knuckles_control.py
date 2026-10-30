@@ -113,3 +113,23 @@ def test_walk_register_any_park_uses_the_graph_walking_time(tmp_path):
     assert permits.overdue(cfg, "2026-11-02", late, db=db)["overdue"] == []
     with pytest.raises(KeyError):
         permits.register_walk(cfg, "nope", 2, now, db=db)
+
+
+def test_parking_full_sends_drivers_to_the_other_viewpoint(cfg):
+    """§6.2.6: a full car park (forecast or reported today) names the viewpoint with free spaces then."""
+    from src.serve.viewpoints import viewpoint_outlook
+    seg = pd.DataFrame({"seg_id": [0, 1, 2], "trail": ["pitawala", "pitawala", "sera_ella"],
+                        "length_m": [400.0, 400.0, 500.0], "poi": ["head_pitawala", "pitawala_vp", "sera_ella"]})
+    hourly = np.zeros((24, 3))
+    hourly[9:12, 0] = 280                                             # 70 cars at Pitawala (60 spaces)
+    hourly[9:12, 2] = 40                                              # 10 cars at Sera Ella (20 spaces)
+    v = {x["trail"]: x for x in viewpoint_outlook(cfg, seg, hourly, ["pitawala", "sera_ella"], "2027-01-09")["viewpoints"]}
+    i = v["pitawala"]["instead"]
+    assert (i["trail"], i["name"], i["free_spaces"]) == ("sera_ella", v["sera_ella"]["name"], 10)
+    assert "go to " + v["sera_ella"]["name"] in i["text"] and v["sera_ella"]["instead"] is None
+    hourly[9:12, 2] = 0
+    rep = viewpoint_outlook(cfg, seg, hourly * 0, ["pitawala", "sera_ella"], "2027-01-09",
+                            {"sera_ella": {"level": "partly_closed", "note": "Parking full"}})
+    w = {x["trail"]: x for x in rep["viewpoints"]}
+    assert w["sera_ella"]["instead"]["trail"] == "pitawala" and w["sera_ella"]["parking_full_hours"] == []
+    assert w["pitawala"]["instead"] is None
