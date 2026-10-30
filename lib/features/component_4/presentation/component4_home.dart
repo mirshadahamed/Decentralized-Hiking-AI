@@ -138,7 +138,7 @@ class _ParkHomeState extends State<ParkHome> {
                   (OutlookScreen(site: s.site, advisory: advisory), Icons.calendar_month, advisory ? 'nav_start_times' : 'nav_plan_book'),
                   (const BottleneckView(), Icons.groups_outlined, 'nav_crowding'), // tomorrow per section, offline
                   (const MapScreen(), Icons.map_outlined, 'nav_map'),
-                  if (!advisory) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
+                  if (s.hasTickets) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
                 ];
           return Scaffold(
             appBar: AppBar(

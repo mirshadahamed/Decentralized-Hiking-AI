@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from src.api import auth
 from src.config import destination_info, load_config
-from src.control import booking
+from src.control import booking, modes
 from src.control.slots import build_control
 from src.live.refresh import PUBLISHED, LiveContext, refresh
 
@@ -116,13 +116,21 @@ def status():
     s = published("status.json")
     return {k: v for k, v in s.items() if k != "alerts"} | {
         "park": CFG["park"], "site": CFG["area"]["name"], "booking_mode": "advisory" if ADVISORY else "required",
-        "sightings": bool(CFG["simulator"].get("sightings"))}
+        "sightings": bool(CFG["simulator"].get("sightings")),
+        "trail_modes": modes.trail_modes(CFG), "modes": modes.park_modes(CFG)}
 
 
 @app.get("/destination", tags=["public"])
 def destination():
     """What the trip planner shows for this park (summary, best time, getting there, trails)."""
     return destination_info(CFG)
+
+
+def require_ticketed(trail: str):
+    """Slot tickets and start times are only for trails in a ticketed mode (src/control/modes.py)."""
+    if not modes.ticketed(CFG, trail):
+        m = modes.trail_modes(CFG).get(trail)
+        raise HTTPException(400, f"{CFG['area']['trail_names'].get(trail, trail)} needs no slot ticket ({m})")
 
 
 def require_booking():
@@ -213,13 +221,152 @@ def stages(day: date):
     """P4: stage advice on a long open-access trail (Pekoe): how busy each stage gets, where and when, and when to
     start. Only for parks built from stages (area.stage_relations)."""
     from src.serve.stages import stage_outlook
-    if not CFG["area"].get("stage_relations"):
+    if not modes.trails_with(CFG, "open_stages"):
         raise HTTPException(404, "This site has no stages")
     c = ctx()
     if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
         raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
     hourly = np.array(_plan(c, day, live_inputs(c, day))["hourly"]["p50"])
-    return stage_outlook(CFG, c.seg, hourly, day.isoformat())
+    weather = None
+    if (day - c.today).days < CFG["live"]["forecast_days"]:
+        try:
+            from src.live.stage_weather import stage_weather
+            weather = {t: v.get(day.isoformat()) for t, v in stage_weather(CFG, c.seg, c.today).items()}
+        except Exception:                                    # no connection: the park's weather still applies
+            weather = None
+    out = stage_outlook(CFG, c.seg, hourly, day.isoformat(), weather)
+    keep = set(modes.trails_with(CFG, "open_stages"))
+    return out | {"stages": [x for x in out["stages"] if x["stage"] in keep]}
+
+
+# ---------- Knuckles mechanisms: guided permits (K4/K5), open viewpoints (K6), campsites (K7) ----------
+def _require_mode(mode: str):
+    if not modes.trails_with(CFG, mode) and not (mode == "campsite" and CFG["control"].get("campsites")):
+        raise HTTPException(404, f"This site has no {mode.replace('_', ' ')} trails")
+
+
+def _permit_plan(day: date) -> dict:
+    from src.control.permits import day_plan, settings
+    c = ctx()
+    inputs = live_inputs(c, day)
+    trails = _plan(c, day, inputs)["capacity"]["trails"]
+    g = settings(CFG).get("mean_group", 6)
+    cap = {t: float(trails[t]["recommended_daily_quota"]) for t in settings(CFG)["treks"] if t in trails}
+    req = {t: float(trails[t]["expected_visitors"]) / g for t in settings(CFG)["treks"] if t in trails}
+    return day_plan(CFG, day.isoformat(), cap, req) | {"rain_share_open_hours": round(inputs["rain_share"], 3)}
+
+
+@app.get("/permits/{day}", tags=["public"])
+def permits_day(day: date):
+    """Guided treks: groups allowed per trek (LP over the trail caps and the guides on duty), issued and left."""
+    _require_mode("guided_permit")
+    c = ctx()
+    if not c.today <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from today up to 90 days ahead")
+    return _permit_plan(day)
+
+
+class PermitIn(BaseModel):
+    day: date
+    trail: TrailName
+    group_size: int = Field(ge=1, le=20)
+
+
+@app.post("/permits", tags=["public"], status_code=201)
+def request_permit(body: PermitIn):
+    from src.control.permits import PermitFull, request
+    _require_mode("guided_permit")
+    plan = _permit_plan(body.day)
+    near = [body.day + timedelta(days=k) for k in (1, 2, -1) if body.day + timedelta(days=k) >= ctx().today]
+    free = [d.isoformat() for d in near
+            if next((x for x in _permit_plan(d)["treks"] if x["trail"] == body.trail), {}).get("groups_left", 0) > 0]
+    try:
+        return request(CFG, body.day.isoformat(), body.trail, body.group_size, plan, other_days=free)
+    except PermitFull as e:
+        return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class PermitTimeIn(BaseModel):
+    at: datetime | None = None
+
+
+@app.post("/permits/{code}/out", tags=["ranger"])
+def permit_out(code: str, body: PermitTimeIn, user: dict = Depends(role("ranger"))):
+    from src.control.permits import check_out
+    now = when(body.at)
+    rain = _day_expectation(now.date())[0]
+    try:
+        r = check_out(CFG, code, now, rain)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    auth.audit(user["username"], "permit_out", code.upper())
+    return r
+
+
+@app.post("/permits/{code}/back", tags=["ranger"])
+def permit_back(code: str, body: PermitTimeIn, user: dict = Depends(role("ranger"))):
+    from src.control.permits import check_back
+    try:
+        r = check_back(code, when(body.at))
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    auth.audit(user["username"], "permit_back", code.upper())
+    return r
+
+
+@app.get("/overdue/{day}", tags=["ranger"])
+def overdue_groups(day: date, at: time | None = None, user: dict = Depends(role("ranger"))):
+    """K5: guided groups still out past their expected return + margin (shorter in rain)."""
+    from src.control.permits import overdue
+    _require_mode("guided_permit")
+    now = when(datetime.combine(day, at) if at else None)
+    return overdue(CFG, day.isoformat(), now, _day_expectation(day)[0])
+
+
+@app.get("/viewpoints/{day}", tags=["public"])
+def viewpoints(day: date):
+    """K6: open viewpoints - busy hours, parking, when to come instead (advice; nobody is turned away)."""
+    from src.serve.viewpoints import viewpoint_outlook
+    _require_mode("open_viewpoint")
+    c = ctx()
+    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    inputs = live_inputs(c, day)
+    hourly = np.array(_plan(c, day, inputs)["hourly"]["p50"])
+    return viewpoint_outlook(CFG, c.seg, hourly, modes.trails_with(CFG, "open_viewpoint"), day.isoformat(),
+                             booking.conditions(day.isoformat()))
+
+
+@app.get("/campsites/{night}", tags=["public"])
+def campsites_night(night: date):
+    from src.serve.viewpoints import campsites
+    _require_mode("campsite")
+    return campsites(CFG, night.isoformat())
+
+
+class CampIn(BaseModel):
+    night: date
+    site: str = Field(max_length=40)
+    pitches: int = Field(ge=1, le=10)
+    people: int = Field(ge=1, le=40)
+
+
+@app.post("/campsites", tags=["public"], status_code=201)
+def book_campsite(body: CampIn):
+    from src.serve.viewpoints import book_campsite as book
+    _require_mode("campsite")
+    try:
+        return book(CFG, body.night.isoformat(), body.site, body.pitches, body.people)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
 
 
 @app.get("/plan/{day}", tags=["public"])
@@ -281,7 +428,8 @@ def slots(day: date):
     return {"day": d, "basis": pub.basis.iloc[0] if pub is not None else "provisional (typical weather)",
             "walk_in_share": build_control().c["walk_in_share"],
             "slots": [{"slot": s, "trail": t, "places_left": int(av.loc[s, t]), "bookable": int(sup.loc[s, t]),
-                       "closed": (t, s) in closed or t in shut} for s in av.index for t in av.columns]}
+                       "closed": (t, s) in closed or t in shut} for s in av.index for t in av.columns
+                      if modes.ticketed(CFG, t)]}                    # other modes need no slot ticket
 
 
 class BookingIn(BaseModel):
@@ -294,6 +442,7 @@ class BookingIn(BaseModel):
 @app.post("/bookings", tags=["public"], status_code=201)
 def create_booking(body: BookingIn):
     require_booking()
+    require_ticketed(body.trail)
     try:
         code = booking.book(body.day.isoformat(), body.trail, body.slot, body.group_size, today=ctx().today.isoformat())
     except booking.SlotFull as e:
@@ -483,7 +632,8 @@ def recalibration(day: date | None = None, user: dict = Depends(role("officer"))
     days before it, the error of the raw and of the corrected forecast (factors from earlier days only)."""
     from src.live.recalibrate import backtest, factors
     d = day or ctx().today + timedelta(days=1)
-    return {"factors": factors(CFG, d.isoformat()),
+    from src.control.start_times import on_time_share
+    return {"factors": factors(CFG, d.isoformat()), "start_time_on_time": on_time_share(d.isoformat()),
             "backtest": backtest(CFG, (d - timedelta(days=60)).isoformat(), (d - timedelta(days=1)).isoformat())}
 
 
@@ -558,6 +708,7 @@ def start_time(day: date, trail: TrailName, wanted: str = "07:00", size: int = 2
     from src.control.start_times import suggest
     if not 1 <= size <= 20:
         raise HTTPException(400, "Group size must be 1-20")
+    require_ticketed(trail)
     try:
         return suggest(day.isoformat(), trail, wanted, size, *_day_expectation(day))
     except ValueError as e:
@@ -575,6 +726,7 @@ class StartTimeIn(BaseModel):
 def hold_start_time(body: StartTimeIn):
     """Hold a start time (counted against the plan); returns a short code to show at the gate."""
     from src.control.start_times import hold
+    require_ticketed(body.trail)
     try:
         return hold(body.day.isoformat(), body.trail, body.slot, body.group_size, *_day_expectation(body.day))
     except ValueError as e:

@@ -182,4 +182,6 @@ control:
   first_slot_h: 6.0
   last_slot_h: 11.0
   viewpoint_min_at_once: 40          # (A) Lipton's Seat / Little Adam's Peak hold more than a path
-  booking_mode: required             # P4 replaces tickets with stage advice (open-access trail)
+  hotspot_at_once: 30                # (A) stage advice: a section with a viewpoint is full at 30 people there at once
+  booking_mode: required             # (kept for the slot tables the refresh writes; no stage is ticketed)
+  default_mode: open_stages          # P4: stage advice, no tickets (src/control/modes.py)

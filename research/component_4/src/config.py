@@ -67,6 +67,11 @@ def load_config(name: str = "default", park: str | None = None) -> dict:
     return cfg
 
 
+def _modes(cfg):
+    from src.control import modes                     # lazy: src.control imports src.config
+    return modes
+
+
 def destination_info(cfg: dict) -> dict:
     """What the app's trip planner shows for a park (gateway /parks and the park's own /destination)."""
     d, a = cfg.get("destination", {}), cfg["area"]
@@ -75,4 +80,5 @@ def destination_info(cfg: dict) -> dict:
             "summary": d.get("summary", ""), "elevation": d.get("elevation", ""), "best_time": d.get("best_time", ""),
             "getting_there": d.get("getting_there", ""), "facts": d.get("facts", []), "accent": d.get("accent", ""),
             "booking_mode": cfg["control"].get("booking_mode", "required"),
+            "trail_modes": _modes(cfg).trail_modes(cfg), "modes": _modes(cfg).park_modes(cfg),
             "trails": a["trail_names"], "trail_info": a.get("trail_info", {}), "center": {"lat": lat, "lon": lon}}
