@@ -5,8 +5,9 @@ against the code on `feature/component-4-knuckles`.*
 
 ## 1. Summary
 
-Component 4 counts **groups**, not people. It keeps **no names, phone numbers, ID numbers, e-mail addresses or
-locations of visitors**. A visitor is known only by a random code that they hold.
+Component 4 counts **groups**, not people. It keeps **no names, phone numbers, ID numbers or e-mail addresses of
+visitors**, and **no locations, except in an SOS call the visitor sends** (deleted after 30 days). A visitor is
+known only by a random code that they hold.
 
 The only personal data is about **staff**: usernames, password hashes and an audit log of their actions.
 
@@ -25,6 +26,8 @@ All data sits on the park's server, one folder per park (`data/` or `data/<park>
 | Spot counts | `spot_counts`, `checkpoint_counts` | Section, time, number counted, the ranger's username | Forecast check and correction |
 | Sightings (Yala) | `sightings` | Place, species, time, the ranger's username | Jeep rule |
 | Trail conditions, incidents | `trail_conditions` | Trail, level, a short note, the officer's username | Lower limits at once |
+| SOS calls (§6.2.7) | `sos` | Random id from the phone, kind, people, nearest place, GPS and note (only if sent; **deleted after 30 days**), status, the ranger who answered | Rescue |
+| Start times by SMS or kiosk (§6.1.2) | `start_advice` (same as the app) | Code, day, trail, slot, group size. **The phone number is not sent to the API** (the SMS gateway keeps it only to reply) | Start times without the app |
 | Staff accounts | `auth.sqlite`: `users`, `sessions` | Username, role, salted scrypt hash, failed logins, session tokens (expire) | Log-in |
 | Audit log | `auth.sqlite`: `audit` | Time, username, action, detail (e.g. a code checked in) | Accountability of staff actions |
 | Backups | `data/backups/<park>/<day>/` | Copies of the two databases above, last 14 days | Recovery |
@@ -42,8 +45,11 @@ All data sits on the park's server, one folder per park (`data/` or `data/<park>
   carry no information about the holder and cannot be guessed in sequence.
 - **Group size only.** Group size is the only number about a group. The app never asks for a name, phone number or
   nationality.
-- **No visitor accounts and no tracking.** There is no GPS, no device ID and no analytics SDK. The Overdue check
-  (Knuckles) uses only the ranger's out / back scan of the permit code.
+- **No visitor accounts and no tracking.** There is no device ID and no analytics SDK. The Overdue check
+  (Knuckles) uses only the ranger's out / back scan of the permit code. GPS is read **only when the visitor presses
+  Send SOS**, once per send, and only if the team app passes a location service; there is no background tracking.
+  After 30 days the position and note of a call are deleted (`sos.purge`, every night before the backup); kind, day, trail and times stay for
+  the yearly safety report.
 - **QR count sharing (N5)** carries only section ids, times and counts, e.g. "12 walkers at section 5 at 08:10".
   It holds no personal data, so a lost phone or a photographed QR reveals nothing about anyone.
 - **Staff passwords:**
@@ -66,6 +72,9 @@ All data sits on the park's server, one folder per park (`data/` or `data/<park>
 | A server or backup disk is lost | No visitor identities on it; staff passwords are hashed | Encrypt the backup folder; keep the server in the park office |
 | A photo of a ticket QR | Valid for one day and one slot | — |
 | The free-text note on an incident could name a person | 200 characters, staff only | Tell officers not to write names in notes |
+| An SOS position shows where a visitor was | Sent only by the visitor; rangers only; deleted after 30 days | — |
+| Someone texts START many times and holds many start times | `/sms` needs the gateway's key; codes not used are counted at the on-time share only | Limit START per number per day in the SMS gateway |
+| False or prank SOS calls (public endpoint) | One call per phone id; rangers see the place | Rate-limit `/sos` per address at the gateway |
 
 ## 5. Field trial (December)
 

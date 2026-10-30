@@ -155,6 +155,25 @@ each visitor gets a different one, which spreads the walkers (RQ14b).
   `.venv\Scripts\python.exe -m src.api.backup`.
 - **Chance constraint (RQ15), optional:** run `.venv\Scripts\python.exe -m src.control.evaluate_chance` once, then
   set `control.chance_eps: 0.1` in `configs/default.yaml` and restart.
+- **SOS (every park):** visitor → red **SOS** icon at the top → what happened, how many people, the trail and the
+  last place passed → **Send SOS**. Ranger → red **SOS** icon at the top → the call with its place (and GPS when
+  sent) → **On the way** (the visitor sees it under **Check for a reply**) → **Close**. With no connection the app
+  shows 1990 / 119 and keeps re-sending.
+- **Parking redirect (Knuckles):** ranger reports a viewpoint's car park full (**incident**, *Partly closed*, note
+  "parking full") → the viewpoint card, for today too, says which other viewpoint has free spaces.
+- **Walk-up share, optional:** `control.walkup_share: 0.3` keeps 30 % of the day plan out of start times, for
+  visitors without the app (RQ15 fairness).
+- **Load test:** `.venv\Scripts\python.exe -m src.api.load_test --start` starts the servers on port 8090, sends
+  1–200 simulated phones, writes `results/<time>_load/`. Stop other heavy jobs first; read-only (no bookings).
+- **Start-time kiosk (ticketed parks):** ranger → tablet icon at the top → hand the tablet to walk-up visitors: trail,
+  group size → **Give me a start time** shows the time and a code; the screen clears after 45 s. Leave it with a
+  long press on the lock.
+- **Start times by SMS:** set `C4_SMS_KEY` before `serve_all`; the park's SMS gateway posts each text to
+  `POST /parks/<park>/sms` (`{"text": "START 1 4 SAT 08:00"}`, header `X-SMS-Key`) and sends back `reply`. Try it
+  in `/docs`. `HELP` lists the trail numbers; `CHECK <code>` on the day.
+- **Notices:** a ranger's *closed* / *partly closed* / *muddy* report, an officer's slot closure, or heavy rain in the
+  forecast (today: the next 2 hours) shows as a banner on the visitor's park screen within 5 min; **OK** hides it.
+- **Faster first answers:** `serve_all` works out every park's forecasts for the next 2 weeks at start and at 02:30.
 
 **Park officer** (log out, log in as `officer1`)
 1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather

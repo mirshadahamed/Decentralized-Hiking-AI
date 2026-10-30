@@ -704,13 +704,41 @@ days get none extra.
 | Without one | — | — | 56.4 % | 31 min |
 
 - **Large groups are turned away more often** (+9 points): a big group does not fit into the places left in a
-  slot. Remedy: let a large group split, or keep places for them in each slot.
+  slot. Remedies tested in RQ15b.
 - **Start-time holders are almost never turned away; everyone else is turned away more** (56 % vs 40 % without the
   app). This is the cost of the priority that makes start times work (RQ13b). The app must not become the only way
-  in: keep a walk-in share in every slot (`control.walk_in_share`, as for tickets), and offer start times at the
-  gate kiosk / by SMS for visitors without a smartphone.
+  in: keep a walk-up share (RQ15b, `control.walkup_share`), and offer start times at the gate kiosk / by SMS for
+  visitors without a smartphone.
 - Mid-morning arrivals wait longest (the peak). Early arrivals are turned away most: they meet the day-ahead caps
   before the feedback raises them.
+
+### RQ15b – Fairness remedies (§6.1.2; run `results/20261030_142223_chance_s1`)
+The same year and groups (the policies of RQ15 give the same numbers again). Two remedies on the 90 % margin:
+- **strict order**: a group that does not fit keeps its turn on its trail; smaller groups behind it wait instead of
+  taking the places left (`MPCController(strict_order=True)`);
+- **walk-up share 30 %**: start times are given for only 70 % of the day plan, and groups with a start time cannot
+  take the walk-ups' 30 % of a slot while walk-ups wait (`control.walkup_share: 0.3`).
+
+| Policy | Over-capacity person-hours | Admitted | Mean wait (min) | Turned away: 6+ minus 1–3 (points) | Turned away: without minus with a start time (points) |
+|---|---|---|---|---|---|
+| gate control only (90 %) | 1,303 | 59.6 % | 63 | 9.3 | — |
+| + strict order | 1,219 | 59.7 % | 65 | **7.4** | — |
+| with start times (60 % of groups) | 1,199 | 60.3 % | 36 | 12.6 | 56.5 |
+| + walk-up share 30 % | 1,227 | 60.4 % | 44 | 12.4 | **50.2** |
+| + walk-up share + strict order | **1,062** | 59.8 % | 45 | 10.5 | 50.9 |
+
+- **Strict order narrows the size gap by a fifth** (9.3 → 7.4 points) at no cost in admissions and with 6 % fewer
+  over-capacity person-hours, for 1–2 min more waiting. The rest of the gap is structural: a group of 8 needs
+  8 free places in one slot, and is offered another trail less often (2.9 % vs 4.1 % redirected).
+- **The walk-up share cuts the walk-ups' disadvantage** from 56.5 to 50.2 % turned away (−6 points) with the same
+  admissions. Start-time holders still get in (0.0 % turned away) and wait 0.8 min. The cost: 30 % fewer start
+  times are given out, so the average wait rises from 36 to 44 min (still far below 63 without the app).
+- **Both together** give the fewest over-capacity person-hours of any 90 %-margin policy (1,062, −11 % vs start
+  times alone): fewer groups slip in late into nearly full slots.
+- What the remedies cannot fix: when demand is about twice what the trails hold (≈ 60 % admitted), whoever plans
+  ahead wins. A kiosk / SMS start time at the gate (not built) is the remaining remedy for visitors without the app.
+- **Live:** `control.walkup_share` (default 0, i.e. as before). The strict order is a rule for the rangers at the
+  gate ("a group that does not fit keeps its turn"), not a setting.
 
 ### §6.1.4 – Re-planning during the day when rain arrives (`evaluate_mpc --world s1 --stress --scenarios none sudden_rain`)
 Run `results/20261030_091335_mpc_stress_s1`. MPCr = gate control that re-plans every slot with the rain of the hours
@@ -748,6 +776,47 @@ already past + the next 2 hours (`mpc.blend_rain_share`; live: `src/live/nowcast
   (the busy Haputale–Ella stages) is where every network struggles (MAE 1.8–3.4 vs ~0.7 on other folds).
 - **Meaning:** on a trail with few walkers the graph adds little; the bottleneck problem is at the few busy stages.
   Pekoe forecasts should be read per stage, and its control is advisory stage advice (P4), not section quotas.
+
+**3 seeds, 6 km sections** (run `results/pekoe_trail/20261030_082117_benchmark_benchmark_6km_3seeds`; temporal mean ±
+SD over seeds 42–44, spatial mean ± SD over 4 folds):
+
+| model | temporal MAE | temporal RMSE | MAE at busy places | spatial MAE | spatial RMSE |
+|---|---|---|---|---|---|
+| HA | 0.993 | 2.12 | 1.71 | 1.32 ± 0.26 | 2.48 |
+| LSTM | 0.846 ± 0.000 | 2.19 | 1.53 | **0.96 ± 0.48** | 2.40 |
+| GRU (no graph) | 0.842 ± 0.001 | 2.17 | 1.52 | 1.31 ± 1.19 | 2.74 |
+| ST-GNN | 0.843 ± 0.001 | 2.17 | 1.52 | 1.04 ± 0.65 | **2.36** |
+
+- The seed-42 picture holds: over time all three networks beat HA by ~15 % (p_holm < 0.001) and tie with each other
+  (ST-GNN vs LSTM p_holm = 0.11, vs GRU 0.30).
+- On held-out sections the graph helps against the no-graph GRU (−0.27 MAE, p_holm < 0.001, d = 0.56) but the LSTM is
+  still better on MAE (+0.09, d = 0.34); the ST-GNN has the lowest RMSE. Seeds barely move the result (SD ≤ 0.001).
+
+## §6.3.12 – Load test: many phones at once (`src.api.load_test --start`, 30 Oct 2026)
+Gateway + 5 park workers on one 4-core laptop (`C4_OFFLINE=1`), run `results/20261030_155736_load`. Each simulated
+phone repeats what the app does when opened (status, outlook, capacity, slots, trails, network advice) at a random
+park; 70 % ask about the same busy day, the rest about another day in the next two weeks. Read-only, 30 s per level.
+
+| phones at once | requests / s | p50 | p95 | errors | served from cache |
+|---|---|---|---|---|---|
+| 1 | 5.9 | 0.02 s | 1.1 s | 0 % | 43 % |
+| 10 | 16.2 | 0.48 s | 1.7 s | 0 % | 49 % |
+| 50 | 13.6 | 1.5 s | 11 s | 0 % | 51 % |
+| 100 | 12.8 | 3.6 s | 24 s | 0 % | 55 % |
+| 200 | 24.0 | 5.4 s | 19 s | 0.3 % | 51 % |
+
+- **The first run found two gateway bugs, now fixed:**
+  - `/network` and `/parks/{park}/capacity/{day}` shared one cache key but stored different things, so whichever came
+    second failed with a 500. They now share one entry.
+  - Every forwarded request built a new HTTP client and loaded the CA certificates (~0.45 s), although the workers are
+    plain HTTP on 127.0.0.1.
+- **Throughput levels off at ~15–25 requests / s:** cached answers take milliseconds, but a forecast that is not
+  cached (capacity, slots, network for a new day) takes 1–2 s of CPU in its park's worker.
+- **Ten phones at once are served in under 2 s (p95).** From 50 phones the uncached forecasts queue and p95 reaches
+  11–24 s, but nothing is lost (≤ 0.3 % errors at 200).
+- **For a Poya morning:** warm the cache for the coming days each night and give the server more cores than this
+  laptop; then most requests are cache hits. A 400 from Adam's Peak `/slots` (no bookings there) is counted as a
+  correct answer.
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 

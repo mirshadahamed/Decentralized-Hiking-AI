@@ -19,22 +19,22 @@
 | R1 / R2 Commit, RUN_APP | Commit: the user. RUN_APP updated (Knuckles and new screens) |
 | R3 Field trial | December (visits) |
 | R4 Compliance | **Done.** Held start times count as held × the recent on-time share (`start_times.on_time_share`); shown in `/admin/recalibration` |
-| R5 Pekoe | **Done.** `open_stages`; viewpoint sections hold 30 at once; weather per stage (`src/live/stage_weather.py`). 3-seed benchmark: running (`run_benchmark --seeds 42 43 44 --tag benchmark_6km_3seeds`) |
+| R5 Pekoe | **Done.** `open_stages`; viewpoint sections hold 30 at once; weather per stage (`src/live/stage_weather.py`). 3-seed benchmark done (`results/pekoe_trail/20261030_082117_benchmark_benchmark_6km_3seeds`): networks beat HA by ~15 %, ST-GNN = LSTM over time; on held-out sections ST-GNN beats the no-graph GRU, LSTM best on MAE |
 | R6 Stage advice evaluation | **Done.** RQ14b: spread starts −53 to −74 %, "start early" worse; the live advice now spreads |
 | R7 Gate priority, measured | **Done (tool).** Ranger switch "Joined the queue" scans groups at the back of the queue (`POST /gate/queue`); check-ins go to `gate_log`; the day report and `/admin/gate-waits/{day}` give the measured median wait of start-time holders vs others. Numbers come with the field trial |
 | R8 DWC data | Waiting for DWC |
 | §6.1.1 Chance constraint | **Done.** `src/control/chance.py`, RQ15: ≈ 20 % fewer over-capacity person-hours than a fixed margin at the same admissions; live off by default (`control.chance_eps`) |
-| §6.1.2 Fairness | **Done (report).** RQ15: large groups and visitors without a start time are turned away more. Remedies (split groups, walk-in share for start times, kiosk / SMS) not built |
+| §6.1.2 Fairness | **Done.** RQ15: large groups and visitors without a start time are turned away more. RQ15b remedies: strict queue order (size gap 9.3 → 7.4 points), walk-up share 30 % (`control.walkup_share`; walk-ups' gap 56.5 → 50.2 points), both together −11 % over-capacity person-hours. Start times without the app: gate kiosk (tablet, ranger opens it) and SMS (`src/control/sms.py`, `POST /sms`: START / CHECK / HELP; needs the park's SMS gateway and `C4_SMS_KEY`) |
 | §6.1.3 Transfer with few counts | Not done: needs Knuckles spot counts (December) |
 | §6.1.4 Rain during the day | **Done.** `mpc.blend_rain_share` + `src/live/nowcast.py`: the gate re-plans with the rain so far and the next 2 hours (only towards caution); unplanned rain −31 % overcrowding |
 | §6.2.5 Trip planner | **Done.** Gateway `GET /trip`; app "Plan a trip" (route icon on the destinations list) |
-| §6.2.6 Parking | Partly: Knuckles car parks (K6). Redirecting arrivals not built |
-| §6.2.7 Safety | **Partly.** Walk register at every park except Yala (`POST /walks/out`, "Out & back" tab, same overdue alarm). Weather warnings and SOS need push / GPS: not built |
+| §6.2.6 Parking | **Done (Knuckles).** When a car park is full (forecast, or a ranger's "parking full" report today), `/viewpoints/{day}` names the other viewpoint with the most free spaces then (`instead`); shown on the viewpoint card. Horton Plains / Riverston bus and van parks: need space counts (field visit) |
+| §6.2.7 Safety | **Done.** Walk register at every park except Yala (`POST /walks/out`, "Out & back" tab, same overdue alarm). SOS: red SOS button on every park (`POST /sos`; trail and last place, GPS when the team app passes a location service; re-sent every 20 s with the same id when there is no signal; 1990 / 119 shown); rangers' "SOS calls" list with "On the way" / "Close"; positions deleted after 30 days. Weather warnings: in-app notices (§6.2.9) |
 | §6.2.8 Explain decisions | **Done.** Gate card's first line says why places are fewer or more (`why`); visitor day screen already lists the limit factors |
-| §6.2.9 Push notifications | Not done: needs a Firebase project (team decision) |
+| §6.2.9 Push notifications | **Done without push.** `GET /notices/{day}` (`src/serve/notices.py`): closures, trail conditions, heavy rain (forecast; today the 2-hour nowcast). The app checks it on opening and every 5 min and shows each notice once (banner). Real push (app closed) still needs a Firebase project; it would send the same list |
 | §6.2.10 Officer trends | **Done.** `GET /admin/trends`; "Last 4 weeks" under the day report |
 | §6.3.11 Backups | **Done.** `src/api/backup.py`; nightly at 02:00 from `serve_all`, 14 days kept |
-| §6.3.12 Load / cache | **Partly.** Gateway caches public forecasts 60 s. Load test not run |
+| §6.3.12 Load / cache | **Done.** Gateway caches public forecasts 60 s. Load test (`src/api/load_test.py`, `results/20261030_155736_load`): 10 phones p95 1.7 s, 200 phones p95 19 s, ≤ 0.3 % errors on a 4-core laptop; found and fixed two gateway bugs (shared cache key, slow client setup). Since then: the config is parsed once per change (0.15 s → 3 ms), the planner's day is kept per input (0.25 s → 20 ms on a repeat), and `serve_all` works out the next 2 weeks at start and 02:30 |
 | §6.3.13 CI | Already in place (`.github/workflows/component4.yml`); lint fixed. Benchmarks need data, so not in CI |
 | §6.3.14 Privacy | **Done.** `docs/privacy.md` |
 
