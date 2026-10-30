@@ -607,6 +607,56 @@ wait (person-hours):
   forecast is refreshed every evening, and a ranger can lower the limits during the day (`POST /incident`, E1).
 - B and D do not use the visitor forecast, so the forecast scenarios leave them unchanged.
 
+## RQ14 – Knuckles: one area, several mechanisms (`C4_PARK=knuckles`, `src.control.evaluate_knuckles`, 30 Oct 2026)
+Simulated 2025, run `results/knuckles/20261030_010706_knuckles`. Assumptions: `assumptions_knuckles.md` (most
+trails are drawn approximately; OSM is thin in the range).
+
+**Guided-trek permits** (5 treks, 21 guides at 4 entries; a mean of 28 group requests a day):
+
+| Policy | Groups served / day | People over a trek's daily cap / day | Days with a trek over its cap | Guides idle / day |
+|---|---|---|---|---|
+| none (a guide is free → go) | 16.6 | 6.5 | 91 | 4.4 |
+| first come first served within the cap | 15.5 | 0.0 | 0 | 5.5 |
+| LP plan made the evening before | 14.1 | 0.3 | 26 | 6.9 |
+
+- The cap removes all over-capacity days at the cost of about one group a day.
+- The evening-before LP allocation is **worse** than first come first served: it plans on expected requests, and the
+  real day differs. **Design change:** the live system gives permits first come first served within the cap while a
+  guide is free (`permits.request`). The LP stays only as the suggested guide roster per trek.
+
+**Overdue alarm** (20,000 simulated groups, 1 % in trouble):
+
+| Rule | False alarms / 1,000 groups that are fine | Troubled groups caught | Alarm, minutes after due back |
+|---|---|---|---|
+| fixed: walking time + 2 h | 136 | 72 % | 76 |
+| model: expected time for group size and rain + 2.3 × spread (≥ 45 min, sooner in rain) | 34 | 58 % | 124 |
+
+- The model rule cuts false alarms by 4×. Rangers stop trusting an alarm that is wrong 1 time in 7.
+- The cost is a later alarm for groups in real trouble. The margin (`overdue_z`) is the knob for the Forest Department to choose.
+
+**Open-viewpoint advice** (weekends; visitors who would arrive in the busy hours come in a quiet hour instead):
+- Pitawala Pathana's peak drops from 28 to 20 / 19 / 22 people at once when 30 / 60 / 90 % follow the advice.
+- Sera Ella's peak drops from 19 to 15 / 13 / 14.
+- The car parks never overflow with the assumed weekend demand.
+- **Check against weekend counts in December:** the real Pitawala crowds may be much larger than assumed.
+
+### RQ14b – Pekoe stage advice: which advice spreads the peaks? (`src.control.evaluate_stages`, 30 Oct 2026)
+Pekoe Trail, 2025 weekends, viewpoint sections hold 30 people at once (`control.hotspot_at_once`, A). Run
+`results/pekoe_trail/20261030_011618_stage_advice`. Person-hours over capacity at the viewpoints per weekend day
+(none: 1.80):
+
+| Advice to walkers on a busy stage | 30 % follow | 60 % follow | 90 % follow |
+|---|---|---|---|
+| start early (everyone the same advice) | 2.79 | 3.59 | 6.35 |
+| a quieter neighbouring stage | 1.09 | 1.46 | 3.39 |
+| **spread: each walker a different start, 06:00–11:00** | 1.25 | **0.86** | **0.46** |
+
+- The same advice to everyone **moves the crowd** instead of spreading it. "Start early" makes it worse the more
+  people follow it, and so does sending everyone to the neighbouring stage once most follow.
+- Personal, spread start times cut the overcrowding by 53–74 %. This is the same lesson as RQ8 (spread, not herd).
+- **Design change:** `/stages/{day}` now gives busy stages a `spread_window`, and the app shows each visitor their own
+  suggested start.
+
 ## RQ1 on the Pekoe Trail – a long, sparse trail (`C4_PARK=pekoe_trail`, `src.run_benchmark`, 28 Oct 2026)
 323 km, 22 stages, ~163 walkers a day (simulated, `docs/assumptions_pekoe_trail.md`); seed 42, no ARIMA.
 

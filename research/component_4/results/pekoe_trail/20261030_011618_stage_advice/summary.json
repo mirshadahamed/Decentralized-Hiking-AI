@@ -1,0 +1,72 @@
+[
+  {
+    "advice": "early",
+    "follow": 0.3,
+    "peak_fullness_hotspots": 0.739,
+    "person_hours_over_hotspots": 2.79,
+    "busy_section_hours": 2.654
+  },
+  {
+    "advice": "early",
+    "follow": 0.6,
+    "peak_fullness_hotspots": 0.775,
+    "person_hours_over_hotspots": 3.593,
+    "busy_section_hours": 2.615
+  },
+  {
+    "advice": "early",
+    "follow": 0.9,
+    "peak_fullness_hotspots": 0.85,
+    "person_hours_over_hotspots": 6.35,
+    "busy_section_hours": 2.721
+  },
+  {
+    "advice": "neighbour",
+    "follow": 0.3,
+    "peak_fullness_hotspots": 0.601,
+    "person_hours_over_hotspots": 1.089,
+    "busy_section_hours": 1.971
+  },
+  {
+    "advice": "neighbour",
+    "follow": 0.6,
+    "peak_fullness_hotspots": 0.629,
+    "person_hours_over_hotspots": 1.464,
+    "busy_section_hours": 1.673
+  },
+  {
+    "advice": "neighbour",
+    "follow": 0.9,
+    "peak_fullness_hotspots": 0.747,
+    "person_hours_over_hotspots": 3.392,
+    "busy_section_hours": 2.067
+  },
+  {
+    "advice": "none",
+    "follow": 0.0,
+    "peak_fullness_hotspots": 0.687,
+    "person_hours_over_hotspots": 1.803,
+    "busy_section_hours": 2.51
+  },
+  {
+    "advice": "spread",
+    "follow": 0.3,
+    "peak_fullness_hotspots": 0.633,
+    "person_hours_over_hotspots": 1.252,
+    "busy_section_hours": 2.173
+  },
+  {
+    "advice": "spread",
+    "follow": 0.6,
+    "peak_fullness_hotspots": 0.582,
+    "person_hours_over_hotspots": 0.855,
+    "busy_section_hours": 1.913
+  },
+  {
+    "advice": "spread",
+    "follow": 0.9,
+    "peak_fullness_hotspots": 0.591,
+    "person_hours_over_hotspots": 0.462,
+    "busy_section_hours": 1.981
+  }
+]
