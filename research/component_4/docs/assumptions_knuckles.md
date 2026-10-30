@@ -54,11 +54,13 @@ or from guides (plan K2). Section lengths matter: they set each section's capaci
 | Weekend multipliers (Sat, Sun) | 2.4, 2.2 | Day trips by car and van from Kandy and Matale |
 | Month multipliers | dry Jan–Apr and Jul–Sep, low Oct–Nov | Two monsoons over the range |
 | Share per trail | Pitawala 30 %, Sera Ella 12 %, guided treks 4–10 % each | Open viewpoints draw most day visitors |
-| Group size | 1 + Poisson(3) | Families and van groups |
+| Group size, walk-up trails | 1 + Poisson(3) | Families and van groups |
+| Guided treks (Maningala, Gombaniya, five peaks, Duwili Ella, Lakegala) | Regrouped into guided groups of 4–12 leaving the entry together around 07:00 (sd 30 min) | One guide per group; `simulator.guided_groups` |
+| River crossings closed in rain | Duwili Ella when the 06:00–12:00 rain reaches 15 mm, Lakegala 25 mm: no trek that day | `simulator.rain_closures` |
 | Last start of long treks | 07:30–10:00 | To be out before dark and the afternoon rain |
 | Dwell at viewpoints / falls | 15–40 min | Photos, bathing at the falls |
 
-Result: about 418 visitors a day on average, 1,012 at the 95th percentile and 2,244 at most (2022–2025 simulated with
+Result: about 418 visitors a day on average, 1,013 at the 95th percentile and 2,243 at most (2022–2025 simulated with
 real weather). **Field check:** weekend counts at Pitawala Pathana and Sera Ella in December.
 
 ## 3. Control
@@ -85,8 +87,6 @@ real weather). **Field check:** weekend counts at Pitawala Pathana and Sera Ella
 
 ## 4. Known limits
 
-- The simulator gives every trail the same group-size distribution. Guided groups (4–12 with a guide) and walk-up
-  families are not told apart.
 - Parking is estimated as people on the walk ÷ people per vehicle. Cars waiting on the road are not modelled.
 - Weather is one point for the whole range (7.45 N, 80.80 E), although the eastern (Meemure) and western (Riverston)
   sides get different monsoons.

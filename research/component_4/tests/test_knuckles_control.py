@@ -73,3 +73,43 @@ def test_campsite_pitches(cfg, tmp_path):
     assert left["duwili_cave"] == 2 and left["nature_camp"] == 15
     with pytest.raises(ValueError, match="2 pitch"):
         book_campsite(cfg, "2027-01-09", "duwili_cave", 3, 8, db)
+
+
+def test_guided_treks_go_as_guided_groups_and_river_treks_close_in_rain(cfg):
+    from src.sim.simulator import guided_regroup, rain_closed
+    p = cfg["simulator"]
+    trails = np.array(["pitawala", "duwili_ella"])
+    rng = np.random.default_rng(0)
+    size = 1 + rng.poisson(3, 200).astype(float)
+    arrive = rng.uniform(360, 780, 200)
+    option = rng.integers(0, 2, 200)
+    s2, a2, o2 = guided_regroup(size, arrive, option, trails, p, np.random.default_rng(1))
+    for k in (0, 1):                                         # people per trail kept
+        assert s2[o2 == k].sum() == size[option == k].sum()
+    assert (s2[o2 == 0] == size[option == 0]).all()          # walk-ups unchanged
+    g = s2[o2 == 1]
+    assert (g[:-1] >= 4).all() and (g <= 12).all() and abs(a2[o2 == 1].mean() - 420) < 30
+    dry, wet = np.zeros(24), np.zeros(24)
+    wet[7:10] = 6.0                                          # 18 mm in the morning
+    assert rain_closed(list(trails), dry, p) == []
+    assert rain_closed(list(trails) + ["lakegala"], wet, p) == ["duwili_ella"]
+    assert guided_regroup(size, arrive, option, trails, {}, rng)[0] is size   # other parks: no change
+
+
+def test_walk_register_any_park_uses_the_graph_walking_time(tmp_path):
+    from src.config import PROCESSED
+    if not (PROCESSED / "segments.geojson").exists():
+        pytest.skip("run src.data.build_dataset first")
+    cfg = load_config()                                       # Horton Plains: no guided treks
+    t = next(iter(cfg["area"]["trail_names"]))
+    db = tmp_path / "b.sqlite"
+    now = datetime(2026, 11, 2, 7, 0)
+    w = permits.register_walk(cfg, t, 4, now, db=db)
+    hours = (datetime.fromisoformat(w["expected_back"]) - now).total_seconds() / 3600
+    assert w["code"].startswith("W") and 0.5 < hours < 8
+    late = now + (datetime.fromisoformat(w["expected_back"]) - now) * 2
+    assert [g["code"] for g in permits.overdue(cfg, "2026-11-02", late, db=db)["overdue"]] == [w["code"]]
+    permits.check_back(w["code"], late, db=db)
+    assert permits.overdue(cfg, "2026-11-02", late, db=db)["overdue"] == []
+    with pytest.raises(KeyError):
+        permits.register_walk(cfg, "nope", 2, now, db=db)

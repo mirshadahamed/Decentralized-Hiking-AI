@@ -18,11 +18,15 @@ it (river crossings, mist).
     POST /permits/{code}/out            ranger: the group starts (at)
     POST /permits/{code}/back           ranger: the group is back (at)
     GET  /overdue/{day}                 ranger / officer: groups out past their expected return
+    POST /walks/out                     §6.2.7, any park: register a group starting a long walk (no permit) ->
+                                        a code, and the same out / back / overdue check
 No personal data: a random code, day, trek, group size and times.
 """
 import secrets
 from contextlib import closing
 from datetime import datetime, timedelta
+from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from scipy.optimize import linprog
@@ -44,8 +48,33 @@ def _con(db=None):
     return con
 
 
+DEFAULTS = {"overdue_margin_min": 45, "overdue_cv": 0.15, "overdue_z": 2.3, "rain_margin_cut_min": 30,
+            "big_group_slowdown": 0.02, "rain_slowdown": 0.25, "treks": {}}
+
+
 def settings(cfg) -> dict:
-    return cfg["control"]["permits"]
+    """control.permits over the defaults (parks without guided treks still use the overdue check, §6.2.7)."""
+    return DEFAULTS | (cfg["control"].get("permits") or {})
+
+
+@lru_cache(maxsize=8)
+def _graph_hours(processed: str) -> dict:
+    """Walking time per trail from the graph (Tobler time of every step / leisure factor + stays at viewpoints)."""
+    import geopandas as gpd
+
+    from src.config import load_config
+    from src.data.graph import load_walks
+    p = load_config()["simulator"]
+    seg = gpd.read_file(Path(processed) / "segments.geojson")
+    fwd = seg.tobler_fwd_min.values / p["leisure_speed_factor"]
+    bwd = seg.tobler_bwd_min.values / p["leisure_speed_factor"]
+    dwell = {i: p["dwell_minutes"].get(poi, [0])[0] for i, poi in seg.poi.items() if isinstance(poi, str)}
+    out = {}
+    for t, walk in load_walks().items():
+        m = sum(fwd[s] if d > 0 else bwd[s] for s, d in walk)
+        m += sum(dwell.get(s, 0) for s in {s for s, _ in walk})
+        out[t] = m / 60
+    return out
 
 
 def plan_permits(cap_people: dict, requests_groups: dict, entry_of: dict, guides: dict, mean_group: float) -> dict:
@@ -82,7 +111,11 @@ def plan_permits(cap_people: dict, requests_groups: dict, entry_of: dict, guides
 def walk_minutes(cfg, trail: str, group_size: int, rain_share: float = 0.0) -> float:
     """Expected trek time: the configured walking time, slower for big groups and in rain (assumed factors)."""
     s = settings(cfg)
-    base = s["treks"][trail]["walk_h"] * 60
+    if trail in s["treks"]:
+        base = s["treks"][trail]["walk_h"] * 60
+    else:
+        from src.config import PROCESSED
+        base = _graph_hours(str(PROCESSED))[trail] * 60
     return base * (1 + s.get("big_group_slowdown", 0.02) * max(0, group_size - 4)) * (1 + s.get("rain_slowdown", 0.25) * rain_share)
 
 
@@ -165,6 +198,27 @@ def check_out(cfg, code: str, now: datetime, rain_share: float = 0.0, db=None) -
         con.commit()
     return p | {"status": "out", "out_at": now.isoformat(timespec="seconds"),
                 "expected_back": back.isoformat(timespec="seconds")}
+
+
+def register_walk(cfg, trail: str, size: int, now: datetime, rain_share: float = 0.0, db=None) -> dict:
+    """§6.2.7: a group starts a long walk at any park (no permit): a code and its expected return, then the same
+    back / overdue check as a guided trek. Codes start with W so rangers can tell them from permits."""
+    if trail not in cfg["area"]["trail_names"]:
+        raise KeyError(f"Unknown trail '{trail}'")
+    back = now + timedelta(minutes=walk_minutes(cfg, trail, size, rain_share))
+    alphabet = booking.CODE_ALPHABET
+    with closing(_con(db)) as con:
+        while True:
+            code = "W" + "".join(secrets.choice(alphabet) for _ in range(6))
+            if not con.execute("SELECT 1 FROM permits WHERE code=?", (code,)).fetchone():
+                break
+        con.execute("INSERT INTO permits (code, day, trail, group_size, created, status, out_at, expected_back) "
+                    "VALUES (?, ?, ?, ?, ?, 'out', ?, ?)",
+                    (code, now.date().isoformat(), trail, size, now.isoformat(timespec="seconds"),
+                     now.isoformat(timespec="seconds"), back.isoformat(timespec="seconds")))
+        con.commit()
+    return {"code": code, "day": now.date().isoformat(), "trail": trail, "group_size": size, "status": "out",
+            "out_at": now.isoformat(timespec="seconds"), "expected_back": back.isoformat(timespec="seconds")}
 
 
 def check_back(code: str, now: datetime, db=None) -> dict:
