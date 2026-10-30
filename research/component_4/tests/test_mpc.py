@@ -103,3 +103,24 @@ def test_reported_condition_lowers_live_caps_and_closure_stops_entry(ec):
     assert closed == 0 and t["closed_for_entry"] and t["capacity_removed"] == 1.0
     assert muddy < full
     assert np.all(m.day_plan(0.0, 900.0, {main: 1.0})[0] == 0)
+
+
+def test_fairness_remedies_keep_everyone_accounted_and_leave_room_for_walk_ups(ec):
+    """§6.1.2: strict order and the walk-up share change who gets in, never how many people are counted."""
+    from src.control.mpc import MPCController
+    size, gate, option = _day(ec, 4000)
+    prio = np.random.default_rng(3).random(len(size)) < 0.6
+    base = MPCController(ec, compliance=0.5)
+    base.run_day(size, gate, option, 0.0, 2000.0, np.random.default_rng(1), priority=prio)
+    fair = MPCController(ec, compliance=0.5, strict_order=True, walkup_share=0.3)
+    s, g, o, st = fair.run_day(size, gate, option, 0.0, 2000.0, np.random.default_rng(1), priority=prio)
+    assert s.sum() + st["refused"] == pytest.approx(size.sum())
+
+    def walkup_in(m):
+        return size[~prio & (m.outcome < 2)].sum()
+    assert walkup_in(fair) > walkup_in(base)                            # more walk-ups get in
+    plan = base.day_plan(0.0, 2000.0)
+    assert np.allclose(fair.day_plan(0.0, 2000.0), plan)                # the plan itself is the same ...
+    _, adv = fair.advise_starts(size, gate, option, 0.0, 2000.0, 0.6, 0.8, np.random.default_rng(2))
+    _, adv0 = base.advise_starts(size, gate, option, 0.0, 2000.0, 0.6, 0.8, np.random.default_rng(2))
+    assert adv["advised"] <= 0.7 * plan.sum() + 1e-6 and adv["advised"] < adv0["advised"]   # ... 30 % kept back

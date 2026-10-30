@@ -10,11 +10,16 @@
      fixed_0.8    a more cautious fixed margin
      cc_<eps>     MPC with the chance constraint P(over) <= eps per section and half hour
      app_<pol>    the same with start times for 60 % of groups, on-plan groups first (N3p): fairness of the app
+   Fairness remedies (§6.1.2):
+     fifo_0.9           fixed_0.9 where a group that does not fit keeps its turn (large groups are not passed over)
+     app_fixed_0.9_w30  start times only for 70 % of the day plan: 30 % kept for visitors without the app
+     app_fifo_0.9_w30   both
    All MPC policies: 50 % accept another trail when theirs is full.
 Metrics: over-capacity person-hours, days over capacity, the share of section-half-hours over capacity among the
 busy ones (is P(over) near eps?), admitted / refused %, mean gate wait.
 Fairness (§6.1.2), per group: refused % and mean wait of early (before 08:00), mid (08-10) and late (after 10:00)
 arrivals, small (1-3) and large (6+) groups, and with / without a start time from the app.
+Gaps in the summary: refused % of large minus small groups, and of visitors without minus with a start time.
 Outputs results/<timestamp>_chance[_s1]/: calibration.json, summary.csv, fairness.csv, daily.csv, tests.json
 """
 import argparse
@@ -35,6 +40,8 @@ from src.sim.simulator import daily_demand, day_events
 from src.utils import new_run_dir
 
 EPS = (0.05, 0.10, 0.20)
+APP = {"app_fixed_0.9": ("fixed_0.9", 0.0), "app_cc_0.1": ("cc_0.1", 0.0),          # policy: (controller, walk-up)
+       "app_fixed_0.9_w30": ("fixed_0.9", 0.3), "app_fifo_0.9_w30": ("fifo_0.9", 0.3)}
 APP_SHARE, FOLLOW = 0.6, 0.8
 
 
@@ -105,8 +112,8 @@ def run(world="s1", seed=11, calib_days=60, max_days=None, write=True, log=print
             "fixed_0.8": MPCController(ec, compliance=0.5, margin=0.8)}
     for e in EPS:
         ctrl[f"cc_{e}"] = MPCController(ec, compliance=0.5, chance=calib | {"eps": e})
-    app = ["fixed_0.9", "cc_0.1"]
-    policies = ["A"] + list(ctrl) + [f"app_{a}" for a in app]
+    ctrl["fifo_0.9"] = MPCController(ec, compliance=0.5, strict_order=True)
+    policies = ["A"] + list(ctrl) + list(APP)
     rows, groups = [], []
     days = np.where(cal.index.year == 2025)[0][:max_days]
     for n, di in enumerate(days):
@@ -125,7 +132,9 @@ def run(world="s1", seed=11, calib_days=60, max_days=None, write=True, log=print
                 s, g, o = size, gate, option
                 outcome, wait = np.zeros(len(size), int), np.zeros(len(size))
             else:
-                m = ctrl[pol.removeprefix("app_")]
+                key, walkup = APP.get(pol, (pol, 0.0))
+                m = ctrl[key]
+                m.walkup_share = walkup
                 g0 = gate
                 if pol.startswith("app_"):
                     g0, adv = m.advise_starts(size, gate, option, r, float(expected[di]), APP_SHARE, FOLLOW, prng)
@@ -145,7 +154,7 @@ def run(world="s1", seed=11, calib_days=60, max_days=None, write=True, log=print
                          "overcrowded": bool((over > 0).any())})
             if pol != "A":
                 groups.append(pd.DataFrame({"policy": pol, "size": size, "band": band, "app": on_plan,
-                                            "refused": outcome == 2, "wait": wait}))
+                                            "refused": outcome == 2, "redirected": outcome == 1, "wait": wait}))
         if n % 25 == 0:
             log(f"{n}/{len(days)} days")
     df = pd.DataFrame(rows)
@@ -173,8 +182,12 @@ def run(world="s1", seed=11, calib_days=60, max_days=None, write=True, log=print
             x = d[m]
             fair.append({"policy": pol, "group": name, "people": float(x["size"].sum()),
                          "refused_pct": 100 * float((x["size"] * x.refused).sum() / max(x["size"].sum(), 1e-9)),
+                         "redirected_pct": 100 * float((x["size"] * x.redirected).sum() / max(x["size"].sum(), 1e-9)),
                          "mean_wait_min": float((x["size"] * x.wait).sum() / max(x["size"].sum(), 1e-9))})
     fair = pd.DataFrame(fair)
+    gap = fair.pivot(index="policy", columns="group", values="refused_pct")
+    summary["large_minus_small_refused_pts"] = summary.policy.map(gap["large_6plus"] - gap["small_1_3"])
+    summary["without_minus_with_refused_pts"] = summary.policy.map(gap["without"] - gap["with_start_time"])
     by = {pol: g.get_group(pol).sort_values("date") for pol in policies}
     tests = {}
     for a, b in (("cc_0.05", "fixed_0.9"), ("cc_0.1", "fixed_0.9"), ("cc_0.2", "fixed_0.9"), ("cc_0.1", "fixed_0.8")):

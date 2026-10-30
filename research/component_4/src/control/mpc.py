@@ -56,16 +56,22 @@ def why_line(ratio: float, rain: float, typical_rain: float, conditions: dict, n
 class MPCController:
     def __init__(self, ec: EntryControl, horizon: int = 6, margin: float | None = None, max_hold_min: int | None = None,
                  compliance: float = 0.5, feedback: bool = True, queue_priority: float = 3.0,
-                 chance: dict | None = None, replan_rain: bool = False):
+                 chance: dict | None = None, replan_rain: bool = False, strict_order: bool = False,
+                 walkup_share: float = 0.0):
         """margin / max_hold_min: default the slot plan's safety margin and slot shift (a fair comparison with D).
         queue_priority: weight of people really waiting now vs forecast arrivals (do not hold back for guesses).
-        chance: {"eps": P(over) allowed, "dry"/"wet": chance.fit(...)} replaces the fixed margin (RQ15)."""
+        chance: {"eps": P(over) allowed, "dry"/"wet": chance.fit(...)} replaces the fixed margin (RQ15).
+        Fairness remedies (§6.1.2): strict_order - a group that does not fit keeps its turn on its trail (smaller
+        groups behind it do not slip into the places left, so large groups are not passed over); walkup_share -
+        the part of the day plan not given out as start times, and of each slot's cap that groups with a start
+        time cannot take ahead of the others (kept for visitors without the app)."""
         self.ec, self.H = ec, horizon
         self.chance, self._rain = chance, 0.0
         self.replan_rain = replan_rain             # §6.1.4: re-plan every slot with the rain measured so far
         self.margin = ec.c["safety_margin"] if margin is None else margin
         self.max_hold = ec.c["max_slot_shift_h"] * 60 if max_hold_min is None else max_hold_min
         self.compliance, self.feedback, self.queue_priority = compliance, feedback, queue_priority
+        self.strict_order, self.walkup_share = strict_order, walkup_share
         self.trail_of_option = np.array([ec.trails.index(ec.sim.options[o][0]) for o in range(len(ec.sim.options))])
         # share of a day's visitors per trail and slot (the usual pattern)
         p = ec.sim.p
@@ -153,15 +159,25 @@ class MPCController:
                 demand[self.trail_of_option[option[g]], k] += size[g]
             caps = self._plan(k, inside, demand, K, C)[:, k]
             used = np.zeros(R)
+            blocked = np.zeros(R, bool)                                        # strict_order: a group keeps its turn
+            reserve = np.zeros(R)                  # places groups with a start time leave for walk-ups waiting now
+            if priority is not None and self.walkup_share > 0:
+                for g, _ in queue:
+                    if not priority[g]:
+                        reserve[self.trail_of_option[option[g]]] += size[g]
+                reserve = np.minimum(reserve, caps * self.walkup_share)
             still = []
             for g, wanted in queue:
                 r = self.trail_of_option[option[g]]
-                if used[r] + size[g] <= caps[r] + 1e-6:
+                limit = caps[r] - reserve[r] if priority is not None and priority[g] else caps[r]
+                if not blocked[r] and used[r] + size[g] <= limit + 1e-6:
                     used[r] += size[g]
                     t = max(wanted, now) if wanted >= now else now + rng.uniform(0, sm)
                     self._enter(g, r, option[g], t, size, inside, K, out_size, out_gate, out_opt, stats, wanted)
                     continue
                 if now + sm - wanted <= self.max_hold and k + 1 < S_:          # wait for the next slot
+                    if self.strict_order and size[g] <= caps[r]:              # it fits an empty slot: hold its turn
+                        blocked[r] = True
                     still.append((g, wanted))
                     continue
                 spare = [rr for rr in range(R) if rr != r and caps[rr] - used[rr] >= size[g] and ec.allowed[rr, k]]
@@ -208,7 +224,7 @@ class MPCController:
         the time they wanted that still has room in the day plan (up to max_shift_min later). A share `follow`
         of them come at that time; everyone else comes when they wanted. Returns new gate times and counts."""
         ec = self.ec
-        left = self.day_plan(rain_share, expected_visitors).copy()
+        left = self.day_plan(rain_share, expected_visitors) * (1.0 - self.walkup_share)
         gate = np.array(gate, float)
         k_of = ec.slot_of(gate)
         sm = ec.c["slot_minutes"]

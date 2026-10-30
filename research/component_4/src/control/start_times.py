@@ -29,7 +29,9 @@ def _con(db=None):
 
 @lru_cache(maxsize=64)
 def _plan(day: str, rain_share: float, expected: float, cond: tuple = ()) -> np.ndarray:
-    return MPCController(build_control()).day_plan(rain_share, expected, dict(cond))
+    ec = build_control()
+    walkup = float(ec.cfg["control"].get("walkup_share", 0.0))       # §6.1.2: places kept for visitors without the app
+    return MPCController(ec).day_plan(rain_share, expected, dict(cond)) * (1.0 - walkup)
 
 
 PRIOR_ON_TIME, PRIOR_WEIGHT, WINDOW_DAYS = 0.8, 10.0, 30
