@@ -47,3 +47,29 @@ def advice(day: str, rows: list, park: str | None, days: list | None = None) -> 
         note = f"{me['name']} has room on {day}."
     out["for_park"] = me | {"other_parks": others[:3], "other_days": quieter_days[:3], "note": note}
     return out
+
+
+UNKNOWN_LOAD = 0.9          # a park whose forecast is missing counts as nearly busy (never preferred over room)
+
+
+def plan_trip(parks: list, days: list, rows: dict) -> dict:
+    """§6.2.5: one day for each chosen park within `days` (distinct days), so each visit falls on a quiet day.
+    rows: {(park, day): park_row}. Best = lowest highest load, then lowest total load, then earlier days.
+    Small search (a few parks x a week): every assignment is tried."""
+    from itertools import permutations
+    if len(parks) > len(days):
+        raise ValueError(f"{len(parks)} places need at least {len(parks)} days")
+
+    def load(p, d):
+        v = rows.get((p, d), {}).get("load")
+        return UNKNOWN_LOAD if v is None else v
+    best = min(permutations(range(len(days)), len(parks)),
+               key=lambda ix: (max(load(p, days[i]) for p, i in zip(parks, ix)),
+                               sum(load(p, days[i]) for p, i in zip(parks, ix)), sorted(ix)))
+    visits = sorted(({"day": days[i], **rows.get((p, days[i]), {"park": p, "load": None, "level": "unknown"})}
+                     for p, i in zip(parks, best)), key=lambda v: v["day"])
+    worst = max(visits, key=lambda v: v["load"] if v["load"] is not None else UNKNOWN_LOAD)
+    note = ("Every visit falls on a day with room." if all(v["level"] == "room" for v in visits) else
+            f"Busiest visit: {worst.get('name', worst['park'])} on {worst['day']} ({worst['level']}); no better order "
+            f"in these days.")
+    return {"days": days, "visits": visits, "note": note}

@@ -23,3 +23,19 @@ def test_busy_park_gets_alternatives_same_kind_first():
 def test_quiet_park_just_has_room():
     out = advice("2027-01-10", [park_row("hp", {"name": "Horton Plains"}, {"total_expected": 300, "total_safe_limit": 1000})], "hp")
     assert out["for_park"]["level"] == "room" and out["for_park"]["note"] == "Horton Plains has room on 2027-01-10."
+
+
+def test_trip_puts_each_park_on_a_quiet_day():
+    from src.api.network import plan_trip
+    info = {"hp": {"name": "Horton Plains", "kind": "national_park"}, "kn": {"name": "Knuckles", "kind": "forest_reserve"}}
+    load = {("hp", "d1"): 1.2, ("hp", "d2"): 0.5, ("hp", "d3"): 0.9,
+            ("kn", "d1"): 0.3, ("kn", "d2"): 0.4, ("kn", "d3"): 1.1}
+    rows = {k: park_row(k[0], info[k[0]], {"total_expected": v * 1000, "total_safe_limit": 1000}) for k, v in load.items()}
+    t = plan_trip(["hp", "kn"], ["d1", "d2", "d3"], rows)
+    assert [(v["park"], v["day"]) for v in t["visits"]] == [("kn", "d1"), ("hp", "d2")]
+    assert t["note"] == "Every visit falls on a day with room."
+    rows.pop(("kn", "d1"))                                                # unknown forecast: avoided if possible
+    assert {v["park"]: v["day"] for v in plan_trip(["hp", "kn"], ["d1", "d2", "d3"], rows)["visits"]}["kn"] != "d1"
+    import pytest
+    with pytest.raises(ValueError):
+        plan_trip(["hp", "kn"], ["d1"], rows)

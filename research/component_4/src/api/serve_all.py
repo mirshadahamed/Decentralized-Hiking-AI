@@ -28,6 +28,8 @@ def main():
         workers.append(subprocess.Popen([sys.executable, "-m", "uvicorn", "src.api.app:app", "--port", str(port),
                                          "--log-level", "warning"], env=env))
         print(f"{park}: worker on port {port}")
+    from src.api.backup import nightly
+    nightly()                                                    # §6.3.11: copy the databases at 02:00
     try:
         uvicorn.run("src.api.gateway:app", host=a.host, port=a.port)
     finally:
