@@ -171,6 +171,8 @@ capacity:                 # Cifuentes (1992) PCC -> RCC -> ECC, per segment
     closed: 1.0
 
 control:                  # entry control: timed tickets per trail and slot (docs/archive/upgrade_plan.md, section 2)
+  walk_register: true     # §6.2.7: rangers register groups starting long walks; overdue alarm as for guided treks
+  chance_eps: null        # RQ15: e.g. 0.1 = gate caps keep P(over capacity) <= 10 % (needs evaluate_chance); null = margin
   slot_minutes: 30
   first_slot_h: 6.0       # gate opens
   last_slot_h: 12.5       # last slot starts 12:30 (last entry 13:00)

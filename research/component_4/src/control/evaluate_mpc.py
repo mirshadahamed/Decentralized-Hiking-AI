@@ -44,7 +44,7 @@ APP_SHARE = (0.3, 0.6, 0.9)        # N3: share of groups with the app who get a 
 FOLLOW = 0.8                       # ... of whom this share come at that time
 STRESS = {"none": {}, "surge": {"demand": 1.5}, "forecast_low": {"expected": 0.7},
           "forecast_high": {"expected": 1.3}, "sudden_rain": {"planned_dry": True}}
-STRESS_POLICIES = ["A", "B", "D", "MPC0.5", "N3p_0.6"]
+STRESS_POLICIES = ["A", "B", "D", "MPC0.5", "MPCr", "N3p_0.6"]   # MPCr: re-plans with the rain so far (§6.1.4)
 
 
 def run(world="default", year="2025", seed=11, max_days=None, write=True, log=print, stress=None, policies=None):
@@ -70,6 +70,7 @@ def run(world="default", year="2025", seed=11, max_days=None, write=True, log=pr
                             + [f"N3_{a}" for a in APP_SHARE] + [f"N3p_{a}" for a in APP_SHARE])
     ctrl = {f"MPC{c}": MPCController(ec, compliance=c) for c in COMPLIANCE}
     ctrl["MPC-nf"] = MPCController(ec, compliance=0.5, feedback=False)
+    ctrl["MPCr"] = MPCController(ec, compliance=0.5, replan_rain=True)
     rows = []
     days = np.where(cal.index.year == int(year))[0][:max_days]
     for n, di in enumerate(days):
@@ -100,7 +101,7 @@ def run(world="default", year="2025", seed=11, max_days=None, write=True, log=pr
                 st["moved_by_advice"] = adv["moved_by_advice"]
                 st["on_plan"] = float(size[adv["on_plan"]].sum())
             else:
-                s, g, o, st = ctrl[pol].run_day(size, gate, option, r, float(expected[di]), prng)
+                s, g, o, st = ctrl[pol].run_day(size, gate, option, r, float(expected[di]), prng, rain_obs=precip[di])
             _, per_min, _ = sim.simulate_groups(s, g, o, precip[di], prng, slow=ev.get("slow"))
             occ = per_min.reshape(sim.S, ec.n_bins, -1).mean(-1)
             over = np.clip(occ[fin] - C[fin, None], 0, None)
@@ -163,11 +164,14 @@ if __name__ == "__main__":
     ap.add_argument("--world", choices=["default", "s1"], default="default")
     ap.add_argument("--max-days", type=int)
     ap.add_argument("--stress", action="store_true")
+    ap.add_argument("--scenarios", nargs="+", choices=list(STRESS), help="stress scenarios to run (default all)")
     a = ap.parse_args()
     if a.stress:
         from src.config import load_config
         blocks, daily = [], []
         for name, st in STRESS.items():
+            if a.scenarios and name not in a.scenarios:
+                continue
             s, _, df = run(a.world, max_days=a.max_days, stress=st, policies=STRESS_POLICIES)
             blocks.append(s.assign(scenario=name))
             daily.append(df.assign(scenario=name))

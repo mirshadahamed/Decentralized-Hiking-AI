@@ -21,12 +21,48 @@ from scipy.optimize import linprog
 from src.control.slots import EntryControl
 
 
+def blend_rain_share(planned: float, precip_h, now_min: int, cap: dict, nowcast_h: int = 2) -> float:
+    """§6.1.4: the rain share of the open hours as known now - hours already past and the next `nowcast_h` hours
+    from the rain measured / nowcast (precip_h, 24 values in mm), the rest of the day as planned. Never below the
+    plan: a dry morning does not raise the caps, because the planned rain may still come while those let in are on
+    the trail (stress test: raising them doubled the overcrowding on ordinary days)."""
+    lo, n = cap.get("open_from_h", 6), cap["open_hours"]
+    hours = (lo + np.arange(n)) % 24
+    known = hours < now_min / 60 + nowcast_h
+    wet = np.asarray(precip_h, float)[hours] >= cap["rain_mm"]
+    return max(planned, float((wet[known].sum() + planned * (~known).sum()) / n))
+
+
+def why_line(ratio: float, rain: float, typical_rain: float, conditions: dict, names: dict) -> str:
+    """§6.2.8: the gate decision in one line - what makes the places fewer (or more) than usual right now."""
+    less, more = [], []
+    if rain >= typical_rain + 0.1:
+        less.append(f"rain ({round(100 * rain)} % of the open hours)")
+    elif rain <= typical_rain - 0.1:
+        more.append("drier than usual")
+    if ratio > 1.05:
+        less.append(f"{round(100 * (ratio - 1))} % more people than expected so far")
+    elif ratio < 0.95:
+        more.append(f"{round(100 * (1 - ratio))} % fewer people than expected so far")
+    for t, f in conditions.items():
+        less.append(f"{names.get(t, t)} " + ("closed" if f >= 1 else f"{round(100 * f)} % less room"))
+    if less:
+        return "Fewer places now: " + "; ".join(less) + "."
+    if more:
+        return "More places now: " + "; ".join(more) + "."
+    return "As planned: no rain, crowd or trail problem beyond the usual."
+
+
 class MPCController:
     def __init__(self, ec: EntryControl, horizon: int = 6, margin: float | None = None, max_hold_min: int | None = None,
-                 compliance: float = 0.5, feedback: bool = True, queue_priority: float = 3.0):
+                 compliance: float = 0.5, feedback: bool = True, queue_priority: float = 3.0,
+                 chance: dict | None = None, replan_rain: bool = False):
         """margin / max_hold_min: default the slot plan's safety margin and slot shift (a fair comparison with D).
-        queue_priority: weight of people really waiting now vs forecast arrivals (do not hold back for guesses)."""
+        queue_priority: weight of people really waiting now vs forecast arrivals (do not hold back for guesses).
+        chance: {"eps": P(over) allowed, "dry"/"wet": chance.fit(...)} replaces the fixed margin (RQ15)."""
         self.ec, self.H = ec, horizon
+        self.chance, self._rain = chance, 0.0
+        self.replan_rain = replan_rain             # §6.1.4: re-plan every slot with the rain measured so far
         self.margin = ec.c["safety_margin"] if margin is None else margin
         self.max_hold = ec.c["max_slot_shift_h"] * 60 if max_hold_min is None else max_hold_min
         self.compliance, self.feedback, self.queue_priority = compliance, feedback, queue_priority
@@ -50,7 +86,7 @@ class MPCController:
         bins = np.arange(b0, ec.n_bins)
         fin = np.where(np.isfinite(C))[0]
         rows, b = [], []
-        cap = self.margin * C
+        cap = self._cap(C)
         for s in fin:
             coef = np.array([K[r, j, s][bins] for r, j in xs]).T                # [bins, vars]
             use = coef.max(axis=1) > 1e-6
@@ -71,10 +107,23 @@ class MPCController:
                 a[r, j] = v
         return a
 
-    def run_day(self, size, gate, option, rain_share: float, expected_visitors: float, rng, priority=None) -> tuple:
+    def _cap(self, C: np.ndarray) -> np.ndarray:
+        """What the plan may fill each section to: margin x capacity, or the chance-constrained cap (RQ15)."""
+        if not self.chance:
+            return self.margin * C
+        from src.control.chance import kind, safe_cap
+        f = self.chance[kind(self._rain)]
+        return safe_cap(C, self.chance["eps"], f["bias"], f["disp"], f["sigma"])
+
+    def run_day(self, size, gate, option, rain_share: float, expected_visitors: float, rng, priority=None,
+                rain_obs=None) -> tuple:
         """One day at the gate. Returns admitted (size, gate_min, option) and counts (refused, redirected, held,
-        mean wait in minutes of those who waited)."""
+        mean wait in minutes of those who waited). Per group (fairness, §6.1.2): self.outcome (0 entered on their
+        trail, 1 sent to another trail, 2 turned away) and self.wait_min.
+        rain_obs: the day's real hourly rain (24 values); with replan_rain each slot plans with blend_rain_share."""
         ec = self.ec
+        self._rain = rain_share
+        self.outcome, self.wait_min = np.zeros(len(size), int), np.zeros(len(size))
         K, C = ec.response(rain_share), ec.capacity(rain_share)
         R, S_ = len(ec.trails), len(ec.slots)
         sm = ec.c["slot_minutes"]
@@ -87,6 +136,9 @@ class MPCController:
         arrived_so_far, expected_so_far = 0.0, 0.0
         for k in range(S_):
             now = ec.slots[k]
+            if self.replan_rain and rain_obs is not None:
+                self._rain = blend_rain_share(rain_share, rain_obs, now, ec.cfg["capacity"])
+                K, C = ec.response(self._rain), ec.capacity(self._rain)
             new = [(int(g), float(gate[g])) for g in np.where(slot == k)[0]]
             queue += new
             # groups that came at their advised start time go first (N3); otherwise first come, first served
@@ -117,13 +169,16 @@ class MPCController:
                     rr = max(spare, key=lambda x: caps[x] - used[x])
                     used[rr] += size[g]
                     stats["redirected"] += size[g]
+                    self.outcome[g] = 1
                     self._enter(g, rr, ec.sim.option_of_trail(ec.trails[rr]), now + rng.uniform(0, sm), size,
                                 inside, K, out_size, out_gate, out_opt, stats, wanted)
                 else:
                     stats["refused"] += size[g]
+                    self.outcome[g] = 2
             queue = still
         for g, _ in queue:
             stats["refused"] += size[g]
+            self.outcome[g] = 2
         return (np.array(out_size, float), np.array(out_gate, float), np.array(out_opt, int), stats)
 
     def _capacity(self, rain_share: float, conditions: dict | None = None) -> np.ndarray:
@@ -139,6 +194,7 @@ class MPCController:
     def day_plan(self, rain_share: float, expected_visitors: float, conditions: dict | None = None) -> np.ndarray:
         """Caps [trail, slot] for the whole day from the forecast alone (planned the evening before)."""
         ec = self.ec
+        self._rain = rain_share
         K, C = ec.response(rain_share), self._capacity(rain_share, conditions)
         H, self.H = self.H, len(ec.slots)
         try:
@@ -183,6 +239,7 @@ class MPCController:
         each trail can still take in the current slot and the caps planned for the next slots.
         conditions: {trail: share of capacity removed} reported today (mud, incident, closure)."""
         ec = self.ec
+        self._rain = rain_share
         K, C = ec.response(rain_share), self._capacity(rain_share, conditions)
         conditions = conditions or {}
         R, S_ = len(ec.trails), len(ec.slots)
@@ -224,6 +281,8 @@ class MPCController:
         out_gate.append(t)
         out_opt.append(opt)
         inside += K[r, ec.slot_of(np.array([t]))[0]] * size[g]
+        if hasattr(self, "wait_min") and g < len(self.wait_min):
+            self.wait_min[g] = max(t - wanted, 0.0)
         if t - wanted > 1:
             stats["held"] += size[g]
             stats["wait_sum"] += (t - wanted) * size[g]

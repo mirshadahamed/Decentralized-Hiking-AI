@@ -119,7 +119,9 @@ def recheck(code: str, now: datetime, rain_share: float, expected: float, db=Non
         return out | {"status": "ok", "note": "Check again on the morning of your walk: the plan is updated from "
                                                "the gate counts during the day."}
     cond = booking.condition_factors(h["day"], db)
-    live = MPCController(build_control()).caps_now(booking.entries(h["day"], db), now.hour * 60 + now.minute,
+    from src.control.chance import live_kwargs
+    ec = build_control()
+    live = MPCController(ec, **live_kwargs(ec.cfg)).caps_now(booking.entries(h["day"], db), now.hour * 60 + now.minute,
                                                    rain_share, expected, cond)
     t = next(x for x in live["trails"] if x["trail"] == h["trail"])
     caps = {live["slot"]: t["can_enter_now"]} | {x["slot"]: x["cap"] for x in t["next_slots"]}
