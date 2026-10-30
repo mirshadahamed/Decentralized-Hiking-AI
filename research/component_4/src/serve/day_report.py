@@ -50,6 +50,11 @@ def day_report(cfg, day: str, db=None) -> dict:
             lines.append(f"{r['name']}: {r['entered']} entered of {r['planned_tickets']} planned "
                          f"({r['tickets_checked_in']} tickets, {r['walk_ins']} walk-ins, {r['start_time_on_time']} on "
                          f"their start time); {r['tickets_no_show']} ticket no-shows.")
+    held = sum(r["start_time_on_time"] + r["start_time_not_used"] for r in rows)
+    if held:                                         # R7: the live counterpart of RQ13b's follow rate
+        came = sum(r["start_time_on_time"] for r in rows)
+        lines.append(f"Start times: {held} people held one, {came} came on time ({round(100 * came / held)} %) and "
+                     f"went in first.")
     for t, v in cond.items():
         lines.append(f"{names.get(t, t)}: {v['level'].replace('_', ' ')}" + (f" - {v['note']}" if v["note"] else "")
                      + f" (reported by {v['set_by']} at {v['set_at'][11:16]}).")

@@ -32,11 +32,30 @@ def _plan(day: str, rain_share: float, expected: float, cond: tuple = ()) -> np.
     return MPCController(build_control()).day_plan(rain_share, expected, dict(cond))
 
 
+PRIOR_ON_TIME, PRIOR_WEIGHT, WINDOW_DAYS = 0.8, 10.0, 30
+
+
+def on_time_share(day: str, db=None) -> dict:
+    """R4 (N2 with compliance): the share of start-time holders who came through the gate at their time, over the
+    WINDOW_DAYS before `day`, pulled towards PRIOR_ON_TIME (RQ13b's follow rate) when there are few holders."""
+    from datetime import date, timedelta
+    d = date.fromisoformat(day)
+    with closing(_con(db)) as con:
+        n, came = con.execute("SELECT COUNT(*), SUM(arrived_at IS NOT NULL) FROM start_advice WHERE day>=? AND day<?",
+                              ((d - timedelta(days=WINDOW_DAYS)).isoformat(), day)).fetchone()
+    n, came = int(n or 0), int(came or 0)
+    return {"holders": n, "came_on_time": came,
+            "share": round((came + PRIOR_ON_TIME * PRIOR_WEIGHT) / (n + PRIOR_WEIGHT), 3)}
+
+
 def _given(day: str, db=None) -> dict:
+    """People expected at each held start time: held x the recent on-time share (not everyone who holds comes),
+    so later visitors are not sent later for places that will stay empty."""
+    share = on_time_share(day, db)["share"]
     with closing(_con(db)) as con:
         rows = con.execute("SELECT trail, slot, SUM(group_size) FROM start_advice WHERE day=? GROUP BY trail, slot",
                            (day,)).fetchall()
-    return {(t, s): n for t, s, n in rows}
+    return {(t, s): n * share for t, s, n in rows}
 
 
 def suggest(day: str, trail: str, wanted: str, size: int, rain_share: float, expected: float, db=None) -> dict:

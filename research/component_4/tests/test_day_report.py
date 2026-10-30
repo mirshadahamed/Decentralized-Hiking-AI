@@ -30,4 +30,5 @@ def test_day_report_counts_every_way_in(tmp_path):
     assert (row["tickets_checked_in"], row["tickets_no_show"], row["walk_ins"], row["start_time_on_time"]) == (4, 2, 3, 5)
     assert r["busiest_gate_hour"] == {"hour": "08:00", "people": 8}
     assert any("muddy - after rain" in x for x in r["lines"]) and any("No spot counts" in x for x in r["lines"])
+    assert any("5 people held one, 5 came on time (100 %)" in x for x in r["lines"])
     assert "<table>" in to_html(r) and d in to_html(r)

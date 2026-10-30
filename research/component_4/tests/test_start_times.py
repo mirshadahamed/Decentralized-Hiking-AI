@@ -33,7 +33,7 @@ def test_suggestion_never_earlier_and_holding_fills_the_plan(client):
     assert h.status_code == 201 and len(h.json()["code"]) == 6
     again = c.get(f"/start-time/{day}", params={"trail": trail, "wanted": "08:00", "size": 4}).json()
     after = next(o for o in again["options"] if o["slot"] == s["suggested"])
-    assert after["places_left"] == first["places_left"] - 4
+    assert first["places_left"] - 4 <= after["places_left"] <= first["places_left"] - 3   # 4 held x 0.8 expected
 
 
 def test_full_slot_is_refused(client):
@@ -93,3 +93,20 @@ def test_morning_recheck_moves_a_hold_when_the_trail_is_closed(tmp_path):
     r = recheck("QWE234", now, 0.0, 600.0, db)
     assert r["status"] == "full" and "closed" in r["note"]
     assert move("QWE234", "10:00", db)["slot"] == "10:00" and held("qwe234", db)["slot"] == "10:00"
+
+
+def test_on_time_share_learns_from_arrivals_and_discounts_holds(tmp_path):
+    from src.control import booking
+    from src.control.start_times import _given, on_time_share
+    db = tmp_path / "b.sqlite"
+    with booking.closing(booking._connect(db)) as con:
+        rows = [(f"C{i:05d}", "2026-11-01", "main", "08:00", 2, "x", "2026-11-01T08:05:00" if i < 5 else None)
+                for i in range(20)]                                   # 5 of 20 came on time
+        rows.append(("TODAY1", "2026-11-05", "main", "09:00", 10, "x", None))
+        con.executemany("INSERT INTO start_advice (code, day, trail, slot, group_size, created, arrived_at) "
+                        "VALUES (?,?,?,?,?,?,?)", rows)
+        con.commit()
+    s = on_time_share("2026-11-05", db)
+    assert (s["holders"], s["came_on_time"]) == (20, 5) and s["share"] == round((5 + 8) / 30, 3)
+    assert _given("2026-11-05", db)[("main", "09:00")] == pytest.approx(10 * s["share"])
+    assert on_time_share("2026-11-01", db)["share"] == 0.8                # nothing before: the prior
