@@ -9,6 +9,7 @@ Staff (bearer token, role checked on the server for every call):
   admin   : + user list, audit log
 Reads the files published by `python -m src.live.refresh`; no personal visitor data is stored (NFR5).
 """
+import copy
 import json
 import threading
 from datetime import date, datetime, time, timedelta
@@ -200,10 +201,19 @@ def live_inputs(c: LiveContext, day: date) -> dict:
             "conditions": booking.conditions(day.isoformat())}
 
 
+_PLANS: dict = {}
+
+
 def _plan(c: LiveContext, day: date, inputs: dict) -> dict:
-    return c.planner.day(c.today.isoformat(), day.isoformat(), rain_share=inputs["rain_share"],
-                         wetness=inputs["wet"]["wetness"],
-                         conditions={t: v["factor"] for t, v in inputs["conditions"].items()})
+    """The planner's day; it depends only on these arguments, so it is kept (§6.3.12: ~0.2-0.4 s each)."""
+    cond = {t: v["factor"] for t, v in inputs["conditions"].items()}
+    key = (id(c.planner), c.today, day, inputs["rain_share"], inputs["wet"]["wetness"], tuple(sorted(cond.items())))
+    if key not in _PLANS:
+        if len(_PLANS) > 2000:                                     # bounded: drop everything rather than grow
+            _PLANS.clear()
+        _PLANS[key] = c.planner.day(c.today.isoformat(), day.isoformat(), rain_share=inputs["rain_share"],
+                                    wetness=inputs["wet"]["wetness"], conditions=cond)
+    return copy.deepcopy(_PLANS[key])
 
 
 @app.get("/weather/{day}", tags=["public"])
@@ -353,16 +363,33 @@ def overdue_groups(day: date, at: time | None = None, user: dict = Depends(role(
     return overdue(CFG, day.isoformat(), now, _day_expectation(day)[0])
 
 
+@app.get("/notices/{day}", tags=["public"])
+def notices(day: date):
+    """§6.2.9: what visitors of that day should know (closures, trail conditions, heavy rain); the app polls it."""
+    from src.live.nowcast import rain_today
+    from src.serve.notices import notices as day_notices
+    c = ctx()
+    if not c.today <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from today up to 90 days ahead")
+    now = when(None)
+    return day_notices(CFG, day, now, c.weather, c.weather_source,
+                       rain_today(CFG, day) if day == now.date() else None)
+
+
 @app.get("/viewpoints/{day}", tags=["public"])
 def viewpoints(day: date):
     """K6: open viewpoints - busy hours, parking, when to come instead (advice; nobody is turned away)."""
     from src.serve.viewpoints import viewpoint_outlook
     _require_mode("open_viewpoint")
     c = ctx()
-    if not c.today + timedelta(days=1) <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
-        raise HTTPException(400, "Choose a day from tomorrow up to 90 days ahead")
+    if not c.today <= day <= c.today + timedelta(days=CFG["live"]["horizon_days"]):
+        raise HTTPException(400, "Choose a day from today up to 90 days ahead")
     inputs = live_inputs(c, day)
-    hourly = np.array(_plan(c, day, inputs)["hourly"]["p50"])
+    if day == c.today:                                       # §6.2.6: today, for "parking full" reports
+        hourly = np.array(c.planner.day((c.today - timedelta(days=1)).isoformat(), day.isoformat(),
+                                        rain_share=inputs["rain_share"])["hourly"]["p50"])
+    else:
+        hourly = np.array(_plan(c, day, inputs)["hourly"]["p50"])
     return viewpoint_outlook(CFG, c.seg, hourly, modes.trails_with(CFG, "open_viewpoint"), day.isoformat(),
                              booking.conditions(day.isoformat()))
 
@@ -545,6 +572,61 @@ def sell(body: WalkInIn, user: dict = Depends(role("ranger"))):
         return JSONResponse(status_code=409, content={"detail": str(e), "alternatives": e.alternatives})
     auth.audit(user["username"], "walk_in", f"{body.day} {body.trail} {body.slot} x{body.group_size}")
     return {"left": left}
+
+
+class SosIn(BaseModel):
+    client_id: str = Field(min_length=8, max_length=40)
+    kind: Literal["injury", "lost", "unwell", "other"]
+    people: int = Field(default=1, ge=1, le=40)
+    note: str = Field(default="", max_length=200)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    accuracy_m: float | None = Field(default=None, ge=0, le=100000)
+    trail: TrailName | None = None
+    seg_id: int | None = None
+    at: datetime | None = None
+
+
+@app.post("/sos", tags=["public"], status_code=201)
+def sos_call(body: SosIn):
+    """§6.2.7: a visitor asks for help; GPS when the phone has it, else the trail / last place passed. Re-sending
+    with the same client_id updates the same call (newer position, no duplicate alarm)."""
+    from src.control import sos
+    try:
+        return sos.raise_sos(CFG, ctx().seg, when(body.at), body.client_id, body.kind, body.people, body.note,
+                             body.lat, body.lon, body.accuracy_m, body.trail, body.seg_id)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from None
+
+
+@app.get("/sos/check/{client_id}", tags=["public"])
+def sos_check(client_id: str):
+    from src.control import sos
+    try:
+        return sos.check(client_id)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from None
+
+
+@app.get("/sos/{day}", tags=["ranger"])
+def sos_calls(day: date, user: dict = Depends(role("ranger"))):
+    from src.control import sos
+    return sos.calls(day.isoformat())
+
+
+class SosStatusIn(BaseModel):
+    status: Literal["seen", "closed"]
+
+
+@app.post("/sos/{call_id}/status", tags=["ranger"])
+def sos_status(call_id: int, body: SosStatusIn, user: dict = Depends(role("ranger"))):
+    from src.control import sos
+    try:
+        r = sos.set_status(call_id, body.status, user["username"], when(None))
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from None
+    auth.audit(user["username"], "sos", f"{call_id} {body.status}")
+    return r
 
 
 @app.get("/segments", tags=["public"])
@@ -799,6 +881,26 @@ def move_start_time(code: str, body: MoveIn):
         return move(code, body.slot)
     except KeyError as e:
         raise HTTPException(404, str(e)) from None
+
+
+class SmsIn(BaseModel):
+    text: str = Field(max_length=480)
+
+
+@app.post("/sms", tags=["public"])
+def sms_in(body: SmsIn, x_sms_key: str = Header(default="")):
+    """§6.1.2: start times by SMS (src/control/sms.py). The park's SMS gateway posts each incoming text with the
+    shared key C4_SMS_KEY and sends `reply` back to the phone; the number is neither sent here nor stored."""
+    import hmac
+    import os
+
+    from src.control import sms
+    key = os.environ.get("C4_SMS_KEY", "")
+    if not key:
+        raise HTTPException(503, "SMS is not set up (C4_SMS_KEY)")
+    if not hmac.compare_digest(x_sms_key, key):
+        raise HTTPException(401, "Wrong SMS key")
+    return {"reply": sms.handle(body.text, CFG, when(None), _day_expectation)}
 
 
 class IncidentIn(BaseModel):

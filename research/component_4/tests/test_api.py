@@ -112,3 +112,33 @@ def test_passwords_are_not_stored_in_plain_text(tmp_path):
     auth.create_user("ranger9", PW, "ranger", db)
     raw = sqlite3.connect(db).execute("SELECT * FROM users").fetchone()
     assert PW.encode() not in b"".join(x if isinstance(x, bytes) else str(x).encode() for x in raw)
+
+
+def test_sos_reaches_the_rangers(client):
+    body = {"client_id": "phone-abc-123", "kind": "injury", "people": 2, "trail": "main", "at": "2026-11-24T10:00:00"}
+    r = client.post("/sos", json=body)
+    assert r.status_code == 201 and r.json()["status"] == "open"
+    assert client.get("/sos/2026-11-24").status_code == 401                         # visitors cannot list calls
+    ranger = token(client, "ranger1")
+    calls = client.get("/sos/2026-11-24", headers=ranger).json()
+    assert calls["open"] == 1
+    cid = calls["calls"][0]["id"]
+    assert client.post(f"/sos/{cid}/status", json={"status": "seen"}, headers=ranger).status_code == 200
+    assert client.get("/sos/check/phone-abc-123").json()["status"] == "seen"
+    assert client.post("/sos", json=body | {"kind": "bored"}).status_code == 422
+
+
+def test_sms_needs_the_gateway_key(client, monkeypatch):
+    monkeypatch.delenv("C4_SMS_KEY", raising=False)
+    assert client.post("/sms", json={"text": "HELP"}).status_code == 503
+    monkeypatch.setenv("C4_SMS_KEY", "k3y")
+    assert client.post("/sms", json={"text": "HELP"}, headers={"X-SMS-Key": "nope"}).status_code == 401
+    r = client.post("/sms", json={"text": "HELP"}, headers={"X-SMS-Key": "k3y"})
+    assert r.status_code == 200 and "START" in r.json()["reply"]
+
+
+def test_notices_are_public(client):
+    today = client.get("/status").json()["today"]
+    r = client.get(f"/notices/{today}")
+    assert r.status_code == 200 and isinstance(r.json(), list)
+    assert client.get("/notices/2020-01-01").status_code == 400

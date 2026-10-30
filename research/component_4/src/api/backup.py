@@ -25,7 +25,8 @@ def park_dir(park: str):
 
 
 def backup_all(keep: int = 14, today: date | None = None, root=None) -> list:
-    """Copy each park's databases; remove copies older than `keep` days. Returns the files written."""
+    """Delete old SOS positions, copy each park's databases, remove copies older than `keep` days. Returns the
+    files written."""
     today = today or date.today()
     base = BACKUPS if root is None else root / "backups"
     out = []
@@ -36,6 +37,9 @@ def backup_all(keep: int = 14, today: date | None = None, root=None) -> list:
             f = src_dir / name
             if not f.exists():
                 continue
+            if name == "bookings.sqlite":                        # §6.2.7: SOS positions go after 30 days
+                from src.control.sos import purge
+                purge(datetime.combine(today, datetime.min.time()), f)
             dest.mkdir(parents=True, exist_ok=True)
             with closing(sqlite3.connect(f)) as a, closing(sqlite3.connect(dest / name)) as b:
                 a.backup(b)
