@@ -113,6 +113,11 @@ class C4Api {
         await _send('GET', '/network/${day(d)}', gateway: true, query: {'park': park!}) as Map<String, dynamic>);
   }
 
+  /// §6.2.5: one quiet day for each chosen park within [days] days from [start] (gateway only).
+  Future<TripPlan> trip(List<String> parks, DateTime start, int days) async => TripPlan.fromJson(await _send(
+      'GET', '/trip', gateway: true, query: {'parks': parks.join(','), 'start': day(start), 'days': '$days'})
+      as Map<String, dynamic>);
+
   /// Parks served by the gateway; null when the server is a single-park API (no gateway).
   Future<List<ParkInfo>?> parks() async {
     try {
@@ -206,6 +211,10 @@ class C4Api {
     }
   }
 
+  /// R7: the group with this code joined the back of the queue (its wait is measured at check-in).
+  Future<CheckInResult> queueJoin(String code, {DateTime? at}) async => CheckInResult.fromJson(
+      await _send('POST', '/gate/queue', body: {'code': code, if (at != null) 'at': at.toIso8601String()}));
+
   Future<CheckInResult> checkIn(String code, {DateTime? at}) async => CheckInResult.fromJson(
       await _send('POST', '/checkin', body: {'code': code, if (at != null) 'at': at.toIso8601String()}));
 
@@ -282,8 +291,48 @@ class C4Api {
       StageOutlook.fromJson(await _send('GET', '/stages/${day(d)}') as Map<String, dynamic>);
 
   /// Officer: the end-of-day report (entries, start times, no-shows, conditions, forecast check).
+  /// §6.2.10: week-by-week lines from the day reports (officer).
+  Future<List<String>> trends({int days = 28}) async =>
+      [for (final l in (await _send('GET', '/admin/trends', query: {'days': '$days'}) as Map)['lines'] as List) l as String];
+
   Future<DayReport> dayReport(DateTime d) async =>
       DayReport.fromJson(await _send('GET', '/admin/day-report/${day(d)}') as Map<String, dynamic>);
+
+  // ---------- Knuckles mechanisms (404 on parks without them) ----------
+  Future<PermitDay> permits(DateTime d) async =>
+      PermitDay.fromJson(await _send('GET', '/permits/${day(d)}') as Map<String, dynamic>);
+
+  /// A permit for a guided trek; 409 (with alternatives) when the trek has no guide or place left.
+  Future<String> requestPermit(DateTime d, String trail, int size) async =>
+      ((await _send('POST', '/permits', body: {'day': day(d), 'trail': trail, 'group_size': size}))
+          as Map<String, dynamic>)['code'] as String;
+
+  Future<Map<String, dynamic>> permitOut(String code, {DateTime? at}) async =>
+      await _send('POST', '/permits/$code/out', body: {if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> permitBack(String code, {DateTime? at}) async =>
+      await _send('POST', '/permits/$code/back', body: {if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  /// §6.2.7: register a group starting a long walk (no permit); returns code and expected_back.
+  Future<Map<String, dynamic>> walkOut(String trail, int size, {DateTime? at}) async => await _send('POST', '/walks/out',
+      body: {'trail': trail, 'group_size': size, if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  Future<OverdueStatus> overdue(DateTime d, {String? at}) async =>
+      OverdueStatus.fromJson(await _send('GET', '/overdue/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
+  Future<List<ViewpointInfo>> viewpoints(DateTime d) async => [
+        for (final v in ((await _send('GET', '/viewpoints/${day(d)}')) as Map<String, dynamic>)['viewpoints'] as List)
+          ViewpointInfo.fromJson(v as Map<String, dynamic>)
+      ];
+
+  Future<List<Campsite>> campsites(DateTime night) async => [
+        for (final s in ((await _send('GET', '/campsites/${day(night)}')) as Map<String, dynamic>)['sites'] as List)
+          Campsite.fromJson(s as Map<String, dynamic>)
+      ];
+
+  Future<String> bookCampsite(DateTime night, String site, int pitches, int people) async =>
+      ((await _send('POST', '/campsites', body: {'night': day(night), 'site': site, 'pitches': pitches, 'people': people}))
+          as Map<String, dynamic>)['code'] as String;
 
   /// Sections a ranger can count on.
   Future<List<SegmentInfo>> segments() async =>

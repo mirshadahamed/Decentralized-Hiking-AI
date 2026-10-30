@@ -316,14 +316,25 @@ class ServerStatus {
     this.site = 'Horton Plains',
     this.bookingMode = 'required',
     this.sightings = false,
+    this.walkRegister = false,
+    this.trailModes = const {},
   });
 
   final DateTime today;
   final String refreshedAt, note, park, site;
   final String bookingMode; // required = slot tickets | advisory = recommended start times (pilgrim sites)
   final bool sightings; // safari parks: rangers report wildlife sightings and manage the jeeps at them
+  final bool walkRegister; // §6.2.7: rangers register groups starting long walks (overdue alarm)
+
+  /// Crowd control per trail (gate_slots, guided_permit, open_viewpoint, open_stages, ...); empty on older servers.
+  final Map<String, String> trailModes;
 
   bool get isAdvisory => bookingMode == 'advisory';
+  bool hasMode(String m) => trailModes.containsValue(m);
+
+  /// Trails sold in slots (tickets, start times). Older servers: every trail.
+  bool ticketed(String trail) => trailModes.isEmpty || const {'gate_slots', 'vehicle_caps'}.contains(trailModes[trail]);
+  bool get hasTickets => !isAdvisory && (trailModes.isEmpty || trailModes.values.any((m) => m == 'gate_slots' || m == 'vehicle_caps'));
 
   factory ServerStatus.fromJson(Map<String, dynamic> j) => ServerStatus(
         today: DateTime.parse(j['today'] as String),
@@ -333,6 +344,8 @@ class ServerStatus {
         site: j['site'] as String? ?? 'Horton Plains',
         bookingMode: j['booking_mode'] as String? ?? 'required',
         sightings: j['sightings'] as bool? ?? false,
+        walkRegister: j['walk_register'] as bool? ?? false,
+        trailModes: {for (final e in (j['trail_modes'] as Map? ?? {}).entries) e.key as String: e.value as String},
       );
 }
 
@@ -1216,9 +1229,10 @@ class DayWeather {
 
 // ---------- RQ13: closed-loop gate control (MPC), re-planned every slot ----------
 class GateControl {
-  GateControl({required this.slot, required this.ratio, required this.trails, required this.basis, this.alerts = const []});
+  GateControl({required this.slot, required this.ratio, required this.trails, required this.basis, this.alerts = const [],
+      this.why = ''});
 
-  final String slot, basis;
+  final String slot, basis, why; // why: the decision in one line (rain, more people than expected, conditions)
   final double ratio; // arrivals so far / expected so far
   final List<Map<String, dynamic>> trails; // trail, trail_name, entered_this_slot, can_enter_now, closed_for_entry, next_slots
   final List<String> alerts; // trail conditions / incidents reported today
@@ -1229,6 +1243,7 @@ class GateControl {
         trails: [for (final t in j['trails'] as List? ?? []) t as Map<String, dynamic>],
         basis: j['basis'] as String? ?? '',
         alerts: [for (final a in j['alerts'] as List? ?? []) a as String],
+        why: j['why'] as String? ?? '',
       );
 }
 
@@ -1266,11 +1281,22 @@ class StartTimeSuggestion {
 // ---------- P4: stage advice on a long open-access trail (GET /stages/{day}) ----------
 class StageInfo {
   StageInfo({required this.stage, required this.name, required this.lengthKm, required this.level, required this.fullness,
-      required this.busiestHour, required this.busiestKm, required this.advice, this.quieterNeighbour});
+      required this.busiestHour, required this.busiestKm, required this.advice, this.quieterNeighbour, this.rainMm,
+      this.spreadWindow});
 
   final String stage, name, level, busiestHour, advice; // level: quiet / busy / crowded
   final double lengthKm, fullness, busiestKm;
   final String? quieterNeighbour;
+  final double? rainMm; // this stage's forecast rain in the open hours (within 16 days)
+  final (int, int)? spreadWindow; // busy stage: give each walker a start in this window (minutes after midnight)
+
+  /// A start time for this walker in the spread window (each visitor a different one; [seed] is per visitor).
+  String? suggestedStart(int seed) {
+    final w = spreadWindow;
+    if (w == null) return null;
+    final m = w.$1 + (Object.hash(seed, stage) % ((w.$2 - w.$1) ~/ 15 + 1)) * 15;
+    return '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+  }
 
   factory StageInfo.fromJson(Map<String, dynamic> j) => StageInfo(
         stage: j['stage'] as String,
@@ -1282,7 +1308,13 @@ class StageInfo {
         busiestKm: _dbl(j['busiest_km']),
         advice: j['advice'] as String? ?? '',
         quieterNeighbour: j['quieter_neighbour'] as String?,
+        rainMm: (j['weather'] as Map?)?['rain_mm'] == null ? null : _dbl((j['weather'] as Map)['rain_mm']),
+        spreadWindow: j['spread_window'] is List
+            ? (_hm((j['spread_window'] as List)[0] as String), _hm((j['spread_window'] as List)[1] as String))
+            : null,
       );
+
+  static int _hm(String t) => int.parse(t.substring(0, 2)) * 60 + int.parse(t.substring(3, 5));
 }
 
 class StageOutlook {
@@ -1334,4 +1366,130 @@ class NetworkAdvice {
       otherDays: [for (final d in p['other_days'] as List? ?? []) ((d as Map)['day'] as String, _dbl(d['load']))],
     );
   }
+}
+
+// ---------- §6.2.5 trip planner (gateway GET /trip) ----------
+class TripVisit {
+  TripVisit({required this.park, required this.day, required this.level, this.load});
+
+  final String park, level; // level: room / busy / full / unknown
+  final DateTime day;
+  final double? load; // expected visitors / safe limit
+
+  factory TripVisit.fromJson(Map<String, dynamic> j) => TripVisit(
+        park: j['park'] as String,
+        day: DateTime.parse(j['day'] as String),
+        level: j['level'] as String? ?? 'unknown',
+        load: j['load'] == null ? null : _dbl(j['load']),
+      );
+}
+
+class TripPlan {
+  TripPlan({required this.visits, required this.note});
+
+  final List<TripVisit> visits;
+  final String note;
+
+  factory TripPlan.fromJson(Map<String, dynamic> j) => TripPlan(
+        visits: [for (final v in j['visits'] as List) TripVisit.fromJson(v as Map<String, dynamic>)],
+        note: j['note'] as String? ?? '',
+      );
+}
+
+// ---------- Knuckles: guided-trek permits (K4/K5), open viewpoints (K6), campsites (K7) ----------
+class PermitTrek {
+  PermitTrek({required this.trail, required this.name, required this.entry, required this.allowed, required this.left,
+      required this.walkH, required this.maxGroup, this.peopleLeft = 0});
+
+  final String trail, name, entry;
+  final int allowed, left, maxGroup, peopleLeft; // left = guides free at the entry while the trek has places
+  final double walkH;
+
+  factory PermitTrek.fromJson(Map<String, dynamic> j) => PermitTrek(
+        trail: j['trail'] as String,
+        name: j['name'] as String? ?? j['trail'] as String,
+        entry: j['entry'] as String? ?? '',
+        allowed: _int(j['groups_allowed']),
+        left: _int(j['groups_left']),
+        walkH: _dbl(j['walk_h']),
+        maxGroup: _int(j['max_group']),
+        peopleLeft: _int(j['people_left']),
+      );
+}
+
+class PermitDay {
+  PermitDay({required this.treks, required this.guides});
+
+  final List<PermitTrek> treks;
+  final List<Map<String, dynamic>> guides; // entry, on_duty, assigned
+
+  factory PermitDay.fromJson(Map<String, dynamic> j) => PermitDay(
+        treks: [for (final t in j['treks'] as List? ?? []) PermitTrek.fromJson(t as Map<String, dynamic>)],
+        guides: [for (final g in j['guides'] as List? ?? []) g as Map<String, dynamic>],
+      );
+}
+
+class OverdueGroup {
+  OverdueGroup({required this.code, required this.name, required this.size, required this.outAt, required this.expectedBack,
+      required this.lateMin});
+
+  final String code, name, outAt, expectedBack;
+  final int size, lateMin;
+
+  factory OverdueGroup.fromJson(Map<String, dynamic> j) => OverdueGroup(
+        code: j['code'] as String,
+        name: j['name'] as String? ?? j['trail'] as String? ?? '',
+        size: _int(j['group_size']),
+        outAt: j['out_at'] as String? ?? '',
+        expectedBack: j['expected_back'] as String? ?? '',
+        lateMin: _int(j['late_min']),
+      );
+}
+
+class OverdueStatus {
+  OverdueStatus({required this.overdue, required this.stillOut, required this.note});
+
+  final List<OverdueGroup> overdue, stillOut;
+  final String note;
+
+  factory OverdueStatus.fromJson(Map<String, dynamic> j) => OverdueStatus(
+        overdue: [for (final g in j['overdue'] as List? ?? []) OverdueGroup.fromJson(g as Map<String, dynamic>)],
+        stillOut: [for (final g in j['still_out'] as List? ?? []) OverdueGroup.fromJson(g as Map<String, dynamic>)],
+        note: j['note'] as String? ?? '',
+      );
+}
+
+class ViewpointInfo {
+  ViewpointInfo({required this.trail, required this.name, required this.level, required this.advice, this.parkingSpaces,
+      this.parkingFullHours = const [], this.reported});
+
+  final String trail, name, level, advice; // level: quiet / busy / crowded
+  final int? parkingSpaces;
+  final List<String> parkingFullHours;
+  final String? reported; // a ranger's report today (e.g. parking full)
+
+  factory ViewpointInfo.fromJson(Map<String, dynamic> j) => ViewpointInfo(
+        trail: j['trail'] as String,
+        name: j['name'] as String? ?? j['trail'] as String,
+        level: j['level'] as String? ?? 'quiet',
+        advice: j['advice'] as String? ?? '',
+        parkingSpaces: j['parking_spaces'] == null ? null : _int(j['parking_spaces']),
+        parkingFullHours: [for (final h in j['parking_full_hours'] as List? ?? []) h as String],
+        reported: j['reported'] as String?,
+      );
+}
+
+class Campsite {
+  Campsite({required this.site, required this.name, required this.trailName, required this.pitches, required this.left});
+
+  final String site, name, trailName;
+  final int pitches, left;
+
+  factory Campsite.fromJson(Map<String, dynamic> j) => Campsite(
+        site: j['site'] as String,
+        name: j['name'] as String? ?? j['site'] as String,
+        trailName: j['trail_name'] as String? ?? '',
+        pitches: _int(j['pitches']),
+        left: _int(j['left']),
+      );
 }

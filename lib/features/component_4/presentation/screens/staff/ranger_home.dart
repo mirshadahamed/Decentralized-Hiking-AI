@@ -5,6 +5,7 @@ import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
 import '../../widgets/scan_page.dart';
+import 'treks_tab.dart';
 import '../bottleneck_screen.dart';
 import 'count_screen.dart';
 import 'sightings_screen.dart';
@@ -22,12 +23,19 @@ class RangerHome extends StatefulWidget {
 class _RangerHomeState extends State<RangerHome> {
   DateTime? _demo; // null = real time
   bool _sightings = false; // safari parks (Yala): the Sightings tab
+  bool _treks = false; // guided treks (Knuckles): the Treks tab (out / back / overdue)
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     C4Scope.of(context).status().then((s) {
-      if (mounted && s.sightings != _sightings) setState(() => _sightings = s.sightings);
+      final treks = s.hasMode('guided_permit') || s.walkRegister;
+      if (mounted && (s.sightings != _sightings || treks != _treks)) {
+        setState(() {
+          _sightings = s.sightings;
+          _treks = treks;
+        });
+      }
     }, onError: (_) {});
   }
 
@@ -46,8 +54,8 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      key: ValueKey(_sightings),
-      length: _sightings ? 6 : 5,
+      key: ValueKey('$_sightings/$_treks'),
+      length: 5 + (_sightings ? 1 : 0) + (_treks ? 1 : 0),
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
@@ -74,6 +82,7 @@ class _RangerHomeState extends State<RangerHome> {
             Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
             Tab(icon: Icon(Icons.exposure_plus_1), text: 'Count'),
             if (_sightings) Tab(icon: Icon(Icons.pets), text: 'Sightings'),
+            if (_treks) Tab(key: Key('tab_treks'), icon: Icon(Icons.hiking), text: 'Out & back'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -83,6 +92,7 @@ class _RangerHomeState extends State<RangerHome> {
           const BottleneckView(), // where and when sections get crowded this week, also offline
           CountTab(now: () => _now), // A4: spot counts, the park's own sensor record
           if (_sightings) SightingsTab(now: () => _now, demo: _demo != null), // jeeps at wildlife sightings
+          if (_treks) TreksTab(day: _day, at: () => _demo), // K5 / §6.2.7: groups out and back, overdue alarm
         ]),
       ),
     );
@@ -104,6 +114,7 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   CheckInResult? _result;
   String? _error;
   bool _busy = false;
+  bool _queue = false; // R7: scanning at the back of the queue (times the wait) instead of letting in
 
   bool get _canScan => canScanQr;
 
@@ -115,7 +126,9 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
       _result = null;
     });
     try {
-      final r = await C4Scope.of(context).checkIn(code.trim().toUpperCase(), at: widget.at());
+      final api = C4Scope.of(context);
+      final c = code.trim().toUpperCase();
+      final r = _queue ? await api.queueJoin(c, at: widget.at()) : await api.checkIn(c, at: widget.at());
       setState(() => _result = r);
       _code.clear();
     } on ApiException catch (e) {
@@ -142,10 +155,21 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
           FilledButton.icon(
             onPressed: _busy ? null : _scan,
             icon: const Icon(Icons.qr_code_scanner, size: 32),
-            label: const Text('Scan ticket'),
+            label: Text(_queue ? 'Scan: joined the queue' : 'Scan ticket'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(72), textStyle: const TextStyle(fontSize: 20)),
           ),
-        const SizedBox(height: 16),
+        SwitchListTile(
+          key: const Key('queue_mode'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Joined the queue'),
+          subtitle: const Text('Scan groups at the back of the queue to measure the wait at the gate'),
+          value: _queue,
+          onChanged: (v) => setState(() {
+            _queue = v;
+            _result = null;
+          }),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _code,
           textCapitalization: TextCapitalization.characters,
@@ -511,6 +535,7 @@ class GateControlCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: Text('Let in now · slot ${c.slot}', style: text.titleSmall)),
           ]),
+          if (c.why.isNotEmpty) Text(c.why, key: const Key('gate_why'), style: text.bodyMedium),
           if (more || fewer)
             Text(
                 '${more ? 'Busier' : 'Quieter'} than expected so far (${(c.ratio * 100).round()} % of the forecast): '

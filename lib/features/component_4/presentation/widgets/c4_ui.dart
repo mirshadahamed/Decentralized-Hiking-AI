@@ -38,7 +38,8 @@ class C4Scope extends InheritedNotifier<C4Lang> {
 
   static C4Api of(BuildContext context) => _of(context).api;
 
-  static C4Lang? langOf(BuildContext context) => _of(context).notifier;
+  /// Null outside a scope (a widget tested on its own): [tr] then gives English.
+  static C4Lang? langOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<C4Scope>()?.notifier;
 }
 
 final _english = C4Lang();

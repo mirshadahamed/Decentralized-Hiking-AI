@@ -457,8 +457,13 @@ class DayReportTab extends StatefulWidget {
 class _DayReportTabState extends State<DayReportTab> {
   DateTime _day = DateTime.now();
   Future<DayReport>? _future;
+  Future<List<String>>? _trends; // §6.2.10: the last 4 weeks
 
-  void _load() => _future = C4Scope.of(context).dayReport(_day);
+  void _load() {
+    final api = C4Scope.of(context);
+    _future = api.dayReport(_day);
+    _trends ??= api.trends();
+  }
 
   @override
   void didChangeDependencies() {
@@ -498,6 +503,17 @@ class _DayReportTabState extends State<DayReportTab> {
             ),
             const BasisNote('From the gate check-ins, walk-ins, start-time codes, rangers\' counts and reported trail '
                 'conditions. A printable page: /admin/day-report/<day>?format=html.'),
+            FutureBuilder<List<String>>(
+              future: _trends,
+              builder: (context, t) => !t.hasData || t.data!.isEmpty
+                  ? const SizedBox.shrink()
+                  : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const SizedBox(height: 12),
+                      Text('Last 4 weeks', style: Theme.of(context).textTheme.titleMedium),
+                      for (final l in t.data!)
+                        ListTile(key: const Key('trend_week'), dense: true, leading: const Icon(Icons.show_chart), title: Text(l)),
+                    ]),
+            ),
           ]);
         },
       );

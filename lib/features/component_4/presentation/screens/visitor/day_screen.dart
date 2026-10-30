@@ -8,6 +8,7 @@ import '../../../domain/edge_forecaster.dart';
 import '../../../services/edge_store.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/knuckles_cards.dart';
 import '../../widgets/weather_card.dart';
 import '../bottleneck_screen.dart';
 import 'ticket_screen.dart';
@@ -29,6 +30,10 @@ class _DayScreenState extends State<DayScreen> {
   Future<DayWeather?>? _weather; // the day's weather (observed / forecast / typical); none on an older server
   Future<StageOutlook?>? _stages; // P4: stage advice (only trails built from stages, e.g. Pekoe)
   Future<NetworkAdvice?>? _network; // N4: other parks / days when this one is busy (gateway only)
+  final int _seed = DateTime.now().microsecondsSinceEpoch; // this visitor's spread start on busy stages (R6)
+  Future<PermitDay?>? _permits; // K4: guided treks (parks with guided_permit trails)
+  Future<List<ViewpointInfo>?>? _views; // K6: open viewpoints
+  Future<List<Campsite>?>? _camps; // K7: campsites
   String _trail = 'main';
   Map<String, String> _names = const {};
   String? _slot;
@@ -46,6 +51,9 @@ class _DayScreenState extends State<DayScreen> {
     _weather = api.weather(widget.day).then<DayWeather?>((w) => w, onError: (_) => null);
     _stages = api.stages(widget.day).then<StageOutlook?>((s) => s, onError: (_) => null);
     _network = api.network(widget.day).then<NetworkAdvice?>((n) => n, onError: (_) => null);
+    _permits = api.permits(widget.day).then<PermitDay?>((p) => p, onError: (_) => null);
+    _views = api.viewpoints(widget.day).then<List<ViewpointInfo>?>((v) => v, onError: (_) => null);
+    _camps = api.campsites(widget.day).then<List<Campsite>?>((c) => c, onError: (_) => null);
     final ServerStatus status;
     try {
       status = await api.status();
@@ -64,9 +72,10 @@ class _DayScreenState extends State<DayScreen> {
     } on ApiException {
       cap = null; // older server: the screen still works without the safe limit
     }
-    final trails = await api.trails();
-    _names = {for (final t in trails) t.id: t.name};
-    if (!_names.containsKey(_trail) && trails.isNotEmpty) _trail = trails.first.id;   // each park has its own trails
+    final all = await api.trails();
+    _names = {for (final t in all) t.id: t.name};
+    final trails = [for (final t in all) if (status.ticketed(t.id)) t]; // slot tickets only (control mode per trail)
+    if (!trails.any((t) => t.id == _trail) && trails.isNotEmpty) _trail = trails.first.id;   // each park has its own trails
     return (plan, await api.slots(widget.day), trails, cap);
   }
 
@@ -167,7 +176,25 @@ class _DayScreenState extends State<DayScreen> {
                 future: _stages,
                 builder: (context, s) => s.data == null || s.data!.stages.isEmpty
                     ? const SizedBox.shrink()
-                    : Padding(padding: const EdgeInsets.only(top: 12), child: StagesCard(outlook: s.data!, selected: _trail)),
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: StagesCard(outlook: s.data!, selected: _trail, seed: _seed)),
+              ),
+              FutureBuilder<List<ViewpointInfo>?>(
+                future: _views,
+                builder: (context, v) => v.data == null || v.data!.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: ViewpointCard(viewpoints: v.data!)),
+              ),
+              FutureBuilder<PermitDay?>(
+                future: _permits,
+                builder: (context, p) => p.data == null || p.data!.treks.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: PermitCard(day: widget.day, data: p.data!)),
+              ),
+              FutureBuilder<List<Campsite>?>(
+                future: _camps,
+                builder: (context, c) => c.data == null || c.data!.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: CampsiteCard(night: widget.day, sites: c.data!)),
               ),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
               if (_edge != null) _onDevice(trails),
@@ -176,6 +203,7 @@ class _DayScreenState extends State<DayScreen> {
                 Text('Want a quieter visit?', style: Theme.of(context).textTheme.titleMedium),
                 for (final s in plan.suggestions) _SuggestionCard(s),
               ],
+              if (trails.isNotEmpty) ...[
               const SizedBox(height: 20),
               Text('Choose a trail', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
@@ -221,6 +249,7 @@ class _DayScreenState extends State<DayScreen> {
               const SizedBox(height: 16),
               StartTimeCard(key: ValueKey('$_trail/$_size'), day: widget.day, trail: _trail, size: _size,
                   trailName: _names[_trail] ?? _trail),
+              ], // ticketed trails
             ]);
           },
         ),
@@ -618,10 +647,11 @@ class SafeLimitCard extends StatelessWidget {
 
 /// P4: which stages of a long trail get busy that day, where and when, and when to start instead (advice only).
 class StagesCard extends StatelessWidget {
-  const StagesCard({super.key, required this.outlook, required this.selected});
+  const StagesCard({super.key, required this.outlook, required this.selected, this.seed = 0});
 
   final StageOutlook outlook;
   final String selected;
+  final int seed; // per visitor: each gets a different start on a busy stage
 
   static Color _color(String level) => switch (level) { 'crowded' => C4Colors.red, 'busy' => C4Colors.amber, _ => C4Colors.green };
 
@@ -637,7 +667,8 @@ class StagesCard extends StatelessWidget {
           dense: true,
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.circle, size: 14, color: _color(s.level)),
-          title: Text('${s.name} · ${s.lengthKm.toStringAsFixed(0)} km · ${s.level}'),
+          title: Text('${s.name} · ${s.lengthKm.toStringAsFixed(0)} km · ${s.level}'
+              '${s.rainMm != null ? ' · rain ${s.rainMm!.toStringAsFixed(0)} mm' : ''}'),
           subtitle: Text(s.advice +
               (s.quieterNeighbour != null ? ' Quieter that day: ${names[s.quieterNeighbour] ?? s.quieterNeighbour}.' : '')),
         );
@@ -646,8 +677,11 @@ class StagesCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Stages this day', style: text.titleMedium),
+          Text(tr(context, 'stages_title'), style: text.titleMedium),
           if (mine != null) row(mine),
+          if (mine?.suggestedStart(seed) case final st?)
+            Text(tr(context, 'stage_start', {'stage': mine!.name, 'time': st}), key: const Key('stage_start'),
+                style: text.titleSmall?.copyWith(color: C4Colors.green)),
           for (final s in busy.take(4)) row(s),
           Text('$quiet of ${outlook.stages.length} stages quiet all day.', style: text.bodyMedium),
           const SizedBox(height: 4),

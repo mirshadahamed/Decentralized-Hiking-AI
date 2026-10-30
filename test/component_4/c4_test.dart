@@ -12,6 +12,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/sightings_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/treks_tab.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/ranger_home.dart';
@@ -20,6 +21,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/start_times_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c4_i18n.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/knuckles_cards.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/weather_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -509,11 +511,72 @@ class _StartApi extends FakeApi {
         'kind': 'start_time', 'priority': true});
 }
 
+class _TripApi extends FakeApi {
+  _TripApi() : super(withParks: true);
+  List<String>? asked;
+
+  @override
+  Future<TripPlan> trip(List<String> parks, DateTime start, int days) async {
+    asked = parks;
+    return TripPlan.fromJson({
+      'visits': [
+        {'park': 'adams_peak', 'day': '2026-11-24', 'load': 0.4, 'level': 'room'},
+        {'park': 'horton_plains', 'day': '2026-11-25', 'load': 0.85, 'level': 'busy'},
+      ],
+      'note': 'Busiest visit: Horton Plains on 2026-11-25 (busy); no better order in these days.',
+    });
+  }
+}
+
+class _KnucklesApi extends FakeApi {
+  (String, int)? requested;
+  String? out, back;
+
+  @override
+  Future<String> requestPermit(DateTime d, String trail, int size) async {
+    requested = (trail, size);
+    return 'KNX2345';
+  }
+
+  @override
+  Future<String> bookCampsite(DateTime night, String site, int pitches, int people) async => 'CMP7777';
+
+  @override
+  Future<Map<String, dynamic>> permitOut(String code, {DateTime? at}) async {
+    out = code;
+    return {'group_size': 5, 'expected_back': '2027-01-09T12:06:00'};
+  }
+
+  @override
+  Future<Map<String, dynamic>> permitBack(String code, {DateTime? at}) async {
+    back = code;
+    return {'group_size': 5};
+  }
+
+  (String, int)? walked;
+
+  @override
+  Future<Map<String, dynamic>> walkOut(String trail, int size, {DateTime? at}) async {
+    walked = (trail, size);
+    return {'code': 'WABC234', 'group_size': size, 'expected_back': '2027-01-09T11:30:00'};
+  }
+
+  @override
+  Future<OverdueStatus> overdue(DateTime d, {String? at}) async => OverdueStatus.fromJson({
+        'overdue': [{'code': 'LATE123', 'name': 'Duwili Ella trek', 'group_size': 6, 'out_at': '07:10',
+          'expected_back': '12:20', 'late_min': 115}],
+        'still_out': [], 'note': 'Call the guide first.'});
+}
+
 class _ReportApi extends FakeApi {
   @override
   Future<DayReport> dayReport(DateTime d) async => DayReport.fromJson({
         'day': C4Api.day(d), 'entered': 132,
         'lines': ['132 people entered; busiest hour at the gate 07:00 (60 people).', 'No spot counts today.']});
+
+  @override
+  Future<List<String>> trends({int days = 28}) async =>
+      ['Week of 2026-10-26: 2,140 entered · no-shows 6 % · start times kept 81 % · forecast error 3.2 (2.5 corrected)'];
 }
 
 class _AdvisoryApi extends FakeApi {
@@ -724,6 +787,24 @@ void main() {
     await t.tap(find.byTooltip('Refresh forecasts'));
     await t.pumpAndSettle();
     expect(api.refreshes, 1);
+  });
+
+  testWidgets('trip planner across parks: each place on its own quiet day', (t) async {
+    final api = _TripApi();
+    await t.pumpWidget(MaterialApp(home: Component4Home(api: api, lang: C4Lang())));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('open_trip')));
+    await t.pumpAndSettle();
+    expect(find.text('Trip planner'), findsOneWidget);
+    await t.tap(find.byKey(const Key('trip_horton_plains')));
+    await t.tap(find.byKey(const Key('trip_adams_peak')));
+    await t.pump();
+    await t.tap(find.byKey(const Key('trip_plan')));
+    await t.pumpAndSettle();
+    expect(api.asked, containsAll(['horton_plains', 'adams_peak']));
+    expect(find.byKey(const Key('visit_adams_peak')), findsOneWidget);
+    expect(find.text('Expected 85 % of the safe limit'), findsOneWidget);
+    expect(find.textContaining('Busiest visit'), findsOneWidget);
   });
 
   testWidgets('start times: best start, good windows and the wait table', (t) async {
@@ -1108,11 +1189,78 @@ void main() {
     expect(find.byKey(const Key('count_share_qr')), findsOneWidget);
   });
 
+  test('control mode per trail: ticketed trails, tickets tab only where something is sold', () {
+    final k = ServerStatus.fromJson({'today': '2027-01-08', 'booking_mode': 'required',
+      'trail_modes': {'pitawala': 'open_viewpoint', 'dothalugala': 'gate_slots', 'lakegala': 'guided_permit'}});
+    expect(k.ticketed('dothalugala'), isTrue);
+    expect(k.ticketed('lakegala'), isFalse);
+    expect(k.hasMode('guided_permit'), isTrue);
+    expect(k.hasTickets, isTrue);
+    final pekoe = ServerStatus.fromJson({'today': '2027-01-08', 'trail_modes': {'s01': 'open_stages'}});
+    expect(pekoe.hasTickets, isFalse);
+    expect(ServerStatus.fromJson({'today': '2027-01-08'}).ticketed('main'), isTrue);   // older server
+  });
+
+  testWidgets('guided trek permit: pick a trek and size, get a code', (t) async {
+    final api = _KnucklesApi();
+    final data = PermitDay.fromJson({'treks': [
+      {'trail': 'lakegala', 'name': 'Lakegala trek', 'entry': 'meemure', 'groups_allowed': 5, 'groups_left': 5,
+        'people_left': 40, 'walk_h': 4.0, 'max_group': 12},
+      {'trail': 'gombaniya', 'name': 'Gombaniya trek', 'entry': 'riverston', 'groups_allowed': 0, 'groups_left': 0,
+        'people_left': 0, 'walk_h': 8.0, 'max_group': 12},
+    ], 'guides': []});
+    await t.pumpWidget(wrap(Scaffold(body: SingleChildScrollView(child: PermitCard(day: today, data: data))), api));
+    expect(find.textContaining('5 guides free · 40 places'), findsOneWidget);
+    await t.tap(find.byKey(const Key('trek_gombaniya')));
+    await t.pump();
+    expect(find.text('Full this day'), findsOneWidget);
+    await t.tap(find.byKey(const Key('trek_lakegala')));
+    await t.pump();
+    await t.tap(find.byKey(const Key('permit_request')));
+    await t.pumpAndSettle();
+    expect(api.requested, ('lakegala', 4));
+    expect(find.textContaining('Permit KNX2345'), findsOneWidget);
+  });
+
+  testWidgets('open viewpoints and campsites: advice, ranger report, book a pitch', (t) async {
+    final v = [ViewpointInfo.fromJson({'trail': 'pitawala', 'name': 'Pitawala Pathana', 'level': 'crowded',
+      'advice': 'Crowded 09:00-12:00. Come before 08:00.', 'parking_spaces': 60, 'reported': 'partly closed - parking full'})];
+    final c = [Campsite.fromJson({'site': 'duwili_cave', 'name': 'Duwili Ella Cave Campsite', 'trail_name': 'Duwili Ella trek',
+      'pitches': 6, 'left': 2})];
+    await t.pumpWidget(wrap(Scaffold(body: SingleChildScrollView(child: Column(children: [
+      ViewpointCard(viewpoints: v), CampsiteCard(night: today, sites: c)]))), _KnucklesApi()));
+    expect(find.textContaining('Come before 08:00'), findsOneWidget);
+    expect(find.textContaining('parking full'), findsOneWidget);
+    expect(find.textContaining('2 of 6 pitches left'), findsOneWidget);
+    await t.tap(find.byKey(const Key('camp_duwili_cave')));
+    await t.pumpAndSettle();
+    expect(find.text('Booked: code CMP7777'), findsOneWidget);
+  });
+
+  testWidgets('treks tab: check a group out and back; an overdue group stands out', (t) async {
+    final api = _KnucklesApi();
+    await t.pumpWidget(wrap(Scaffold(body: TreksTab(day: today, at: () => null)), api));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('overdue_LATE123')), findsOneWidget);
+    expect(find.textContaining('115 min late'), findsOneWidget);
+    await t.enterText(find.byKey(const Key('trek_code')), 'knx2345');
+    await t.tap(find.byKey(const Key('trek_out')));
+    await t.pumpAndSettle();
+    expect(api.out, 'KNX2345');
+    expect(find.text('Out: 5 people, back by 12:06'), findsOneWidget);
+    await t.tap(find.byKey(const Key('walk_out')));                    // §6.2.7: a walk without a permit
+    await t.pumpAndSettle();
+    expect(api.walked?.$2, 4);
+    expect(find.textContaining('Walk WABC234: 4 people'), findsOneWidget);
+  });
+
   testWidgets('day report: the lines of the day and a copy button', (t) async {
     await t.pumpWidget(wrap(const Scaffold(body: DayReportTab()), _ReportApi()));
     await t.pumpAndSettle();
     expect(find.text('132 people entered; busiest hour at the gate 07:00 (60 people).'), findsOneWidget);
     expect(find.byKey(const Key('report_copy')), findsOneWidget);
+    await t.scrollUntilVisible(find.byKey(const Key('trend_week')), 200);
+    expect(find.textContaining('start times kept 81 %'), findsOneWidget);       // §6.2.10 weekly trends
   });
 
   testWidgets('stages: the chosen stage first, busy stages with a quieter neighbour, the rest counted', (t) async {
@@ -1124,13 +1272,19 @@ void main() {
         {'stage': 's15', 'name': 'Stage 15', 'length_km': 12.0, 'level': 'crowded', 'fullness': 1.4, 'busiest_hour': '10:00',
           'busiest_km': 6.0, 'advice': 'Crowded from about 09:00 to 12:00.', 'quieter_neighbour': 's14'},
         {'stage': 's10', 'name': 'Stage 10', 'length_km': 14.0, 'level': 'busy', 'fullness': 0.7, 'busiest_hour': '08:00',
-          'busiest_km': 2.0, 'advice': 'Busy from about 08:00.'},
+          'busiest_km': 2.0, 'advice': 'Busy from about 08:00.', 'weather': {'rain_mm': 7.6, 'rain_hours': 3},
+          'spread_window': ['06:00', '11:00']},
       ],
     });
     await t.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: StagesCard(outlook: o, selected: 's10')))));
-    expect(find.textContaining('Stage 10 · 14 km · busy'), findsOneWidget);
+    expect(find.textContaining('Stage 10 · 14 km · busy · rain 8 mm'), findsOneWidget);
     expect(find.textContaining('Quieter that day: Stage 14'), findsOneWidget);
     expect(find.text('1 of 3 stages quiet all day.'), findsOneWidget);
+    expect(find.byKey(const Key('stage_start')), findsOneWidget);
+    final st = o.stages.firstWhere((x) => x.stage == 's10');
+    final starts = {for (var i = 0; i < 50; i++) st.suggestedStart(i)!};
+    expect(starts.length, greaterThan(5));                                   // walkers get different starts
+    expect(starts.every((x) => x.compareTo('06:00') >= 0 && x.compareTo('11:00') <= 0), isTrue);
   });
 
   testWidgets('incident: a ranger reports a closed trail; gate control shows the alert', (t) async {

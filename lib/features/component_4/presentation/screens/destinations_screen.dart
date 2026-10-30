@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../theme/c4_theme.dart';
 import '../widgets/c4_ui.dart';
+import 'visitor/trip_screen.dart';
 
 /// Trip planner, step 1: choose a destination. Built only from the server's destination list, so a new
 /// destination (a new configs/parks/*.yaml) appears here, with its own filter chip, without changing the app.
@@ -34,7 +35,19 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
     final shown = widget.parks.where(_matches).toList();
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: Text(tr(context, 'where_to')), actions: widget.actions),
+      appBar: AppBar(title: Text(tr(context, 'where_to')), actions: [
+        if (widget.parks.length > 1)
+          IconButton(
+            key: const Key('open_trip'),
+            tooltip: tr(context, 'trip_open'),
+            icon: const Icon(Icons.route),
+            onPressed: () => Navigator.of(context).push(c4Route(context, TripScreen(parks: widget.parks, onPick: (id) {
+              Navigator.of(context).pop();
+              widget.onPick(id);
+            }))),
+          ),
+        ...widget.actions,
+      ]),
       body: ListView(padding: C4Space.page, children: [
         Text(tr(context, 'where_to_sub'), style: text.bodyLarge),
         const SizedBox(height: C4Space.m),
