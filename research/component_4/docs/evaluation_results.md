@@ -657,6 +657,78 @@ Pekoe Trail, 2025 weekends, viewpoint sections hold 30 people at once (`control.
 - **Design change:** `/stages/{day}` now gives busy stages a `spread_window`, and the app shows each visitor their own
   suggested start.
 
+## RQ15 – A chance constraint at the gate instead of a fixed margin; who pays for control (`src.control.evaluate_chance`, 30 Oct 2026)
+Plan §6.1.1–6.1.2. Horton Plains, realistic world S1, 2025, run `results/20261030_085127_chance_s1`.
+
+**Calibration** (60 training days, the gate controller with the 90 % margin): how far the real occupancy of a
+section strays from the controller's own prediction (inside + K·admitted):
+- dry: bias 1.00, spread ≈ 1.24 × the prediction (Poisson-like);
+- wet: bias 0.96, spread ≈ 1.14 × the prediction;
+- no extra spread proportional to the load (σ = 0) on either kind of day.
+
+So the chance constraint is mainly a buffer of about z·√(1.2·m). Small sections get a larger share of buffer; wet
+days get none extra.
+
+| Gate policy | Over-capacity person-hours | Days over capacity | Busy half-hours over capacity | Admitted | Mean wait (min) |
+|---|---|---|---|---|---|
+| none | 169,950 | 365 | 33.2 % | 100 % | 0 |
+| fixed margin 90 % (current) | 1,303 | 326 | 3.35 % | 59.6 % | 63 |
+| fixed margin 80 % | 365 | 198 | 1.28 % | 55.9 % | 66 |
+| chance, P(over) ≤ 20 % | 693 | 285 | 2.01 % | 57.9 % | 65 |
+| chance, P(over) ≤ 10 % | 241 | 161 | 0.82 % | 54.8 % | 66 |
+| chance, P(over) ≤ 5 % | 90 | 94 | 0.43 % | 52.6 % | 68 |
+
+- **On the trade-off curve, the chance constraint does better.** At 57.9 % admitted, a fixed margin between 80 and
+  90 % would give about 870 person-hours over capacity (linear between the two); the chance constraint gives 693
+  (≈ −20 %). At 10 % it has 34 % fewer person-hours over than the 80 % margin, for 1.1 points fewer admitted.
+- All differences vs the 90 % margin: Wilcoxon p < 10⁻¹⁸ per day.
+- **ε is not the realised rate:** busy half-hours go over capacity far less often than ε. The constraint is
+  conservative because the plan rarely fills a section up to its cap. Read ε as a setting that orders the
+  policies, not as a promised probability.
+- **No weather benefit found:** the calibration shows no extra spread on wet days, so "hold back more on uncertain
+  days" did not happen in this world. The arrival uncertainty is absorbed by the hard caps, and the gate counts
+  correct the forecast (RQ13).
+- **Live:** off by default. Set `control.chance_eps` (e.g. 0.1) after running the evaluation; the gate card then
+  states the rule. Choosing ε is a park decision: fewer people over capacity against fewer people admitted.
+
+**Fairness** (§6.2; people-weighted, the current 90 % margin; with start times for 60 % of groups, N3p):
+
+| Group | Turned away, gate control only | Mean wait, gate control only | Turned away, with start times | Mean wait, with start times |
+|---|---|---|---|---|
+| Arrive before 08:00 | 42.7 % | 33 min | 40.3 % | 18 min |
+| Arrive 08:00–10:00 | 37.7 % | 57 min | 39.1 % | 36 min |
+| Arrive after 10:00 | 29.4 % | 31 min | 36.1 % | 26 min |
+| Groups of 1–3 | 37.1 % | 39 min | 34.9 % | 23 min |
+| Groups of 6+ | 46.5 % | 35 min | 48.0 % | 21 min |
+| Holding a start time | — | — | 0.0 % | 0.5 min |
+| Without one | — | — | 56.4 % | 31 min |
+
+- **Large groups are turned away more often** (+9 points): a big group does not fit into the places left in a
+  slot. Remedy: let a large group split, or keep places for them in each slot.
+- **Start-time holders are almost never turned away; everyone else is turned away more** (56 % vs 40 % without the
+  app). This is the cost of the priority that makes start times work (RQ13b). The app must not become the only way
+  in: keep a walk-in share in every slot (`control.walk_in_share`, as for tickets), and offer start times at the
+  gate kiosk / by SMS for visitors without a smartphone.
+- Mid-morning arrivals wait longest (the peak). Early arrivals are turned away most: they meet the day-ahead caps
+  before the feedback raises them.
+
+### §6.1.4 – Re-planning during the day when rain arrives (`evaluate_mpc --world s1 --stress --scenarios none sudden_rain`)
+Run `results/20261030_091335_mpc_stress_s1`. MPCr = gate control that re-plans every slot with the rain of the hours
+already past + the next 2 hours (`mpc.blend_rain_share`; live: `src/live/nowcast.py`, Open-Meteo every 15 min).
+
+| Scenario | MPC: over-capacity person-hours / admitted | MPCr: over-capacity person-hours / admitted |
+|---|---|---|
+| rain planned correctly | 1,259 / 59.0 % | 1,196 / 58.6 % |
+| rain not planned for (planned dry) | 20,955 / 67.0 % | **14,511** / 65.1 % |
+
+- Rain the plan did not expect: **31 % less overcrowding** (cut vs no control 89.0 → 92.4 %), for 1.9 points fewer
+  admitted. The gap to D (booking, 18,332) is closed and passed.
+- **Only towards caution:** a first version also *raised* the caps on a drier-than-planned morning. That doubled
+  the overcrowding on ordinary days (2,198 vs 1,259 person-hours), because the planned rain still came while those
+  let in were on the trail. Now the share is never below the plan (`max(planned, measured)`).
+- What remains of the sudden-rain overcrowding comes from people already inside when the rain starts: the gate can
+  only stop new entries.
+
 ## RQ1 on the Pekoe Trail – a long, sparse trail (`C4_PARK=pekoe_trail`, `src.run_benchmark`, 28 Oct 2026)
 323 km, 22 stages, ~163 walkers a day (simulated, `docs/assumptions_pekoe_trail.md`); seed 42, no ARIMA.
 

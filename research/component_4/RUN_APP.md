@@ -17,6 +17,8 @@ Paths on this laptop:
 cd D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4
 .venv\Scripts\python.exe -m src.live.refresh                                   # Horton Plains
 $env:C4_PARK = "adams_peak"; .venv\Scripts\python.exe -m src.live.refresh; Remove-Item Env:C4_PARK   # Adam's Peak
+$env:C4_PARK = "knuckles"; .venv\Scripts\python.exe -m src.live.refresh; Remove-Item Env:C4_PARK     # Knuckles
+$env:C4_PARK = "pekoe_trail"; .venv\Scripts\python.exe -m src.live.refresh; Remove-Item Env:C4_PARK  # Pekoe Trail
 .venv\Scripts\python.exe -m src.api.serve_all
 ```
 - Each `refresh` takes about 1–2 minutes. Run them **once a day**: they fetch the weather and make the forecasts,
@@ -107,6 +109,52 @@ switches English / සිංහල / தமிழ்.
 2. **Sightings** tab (only at Yala) → pick a section (e.g. *Heenwewa Tank*), species **leopard** → **Report at 07:10**.
 3. The card shows the rule (*at most 10 jeeps stopped, 10 min each*), the jeeps estimated near it from the gate, and
    – when it is crowded – which circuits avoid it. **Animal gone** ends it.
+
+**Knuckles: several mechanisms in one area** (choose *Knuckles Range*)
+1. Calendar → a day. Each trail shows what it needs:
+   - **Open viewpoints** (Pitawala Pathana, Sera Ella; no ticket): busy hours, the car park, and when to come instead.
+   - **Guided treks** (Maningala, Gombaniya, five peaks, Duwili Ella, Lakegala): pick a trek and a group size →
+     **Request a permit** → a 7-letter code. A full trek offers another trek from the same entry, or another day.
+   - **Campsites tonight**: pitches left → **Book a pitch**.
+   - **Choose a trail** lists only the ticketed nature trails (Knuckles Waterfall, Dothalugala), booked like Horton
+     Plains.
+2. Log in as a **Knuckles** ranger (setup step 5) → **Treks** tab: type the permit code → **Starts now** (shows when
+   the group is due back) → later **Back**. A group not back by then plus the margin shows in red as **overdue**.
+   Use **Now** (demo time) to jump ahead.
+
+**Pekoe Trail** (choose *The Pekoe Trail*): no tickets. Calendar → a day → **Stages this day**: how busy each stage
+gets and the rain per stage (within 16 days). On a busy stage the app gives **this visitor** a suggested start time;
+each visitor gets a different one, which spreads the walkers (RQ14b).
+
+**More since 28 Oct**
+- **Ranger, gate:** "Or type the ticket or start-time code". A start-time code on time shows **Start time · let in
+  first**. Live tab → **Report a problem on a trail** (muddy / partly closed / closed / all clear, today only): the
+  "Let in now" numbers drop at once and the alert shows on the card.
+- **Ranger, Count tab:** **Share by QR** shows waiting counts as a QR code; another ranger taps **Receive by QR** and
+  scans it. Whichever phone gets a signal first sends them.
+- **Visitor:** start-time card → after **Hold**, **Check before you leave** (on the day) → **Move to HH:MM** if it got
+  busier. A busy park shows **other parks with room and quieter days** (all parks through `serve_all`).
+- **Crowding screen → All day:** every section that fills up × every hour; tap a square.
+- **Officer:** **Day report** tab (copy for the daily log; printable page at `/admin/day-report/<day>?format=html`);
+  **Forecast check** also shows the error after correction by the rangers' counts.
+
+**More since 30 Oct**
+- **Trip planner:** destinations list → route icon (top right) → choose several places, the first day and how many
+  days → **Find quiet days**: one day for each place with the most room. Needs `serve_all` (the gateway).
+- **Ranger, Check in tab:** switch on **Joined the queue** and scan groups at the back of the queue. When they are let
+  in (switch off, scan again), the wait is measured; the officer's **Day report** shows the median wait of
+  start-time holders vs others.
+- **Ranger, Out & back tab** (every park but Yala): **Register a walk (no permit)**: trail, group size → **Starts
+  now** gives a W code and the time the group is due back. Type the code → **Back** when they return. Late groups
+  turn red as **overdue** (use **Now** to jump ahead in a demo).
+- **Ranger, Live tab:** the first line of **Let in now** says why there are fewer or more places (rain, more people
+  than expected, a reported problem). Today's rain so far and the next 2 hours come from Open-Meteo every 15 min.
+- **Officer, Day report:** **Last 4 weeks** below the day: entries, no-shows, start times kept, forecast error.
+- **Sinhala / Tamil:** the Knuckles cards, the trip planner and the stage start are translated (drafts).
+- **Backups:** `serve_all` copies every park's databases to `data/backups/` at 02:00 (14 days kept); now:
+  `.venv\Scripts\python.exe -m src.api.backup`.
+- **Chance constraint (RQ15), optional:** run `.venv\Scripts\python.exe -m src.control.evaluate_chance` once, then
+  set `control.chance_eps: 0.1` in `configs/default.yaml` and restart.
 
 **Park officer** (log out, log in as `officer1`)
 1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather
@@ -239,9 +287,12 @@ flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
    .venv\Scripts\python.exe -m src.api.users add --username ranger1 --role ranger
    Remove-Item Env:C4_PARK
    ```
-   Yala has its own accounts too: the same lines with `$env:C4_PARK = "yala"`.
+   Yala, Knuckles and the Pekoe Trail have their own accounts too: the same lines with `$env:C4_PARK = "yala"`,
+   `"knuckles"` or `"pekoe_trail"`.
 6. Adam's Peak data (once, ~10 min): `$env:C4_PARK = "adams_peak"; .venv\Scripts\python.exe -m src.data.build_dataset`
-7. Yala data (once, ~10 min): `$env:C4_PARK = "yala"; .venv\Scripts\python.exe -m src.data.build_dataset`, then
+7. Knuckles data (once, ~5 min; OSM from the cache): `$env:C4_PARK = "knuckles"; .venv\Scripts\python.exe -m src.data.build_dataset`.
+   Assumptions and the approximate trails: `docs/assumptions_knuckles.md`.
+8. Yala data (once, ~10 min): `$env:C4_PARK = "yala"; .venv\Scripts\python.exe -m src.data.build_dataset`, then
    `.venv\Scripts\python.exe -m src.run_benchmark` (model, a few hours) and `.venv\Scripts\python.exe -m src.live.refresh`.
 
 ---

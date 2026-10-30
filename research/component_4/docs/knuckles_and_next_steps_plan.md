@@ -2,6 +2,42 @@
 
 *Written 30 Oct 2026. Builds on `improvement_plan.md` (sections 7–8) and `evaluation_results.md` (RQ1–RQ13c).*
 
+## Progress (30 Oct 2026, branch `feature/component-4-knuckles`)
+
+| Item | Status |
+|---|---|
+| §3 Per-trail control modes | **Done.** `src/control/modes.py`. `/status` and `/destination` give `trail_modes`. Slots, bookings and start times only for ticketed trails; `/stages` only for `open_stages`. Pekoe is `open_stages`. The app builds its cards and tabs from the modes |
+| K1 Assumptions | **Done, from OSM.** `assumptions_knuckles.md`. Forest Department rules and numbers still to request |
+| K2 Graph | **Done.** `src/data/waypoint_graph.py`: 9 trails, 49 sections. Several trails approximate (straight legs) until GPS tracks; Nitro Cave and Corbet's Gap not in OSM |
+| K3 Simulator | **Done.** Weekend day-trippers, two monsoons, dwell at falls and viewpoints; guided groups of 4–12 leaving together (`simulator.guided_groups`); Duwili Ella / Lakegala closed after heavy morning rain (`simulator.rain_closures`) |
+| K4 Permits | **Done.** `src/control/permits.py`, `/permits`. First come first served within the cap and the free guides (RQ14); LP = guide roster suggestion |
+| K5 Overdue check | **Done.** Out / back, `/overdue/{day}`, margin grows with trek time and shrinks in rain; ranger "Treks" tab |
+| K6 Viewpoints and parking | **Done.** `/viewpoints/{day}`; "parking full" through `POST /incident` |
+| K7 Campsites | **Done.** `/campsites` (pitches per night) |
+| K8 App | **Done.** Permit, viewpoint and campsite cards; Treks tab; Tickets tab only where something is sold; Sinhala and Tamil labels (drafts, to be checked by native speakers) |
+| K9 Evaluation | **Done.** RQ14 in `evaluation_results.md` |
+| R1 / R2 Commit, RUN_APP | Commit: the user. RUN_APP updated (Knuckles and new screens) |
+| R3 Field trial | December (visits) |
+| R4 Compliance | **Done.** Held start times count as held × the recent on-time share (`start_times.on_time_share`); shown in `/admin/recalibration` |
+| R5 Pekoe | **Done.** `open_stages`; viewpoint sections hold 30 at once; weather per stage (`src/live/stage_weather.py`). 3-seed benchmark: running (`run_benchmark --seeds 42 43 44 --tag benchmark_6km_3seeds`) |
+| R6 Stage advice evaluation | **Done.** RQ14b: spread starts −53 to −74 %, "start early" worse; the live advice now spreads |
+| R7 Gate priority, measured | **Done (tool).** Ranger switch "Joined the queue" scans groups at the back of the queue (`POST /gate/queue`); check-ins go to `gate_log`; the day report and `/admin/gate-waits/{day}` give the measured median wait of start-time holders vs others. Numbers come with the field trial |
+| R8 DWC data | Waiting for DWC |
+| §6.1.1 Chance constraint | **Done.** `src/control/chance.py`, RQ15: ≈ 20 % fewer over-capacity person-hours than a fixed margin at the same admissions; live off by default (`control.chance_eps`) |
+| §6.1.2 Fairness | **Done (report).** RQ15: large groups and visitors without a start time are turned away more. Remedies (split groups, walk-in share for start times, kiosk / SMS) not built |
+| §6.1.3 Transfer with few counts | Not done: needs Knuckles spot counts (December) |
+| §6.1.4 Rain during the day | **Done.** `mpc.blend_rain_share` + `src/live/nowcast.py`: the gate re-plans with the rain so far and the next 2 hours (only towards caution); unplanned rain −31 % overcrowding |
+| §6.2.5 Trip planner | **Done.** Gateway `GET /trip`; app "Plan a trip" (route icon on the destinations list) |
+| §6.2.6 Parking | Partly: Knuckles car parks (K6). Redirecting arrivals not built |
+| §6.2.7 Safety | **Partly.** Walk register at every park except Yala (`POST /walks/out`, "Out & back" tab, same overdue alarm). Weather warnings and SOS need push / GPS: not built |
+| §6.2.8 Explain decisions | **Done.** Gate card's first line says why places are fewer or more (`why`); visitor day screen already lists the limit factors |
+| §6.2.9 Push notifications | Not done: needs a Firebase project (team decision) |
+| §6.2.10 Officer trends | **Done.** `GET /admin/trends`; "Last 4 weeks" under the day report |
+| §6.3.11 Backups | **Done.** `src/api/backup.py`; nightly at 02:00 from `serve_all`, 14 days kept |
+| §6.3.12 Load / cache | **Partly.** Gateway caches public forecasts 60 s. Load test not run |
+| §6.3.13 CI | Already in place (`.github/workflows/component4.yml`); lint fixed. Benchmarks need data, so not in CI |
+| §6.3.14 Privacy | **Done.** `docs/privacy.md` |
+
 ## 1. Summary
 
 The app covers four places: Horton Plains, Adam's Peak, Yala and the Pekoe Trail. Each already uses a different way of
