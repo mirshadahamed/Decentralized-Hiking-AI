@@ -335,6 +335,29 @@ class C4Api {
           as Map<String, dynamic>)['code'] as String;
 
   /// Sections a ranger can count on.
+  /// §6.2.7 SOS: a visitor asks for help (the same clientId again updates the same call, e.g. a newer GPS fix).
+  Future<SosStatus> sos(String clientId, String kind, int people,
+          {String note = '', String? trail, int? segId, double? lat, double? lon, double? accuracy}) async =>
+      SosStatus.fromJson(await _send('POST', '/sos', body: {
+        'client_id': clientId, 'kind': kind, 'people': people, 'note': note,
+        'trail': ?trail, 'seg_id': ?segId, 'lat': ?lat, 'lon': ?lon, 'accuracy_m': ?accuracy,
+      }) as Map<String, dynamic>);
+
+  Future<SosStatus> sosCheck(String clientId) async =>
+      SosStatus.fromJson(await _send('GET', '/sos/check/$clientId') as Map<String, dynamic>);
+
+  /// Ranger: the day's SOS calls, open ones first.
+  /// §6.2.9: closures, trail conditions and heavy rain for visitors of that day (polled while the app is open).
+  Future<List<ParkNotice>> notices(DateTime d) async =>
+      [for (final n in (await _send('GET', '/notices/${day(d)}')) as List) ParkNotice.fromJson(n as Map<String, dynamic>)];
+
+  Future<List<SosCall>> sosCalls(DateTime d) async => [
+        for (final c in ((await _send('GET', '/sos/${day(d)}')) as Map<String, dynamic>)['calls'] as List)
+          SosCall.fromJson(c as Map<String, dynamic>)
+      ];
+
+  Future<void> sosStatus(int id, String status) async => _send('POST', '/sos/$id/status', body: {'status': status});
+
   Future<List<SegmentInfo>> segments() async =>
       [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
 

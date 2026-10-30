@@ -8,7 +8,9 @@ import '../../widgets/scan_page.dart';
 import 'treks_tab.dart';
 import '../bottleneck_screen.dart';
 import 'count_screen.dart';
+import 'kiosk_screen.dart';
 import 'sightings_screen.dart';
+import 'sos_calls_screen.dart';
 
 
 /// Gate tools: check in tickets, sell walk-in places, live traffic lights.
@@ -24,16 +26,18 @@ class _RangerHomeState extends State<RangerHome> {
   DateTime? _demo; // null = real time
   bool _sightings = false; // safari parks (Yala): the Sightings tab
   bool _treks = false; // guided treks (Knuckles): the Treks tab (out / back / overdue)
+  bool _kiosk = false; // ticketed trails: the start-time kiosk for walk-ups
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     C4Scope.of(context).status().then((s) {
       final treks = s.hasMode('guided_permit') || s.walkRegister;
-      if (mounted && (s.sightings != _sightings || treks != _treks)) {
+      if (mounted && (s.sightings != _sightings || treks != _treks || s.hasTickets != _kiosk)) {
         setState(() {
           _sightings = s.sightings;
           _treks = treks;
+          _kiosk = s.hasTickets;
         });
       }
     }, onError: (_) {});
@@ -60,6 +64,19 @@ class _RangerHomeState extends State<RangerHome> {
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
           actions: [
+            IconButton(
+              key: const Key('open_sos_calls'),
+              tooltip: 'SOS calls',
+              icon: const Icon(Icons.sos, color: C4Colors.red),
+              onPressed: () => Navigator.of(context).push(c4Route(context, SosCallsScreen(day: _day))),
+            ),
+            if (_kiosk)
+              IconButton(
+                key: const Key('open_kiosk'),
+                tooltip: 'Start-time kiosk for walk-ups',
+                icon: const Icon(Icons.tablet_android),
+                onPressed: () => Navigator.of(context).push(c4Route(context, KioskScreen(now: () => _now))),
+              ),
             TextButton.icon(
               onPressed: _pickDemoTime,
               onLongPress: () => setState(() => _demo = null),

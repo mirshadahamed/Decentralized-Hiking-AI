@@ -1074,6 +1074,62 @@ class SegmentInfo {
       );
 }
 
+/// §6.2.7: what the visitor sees after an SOS call (open / seen = a ranger is on the way / closed).
+class SosStatus {
+  SosStatus({required this.id, required this.status, required this.place, required this.note});
+
+  final int id;
+  final String status, place, note;
+
+  factory SosStatus.fromJson(Map<String, dynamic> j) => SosStatus(
+        id: _int(j['id']),
+        status: j['status'] as String? ?? 'open',
+        place: j['place'] as String? ?? '',
+        note: j['note'] as String? ?? '',
+      );
+}
+
+/// §6.2.9: something visitors of a day should know; `id` stays the same while the notice does not change.
+class ParkNotice {
+  ParkNotice({required this.id, required this.level, required this.kind, required this.text, this.trail});
+
+  final String id, level, kind, text; // level: danger | warning | info
+  final String? trail;
+
+  factory ParkNotice.fromJson(Map<String, dynamic> j) => ParkNotice(
+        id: j['id'] as String,
+        level: j['level'] as String? ?? 'info',
+        kind: j['kind'] as String? ?? '',
+        text: j['text'] as String? ?? '',
+        trail: j['trail'] as String?,
+      );
+}
+
+/// §6.2.7: an SOS call as the ranger sees it.
+class SosCall {
+  SosCall({required this.id, required this.created, required this.kind, required this.people, required this.place,
+      required this.status, this.note, this.lat, this.lon, this.accuracy, this.handledBy});
+
+  final int id, people;
+  final String created, kind, place, status;
+  final String? note, handledBy;
+  final double? lat, lon, accuracy;
+
+  factory SosCall.fromJson(Map<String, dynamic> j) => SosCall(
+        id: _int(j['id']),
+        created: j['created'] as String? ?? '',
+        kind: j['kind'] as String? ?? 'other',
+        people: _int(j['people'] ?? 1),
+        place: j['place'] as String? ?? '',
+        status: j['status'] as String? ?? 'open',
+        note: j['note'] as String?,
+        lat: (j['lat'] as num?)?.toDouble(),
+        lon: (j['lon'] as num?)?.toDouble(),
+        accuracy: (j['accuracy_m'] as num?)?.toDouble(),
+        handledBy: j['handled_by'] as String?,
+      );
+}
+
 /// A count made on the phone; kept until the server has it (offline-first).
 class SpotCount {
   SpotCount({required this.day, required this.segId, required this.time, required this.count, required this.clientId});
@@ -1461,9 +1517,11 @@ class OverdueStatus {
 
 class ViewpointInfo {
   ViewpointInfo({required this.trail, required this.name, required this.level, required this.advice, this.parkingSpaces,
-      this.parkingFullHours = const [], this.reported});
+      this.parkingFullHours = const [], this.reported, this.insteadName, this.insteadSpaces});
 
   final String trail, name, level, advice; // level: quiet / busy / crowded
+  final String? insteadName; // §6.2.6: car park full -> the viewpoint with free spaces then
+  final int? insteadSpaces;
   final int? parkingSpaces;
   final List<String> parkingFullHours;
   final String? reported; // a ranger's report today (e.g. parking full)
@@ -1476,6 +1534,8 @@ class ViewpointInfo {
         parkingSpaces: j['parking_spaces'] == null ? null : _int(j['parking_spaces']),
         parkingFullHours: [for (final h in j['parking_full_hours'] as List? ?? []) h as String],
         reported: j['reported'] as String?,
+        insteadName: (j['instead'] as Map<String, dynamic>?)?['name'] as String?,
+        insteadSpaces: j['instead'] == null ? null : _int((j['instead'] as Map<String, dynamic>)['free_spaces']),
       );
 }
 

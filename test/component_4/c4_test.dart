@@ -12,6 +12,9 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/count_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/halfway_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/sightings_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/kiosk_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/sos_calls_screen.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/visitor/sos_screen.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/treks_tab.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/officer_home.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/screens/staff/records_screen.dart';
@@ -22,6 +25,7 @@ import 'package:decentralized_hiking_ai/features/component_4/presentation/screen
 import 'package:decentralized_hiking_ai/features/component_4/presentation/l10n/c4_i18n.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/c4_ui.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/knuckles_cards.dart';
+import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/notices_banner.dart';
 import 'package:decentralized_hiking_ai/features/component_4/presentation/widgets/weather_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -526,6 +530,49 @@ class _TripApi extends FakeApi {
       'note': 'Busiest visit: Horton Plains on 2026-11-25 (busy); no better order in these days.',
     });
   }
+}
+
+class _NoticesApi extends FakeApi {
+  final list = [ParkNotice(id: 'a1', level: 'danger', kind: 'condition', trail: 'kirigalpotta', text: 'Kirigalpotta is closed (landslide).')];
+
+  @override
+  Future<List<ParkNotice>> notices(DateTime d) async => List.of(list);
+}
+
+class _SosApi extends FakeApi {
+  int tries = 0;
+  bool online = false;
+  final sent = <(String, String, int, String?, int?)>[];
+  final statuses = <(int, String)>[];
+
+  @override
+  Future<List<SegmentInfo>> segments() async => [
+        SegmentInfo(segId: 3, name: "Mini World's End", trail: 'main', trailName: "World's End loop"),
+        SegmentInfo(segId: 25, name: "World's End", trail: 'main', trailName: "World's End loop"),
+      ];
+
+  @override
+  Future<SosStatus> sos(String clientId, String kind, int people,
+      {String note = '', String? trail, int? segId, double? lat, double? lon, double? accuracy}) async {
+    tries++;
+    if (!online) throw ApiException(0, 'offline');
+    sent.add((clientId, kind, people, trail, segId));
+    return SosStatus(id: 7, status: 'open', place: "World's End loop, World's End", note: 'Rangers have your call.');
+  }
+
+  @override
+  Future<SosStatus> sosCheck(String clientId) async =>
+      SosStatus(id: 7, status: 'seen', place: "World's End", note: 'A ranger has seen your call and is on the way.');
+
+  @override
+  Future<List<SosCall>> sosCalls(DateTime d) async => [
+        SosCall.fromJson({'id': 7, 'created': '2026-10-15T10:02:00', 'kind': 'injury', 'people': 2,
+          'place': "World's End loop, World's End", 'status': statuses.isEmpty ? 'open' : 'seen', 'note': 'ankle',
+          'lat': 6.80123, 'lon': 80.80456, 'accuracy_m': 12.0, 'handled_by': statuses.isEmpty ? null : 'ranger1'}),
+      ];
+
+  @override
+  Future<void> sosStatus(int id, String status) async => statuses.add((id, status));
 }
 
 class _KnucklesApi extends FakeApi {
@@ -1224,17 +1271,96 @@ void main() {
 
   testWidgets('open viewpoints and campsites: advice, ranger report, book a pitch', (t) async {
     final v = [ViewpointInfo.fromJson({'trail': 'pitawala', 'name': 'Pitawala Pathana', 'level': 'crowded',
-      'advice': 'Crowded 09:00-12:00. Come before 08:00.', 'parking_spaces': 60, 'reported': 'partly closed - parking full'})];
+      'advice': 'Crowded 09:00-12:00. Come before 08:00.', 'parking_spaces': 60, 'reported': 'partly closed - parking full',
+      'instead': {'trail': 'sera_ella', 'name': 'Sera Ella', 'free_spaces': 12}})];
     final c = [Campsite.fromJson({'site': 'duwili_cave', 'name': 'Duwili Ella Cave Campsite', 'trail_name': 'Duwili Ella trek',
       'pitches': 6, 'left': 2})];
     await t.pumpWidget(wrap(Scaffold(body: SingleChildScrollView(child: Column(children: [
       ViewpointCard(viewpoints: v), CampsiteCard(night: today, sites: c)]))), _KnucklesApi()));
     expect(find.textContaining('Come before 08:00'), findsOneWidget);
     expect(find.textContaining('parking full'), findsOneWidget);
+    expect(find.textContaining('go to Sera Ella instead (about 12 spaces free)'), findsOneWidget);
     expect(find.textContaining('2 of 6 pitches left'), findsOneWidget);
     await t.tap(find.byKey(const Key('camp_duwili_cave')));
     await t.pumpAndSettle();
     expect(find.text('Booked: code CMP7777'), findsOneWidget);
+  });
+
+  testWidgets('SOS: no signal shows the phone numbers and keeps trying with the same id; then a reply', (t) async {
+    final api = _SosApi();
+    await t.pumpWidget(wrap(const SosScreen(), api));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('sos_lost')));
+    await t.tap(find.byKey(const Key('sos_trail')));
+    await t.pumpAndSettle();
+    await t.tap(find.text("World's End loop").last);
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('sos_send')));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('sos_offline')), findsOneWidget);
+    expect(find.textContaining('1990'), findsOneWidget);
+    api.online = true;
+    await t.pump(const Duration(seconds: 21)); // the automatic re-send
+    await t.pumpAndSettle();
+    expect(api.tries, 2);
+    expect(api.sent.single.$2, 'lost');
+    expect(api.sent.single.$4, 'main');
+    expect(find.byKey(const Key('sos_offline')), findsNothing);
+    expect(find.textContaining("Sent: World's End loop"), findsOneWidget);
+    await t.tap(find.text('Check for a reply'));
+    await t.pumpAndSettle();
+    expect(find.textContaining('on the way'), findsOneWidget);
+    await t.pump(const Duration(seconds: 30));
+    expect(api.tries, 2); // sent: no more re-sends
+  });
+
+  testWidgets('kiosk: a walk-up picks trail and group size, gets a start time and code, then the screen clears', (t) async {
+    final api = _StartApi();
+    await t.pumpWidget(wrap(KioskScreen(now: () => DateTime(2026, 11, 2, 7, 0), resetAfter: const Duration(seconds: 5)), api));
+    await t.pumpAndSettle();
+    expect(find.text('Give me a start time'), findsOneWidget);
+    await t.tap(find.byKey(const Key('kiosk_trail_main')));
+    await t.tap(find.byKey(const Key('kiosk_more')));
+    await t.pump();
+    await t.tap(find.byKey(const Key('kiosk_get')));
+    await t.pumpAndSettle();
+    expect(api.held, ('main', '08:30', 3));
+    expect(find.text('Start at 08:30'), findsOneWidget);
+    expect(find.text('K7Q2ZP'), findsOneWidget);
+    await t.pump(const Duration(seconds: 6)); // cleared for the next visitor
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('kiosk_code')), findsNothing);
+    expect(find.textContaining('People in your group: 2'), findsOneWidget);
+  });
+
+  testWidgets('notices: shown until OK, then not again; a new notice appears on the next check', (t) async {
+    SharedPreferences.setMockInitialValues({});
+    final api = _NoticesApi();
+    await t.pumpWidget(wrap(Scaffold(body: NoticesBanner(day: today, every: const Duration(minutes: 5))), api));
+    await t.pumpAndSettle();
+    expect(find.text('Kirigalpotta is closed (landslide).'), findsOneWidget);
+    await t.tap(find.text('OK'));
+    await t.pumpAndSettle();
+    expect(find.text('Kirigalpotta is closed (landslide).'), findsNothing);
+    api.list.add(ParkNotice(id: 'b2', level: 'warning', kind: 'rain', text: 'Heavy rain forecast around 14:00.'));
+    await t.pump(const Duration(minutes: 5));
+    await t.pumpAndSettle();
+    expect(find.text('Heavy rain forecast around 14:00.'), findsOneWidget);
+    expect(find.text('Kirigalpotta is closed (landslide).'), findsNothing);
+    await t.pumpWidget(const SizedBox()); // stop the timer
+  });
+
+  testWidgets('SOS calls for rangers: position, note, on the way', (t) async {
+    final api = _SosApi();
+    await t.pumpWidget(wrap(SosCallsScreen(day: today), api));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Injury · 2 people'), findsOneWidget);
+    expect(find.textContaining('GPS 6.80123, 80.80456 (±12 m)'), findsOneWidget);
+    await t.tap(find.byKey(const Key('sos_seen_7')));
+    await t.pumpAndSettle();
+    expect(api.statuses, [(7, 'seen')]);
+    expect(find.byKey(const Key('sos_close_7')), findsOneWidget);
+    await t.pumpWidget(const SizedBox()); // stop the 30 s refresh timer
   });
 
   testWidgets('treks tab: check a group out and back; an overdue group stands out', (t) async {

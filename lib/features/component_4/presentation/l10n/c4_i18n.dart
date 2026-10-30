@@ -208,6 +208,56 @@ const Map<String, Map<String, String>> _strings = {
   'vp_crowded': {'en': 'crowded', 'si': 'ඉතා සෙනඟ', 'ta': 'நெரிசல்'},
   'ranger_today': {'en': 'Ranger today: {report}', 'si': 'අද රේන්ජර්: {report}', 'ta': 'இன்று வனக்காவலர்: {report}'},
   'car_park': {'en': 'Car park: {n} spaces', 'si': 'වාහන නැවතුම: ඉඩ {n}', 'ta': 'வாகன நிறுத்தம்: {n} இடங்கள்'},
+  'sos_open': {'en': 'SOS: ask for help', 'si': 'SOS: උදව් ඉල්ලන්න', 'ta': 'SOS: உதவி கேளுங்கள்'},
+  'sos_title': {'en': 'Ask a ranger for help', 'si': 'රේන්ජර්ගෙන් උදව් ඉල්ලන්න', 'ta': 'வனக்காவலரிடம் உதவி கேளுங்கள்'},
+  'sos_kind_injury': {'en': 'Injured', 'si': 'තුවාල වී ඇත', 'ta': 'காயம்'},
+  'sos_kind_lost': {'en': 'Lost', 'si': 'මං මුළා වී ඇත', 'ta': 'வழி தவறினோம்'},
+  'sos_kind_unwell': {'en': 'Unwell', 'si': 'අසනීපයි', 'ta': 'உடல்நலமில்லை'},
+  'sos_kind_other': {'en': 'Other', 'si': 'වෙනත්', 'ta': 'மற்றவை'},
+  'sos_people': {'en': 'People with you: {n}', 'si': 'ඔබ සමඟ සිටින අය: {n}', 'ta': 'உங்களுடன் உள்ளவர்கள்: {n}'},
+  'sos_trail': {'en': 'Trail', 'si': 'මංතීරුව', 'ta': 'பாதை'},
+  'sos_place': {'en': 'Last place you passed', 'si': 'ඔබ අවසානයට පසු කළ ස්ථානය', 'ta': 'நீங்கள் கடைசியாகக் கடந்த இடம்'},
+  'sos_note': {'en': 'What happened (optional)', 'si': 'සිදු වූයේ කුමක්ද (අවශ්‍ය නම්)', 'ta': 'என்ன நடந்தது (விரும்பினால்)'},
+  'sos_send': {'en': 'Send SOS', 'si': 'SOS යවන්න', 'ta': 'SOS அனுப்பு'},
+  'sos_gps': {'en': 'Your phone’s position is sent too.', 'si': 'ඔබේ දුරකථනයේ පිහිටීමද යවනු ලැබේ.', 'ta': 'உங்கள் தொலைபேசியின் இருப்பிடமும் அனுப்பப்படும்.'},
+  'sos_no_gps': {
+    'en': 'No GPS on this phone: choose the trail and the last place you passed.',
+    'si': 'මෙම දුරකථනයේ GPS නැත: මංතීරුව සහ අවසානයට පසු කළ ස්ථානය තෝරන්න.',
+    'ta': 'இந்த தொலைபேசியில் GPS இல்லை: பாதையையும் கடைசியாகக் கடந்த இடத்தையும் தேர்ந்தெடுக்கவும்.'
+  },
+  'sos_sent': {'en': 'Sent: {place}', 'si': 'යවන ලදී: {place}', 'ta': 'அனுப்பப்பட்டது: {place}'},
+  'sos_check': {'en': 'Check for a reply', 'si': 'පිළිතුරක් බලන්න', 'ta': 'பதிலைச் சரிபார்க்கவும்'},
+  'sos_offline': {
+    'en': 'Not sent yet: no connection. The app keeps trying. Call 1990 (ambulance) or 119 (police).',
+    'si': 'තවම යවා නැත: සම්බන්ධතාවක් නැත. යෙදුම දිගටම උත්සාහ කරයි. 1990 (ගිලන් රථ) හෝ 119 (පොලිස්) අමතන්න.',
+    'ta': 'இன்னும் அனுப்பப்படவில்லை: இணைப்பு இல்லை. செயலி தொடர்ந்து முயற்சிக்கும். 1990 (அம்புலன்ஸ்) அல்லது 119 (பொலிஸ்) அழைக்கவும்.'
+  },
+  'kiosk_title': {'en': 'Get a start time', 'si': 'ආරම්භක වේලාවක් ලබා ගන්න', 'ta': 'தொடக்க நேரம் பெறுங்கள்'},
+  'kiosk_trail': {'en': 'Which trail?', 'si': 'කුමන මංතීරුවද?', 'ta': 'எந்தப் பாதை?'},
+  'kiosk_people': {'en': 'People in your group: {n}', 'si': 'ඔබේ කණ්ඩායමේ අය: {n}', 'ta': 'உங்கள் குழுவில் உள்ளவர்கள்: {n}'},
+  'kiosk_get': {'en': 'Give me a start time', 'si': 'මට ආරම්භක වේලාවක් දෙන්න', 'ta': 'எனக்கு ஒரு தொடக்க நேரம் தாருங்கள்'},
+  'kiosk_start': {'en': 'Start at {time}', 'si': '{time} ට ආරම්භ කරන්න', 'ta': '{time} மணிக்குத் தொடங்குங்கள்'},
+  'kiosk_code': {
+    'en': 'Your code: {code}. Write it down or take a photo, and show it at the gate at {time}: you go in first.',
+    'si': 'ඔබේ කේතය: {code}. එය ලියා ගන්න හෝ ඡායාරූපයක් ගන්න, {time} ට දොරටුවේදී පෙන්වන්න: ඔබට පළමුව ඇතුළු විය හැක.',
+    'ta': 'உங்கள் குறியீடு: {code}. அதை எழுதிக்கொள்ளுங்கள் அல்லது புகைப்படம் எடுங்கள், {time} மணிக்கு வாயிலில் காட்டுங்கள்: நீங்கள் முதலில் உள்ளே செல்லலாம்.'
+  },
+  'kiosk_full': {
+    'en': 'This trail is full for the next 3 hours. Please choose another trail or ask the ranger.',
+    'si': 'ඉදිරි පැය 3 සඳහා මෙම මංතීරුව පිරී ඇත. කරුණාකර වෙනත් මංතීරුවක් තෝරන්න හෝ රේන්ජර්ගෙන් අසන්න.',
+    'ta': 'அடுத்த 3 மணி நேரத்திற்கு இந்தப் பாதை நிரம்பியுள்ளது. வேறு பாதையைத் தேர்ந்தெடுக்கவும் அல்லது வனக்காவலரிடம் கேளுங்கள்.'
+  },
+  'kiosk_sms': {
+    'en': 'No smartphone? Text START to the park number for a start time.',
+    'si': 'ස්මාර්ට් දුරකථනයක් නැද්ද? ආරම්භක වේලාවක් සඳහා START ලෙස උද්‍යාන අංකයට කෙටි පණිවිඩයක් යවන්න.',
+    'ta': 'ஸ்மார்ட்போன் இல்லையா? தொடக்க நேரத்திற்கு START என்று பூங்கா எண்ணுக்கு குறுஞ்செய்தி அனுப்புங்கள்.'
+  },
+  'kiosk_next': {'en': 'Next visitor', 'si': 'ඊළඟ අමුත්තා', 'ta': 'அடுத்த பார்வையாளர்'},
+  'park_instead': {
+    'en': 'Car park full: go to {name} instead (about {n} spaces free).',
+    'si': 'වාහන නැවතුම පිරී ඇත: ඒ වෙනුවට {name} වෙත යන්න (ඉඩ {n} ක් පමණ ඇත).',
+    'ta': 'வாகன நிறுத்தம் நிரம்பியது: பதிலாக {name} செல்லுங்கள் (சுமார் {n} இடங்கள் காலி).'
+  },
   'campsites_title': {'en': 'Campsites tonight', 'si': 'අද රාත්‍රියේ කඳවුරු භූමි', 'ta': 'இன்றிரவு முகாம் இடங்கள்'},
   'pitches_left': {'en': '{left} of {total} pitches left · {trail}', 'si': 'කූඩාරම් ඉඩ {total} න් {left} ඉතිරිය · {trail}', 'ta': '{total} இல் {left} கூடார இடங்கள் மீதம் · {trail}'},
   'pitch_booked': {'en': 'Booked: code {code}', 'si': 'වෙන් කළා: කේතය {code}', 'ta': 'முன்பதிவு: குறியீடு {code}'},

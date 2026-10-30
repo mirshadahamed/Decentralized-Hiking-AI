@@ -123,12 +123,13 @@ class ViewpointCard extends StatelessWidget {
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.landscape_outlined, color: color(v.level)),
+              leading: Icon(v.insteadName != null ? Icons.local_parking : Icons.landscape_outlined, color: color(v.level)),
               title: Text('${v.name} · ${tr(context, 'vp_${v.level}')}'),
               subtitle: Text([
                 v.advice,
                 if (v.reported != null) tr(context, 'ranger_today', {'report': v.reported!}),
                 if (v.parkingSpaces != null) tr(context, 'car_park', {'n': v.parkingSpaces!}),
+                if (v.insteadName != null) tr(context, 'park_instead', {'name': v.insteadName!, 'n': v.insteadSpaces ?? 0}),
               ].join(' ')),
             ),
         ]),
