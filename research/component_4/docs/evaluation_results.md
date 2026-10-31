@@ -818,6 +818,40 @@ park; 70 % ask about the same busy day, the rest about another day in the next t
   laptop; then most requests are cache hits. A 400 from Adam's Peak `/slots` (no bookings there) is counted as a
   correct answer.
 
+**After the speed-ups** (config parsed once per change, planner day kept per input, `serve_all` warms the next 14 days;
+run `results/20261031_045906_load`, same laptop and settings):
+
+| phones at once | requests / s | p50 | p95 | errors | served from cache |
+|---|---|---|---|---|---|
+| 1 | 18.8 | 0.01 s | 0.10 s | 0 % | 47 % |
+| 10 | 102.8 | 0.07 s | 0.25 s | 0 % | 50 % |
+| 50 | 59.9 | 0.57 s | 2.3 s | 0 % | 51 % |
+| 100 | 55.7 | 1.2 s | 5.3 s | 0 % | 54 % |
+| 200 | 48.3 | 2.9 s | 11 s | 0 % | 58 % |
+
+- 2-6× the throughput; p95 for 10 phones 1.7 s → 0.25 s, for 100 phones 24 s → 5.3 s; no errors at 200 phones.
+- What still queues at 50+ phones is `/network` (p95 2.3-9 s): the network advice is worked out per request. More
+  cores, or caching it per day like `/capacity`, is the next step.
+
+## §6.1.3 – Transfer to Knuckles with few counts: dry run on simulated counts (`src.eval.transfer --targets knuckles --sources horton_plains pekoe_trail`, 31 Oct 2026)
+
+Run `results/20261031_013713_transfer_knuckles` (seeds 42-44; test = the last year of simulated Knuckles counts; Holm-corrected paired tests over 365 days). `HA_k` is the historical average built from the same k days of counts the network is fine-tuned on.
+
+| Model (ST-GNN) | 14 days | 30 days | 90 days |
+|---|---|---|---|
+| HA_k (same days) | 1.54 | 1.42 | 1.33 |
+| From scratch | 1.82 | 1.80 | 1.77 |
+| Fine-tuned from Horton Plains | **1.45** | **1.41** | 1.37 |
+| Fine-tuned from Pekoe | 1.49 | 1.45 | 1.43 |
+
+MAE (people per segment); zero-shot (no Knuckles counts): 2.00 from Horton Plains, 1.66 from Pekoe; ST-GNN with all Knuckles history 1.21, HA 1.35.
+
+- **Fine-tuning always beats training from scratch** (0.33-0.40 lower MAE, every k, both sources, p_holm < 1e-30).
+- **With 14 days of counts, fine-tuning from Horton Plains beats the average of those 14 days** (-0.09, p_holm = 1e-5; Pekoe -0.06, p_holm = 0.04). At 30 days they are level (n.s.); at 90 days HA_90 is better (+0.05).
+- Horton Plains is the better source after fine-tuning; Pekoe is the better zero-shot source. Zero-shot is worse than HA everywhere: do not deploy a network on Knuckles without some counts.
+- GRU without the graph gives the same picture (14 days: -0.12 vs HA_14).
+- **Use for December:** with the first two weeks of spot counts, serve the network fine-tuned from Horton Plains; switch to HA once there are about a month of counts, and back to an in-domain ST-GNN when a season of counts exists. Simulated counts only: rerun with the real December counts.
+
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
 Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE

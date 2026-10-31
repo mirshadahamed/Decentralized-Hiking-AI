@@ -25,7 +25,7 @@
 | R8 DWC data | Waiting for DWC |
 | §6.1.1 Chance constraint | **Done.** `src/control/chance.py`, RQ15: ≈ 20 % fewer over-capacity person-hours than a fixed margin at the same admissions; live off by default (`control.chance_eps`) |
 | §6.1.2 Fairness | **Done.** RQ15: large groups and visitors without a start time are turned away more. RQ15b remedies: strict queue order (size gap 9.3 → 7.4 points), walk-up share 30 % (`control.walkup_share`; walk-ups' gap 56.5 → 50.2 points), both together −11 % over-capacity person-hours. Start times without the app: gate kiosk (tablet, ranger opens it) and SMS (`src/control/sms.py`, `POST /sms`: START / CHECK / HELP; needs the park's SMS gateway and `C4_SMS_KEY`) |
-| §6.1.3 Transfer with few counts | Not done: needs Knuckles spot counts (December) |
+| §6.1.3 Transfer with few counts | Dry run done on simulated counts (`results/20261031_013713_transfer_knuckles`): fine-tuned from Horton Plains beats HA with 14 days of counts, level at 30. Real run needs the December spot counts |
 | §6.1.4 Rain during the day | **Done.** `mpc.blend_rain_share` + `src/live/nowcast.py`: the gate re-plans with the rain so far and the next 2 hours (only towards caution); unplanned rain −31 % overcrowding |
 | §6.2.5 Trip planner | **Done.** Gateway `GET /trip`; app "Plan a trip" (route icon on the destinations list) |
 | §6.2.6 Parking | **Done (Knuckles).** When a car park is full (forecast, or a ranger's "parking full" report today), `/viewpoints/{day}` names the other viewpoint with the most free spaces then (`instead`); shown on the viewpoint card. Horton Plains / Riverston bus and van parks: need space counts (field visit) |
@@ -34,7 +34,7 @@
 | §6.2.9 Push notifications | **Done without push.** `GET /notices/{day}` (`src/serve/notices.py`): closures, trail conditions, heavy rain (forecast; today the 2-hour nowcast). The app checks it on opening and every 5 min and shows each notice once (banner). Real push (app closed) still needs a Firebase project; it would send the same list |
 | §6.2.10 Officer trends | **Done.** `GET /admin/trends`; "Last 4 weeks" under the day report |
 | §6.3.11 Backups | **Done.** `src/api/backup.py`; nightly at 02:00 from `serve_all`, 14 days kept |
-| §6.3.12 Load / cache | **Done.** Gateway caches public forecasts 60 s. Load test (`src/api/load_test.py`, `results/20261030_155736_load`): 10 phones p95 1.7 s, 200 phones p95 19 s, ≤ 0.3 % errors on a 4-core laptop; found and fixed two gateway bugs (shared cache key, slow client setup). Since then: the config is parsed once per change (0.15 s → 3 ms), the planner's day is kept per input (0.25 s → 20 ms on a repeat), and `serve_all` works out the next 2 weeks at start and 02:30 |
+| §6.3.12 Load / cache | **Done.** Gateway caches public forecasts 60 s. Load test (`src/api/load_test.py`, `results/20261030_155736_load`): 10 phones p95 1.7 s, 200 phones p95 19 s, ≤ 0.3 % errors on a 4-core laptop; found and fixed two gateway bugs (shared cache key, slow client setup). Since then: the config is parsed once per change (0.15 s → 3 ms), the planner's day is kept per input (0.25 s → 20 ms on a repeat), and `serve_all` works out the next 2 weeks at start and 02:30. Re-run (`results/20261031_045906_load`): 10 phones p95 0.25 s, 100 phones 5.3 s, 200 phones 11 s, 0 % errors |
 | §6.3.13 CI | Already in place (`.github/workflows/component4.yml`); lint fixed. Benchmarks need data, so not in CI |
 | §6.3.14 Privacy | **Done.** `docs/privacy.md` |
 
