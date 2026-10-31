@@ -55,14 +55,26 @@ def _strip(d: dict) -> dict:
     return {k: (_strip(v) if isinstance(v, dict) else copy.deepcopy(v)) for k, v in d.items() if k != "__replace__"}
 
 
+_YAML: dict = {}
+
+
+def _yaml(path: Path) -> dict:
+    """A config file, parsed once per change (the API reads the config on most requests; parsing took ~0.15 s).
+    A copy, so callers may change it."""
+    mtime = path.stat().st_mtime_ns
+    hit = _YAML.get(path)
+    if hit is None or hit[0] != mtime:
+        with open(path, encoding="utf-8") as f:
+            hit = _YAML[path] = (mtime, yaml.safe_load(f))
+    return copy.deepcopy(hit[1])
+
+
 def load_config(name: str = "default", park: str | None = None) -> dict:
     park = park or PARK
-    with open(CONFIGS / f"{name}.yaml", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg = _yaml(CONFIGS / f"{name}.yaml")
     over = CONFIGS / "parks" / f"{park}.yaml"
     if park != DEFAULT_PARK and over.exists():
-        with open(over, encoding="utf-8") as f:
-            cfg = _merge(cfg, yaml.safe_load(f))
+        cfg = _merge(cfg, _yaml(over))
     cfg["park"] = park
     return cfg
 
