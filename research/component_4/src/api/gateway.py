@@ -80,6 +80,9 @@ async def network(day: date, park: str | None = None, around: int = 3):
     from src.api.network import advice, park_row
     if park is not None and park not in PORTS:
         raise HTTPException(404, f"Unknown park '{park}'")
+    key = ("", f"network/{day}", f"park={park}&around={around}")   # the whole answer: same CACHE_S as the parts
+    if (hit := _cached(key)) is not None:
+        return hit
     info = {p: destination_info(load_config(park=p)) for p in PARKS}
     near = [day + timedelta(days=k) for k in range(-around, around + 1) if k] if park else []
     async with httpx.AsyncClient(timeout=120, **LOCAL) as client:
@@ -87,7 +90,10 @@ async def network(day: date, park: str | None = None, around: int = 3):
                                     *[_capacity(client, park, d.isoformat()) for d in near])
     rows = [park_row(p, info[p], c) for p, c in zip(PARKS, caps)]
     days = [(d.isoformat(), park_row(park, info[park], c)) for d, c in zip(near, caps[len(PARKS):])]
-    return advice(day.isoformat(), rows, park, days)
+    out = advice(day.isoformat(), rows, park, days)
+    if all(c is not None for c in caps):                         # a park that was down is asked again next time
+        _store(key, out)
+    return out
 
 
 @app.get("/trip")

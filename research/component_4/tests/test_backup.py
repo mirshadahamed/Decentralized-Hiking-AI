@@ -51,6 +51,25 @@ def test_network_and_forward_share_one_cache_entry():
     gateway._cache.clear()
 
 
+def test_network_answer_is_cached():
+    """§6.3.12: /network keeps its whole answer; a park whose worker did not answer is not cached."""
+    from fastapi.testclient import TestClient
+
+    from src.api import gateway
+    gateway._cache.clear()
+    client = TestClient(gateway.app)
+    for p in gateway.PARKS:
+        gateway._store((p, "capacity/2026-11-02", ""), (b'{"total_expected": 5, "safe_limit": 50}', "application/json"))
+    first = client.get("/network/2026-11-02").json()
+    for p in gateway.PARKS:                                      # parts gone, no workers running: answer still there
+        gateway._cache.pop((p, "capacity/2026-11-02", ""))
+    assert client.get("/network/2026-11-02").json() == first
+    gateway._cache.clear()
+    client.get("/network/2026-11-03")                            # no workers: every park unknown, so not kept
+    assert not any(k[1] == "network/2026-11-03" for k in gateway._cache)
+    gateway._cache.clear()
+
+
 def test_config_is_parsed_once_per_change(tmp_path, monkeypatch):
     """§6.3.12: load_config keeps the parsed YAML until the file changes, and hands out copies."""
     import os
