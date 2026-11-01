@@ -3,13 +3,15 @@ from datetime import date, datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from src.config import load_config
+from src.config import PROCESSED, load_config
 from src.control import booking
 from src.serve.notices import HEAVY_MM, notices
 
 CFG = load_config(park="horton_plains")
 DAY = date(2026, 11, 2)
+needs_data = pytest.mark.skipif(not (PROCESSED / "segments.geojson").exists(), reason="run src.data.build_dataset first")
 
 
 def _weather(mm_at_14: float, source: str = "forecast"):
@@ -18,6 +20,7 @@ def _weather(mm_at_14: float, source: str = "forecast"):
     return w, pd.Series(source, index=idx)
 
 
+@needs_data
 def test_conditions_closures_and_forecast_rain(tmp_path, monkeypatch):
     monkeypatch.setattr(booking, "DB", tmp_path / "bookings.sqlite")
     now = datetime(2026, 11, 1, 18, 0)

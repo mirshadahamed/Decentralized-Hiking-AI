@@ -1,5 +1,8 @@
 """NFR4: calibrated ranges (src.eval.conformal) and the cautious quota in the published forecast."""
 import numpy as np
+import pytest
+
+from src.config import PROCESSED
 
 
 def test_ranges_cover_new_data_at_the_level_and_grow_with_the_forecast():
@@ -25,10 +28,11 @@ def test_rare_large_forecasts_borrow_a_scaled_range():
     assert np.allclose(t["0.9"][k200], np.array(t["0.9"][k100]) * 2)
 
 
+@pytest.mark.skipif(not (PROCESSED / "dataset.npz").exists(), reason="run src.data.build_dataset first")
 def test_published_forecast_has_ranges_and_a_cautious_quota():
     import geopandas as gpd
 
-    from src.config import PROCESSED, load_config
+    from src.config import load_config
     from src.eval.conformal import calibrate
     from src.eval.data import TrailData
     from src.serve.predict import build_forecast, with_range

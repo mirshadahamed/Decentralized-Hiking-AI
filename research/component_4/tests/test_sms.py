@@ -3,11 +3,12 @@ from datetime import date, datetime
 
 import pytest
 
-from src.config import load_config
+from src.config import PROCESSED, load_config
 from src.control import sms
 
 CFG = load_config(park="horton_plains")
 FRI = date(2026, 10, 30)
+needs_data = pytest.mark.skipif(not (PROCESSED / "segments.geojson").exists(), reason="run src.data.build_dataset first")
 
 
 def test_parse_takes_words_in_any_order():
@@ -21,6 +22,7 @@ def test_parse_takes_words_in_any_order():
             sms.parse(bad, CFG, FRI)
 
 
+@needs_data
 def test_start_holds_a_code_and_check_finds_it(tmp_path, monkeypatch):
     from src.control import booking
     monkeypatch.setattr(booking, "DB", tmp_path / "bookings.sqlite")
