@@ -445,6 +445,65 @@ Paired tests (Holm), ST-GNN vs the other models in the spot setting, interior se
 - **Claims C1 and C4 are supported here** (simulation; field check in December). It also makes the A4 spot counts
   a model input, not only a check.
 
+### RQ11c – A direction-aware graph (`stgnn_dir`, 1 Nov 2026)
+
+**Model:** the ST-GNN's graph step is replaced by a diffusion step in each direction of walking (DCRNN-style, 2 hops
+up and 2 down; edges point along `segment_walk_position` within a trail, links between trails both ways). About 2× the
+weights (25,953 vs 13,665). Aim: the Adam's Peak summit, where people go up and down the same steps.
+
+**Runs:**
+- Few counted places (as RQ11b, 3 seeds, the other models reloaded with `--reuse`): `results/20261101_125359_sparse_s1`,
+  `results/adams_peak/20261101_134232_sparse_s1`.
+- Held-out sections (spatial CV, 3 seeds): `results/20261101_234356_benchmark_dir`,
+  `results/adams_peak/20261101_172317_benchmark_dir`.
+
+MAE, mean of 3 seeds:
+
+| Test | ST-GNN | Direction-aware | Best other |
+|---|---|---|---|
+| Horton, uncounted sections, day-ahead / from 08:00 | 1.75 / 1.49 | **1.73 / 1.47** | LSTM 1.77 / 1.51 |
+| Adam's Peak, uncounted sections, day-ahead / from 08:00 | **5.28** / 3.13 | 5.44 / **3.12** | LSTM 5.51 / 3.31 |
+| Horton, held-out sections | **2.54** | 3.24 | LSTM 2.59 |
+| Adam's Peak, held-out sections | 9.63 | 9.42 | **LSTM 8.23** |
+| Adam's Peak, held-out summit block (fold 0) | 33.3 | 29.1 | **LSTM 28.2** |
+
+- **Horton, few counts:** a small, significant gain over the ST-GNN (−0.024, p_holm < 10⁻⁴).
+- **Adam's Peak, few counts:** worse day-ahead (+0.19), level from 08:00.
+- **Held-out sections:** worse at Horton (one block is unstable across seeds: MAE 1.5-5.5). At Adam's Peak it closes
+  most of the summit gap to the LSTM (33.3 → 29.1) but loses on another block.
+- **Decision:** kept as an option (`--models stgnn_dir`); not deployed and not ported to the phone. The summit block
+  remains the place where the graph does not help (Limitation 5).
+
+### RQ11d – Where should rangers count? One model for counts from any places (S4c; `src.eval.placement`, 1 Nov 2026)
+
+**Model:** the ST-GNN and the GRU without graph are trained with random sets of counted sections per batch (the gates
+plus up to 16-19 others), so one model takes counts from **any** set of places. The live ranger forecast now uses it
+(`LATEST_PLACEMENT_S1`): a count at any section updates today's forecast.
+
+**Method:** greedy choice on the validation year: add the section that lowers MAE the most, up to 8. Scored on the
+test year from 10:00 (rest of the day) and day-ahead, against 10 random sets of the same size, the gates only, and the
+rangers' 5 usual places (A4). 2 seeds.
+
+**Runs:** `results/20261101_143850_placement_s1` (Horton), `results/adams_peak/20261101_155026_placement_s1`.
+
+ST-GNN MAE from 10:00 (all sections):
+
+| Places counted besides the gates | Horton | Adam's Peak |
+|---|---|---|
+| None | 1.096 | 3.887 |
+| 5 random | 1.095 | 3.866 |
+| The rangers' 5 places | 1.094 | 3.820 |
+| **5 chosen by the greedy order** | **1.092** | **3.777** (−2.8 %) |
+| 8 chosen by the greedy order | 1.091 | 3.768 (−3.1 %) |
+
+- **Greedy beats random at every k in both parks** (p_holm < 0.001), and beats the rangers' places from 10:00
+  (Adam's Peak −0.043, p_holm = 0.002; Horton −0.0025, p_holm = 0.045).
+- **Adam's Peak order:** the summit, then the Nallathanniya steps from the lower third upwards (39 %, 33 %, 28 %, the
+  halfway point). **Horton:** two main-loop sections near the start, then Mini World's End.
+- At Horton the gains are tiny: the gates already explain most of the day.
+- Graph vs no graph with the same chosen places: not significant in either park (Adam's Peak −0.05 from 10:00, p = 0.27).
+- **Use:** the ranger count screen ranks sections by this order (`count_rank`, "#1" badge). Field check in December.
+
 ## RQ12 – A calibrated chance of over-capacity (S3; `src.eval.uncertainty`)
 
 Same S1 runs, seed 42, in folder `uncertainty/`.
@@ -830,8 +889,10 @@ run `results/20261031_045906_load`, same laptop and settings):
 | 200 | 48.3 | 2.9 s | 11 s | 0 % | 58 % |
 
 - 2-6× the throughput; p95 for 10 phones 1.7 s → 0.25 s, for 100 phones 24 s → 5.3 s; no errors at 200 phones.
-- What still queues at 50+ phones is `/network` (p95 2.3-9 s): the network advice is worked out per request. More
-  cores, or caching it per day like `/capacity`, is the next step.
+- What still queues at 50+ phones is `/network` (p95 2.3-9 s): the network advice is worked out per request.
+- **Since 1 Nov:** the gateway caches the whole `/network/{day}` answer per park and place (60 s, as for forecasts);
+  an answer with a capacity missing is not cached (`tests/test_backup.py::test_network_answer_is_cached`). Not yet
+  re-load-tested.
 
 ## §6.1.3 – Transfer to Knuckles with few counts: dry run on simulated counts (`src.eval.transfer --targets knuckles --sources horton_plains pekoe_trail`, 31 Oct 2026)
 
@@ -851,6 +912,45 @@ MAE (people per segment); zero-shot (no Knuckles counts): 2.00 from Horton Plain
 - Horton Plains is the better source after fine-tuning; Pekoe is the better zero-shot source. Zero-shot is worse than HA everywhere: do not deploy a network on Knuckles without some counts.
 - GRU without the graph gives the same picture (14 days: -0.12 vs HA_14).
 - **Use for December:** with the first two weeks of spot counts, serve the network fine-tuned from Horton Plains; switch to HA once there are about a month of counts, and back to an in-domain ST-GNN when a season of counts exists. Simulated counts only: rerun with the real December counts.
+
+### §6.1.3b – A source trained on several parks at once (`transfer.py --joint horton_plains adams_peak pekoe_trail`, 1 Nov 2026)
+
+One ST-GNN trained on the three parks together (graph swapped per batch; early stopping on the mean validation loss),
+then fine-tuned on Knuckles like the single-park source. Run `results/20261101_210004_transfer_knuckles_joint`
+(seeds 42-44, same test year).
+
+| Model (ST-GNN) | No counts | 14 days | 30 days | 90 days |
+|---|---|---|---|---|
+| HA_k (same days) | – | 1.54 | 1.42 | 1.33 |
+| From Horton Plains | 2.00 | 1.45 | 1.41 | 1.38 |
+| **From the joint model** | **1.73** | **1.42** | **1.38** | **1.36** |
+
+- **The joint source is better at every k** (14 days −0.033, p_holm < 10⁻⁹; 30 days −0.024; 90 days −0.015, p_holm = 0.03)
+  and zero-shot (2.00 → 1.73; still worse than HA 1.35).
+- vs HA of the same days: −0.13 at 14 days (p_holm < 10⁻⁶); level at 30 and 90.
+- **Use for December:** start Knuckles from the joint model instead of Horton Plains alone; the switch to HA after
+  about a month stays.
+
+## Forecast ranges (FR10 / NFR4; `src.eval.conformal`, 1 Nov 2026)
+
+**Method:** split conformal prediction on the deployed model. The validation year gives the residuals, grouped by forecast
+size (0, 0.5, 1, 2, 5, 10, 20, 50, 100, 200 people) with the finite-sample correction. A group with < 200 residuals is
+scaled from the nearest smaller group that has enough. Scored on the test year against one range for every size.
+
+**Runs:** `results/20261101_125624_conformal` (Horton), `results/adams_peak/20261101_125652_conformal`.
+
+| 90 % range | Covered, all hours | Covered, busy hours | Mean width (people) |
+|---|---|---|---|
+| Horton, by forecast size | 0.898 | **0.777** | 5.7 |
+| Horton, one range | 0.900 | 0.172 | – |
+| Adam's Peak, by forecast size | 0.900 | **0.857** | 17.4 |
+| Adam's Peak, one range | 0.900 | 0.078 | – |
+
+- Both hold 90 % overall; only the ranges by forecast size still hold at busy hours (conformal does not promise that).
+- **In service:** every published forecast now has `peak_range` per section, `peak_occupancy_range` and a
+  **`cautious_daily_quota`** per trail (the limit if the crowd comes in at the top of the 90 % range), and a top-level
+  `range` block. The phone pack carries the cautious quota; the app shows it under the safe number. Example, Horton
+  Plains, Vesak 2025, main trail: safe number 153, cautious 110; peak 205 people (range 112-474).
 
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
@@ -904,3 +1004,5 @@ Daily rain 2022–2025 at each park's weather point: Open-Meteo / ERA5 (what the
 2. One seed at Adam's Peak and in RQ2; three for Horton RQ1 temporal.
 3. RQ3/RQ4 control results use the same simulator that generated the data.
 4. Usability (SUS) and expert review with DWC / Sri Pada officers are not done yet.
+5. At the Adam's Peak summit block the graph models do not beat the LSTM on held-out sections; the
+   direction-aware model (RQ11c) narrows but does not close the gap.
