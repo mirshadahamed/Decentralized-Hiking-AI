@@ -1,4 +1,4 @@
-# How to run the Component 4 app (Horton Plains, Adam's Peak, Yala)
+# How to run the Component 4 app (Horton Plains, Adam's Peak, Yala, Knuckles, Pekoe Trail)
 
 Two programs run at the same time:
 1. **The park servers** (Python): forecasts, bookings, staff logins; one per park behind one address. Terminal 1.
@@ -93,7 +93,8 @@ switches English / සිංහල / தமிழ்.
 4. **Live**: traffic lights estimated from who went through the gate. The card on top says what to do at the gate
    for the next 2 hours: *keep the gate open*, or *hold new entries to a trail for N min / send the next groups to
    another trail*. To see it act, check in or sell many groups for one trail between 06:00 and 08:00.
-5. **Count**: pick a section (★ = the count also updates today's forecast), tap **+1** for every walker you see, **Save count**. Works in airplane mode: the count
+5. **Count**: pick a section (**#1**, **#2**, … = count here first: helps today's forecast most; a count at any
+   section now updates the forecast), tap **+1** for every walker you see, **Save count**. Works in airplane mode: the count
    waits on the phone ("1 waiting to be sent") and is sent with **Send now** when the signal is back.
    Back on **Live**, the card *Rest of today · updated with N counts* shows the sections now expected over capacity.
 6. **Crowding**: on each section the **% chance** that it is really over capacity at that hour.
@@ -174,6 +175,26 @@ each visitor gets a different one, which spreads the walkers (RQ14b).
 - **Notices:** a ranger's *closed* / *partly closed* / *muddy* report, an officer's slot closure, or heavy rain in the
   forecast (today: the next 2 hours) shows as a banner on the visitor's park screen within 5 min; **OK** hides it.
 - **Faster first answers:** `serve_all` works out every park's forecasts for the next 2 weeks at start and at 02:30.
+
+**More since 1 Nov** (restart `serve_all` and rebuild the APK to see these)
+- **Crowding screen / day screen:** under the safe number, **N on a bad day**: the safe number if the crowd comes in at
+  the top of the 90 % forecast range. Also offline (it is in the phone pack). Try Horton Plains on Vesak (12 May):
+  main trail 153, on a bad day 110.
+- **Forecast JSON** (`/forecast`, Module 3 feed): new fields `peak_range` per section, `peak_occupancy_range` and
+  `cautious_daily_quota` per trail, and a `range` block. Older fields are unchanged.
+- **Ranger, Count tab:** sections ranked **#1, #2, …** by where a count helps today's forecast most (Adam's Peak: the
+  summit first, then the Nallathanniya steps). Counts at any section now feed today's forecast (**Live** → *Rest of
+  today*).
+- **Gateway:** `/network` answers are cached for 60 s like the forecasts (the trip planner is faster with many phones).
+- **Research reruns (optional, hours each; not needed for the demo):**
+  ```powershell
+  .venv\Scripts\python.exe -m src.eval.conformal                       # forecast ranges (minutes)
+  .venv\Scripts\python.exe -m src.eval.placement --world s1            # where to count (~1 h)
+  .venv\Scripts\python.exe -m src.eval.transfer --targets knuckles --sources horton_plains --joint horton_plains adams_peak pekoe_trail --kinds stgnn
+  .venv\Scripts\python.exe -m src.eval.sparse_sensors --world s1 --settings spot --models lstm gru_nograph stgnn stgnn_dir --reuse 20261022_042402_sparse_s1
+  ```
+  Add `$env:C4_PARK = "adams_peak";` in front for Adam's Peak (and `--reuse 20261022_054232_sparse_s1`). A new `conformal` or `placement` run is used by the
+  servers after a restart.
 
 **Park officer** (log out, log in as `officer1`)
 1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather
