@@ -26,7 +26,7 @@ from src.eval.metrics import paired_tests
 from src.models.baselines import HistoricalAverage
 from src.run_benchmark import evaluate
 from src.eval.data import TrailData
-from src.train.trainer import predict, train
+from src.train.trainer import predict, train_or_load
 from src.utils import new_run_dir
 
 NEURAL = ["lstm", "gru_nograph", "stgnn"]
@@ -59,6 +59,8 @@ def main():
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--settings", nargs="+", default=["gate", "zero"], choices=["gate", "spot", "zero", "all"])
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
+    ap.add_argument("--models", nargs="+", default=NEURAL, choices=NEURAL + ["stgnn_dir"])
+    ap.add_argument("--reuse", default=None, help="earlier sparse run (name under results/): load its models")
     ap.add_argument("--world", choices=["default", "s1"], default="default",
                     help="s1: the realistic world (data/processed/dataset_s1.npz, src.data.build_dataset --world s1)")
     a = ap.parse_args()
@@ -82,6 +84,7 @@ def main():
         logf.write(m + "\n")
         logf.flush()
 
+    reuse = RESULTS / a.reuse if a.reuse else None
     sets = settings(data)
     interior = np.where(~sets["gate"])[0]
     log(f"gates: {np.where(sets['gate'])[0].tolist()}; scored interior segments: {len(interior)}")
@@ -92,10 +95,11 @@ def main():
         day_err, preds = {}, {"HA": [ha]}
         r, day_err["HA"] = evaluate("HA", ha, data, te, interior, cfg, {"setting": name})
         rows.append(r)
-        for kind in NEURAL:
+        for kind in a.models:
             ps, des = [], []
             for s in a.seeds:
-                model, scale = train(data, kind, sensed, cfg, s, log=log, loss_nodes=every)
+                model, scale = train_or_load(reuse, f"{name}_{kind}_s{s}", data, kind, sensed, cfg, s, log=log,
+                                             loss_nodes=every)
                 p = predict(model, data, te, sensed, scale)
                 r, de = evaluate(kind, p, data, te, interior, cfg, {"setting": name, "seed": s})
                 uncounted = np.setdiff1d(interior, np.where(sensed)[0])     # interior segments nobody counts
@@ -112,7 +116,7 @@ def main():
                 log(f"[{name}] {kind} seed={s} MAE={r['MAE']:.3f} RMSE={r['RMSE']:.3f}")
             day_err[kind], preds[kind] = np.mean(des, 0), ps
             saved[f"{name}_{kind}"] = ps[0].astype(np.float32)
-        stats[name] = paired_tests(day_err, "stgnn")
+        stats[name] = {f"vs_{g}": paired_tests(day_err, g) for g in ("stgnn", "stgnn_dir") if g in day_err}
         for kind, ps in preds.items():
             for ev, thr in (("over", 1.0), ("busy", cfg["capacity"]["busy_utilisation"])):
                 cs = [counts(p, y, open_, cap, interior, thr) for p in ps]
@@ -123,7 +127,7 @@ def main():
     pd.DataFrame(events).to_csv(run / "events.csv", index=False)
     (run / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     np.savez_compressed(run / "predictions.npz", origins=te, interior=interior, HA=ha.astype(np.float32), **saved)
-    if not a.quick:
+    if not a.quick and a.models == NEURAL:                       # the live spot model reads this run
         (RESULTS / ("LATEST_SPARSE_S1" if a.world == "s1" else "LATEST_SPARSE")).write_text(run.name, encoding="utf-8")
     cols = ["MAE", "RMSE"] + [c for c in df.columns if c.startswith("MAE_from_")]
     log(df.groupby(["setting", "model"])[cols].mean().round(3).to_string())

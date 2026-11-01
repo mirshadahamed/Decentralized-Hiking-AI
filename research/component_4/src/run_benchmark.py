@@ -22,7 +22,7 @@ from src.data.build_dataset import viewpoints
 from src.eval.data import TrailData
 from src.eval.metrics import paired_tests, per_day_mae, summary
 from src.models.baselines import ARIMABaseline, HistoricalAverage
-from src.train.trainer import predict, train
+from src.train.trainer import predict, train_or_load
 from src.utils import new_run_dir
 
 NEURAL = ["lstm", "gru_nograph", "stgnn"]
@@ -46,7 +46,7 @@ def evaluate(name, pred, data, origins, nodes, cfg, extra=None):
     return row, per_day_mae(pred, y, om, nodes)
 
 
-def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log, neural=None):
+def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log, neural=None, reuse=None):
     te = data.origins("test")
     rows, day_err, preds = [], {}, {}
 
@@ -65,7 +65,7 @@ def run_protocol(data, cfg, run, sensed, nodes, seeds, tag, use_arima, log, neur
     for kind in neural or NEURAL:
         seed_rows, seed_days, seed_preds = [], [], []
         for s in seeds:
-            model, scale = train(data, kind, sensed, cfg, s, log=log)
+            model, scale = train_or_load(reuse, f"{tag}_{kind}_s{s}", data, kind, sensed, cfg, s, log=log)
             p = predict(model, data, te, sensed, scale)
             r, de = evaluate(kind, p, data, te, nodes, cfg, {"seed": s})
             seed_rows.append(r), seed_days.append(de), seed_preds.append(p)
@@ -87,10 +87,12 @@ def main():
     ap.add_argument("--protocol", choices=["temporal", "spatial", "both"], default="both")
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--no-arima", action="store_true")
-    ap.add_argument("--models", nargs="+", default=None, choices=NEURAL + ["stgnn_lstm"],
+    ap.add_argument("--models", nargs="+", default=None, choices=NEURAL + ["stgnn_lstm", "stgnn_dir"],
                     help="neural models to train (default: lstm gru_nograph stgnn)")
     ap.add_argument("--seeds", type=int, nargs="+", default=None, help="override the config seeds (both protocols)")
     ap.add_argument("--tag", default="", help="extra name for the run folder; tagged runs do not replace LATEST")
+    ap.add_argument("--reuse", default=None, help="earlier run folder (name under results/): load its models instead "
+                                                  "of training them again, so a new model is tested on the same days")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -99,6 +101,7 @@ def main():
     if args.quick:
         cfg["train"].update(epochs=1, seeds=[42], spatial_seeds=[42])
     data = TrailData(cfg)
+    reuse = RESULTS / args.reuse if args.reuse else None
     run = new_run_dir("benchmark" + ("_quick" if args.quick else "") + (f"_{args.tag}" if args.tag else ""), cfg)
     graph_models = [m for m in (args.models or NEURAL) if m.startswith("stgnn")]
 
@@ -117,7 +120,7 @@ def main():
     out = {}
     if args.protocol in ("temporal", "both"):
         rows, day_err, preds = run_protocol(data, cfg, run, np.ones(data.N, bool), all_nodes,
-                                            cfg["train"]["seeds"], "temporal", not args.no_arima, log, args.models)
+                                            cfg["train"]["seeds"], "temporal", not args.no_arima, log, args.models, reuse)
         pd.DataFrame(rows).to_csv(run / "metrics_temporal.csv", index=False)
         out["temporal"] = tests(day_err)
         np.savez_compressed(run / "predictions_temporal.npz", origins=data.origins("test"),
@@ -131,7 +134,7 @@ def main():
             sensed[block] = False
             log(f"[spatial fold {f}] held-out segments: {block.tolist()}")
             rows, day_err, _ = run_protocol(data, cfg, run, sensed, block, cfg["train"]["spatial_seeds"],
-                                            f"spatial{f}", False, log, args.models)
+                                            f"spatial{f}", False, log, args.models, reuse)
             for r in rows:
                 r["fold"] = f
             fold_rows += rows
