@@ -4,6 +4,7 @@
     python -m src.eval.transfer --quick            # 1 epoch, 30 days: checks the pipeline
     python -m src.eval.transfer --targets knuckles --sources horton_plains pekoe_trail --days 14 30 90 --seeds 42 43 44
                                                    # §6.1.3: a new park with a few weeks of counts
+    python -m src.eval.transfer --targets knuckles --sources horton_plains --joint horton_plains adams_peak pekoe_trail         --kinds stgnn --days 14 30 90 --seeds 42 43 44   # one model trained on several parks at once as the source
 
 For each target park (test year 2025, every segment has counts, day-ahead forecasts from midnight):
   in_domain    trained on the target's 2 years of counts (the best case, reference)
@@ -11,6 +12,8 @@ For each target park (test year 2025, every segment has counts, day-ahead foreca
                target's last 30 days
   scratch_<k>  trained on only the target's last k days of counts
   finetune_<k> the other park's model, then trained on the same k days
+  ..._from_joint  with --joint: the source is ONE model trained on all the --joint parks together
+               (src.train.trainer.joint_train), tested against each single-park source
   HA, HA_<k>   historical average from 2 years / k days of target counts
 Few-shot models train a fixed number of epochs with no early stopping on the target's validation year: a new
 park does not have a year of counts to choose a model with.
@@ -29,7 +32,7 @@ from src.eval.data import TrailData
 from src.eval.metrics import paired_tests
 from src.models.baselines import HistoricalAverage
 from src.run_benchmark import evaluate
-from src.train.trainer import build_model, load_weights, predict, train
+from src.train.trainer import build_model, joint_train, load_weights, predict, train
 from src.utils import new_run_dir
 
 PARKS = ["horton_plains", "adams_peak"]
@@ -54,7 +57,11 @@ def main():
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--targets", nargs="+", default=PARKS)
     ap.add_argument("--sources", nargs="+", default=None, help="default: for each target, the other default park")
+    ap.add_argument("--joint", nargs="+", default=None, help="also: one model trained on all these parks as a source")
+    ap.add_argument("--kinds", nargs="+", default=KINDS, choices=KINDS + ["stgnn_dir"])
     a = ap.parse_args()
+    if a.joint and set(a.joint) & set(a.targets):
+        ap.error("a target park cannot be one of the --joint sources")
     train_cfg = dict(load_config(park="horton_plains")["train"])
     if a.quick:
         train_cfg.update(epochs=1)
@@ -64,9 +71,10 @@ def main():
         return a.sources or [p for p in PARKS if p != tgt]
 
     involved = list(dict.fromkeys(a.targets + [p for t in a.targets for p in sources(t)]))
-    names = [TrailData(load_config(park=p), path=processed_dir(p) / "dataset.npz").cov_names for p in involved]
+    names = [TrailData(load_config(park=p), path=processed_dir(p) / "dataset.npz").cov_names
+             for p in dict.fromkeys(involved + (a.joint or []))]
     common = [c for c in names[0] if all(c in n for n in names[1:])]
-    tag = "" if a.targets == PARKS and a.sources is None else "_" + "_".join(a.targets)
+    tag = ("" if a.targets == PARKS and a.sources is None else "_" + "_".join(a.targets)) + ("_joint" if a.joint else "")
     run = new_run_dir("transfer" + tag + ("_quick" if a.quick else ""), load_config())
     logf = open(run / "log.txt", "w", encoding="utf-8")
 
@@ -82,15 +90,21 @@ def main():
     full = {}
     for park in involved:
         cfg, d = load(park, common, train_cfg)
-        for kind in KINDS:
+        for kind in a.kinds:
             for s in a.seeds:
                 m, _ = train(d, kind, np.ones(d.N, bool), cfg, s, log=lambda x: log(f"[{park}] {x}"))
                 full[park, kind, s] = {k: v.clone() for k, v in m.state_dict().items()}
+    if a.joint:
+        datas = [load(p, common, train_cfg)[1] for p in a.joint]
+        cfg_j = dict(load_config(), train=train_cfg)
+        for kind in a.kinds:
+            for s in a.seeds:
+                full["joint", kind, s] = joint_train(datas, kind, cfg_j, s, log=lambda x: log(f"[joint] {x}"))
 
     rows, tests = [], {}
     for tgt in a.targets:
-        srcs = sources(tgt)
-        sfx = {src: f"_from_{src}" if a.sources else "" for src in srcs}
+        srcs = sources(tgt) + (["joint"] if a.joint else [])
+        sfx = {src: f"_from_{src}" if (a.sources or src == "joint") else "" for src in srcs}
         cfg, d = load(tgt, common, train_cfg)
         te, every = d.origins("test"), np.ones(d.N, bool)
         nodes = np.arange(d.N)
@@ -111,7 +125,7 @@ def main():
 
         add("HA", [HistoricalAverage().fit(d, every).predict(d, te)], d)
         _, d_scale = load(tgt, common, train_cfg, SCALE_DAYS)
-        for kind in KINDS:
+        for kind in a.kinds:
             preds_in = []
             for s in a.seeds:
                 m = load_weights(build_model(d, kind, train_cfg["hidden"]), full[tgt, kind, s])
@@ -127,7 +141,7 @@ def main():
         for k in a.days:
             _, dk = load(tgt, common, train_cfg, k)
             add(f"HA_{k}", [HistoricalAverage().fit(dk, every).predict(dk, te)], dk)
-            for kind in KINDS:
+            for kind in a.kinds:
                 p_scratch, p_ft = [], {src: [] for src in srcs}
                 for s in a.seeds:
                     say = lambda x, how: log(f"[{tgt} {k}d {how}] {x}")
@@ -144,14 +158,17 @@ def main():
 
         # paired tests over forecast days (Holm within each question)
         t = {}
-        for kind in KINDS:
+        for kind in a.kinds:
             for src in srcs:
                 zs = f"{kind}_zero_shot{sfx[src]}"
                 t[zs] = paired_tests({x: day_err[x] for x in (zs, f"{kind}_in_domain", "HA")}, zs)
                 for k in a.days:
                     ft = f"{kind}_finetune_{k}{sfx[src]}"
                     t[ft] = paired_tests({x: day_err[x] for x in (ft, f"{kind}_scratch_{k}", f"HA_{k}", "HA")}, ft)
-        for src in srcs:
+                    if src == "joint":
+                        t[ft + "_vs_single"] = paired_tests(
+                            {x: day_err[x] for x in [ft] + [f"{kind}_finetune_{k}{sfx[o]}" for o in srcs if o != "joint"]}, ft)
+        for src in (srcs if {"stgnn", "gru_nograph"} <= set(a.kinds) else []):
             t[f"graph_zero_shot{sfx[src]}"] = paired_tests(
                 {x: day_err[x] for x in (f"stgnn_zero_shot{sfx[src]}", f"gru_nograph_zero_shot{sfx[src]}")},
                 f"stgnn_zero_shot{sfx[src]}")
@@ -162,7 +179,8 @@ def main():
     (run / "tests.json").write_text(json.dumps({"targets": a.targets, "sources": a.sources, "shared_covariates": common,
                                                 "seeds": a.seeds, "days": a.days,
                                                 "tests": tests}, indent=2), encoding="utf-8")
-    (RESULTS / f"LATEST_TRANSFER{tag.upper()}").write_text(run.name, encoding="utf-8")   # slides read the default one
+    if not a.quick:
+        (RESULTS / f"LATEST_TRANSFER{tag.upper()}").write_text(run.name, encoding="utf-8")  # slides read the default one
     log(df[["target", "model", "MAE", "RMSE"]].round(3).to_string(index=False))
     log(f"done -> {run}")
 
