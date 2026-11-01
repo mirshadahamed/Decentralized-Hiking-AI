@@ -1,0 +1,86 @@
+{
+  "MPC0.5_vs_D_person_hours_over": {
+    "mean_diff_per_day": 1.4017610350076104,
+    "wilcoxon_p": 6.639193053189318e-18
+  },
+  "MPC0.5_vs_D_admitted": {
+    "mean_diff_per_day": -26.019178082191782,
+    "wilcoxon_p": 2.7331234210875647e-22
+  },
+  "MPC0.5_vs_D_gate_wait_h": {
+    "mean_diff_per_day": 406.55138585660796,
+    "wilcoxon_p": 4.237808910132865e-60
+  },
+  "MPC0.5_vs_B_person_hours_over": {
+    "mean_diff_per_day": -190.5022271689498,
+    "wilcoxon_p": 1.4322539015337709e-61
+  },
+  "MPC0.5_vs_B_admitted": {
+    "mean_diff_per_day": 12.46027397260274,
+    "wilcoxon_p": 0.0001590856414023133
+  },
+  "MPC0.5_vs_B_gate_wait_h": {
+    "mean_diff_per_day": 406.55138585660796,
+    "wilcoxon_p": 4.237808910132865e-60
+  },
+  "MPC0.5_vs_MPC-nf_person_hours_over": {
+    "mean_diff_per_day": 0.0457216514459667,
+    "wilcoxon_p": 0.3068210794822457
+  },
+  "MPC0.5_vs_MPC-nf_admitted": {
+    "mean_diff_per_day": 0.7068493150684931,
+    "wilcoxon_p": 0.8698308557048209
+  },
+  "MPC0.5_vs_MPC-nf_gate_wait_h": {
+    "mean_diff_per_day": 2.567344281132053,
+    "wilcoxon_p": 0.3146068610551638
+  },
+  "MPC0.75_vs_D_person_hours_over": {
+    "mean_diff_per_day": 1.414341514459665,
+    "wilcoxon_p": 2.434302855735841e-15
+  },
+  "MPC0.75_vs_D_admitted": {
+    "mean_diff_per_day": -24.753424657534246,
+    "wilcoxon_p": 1.9967562511822947e-20
+  },
+  "MPC0.75_vs_D_gate_wait_h": {
+    "mean_diff_per_day": 410.7240414142107,
+    "wilcoxon_p": 4.237808910132865e-60
+  },
+  "N3_0.6_vs_MPC0.5_person_hours_over": {
+    "mean_diff_per_day": 0.6102903348554034,
+    "wilcoxon_p": 0.0031375046674450235
+  },
+  "N3_0.6_vs_MPC0.5_admitted": {
+    "mean_diff_per_day": 17.09315068493151,
+    "wilcoxon_p": 6.966172824086339e-30
+  },
+  "N3_0.6_vs_MPC0.5_gate_wait_h": {
+    "mean_diff_per_day": 27.26492095299337,
+    "wilcoxon_p": 1.3227056397621602e-14
+  },
+  "N3_0.6_vs_D_person_hours_over": {
+    "mean_diff_per_day": 2.0120513698630136,
+    "wilcoxon_p": 1.1520986026269512e-21
+  },
+  "N3_0.6_vs_D_admitted": {
+    "mean_diff_per_day": -8.926027397260274,
+    "wilcoxon_p": 0.4884527977086389
+  },
+  "N3_0.6_vs_D_gate_wait_h": {
+    "mean_diff_per_day": 433.8163068096013,
+    "wilcoxon_p": 4.237808910132865e-60
+  },
+  "N3_0.9_vs_D_person_hours_over": {
+    "mean_diff_per_day": 1.5868122146118722,
+    "wilcoxon_p": 7.236132543994656e-17
+  },
+  "N3_0.9_vs_D_admitted": {
+    "mean_diff_per_day": -7.109589041095891,
+    "wilcoxon_p": 0.9197142879106902
+  },
+  "N3_0.9_vs_D_gate_wait_h": {
+    "mean_diff_per_day": 402.042868366459,
+    "wilcoxon_p": 4.237808910132865e-60
+  }
+}

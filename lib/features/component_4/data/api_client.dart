@@ -106,6 +106,18 @@ class C4Api {
   }
 
   // ---------- gateway ----------
+  /// N4: is this park busy that day, and which other parks / days have room? Null without the gateway.
+  Future<NetworkAdvice?> network(DateTime d) async {
+    if (park == null) return null;
+    return NetworkAdvice.fromJson(
+        await _send('GET', '/network/${day(d)}', gateway: true, query: {'park': park!}) as Map<String, dynamic>);
+  }
+
+  /// §6.2.5: one quiet day for each chosen park within [days] days from [start] (gateway only).
+  Future<TripPlan> trip(List<String> parks, DateTime start, int days) async => TripPlan.fromJson(await _send(
+      'GET', '/trip', gateway: true, query: {'parks': parks.join(','), 'start': day(start), 'days': '$days'})
+      as Map<String, dynamic>);
+
   /// Parks served by the gateway; null when the server is a single-park API (no gateway).
   Future<List<ParkInfo>?> parks() async {
     try {
@@ -199,6 +211,10 @@ class C4Api {
     }
   }
 
+  /// R7: the group with this code joined the back of the queue (its wait is measured at check-in).
+  Future<CheckInResult> queueJoin(String code, {DateTime? at}) async => CheckInResult.fromJson(
+      await _send('POST', '/gate/queue', body: {'code': code, if (at != null) 'at': at.toIso8601String()}));
+
   Future<CheckInResult> checkIn(String code, {DateTime? at}) async => CheckInResult.fromJson(
       await _send('POST', '/checkin', body: {'code': code, if (at != null) 'at': at.toIso8601String()}));
 
@@ -238,11 +254,110 @@ class C4Api {
   Future<GateAdvice> gateAdvice(DateTime d, {String? at}) async => GateAdvice.fromJson(
       await _send('GET', '/gate/advice/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
 
+  /// Visitor without a ticket: the earliest start at or after [wanted] with room in the day's plan (N3).
+  Future<StartTimeSuggestion> startTime(DateTime d, String trail, String wanted, int size) async =>
+      StartTimeSuggestion.fromJson(await _send('GET', '/start-time/${day(d)}',
+          query: {'trail': trail, 'wanted': wanted, 'size': '$size'}) as Map<String, dynamic>);
+
+  /// Hold that start time; returns the short code to show at the gate.
+  Future<String> holdStartTime(DateTime d, String trail, String slot, int size) async =>
+      ((await _send('POST', '/start-time', body: {'day': day(d), 'trail': trail, 'slot': slot, 'group_size': size}))
+          as Map<String, dynamic>)['code'] as String;
+
+  /// On the day, before leaving: is the held start still fine after the gate counts and any incident so far?
+  Future<StartTimeCheck> recheckStartTime(String code) async =>
+      StartTimeCheck.fromJson(await _send('GET', '/start-time/check/$code') as Map<String, dynamic>);
+
+  Future<void> moveStartTime(String code, String slot) async => _send('POST', '/start-time/$code/move', body: {'slot': slot});
+
+  /// Ranger: report a problem on a trail now (today only); gate control and start times use it at once.
+  Future<void> reportIncident(String trail, String level, String note) async =>
+      _send('POST', '/incident', body: {'trail': trail, 'level': level, 'note': note});
+
+  /// Ranger: how many more people each trail can take now, re-planned from the gate counts (MPC, RQ13).
+  Future<GateControl> gateControl(DateTime d, {String? at}) async => GateControl.fromJson(
+      await _send('GET', '/gate/control/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
   /// Ranger: the rest of today, updated with the spot counts made so far (A1).
   Future<TodayUpdate> liveForecast(DateTime d, {String? at}) async => TodayUpdate.fromJson(
       await _send('GET', '/live/forecast/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
 
+  /// The weather of a date: observed, forecast or typical, and what it does to the crowd and the safe limit.
+  Future<DayWeather> weather(DateTime d) async =>
+      DayWeather.fromJson(await _send('GET', '/weather/${day(d)}') as Map<String, dynamic>);
+
+  /// Long open-access trails (Pekoe): how busy each stage gets and when to start (404 on other parks).
+  Future<StageOutlook> stages(DateTime d) async =>
+      StageOutlook.fromJson(await _send('GET', '/stages/${day(d)}') as Map<String, dynamic>);
+
+  /// Officer: the end-of-day report (entries, start times, no-shows, conditions, forecast check).
+  /// §6.2.10: week-by-week lines from the day reports (officer).
+  Future<List<String>> trends({int days = 28}) async =>
+      [for (final l in (await _send('GET', '/admin/trends', query: {'days': '$days'}) as Map)['lines'] as List) l as String];
+
+  Future<DayReport> dayReport(DateTime d) async =>
+      DayReport.fromJson(await _send('GET', '/admin/day-report/${day(d)}') as Map<String, dynamic>);
+
+  // ---------- Knuckles mechanisms (404 on parks without them) ----------
+  Future<PermitDay> permits(DateTime d) async =>
+      PermitDay.fromJson(await _send('GET', '/permits/${day(d)}') as Map<String, dynamic>);
+
+  /// A permit for a guided trek; 409 (with alternatives) when the trek has no guide or place left.
+  Future<String> requestPermit(DateTime d, String trail, int size) async =>
+      ((await _send('POST', '/permits', body: {'day': day(d), 'trail': trail, 'group_size': size}))
+          as Map<String, dynamic>)['code'] as String;
+
+  Future<Map<String, dynamic>> permitOut(String code, {DateTime? at}) async =>
+      await _send('POST', '/permits/$code/out', body: {if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> permitBack(String code, {DateTime? at}) async =>
+      await _send('POST', '/permits/$code/back', body: {if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  /// §6.2.7: register a group starting a long walk (no permit); returns code and expected_back.
+  Future<Map<String, dynamic>> walkOut(String trail, int size, {DateTime? at}) async => await _send('POST', '/walks/out',
+      body: {'trail': trail, 'group_size': size, if (at != null) 'at': at.toIso8601String()}) as Map<String, dynamic>;
+
+  Future<OverdueStatus> overdue(DateTime d, {String? at}) async =>
+      OverdueStatus.fromJson(await _send('GET', '/overdue/${day(d)}', query: {'at': ?at}) as Map<String, dynamic>);
+
+  Future<List<ViewpointInfo>> viewpoints(DateTime d) async => [
+        for (final v in ((await _send('GET', '/viewpoints/${day(d)}')) as Map<String, dynamic>)['viewpoints'] as List)
+          ViewpointInfo.fromJson(v as Map<String, dynamic>)
+      ];
+
+  Future<List<Campsite>> campsites(DateTime night) async => [
+        for (final s in ((await _send('GET', '/campsites/${day(night)}')) as Map<String, dynamic>)['sites'] as List)
+          Campsite.fromJson(s as Map<String, dynamic>)
+      ];
+
+  Future<String> bookCampsite(DateTime night, String site, int pitches, int people) async =>
+      ((await _send('POST', '/campsites', body: {'night': day(night), 'site': site, 'pitches': pitches, 'people': people}))
+          as Map<String, dynamic>)['code'] as String;
+
   /// Sections a ranger can count on.
+  /// §6.2.7 SOS: a visitor asks for help (the same clientId again updates the same call, e.g. a newer GPS fix).
+  Future<SosStatus> sos(String clientId, String kind, int people,
+          {String note = '', String? trail, int? segId, double? lat, double? lon, double? accuracy}) async =>
+      SosStatus.fromJson(await _send('POST', '/sos', body: {
+        'client_id': clientId, 'kind': kind, 'people': people, 'note': note,
+        'trail': ?trail, 'seg_id': ?segId, 'lat': ?lat, 'lon': ?lon, 'accuracy_m': ?accuracy,
+      }) as Map<String, dynamic>);
+
+  Future<SosStatus> sosCheck(String clientId) async =>
+      SosStatus.fromJson(await _send('GET', '/sos/check/$clientId') as Map<String, dynamic>);
+
+  /// Ranger: the day's SOS calls, open ones first.
+  /// §6.2.9: closures, trail conditions and heavy rain for visitors of that day (polled while the app is open).
+  Future<List<ParkNotice>> notices(DateTime d) async =>
+      [for (final n in (await _send('GET', '/notices/${day(d)}')) as List) ParkNotice.fromJson(n as Map<String, dynamic>)];
+
+  Future<List<SosCall>> sosCalls(DateTime d) async => [
+        for (final c in ((await _send('GET', '/sos/${day(d)}')) as Map<String, dynamic>)['calls'] as List)
+          SosCall.fromJson(c as Map<String, dynamic>)
+      ];
+
+  Future<void> sosStatus(int id, String status) async => _send('POST', '/sos/$id/status', body: {'status': status});
+
   Future<List<SegmentInfo>> segments() async =>
       [for (final s in await _send('GET', '/segments') as List) SegmentInfo.fromJson(s as Map<String, dynamic>)];
 

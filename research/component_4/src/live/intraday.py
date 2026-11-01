@@ -8,7 +8,12 @@ carries them to the sections nobody counts (RQ11b: only the graph model improves
 Input for the hours of today before `at`, on the counted sections: the ranger's count where there is one (mean of
 the counts in that hour), otherwise the morning's day-ahead forecast. Earlier days: the live history.
 Counts at other sections are not model input; they stay a check (Forecast check).
+
+If the placement run exists (src.eval.placement, results/LATEST_PLACEMENT_S1), its model is used instead: it was
+trained with counts at random places, so a count at ANY section updates today's forecast, and its counting order
+(greedy on the validation year) tells the rangers where a count helps most (GET /segments: count_rank).
 """
+import json
 from functools import lru_cache
 
 import numpy as np
@@ -35,14 +40,40 @@ def spot_model(n_nodes: int, hidden: int, kind: str = "stgnn", seed: int = 42):
     return ck, run.name
 
 
-def _load(ctx):
-    found = spot_model(ctx.data.N, ctx.cfg["train"]["hidden"])
-    if found is None:
+@lru_cache(maxsize=1)
+def any_model(n_nodes: int, kind: str = "stgnn", seed: int = 42):
+    """(checkpoint, run name, counting order) of the latest placement run, or None."""
+    ptr = RESULTS / "LATEST_PLACEMENT_S1"
+    if not ptr.exists():
         return None
-    ck, run = found
-    model = build_model(ctx.data, ck["kind"], ctx.cfg["train"]["hidden"])
+    run = RESULTS / ptr.read_text(encoding="utf-8").strip()
+    path = run / "models" / f"{kind}_s{seed}.pt"
+    if not path.exists():
+        return None
+    ck = torch.load(path, weights_only=False)
+    if len(ck["sensed"]) != n_nodes or "mask_aug" not in ck:
+        return None
+    order = json.loads((run / "order.json").read_text(encoding="utf-8"))["order"].get(kind, [])
+    return ck, run.name, [int(j) for j in order]
+
+
+def _load(ctx):
+    """(model, scale, sections always read, run, any_place, counting order); any_place: a count at any section
+    is model input (placement model), else only at the spot model's sections."""
+    hidden = ctx.cfg["train"]["hidden"]
+    found = any_model(ctx.data.N)
+    if found is not None:
+        ck, run, order = found
+        base, any_place = np.asarray(ck["mask_aug"][0], bool), True
+    else:
+        found = spot_model(ctx.data.N, hidden)
+        if found is None:
+            return None
+        (ck, run), order = found, []
+        base, any_place = np.asarray(ck["sensed"], bool), False
+    model = build_model(ctx.data, ck["kind"], hidden)
     model.load_state_dict(ck["state_dict"])
-    return model.eval(), float(ck["scale"]), np.asarray(ck["sensed"], bool), run
+    return model.eval(), float(ck["scale"]), base, run, any_place, order
 
 
 def _label(cfg, s) -> str:
@@ -52,9 +83,19 @@ def _label(cfg, s) -> str:
 
 
 def model_sections(ctx) -> set:
-    """seg_ids the spot model reads (where a count changes today's forecast)."""
+    """seg_ids whose counts change today's forecast (every section with the placement model)."""
     m = _load(ctx)
-    return set() if m is None else {int(i) for i in ctx.seg.sort_values("seg_id").seg_id.values[m[2]]}
+    if m is None:
+        return set()
+    ids = ctx.seg.sort_values("seg_id").seg_id.values
+    return {int(i) for i in (ids if m[4] else ids[m[2]])}
+
+
+def count_order(ctx) -> list:
+    """seg_ids where a ranger's count helps the forecast most, best first (placement run; [] without one)."""
+    m = _load(ctx)
+    ids = ctx.seg.sort_values("seg_id").seg_id.values
+    return [] if m is None else [int(ids[j]) for j in m[5]]
 
 
 def update_today(ctx, day, now_min: int, counts: list) -> dict:
@@ -65,7 +106,7 @@ def update_today(ctx, day, now_min: int, counts: list) -> dict:
     m = _load(ctx)
     if m is None:
         raise LookupError("No spot model yet: run python -m src.eval.sparse_sensors --world s1 --settings spot")
-    model, scale, sensed, run = m
+    model, scale, sensed, run, any_place, _ = m
     t0 = int(np.searchsorted(data.times, pd.Timestamp(day)))
     if t0 >= data.T or data.times[t0] != pd.Timestamp(day):
         raise ValueError(f"{day} is outside the live data")
@@ -78,6 +119,12 @@ def update_today(ctx, day, now_min: int, counts: list) -> dict:
                if base_model is not None else np.zeros((data.H, data.N)))     # [24, N] day-ahead
 
     order = {int(i): j for j, i in enumerate(ctx.seg.sort_values("seg_id").seg_id)}
+    if any_place:                                             # the sections counted so far today are read too
+        sensed = sensed.copy()
+        for c in counts:
+            j = order.get(int(c["seg_id"]))
+            if j is not None and int(c["time_min"]) // 60 < hour:
+                sensed[j] = True
     occ = data.y[origin - data.L:origin].astype(np.float64).copy()            # [L, N]
     today_rows = np.arange(data.L) + origin - data.L >= t0
     hrs = (np.arange(data.L) + origin - data.L - t0)[today_rows]
@@ -122,6 +169,7 @@ def update_today(ctx, day, now_min: int, counts: list) -> dict:
             "biggest_changes": [{k: x[k] for k in ("seg_id", "name", "change", "over_hours")} for x in changed],
             "over_capacity": [{k: x[k] for k in ("seg_id", "name", "over_hours", "capacity_at_once")}
                               for x in sections if x["over_hours"]],
-            "basis": (f"Updated from {used} ranger count{'s' if used != 1 else ''} at the counted places "
+            "basis": (f"Updated from {used} ranger count{'s' if used != 1 else ''} at "
+                      f"{'the sections counted today' if any_place else 'the counted places'} "
                       f"({int(sensed.sum())} of {data.N} sections); the graph model carries them to the sections "
                       "nobody counts. Without counts it is the morning forecast.")}

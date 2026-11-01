@@ -144,6 +144,7 @@ planning:
   access_note: "Book a licensed safari jeep; check the annual closure dates with DWC."
 
 control:
+  walk_register: false               # jeeps with drivers: no walkers to register
   first_slot_h: 6.0
   last_slot_h: 15.5
   viewpoint_min_at_once: 60          # (A) Patanangala beach stop and tank bunds hold more than a track

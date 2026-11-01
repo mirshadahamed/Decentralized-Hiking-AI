@@ -1,0 +1,97 @@
+{
+  "permits": {
+    "fcfs_cap": {
+      "requests": 28.43,
+      "groups": 15.512,
+      "people": 92.414,
+      "people_over_cap": 0.0,
+      "guides_idle": 5.488,
+      "least_served_share": 0.518
+    },
+    "lp_plan": {
+      "requests": 28.43,
+      "groups": 14.096,
+      "people": 84.986,
+      "people_over_cap": 0.249,
+      "guides_idle": 6.904,
+      "least_served_share": 0.412
+    },
+    "none": {
+      "requests": 28.43,
+      "groups": 16.633,
+      "people": 99.929,
+      "people_over_cap": 6.542,
+      "guides_idle": 4.367,
+      "least_served_share": 0.603
+    }
+  },
+  "permit_days_over_cap": {
+    "fcfs_cap": 0,
+    "lp_plan": 26,
+    "none": 91
+  },
+  "overdue": {
+    "fixed_2h": {
+      "troubled_groups": 199,
+      "caught": 0.7236180904522613,
+      "minutes_after_due_to_alarm": 75.84773869346733,
+      "false_alarms_per_1000": 136.45775465885563
+    },
+    "model": {
+      "troubled_groups": 199,
+      "caught": 0.5778894472361809,
+      "minutes_after_due_to_alarm": 124.41820854271357,
+      "false_alarms_per_1000": 33.58416241603959
+    }
+  },
+  "viewpoints": [
+    {
+      "trail": "pitawala",
+      "follow": 0.0,
+      "peak_people": 28.02,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "pitawala",
+      "follow": 0.3,
+      "peak_people": 20.49,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "pitawala",
+      "follow": 0.6,
+      "peak_people": 18.94,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "pitawala",
+      "follow": 0.9,
+      "peak_people": 22.32,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "sera_ella",
+      "follow": 0.0,
+      "peak_people": 19.21,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "sera_ella",
+      "follow": 0.3,
+      "peak_people": 14.82,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "sera_ella",
+      "follow": 0.6,
+      "peak_people": 13.01,
+      "car_hours_over": 0.0
+    },
+    {
+      "trail": "sera_ella",
+      "follow": 0.9,
+      "peak_people": 13.91,
+      "car_hours_over": 0.0
+    }
+  ]
+}

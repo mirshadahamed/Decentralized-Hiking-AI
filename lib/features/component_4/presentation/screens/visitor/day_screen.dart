@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../data/api_client.dart';
+import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../../domain/edge_forecaster.dart';
 import '../../../services/edge_store.dart';
 import '../../../services/ticket_store.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/knuckles_cards.dart';
+import '../../widgets/weather_card.dart';
 import '../bottleneck_screen.dart';
 import 'ticket_screen.dart';
 
@@ -23,6 +27,13 @@ class DayScreen extends StatefulWidget {
 class _DayScreenState extends State<DayScreen> {
   late Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _future;
   Future<(EdgeForecast, bool)?>? _edge; // tomorrow only: the forecast computed on this device
+  Future<DayWeather?>? _weather; // the day's weather (observed / forecast / typical); none on an older server
+  Future<StageOutlook?>? _stages; // P4: stage advice (only trails built from stages, e.g. Pekoe)
+  Future<NetworkAdvice?>? _network; // N4: other parks / days when this one is busy (gateway only)
+  final int _seed = DateTime.now().microsecondsSinceEpoch; // this visitor's spread start on busy stages (R6)
+  Future<PermitDay?>? _permits; // K4: guided treks (parks with guided_permit trails)
+  Future<List<ViewpointInfo>?>? _views; // K6: open viewpoints
+  Future<List<Campsite>?>? _camps; // K7: campsites
   String _trail = 'main';
   Map<String, String> _names = const {};
   String? _slot;
@@ -37,6 +48,12 @@ class _DayScreenState extends State<DayScreen> {
 
   Future<(DayPlan, DaySlots, List<TrailInfo>, DayCapacity?)> _load() async {
     final api = C4Scope.of(context);
+    _weather = api.weather(widget.day).then<DayWeather?>((w) => w, onError: (_) => null);
+    _stages = api.stages(widget.day).then<StageOutlook?>((s) => s, onError: (_) => null);
+    _network = api.network(widget.day).then<NetworkAdvice?>((n) => n, onError: (_) => null);
+    _permits = api.permits(widget.day).then<PermitDay?>((p) => p, onError: (_) => null);
+    _views = api.viewpoints(widget.day).then<List<ViewpointInfo>?>((v) => v, onError: (_) => null);
+    _camps = api.campsites(widget.day).then<List<Campsite>?>((c) => c, onError: (_) => null);
     final ServerStatus status;
     try {
       status = await api.status();
@@ -55,9 +72,10 @@ class _DayScreenState extends State<DayScreen> {
     } on ApiException {
       cap = null; // older server: the screen still works without the safe limit
     }
-    final trails = await api.trails();
-    _names = {for (final t in trails) t.id: t.name};
-    if (!_names.containsKey(_trail) && trails.isNotEmpty) _trail = trails.first.id;   // each park has its own trails
+    final all = await api.trails();
+    _names = {for (final t in all) t.id: t.name};
+    final trails = [for (final t in all) if (status.ticketed(t.id)) t]; // slot tickets only (control mode per trail)
+    if (!trails.any((t) => t.id == _trail) && trails.isNotEmpty) _trail = trails.first.id;   // each park has its own trails
     return (plan, await api.slots(widget.day), trails, cap);
   }
 
@@ -142,6 +160,42 @@ class _DayScreenState extends State<DayScreen> {
             final canBook = chosen != null && !chosen.closed && chosen.placesLeft >= _size && !_busy;
             return ListView(padding: const EdgeInsets.all(16), children: [
               _Summary(plan: plan),
+              FutureBuilder<DayWeather?>(
+                future: _weather,
+                builder: (context, w) => w.data == null
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: WeatherCard(weather: w.data!)),
+              ),
+              FutureBuilder<NetworkAdvice?>(
+                future: _network,
+                builder: (context, n) => n.data == null || !n.data!.busy
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: NetworkCard(advice: n.data!)),
+              ),
+              FutureBuilder<StageOutlook?>(
+                future: _stages,
+                builder: (context, s) => s.data == null || s.data!.stages.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: StagesCard(outlook: s.data!, selected: _trail, seed: _seed)),
+              ),
+              FutureBuilder<List<ViewpointInfo>?>(
+                future: _views,
+                builder: (context, v) => v.data == null || v.data!.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: ViewpointCard(viewpoints: v.data!)),
+              ),
+              FutureBuilder<PermitDay?>(
+                future: _permits,
+                builder: (context, p) => p.data == null || p.data!.treks.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: PermitCard(day: widget.day, data: p.data!)),
+              ),
+              FutureBuilder<List<Campsite>?>(
+                future: _camps,
+                builder: (context, c) => c.data == null || c.data!.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(padding: const EdgeInsets.only(top: 12), child: CampsiteCard(night: widget.day, sites: c.data!)),
+              ),
               if (cap != null) ...[const SizedBox(height: 12), SafeLimitCard(capacity: cap)],
               if (_edge != null) _onDevice(trails),
               if (plan.suggestions.isNotEmpty) ...[
@@ -149,6 +203,7 @@ class _DayScreenState extends State<DayScreen> {
                 Text('Want a quieter visit?', style: Theme.of(context).textTheme.titleMedium),
                 for (final s in plan.suggestions) _SuggestionCard(s),
               ],
+              if (trails.isNotEmpty) ...[
               const SizedBox(height: 20),
               Text('Choose a trail', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
@@ -191,11 +246,163 @@ class _DayScreenState extends State<DayScreen> {
                 label: Text(_slot == null ? 'Pick a time to book' : 'Book $_size place${_size > 1 ? 's' : ''} at $_slot'),
                 style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
               ),
+              const SizedBox(height: 16),
+              StartTimeCard(key: ValueKey('$_trail/$_size'), day: widget.day, trail: _trail, size: _size,
+                  trailName: _names[_trail] ?? _trail),
+              ], // ticketed trails
             ]);
           },
         ),
       );
 }
+
+/// N3: for visitors without a ticket - the earliest start with room in today's plan; coming then means going in
+/// first at the gate. "Hold" counts it against the plan and gives a code to show.
+class StartTimeCard extends StatefulWidget {
+  const StartTimeCard({super.key, required this.day, required this.trail, required this.size, required this.trailName});
+
+  final DateTime day;
+  final String trail, trailName;
+  final int size;
+
+  @override
+  State<StartTimeCard> createState() => _StartTimeCardState();
+}
+
+class _StartTimeCardState extends State<StartTimeCard> {
+  String _wanted = '07:00';
+  Future<StartTimeSuggestion?>? _future;
+  String? _code, _slot;
+  StartTimeCheck? _check;
+
+  Future<void> _recheck() async {
+    final api = C4Scope.of(context);
+    try {
+      final c = await api.recheckStartTime(_code!);
+      if (mounted) setState(() => _check = c);
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _move(String slot) async {
+    final api = C4Scope.of(context);
+    try {
+      await api.moveStartTime(_code!, slot);
+      if (mounted) {
+        setState(() {
+          _slot = slot;
+          _check = null;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  void _load() => _future = C4Scope.of(context)
+      .startTime(widget.day, widget.trail, _wanted, widget.size)
+      .then<StartTimeSuggestion?>((s) => s, onError: (_) => null);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_future == null) _load();
+  }
+
+  Future<void> _hold(String slot) async {
+    try {
+      final code = await C4Scope.of(context).holdStartTime(widget.day, widget.trail, slot, widget.size);
+      if (mounted) {
+        setState(() {
+          _code = code;
+          _slot = slot;
+          _check = null;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      setState(_load);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<StartTimeSuggestion?>(
+        future: _future,
+        builder: (context, snap) {
+          final s = snap.data;
+          if (s == null) return const SizedBox.shrink();                 // older server or no plan
+          final text = Theme.of(context).textTheme;
+          return Card(
+            key: const Key('start_time_card'),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Coming without a ticket?', style: text.titleMedium),
+                const SizedBox(height: 4),
+                Row(children: [
+                  const Text('I would like to start at '),
+                  DropdownButton<String>(
+                    key: const Key('start_wanted'),
+                    value: _wanted,
+                    items: [
+                      for (var m = 6 * 60; m <= 12 * 60; m += 30)
+                        '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}'
+                    ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                    onChanged: (v) => setState(() {
+                      _wanted = v!;
+                      _code = null;
+                      _load();
+                    }),
+                  ),
+                ]),
+                if (s.suggested == null)
+                  Text(s.note, style: text.bodyMedium?.copyWith(color: C4Colors.red))
+                else ...[
+                  Text(
+                      s.laterMin == 0
+                          ? 'Start at ${s.suggested} on the ${widget.trailName}: there is room.'
+                          : 'Start at ${s.suggested} instead (${s.laterMin} min later): the ${widget.trailName} is full before then.',
+                      key: const Key('start_suggested'),
+                      style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(s.note, style: text.bodySmall),
+                  const SizedBox(height: 8),
+                  if (_code == null)
+                    OutlinedButton.icon(
+                      key: const Key('start_hold'),
+                      onPressed: () => _hold(s.suggested!),
+                      icon: const Icon(Icons.schedule),
+                      label: Text('Hold ${s.suggested} for ${widget.size}'),
+                    )
+                  else ...[
+                    Text('Held: show code $_code at the gate at ${_slot ?? s.suggested}.',
+                        key: const Key('start_code'), style: text.titleSmall?.copyWith(color: C4Colors.green)),
+                    TextButton.icon(
+                      key: const Key('start_recheck'),
+                      onPressed: _recheck,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Check before you leave'),
+                    ),
+                    if (_check != null)
+                      Text(_check!.note, key: const Key('start_check_note'),
+                          style: text.bodyMedium?.copyWith(color: _check!.status == 'ok' ? C4Colors.green : C4Colors.red)),
+                    if (_check?.suggested != null)
+                      OutlinedButton(
+                        key: const Key('start_move'),
+                        onPressed: () => _move(_check!.suggested!),
+                        child: Text('Move to ${_check!.suggested}'),
+                      ),
+                  ],
+                ],
+              ]),
+            ),
+          );
+        },
+      );
+}
+
+final _n = NumberFormat.decimalPattern();
 
 class _Summary extends StatelessWidget {
   const _Summary({required this.plan});
@@ -213,7 +420,11 @@ class _Summary extends StatelessWidget {
               CrowdChip(plan.crowdLevel),
             ]),
             const SizedBox(height: 8),
-            Text(peopleRange(plan.p10, plan.p50, plan.p90), style: Theme.of(context).textTheme.headlineSmall),
+            StatValue(
+              value: about(plan.p50).replaceFirst('about ', '~'),
+              label: 'people expected',
+              caption: plan.p10 == plan.p90 ? null : 'Likely between ${_n.format(plan.p10)} and ${_n.format(plan.p90)}',
+            ),
             BasisNote('Confidence: ${plan.confidence}. Estimates from a simulated visitor history until park counts are connected.'),
           ]),
         ),
@@ -284,7 +495,7 @@ class OnDeviceCard extends StatelessWidget {
     final names = {for (final t in trails) t.id: t.name};
     String label(int s) {
       final (trail, poi) = s < forecast.places.length ? forecast.places[s] : ('', '');
-      if (poi.isNotEmpty) return poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase());
+      if (poi.isNotEmpty) return BottleneckDay.poiLabel(poi);
       return '${names[trail] ?? 'Trail'} · section ${s + 1}';
     }
     return Card(
@@ -401,7 +612,9 @@ class SafeLimitCard extends StatelessWidget {
                           backgroundColor: (t.condition.isClosed ? C4Colors.red : C4Colors.amber).withValues(alpha: 0.18),
                         ),
                       ),
-                    Text(t.condition.isClosed ? 'closed' : '${about(t.expected)} / ${t.safeLimit}', style: text.bodyMedium),
+                    Text(t.condition.isClosed ? 'closed' : '${about(t.expected)} expected · safe ${t.safeLimit}',
+                        style: text.bodyMedium?.copyWith(
+                            fontWeight: t.overLimit ? FontWeight.w600 : null, color: t.overLimit ? C4Colors.red : null)),
                   ]),
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
@@ -425,7 +638,90 @@ class SafeLimitCard extends StatelessWidget {
               label: const Text('Why this limit?'),
             ),
           ),
-          BasisNote('expected / safe limit. $_basis'),
+          BasisNote(_basis),
+        ]),
+      ),
+    );
+  }
+}
+
+/// P4: which stages of a long trail get busy that day, where and when, and when to start instead (advice only).
+class StagesCard extends StatelessWidget {
+  const StagesCard({super.key, required this.outlook, required this.selected, this.seed = 0});
+
+  final StageOutlook outlook;
+  final String selected;
+  final int seed; // per visitor: each gets a different start on a busy stage
+
+  static Color _color(String level) => switch (level) { 'crowded' => C4Colors.red, 'busy' => C4Colors.amber, _ => C4Colors.green };
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final names = {for (final s in outlook.stages) s.stage: s.name};
+    final mine = outlook.stages.where((s) => s.stage == selected).firstOrNull;
+    final busy = outlook.stages.where((s) => s.level != 'quiet' && s.stage != selected).toList()
+      ..sort((a, b) => b.fullness.compareTo(a.fullness));
+    final quiet = outlook.stages.where((s) => s.level == 'quiet').length;
+    Widget row(StageInfo s) => ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.circle, size: 14, color: _color(s.level)),
+          title: Text('${s.name} · ${s.lengthKm.toStringAsFixed(0)} km · ${s.level}'
+              '${s.rainMm != null ? ' · rain ${s.rainMm!.toStringAsFixed(0)} mm' : ''}'),
+          subtitle: Text(s.advice +
+              (s.quieterNeighbour != null ? ' Quieter that day: ${names[s.quieterNeighbour] ?? s.quieterNeighbour}.' : '')),
+        );
+    return Card(
+      key: const Key('stages_card'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr(context, 'stages_title'), style: text.titleMedium),
+          if (mine != null) row(mine),
+          if (mine?.suggestedStart(seed) case final st?)
+            Text(tr(context, 'stage_start', {'stage': mine!.name, 'time': st}), key: const Key('stage_start'),
+                style: text.titleSmall?.copyWith(color: C4Colors.green)),
+          for (final s in busy.take(4)) row(s),
+          Text('$quiet of ${outlook.stages.length} stages quiet all day.', style: text.bodyMedium),
+          const SizedBox(height: 4),
+          Text(outlook.basis, style: text.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+
+/// N4: this park is busy that day - quieter days here, and other parks with room.
+class NetworkCard extends StatelessWidget {
+  const NetworkCard({super.key, required this.advice});
+
+  final NetworkAdvice advice;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    String pct(double l) => '${(l * 100).round()} % of the safe limit';
+    return Card(
+      key: const Key('network_card'),
+      color: C4Colors.amber.withValues(alpha: 0.12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.alt_route, color: C4Colors.amber),
+            const SizedBox(width: 8),
+            Expanded(child: Text(advice.level == 'full' ? 'Expected to be over its limit' : 'Expected to be busy',
+                style: text.titleMedium)),
+          ]),
+          const SizedBox(height: 4),
+          Text(advice.note, style: text.bodyMedium),
+          for (final d in advice.otherDays)
+            ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.event_available),
+                title: Text(d.$1), subtitle: Text(pct(d.$2))),
+          for (final p in advice.otherParks)
+            ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.park_outlined),
+                title: Text(p.$2), subtitle: Text('${pct(p.$3)} that day')),
         ]),
       ),
     );

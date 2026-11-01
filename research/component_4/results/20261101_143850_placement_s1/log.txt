@@ -1,0 +1,119 @@
+gates [26, 30]; rangers' places [14, 19, 25, 29, 31]; training with gates + 0..16 random places; seeds [42, 43]
+  stgnn seed=42 ep=00 train=0.2066 val=0.3509 (27.2s)
+  stgnn seed=42 ep=01 train=0.1694 val=0.3056 (27.0s)
+  stgnn seed=42 ep=02 train=0.1510 val=0.2863 (27.6s)
+  stgnn seed=42 ep=03 train=0.1441 val=0.2761 (27.1s)
+  stgnn seed=42 ep=04 train=0.1379 val=0.2695 (27.3s)
+  stgnn seed=42 ep=05 train=0.1336 val=0.2637 (27.5s)
+  stgnn seed=42 ep=06 train=0.1304 val=0.2590 (27.6s)
+  stgnn seed=42 ep=07 train=0.1284 val=0.2570 (26.8s)
+  stgnn seed=42 ep=08 train=0.1266 val=0.2541 (27.0s)
+  stgnn seed=42 ep=09 train=0.1254 val=0.2534 (27.5s)
+  stgnn seed=42 ep=10 train=0.1233 val=0.2551 (27.0s)
+  stgnn seed=42 ep=11 train=0.1228 val=0.2523 (27.3s)
+  stgnn seed=42 ep=12 train=0.1221 val=0.2514 (27.0s)
+  stgnn seed=42 ep=13 train=0.1212 val=0.2500 (27.6s)
+  stgnn seed=42 ep=14 train=0.1201 val=0.2492 (28.0s)
+  stgnn seed=42 ep=15 train=0.1200 val=0.2511 (27.7s)
+  stgnn seed=42 ep=16 train=0.1184 val=0.2504 (26.5s)
+  stgnn seed=42 ep=17 train=0.1182 val=0.2486 (27.1s)
+  stgnn seed=42 ep=18 train=0.1174 val=0.2474 (27.2s)
+  stgnn seed=42 ep=19 train=0.1175 val=0.2495 (27.6s)
+  stgnn seed=43 ep=00 train=0.2089 val=0.3592 (27.4s)
+  stgnn seed=43 ep=01 train=0.1756 val=0.3195 (27.6s)
+  stgnn seed=43 ep=02 train=0.1584 val=0.2996 (27.5s)
+  stgnn seed=43 ep=03 train=0.1494 val=0.2876 (27.1s)
+  stgnn seed=43 ep=04 train=0.1447 val=0.2802 (26.8s)
+  stgnn seed=43 ep=05 train=0.1393 val=0.2728 (26.9s)
+  stgnn seed=43 ep=06 train=0.1357 val=0.2683 (27.4s)
+  stgnn seed=43 ep=07 train=0.1325 val=0.2657 (26.9s)
+  stgnn seed=43 ep=08 train=0.1300 val=0.2618 (27.2s)
+  stgnn seed=43 ep=09 train=0.1290 val=0.2581 (27.4s)
+  stgnn seed=43 ep=10 train=0.1267 val=0.2574 (26.9s)
+  stgnn seed=43 ep=11 train=0.1251 val=0.2549 (26.8s)
+  stgnn seed=43 ep=12 train=0.1238 val=0.2545 (27.6s)
+  stgnn seed=43 ep=13 train=0.1230 val=0.2524 (26.8s)
+  stgnn seed=43 ep=14 train=0.1217 val=0.2493 (26.9s)
+  stgnn seed=43 ep=15 train=0.1212 val=0.2503 (26.8s)
+  stgnn seed=43 ep=16 train=0.1208 val=0.2487 (27.2s)
+  stgnn seed=43 ep=17 train=0.1196 val=0.2479 (27.4s)
+  stgnn seed=43 ep=18 train=0.1189 val=0.2471 (26.9s)
+  stgnn seed=43 ep=19 train=0.1182 val=0.2522 (27.0s)
+  gru_nograph seed=42 ep=00 train=0.2123 val=0.3621 (26.9s)
+  gru_nograph seed=42 ep=01 train=0.1709 val=0.3057 (26.1s)
+  gru_nograph seed=42 ep=02 train=0.1512 val=0.2873 (26.1s)
+  gru_nograph seed=42 ep=03 train=0.1438 val=0.2769 (26.2s)
+  gru_nograph seed=42 ep=04 train=0.1373 val=0.2714 (26.0s)
+  gru_nograph seed=42 ep=05 train=0.1335 val=0.2615 (26.3s)
+  gru_nograph seed=42 ep=06 train=0.1284 val=0.2555 (26.4s)
+  gru_nograph seed=42 ep=07 train=0.1255 val=0.2532 (26.2s)
+  gru_nograph seed=42 ep=08 train=0.1242 val=0.2515 (26.3s)
+  gru_nograph seed=42 ep=09 train=0.1234 val=0.2496 (26.2s)
+  gru_nograph seed=42 ep=10 train=0.1218 val=0.2518 (26.2s)
+  gru_nograph seed=42 ep=11 train=0.1223 val=0.2470 (26.4s)
+  gru_nograph seed=42 ep=12 train=0.1204 val=0.2476 (26.0s)
+  gru_nograph seed=42 ep=13 train=0.1190 val=0.2450 (26.1s)
+  gru_nograph seed=42 ep=14 train=0.1179 val=0.2448 (26.3s)
+  gru_nograph seed=42 ep=15 train=0.1189 val=0.2482 (26.8s)
+  gru_nograph seed=42 ep=16 train=0.1173 val=0.2451 (25.9s)
+  gru_nograph seed=42 ep=17 train=0.1171 val=0.2457 (26.3s)
+  gru_nograph seed=42 ep=18 train=0.1170 val=0.2434 (26.6s)
+  gru_nograph seed=42 ep=19 train=0.1162 val=0.2453 (27.1s)
+  gru_nograph seed=43 ep=00 train=0.2038 val=0.3380 (26.7s)
+  gru_nograph seed=43 ep=01 train=0.1637 val=0.3021 (26.3s)
+  gru_nograph seed=43 ep=02 train=0.1497 val=0.2904 (26.5s)
+  gru_nograph seed=43 ep=03 train=0.1414 val=0.2738 (26.8s)
+  gru_nograph seed=43 ep=04 train=0.1365 val=0.2671 (26.3s)
+  gru_nograph seed=43 ep=05 train=0.1321 val=0.2631 (26.0s)
+  gru_nograph seed=43 ep=06 train=0.1291 val=0.2564 (26.5s)
+  gru_nograph seed=43 ep=07 train=0.1258 val=0.2546 (26.1s)
+  gru_nograph seed=43 ep=08 train=0.1238 val=0.2508 (26.8s)
+  gru_nograph seed=43 ep=09 train=0.1228 val=0.2491 (25.8s)
+  gru_nograph seed=43 ep=10 train=0.1212 val=0.2477 (25.8s)
+  gru_nograph seed=43 ep=11 train=0.1208 val=0.2476 (26.1s)
+  gru_nograph seed=43 ep=12 train=0.1193 val=0.2499 (26.4s)
+  gru_nograph seed=43 ep=13 train=0.1191 val=0.2450 (26.6s)
+  gru_nograph seed=43 ep=14 train=0.1177 val=0.2462 (25.8s)
+  gru_nograph seed=43 ep=15 train=0.1176 val=0.2450 (25.9s)
+  gru_nograph seed=43 ep=16 train=0.1174 val=0.2443 (26.7s)
+  gru_nograph seed=43 ep=17 train=0.1169 val=0.2443 (26.3s)
+  gru_nograph seed=43 ep=18 train=0.1162 val=0.2453 (26.4s)
+  gru_nograph seed=43 ep=19 train=0.1154 val=0.2471 (26.0s)
+[stgnn] place 1: 7 (main, 6%)  validation MAE 1.1231
+[stgnn] place 2: 14 (mini_worlds_end)  validation MAE 1.1222
+[stgnn] place 3: 3 (main, 77%)  validation MAE 1.1216
+[stgnn] place 4: 17 (main, 35%)  validation MAE 1.1210
+[stgnn] place 5: 8 (main, 3%)  validation MAE 1.1205
+[stgnn] place 6: 20 (main, 45%)  validation MAE 1.1201
+[stgnn] place 7: 6 (main, 68%)  validation MAE 1.1197
+[stgnn] place 8: 9 (main, 10%)  validation MAE 1.1193
+[gru_nograph] place 1: 8 (main, 3%)  validation MAE 1.1216
+[gru_nograph] place 2: 19 (worlds_end)  validation MAE 1.1205
+[gru_nograph] place 3: 7 (main, 6%)  validation MAE 1.1194
+[gru_nograph] place 4: 14 (mini_worlds_end)  validation MAE 1.1187
+[gru_nograph] place 5: 0 (main, 87%)  validation MAE 1.1181
+[gru_nograph] place 6: 25 (bakers_falls)  validation MAE 1.1175
+[gru_nograph] place 7: 1 (main, 84%)  validation MAE 1.1172
+[gru_nograph] place 8: 24 (main, 58%)  validation MAE 1.1169
+model       gru_nograph                            stgnn                      
+places       gates only greedy random rangers gates only greedy random rangers
+from_hour k                                                                   
+0         0       2.278    NaN    NaN     NaN      2.295    NaN    NaN     NaN
+          1         NaN  2.277  2.278     NaN        NaN  2.292  2.294     NaN
+          2         NaN  2.273  2.277     NaN        NaN  2.288  2.292     NaN
+          3         NaN  2.271  2.277     NaN        NaN  2.287  2.292     NaN
+          4         NaN  2.269  2.276     NaN        NaN  2.285  2.291     NaN
+          5         NaN  2.268  2.276   2.270        NaN  2.284  2.291   2.279
+          6         NaN  2.266  2.276     NaN        NaN  2.283  2.290     NaN
+          7         NaN  2.265  2.274     NaN        NaN  2.281  2.287     NaN
+          8         NaN  2.264  2.273     NaN        NaN  2.280  2.285     NaN
+10        0       1.094    NaN    NaN     NaN      1.096    NaN    NaN     NaN
+          1         NaN  1.093  1.093     NaN        NaN  1.095  1.096     NaN
+          2         NaN  1.092  1.093     NaN        NaN  1.094  1.096     NaN
+          3         NaN  1.091  1.093     NaN        NaN  1.093  1.096     NaN
+          4         NaN  1.090  1.093     NaN        NaN  1.092  1.095     NaN
+          5         NaN  1.090  1.093   1.091        NaN  1.092  1.095   1.094
+          6         NaN  1.089  1.093     NaN        NaN  1.092  1.096     NaN
+          7         NaN  1.089  1.092     NaN        NaN  1.091  1.094     NaN
+          8         NaN  1.088  1.092     NaN        NaN  1.091  1.094     NaN
+done -> D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\20261101_143850_placement_s1

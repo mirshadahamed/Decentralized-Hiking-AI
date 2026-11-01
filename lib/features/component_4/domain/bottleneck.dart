@@ -1,3 +1,4 @@
+import '../models/models.dart';
 import 'edge_forecaster.dart';
 
 /// How full a trail section is at one hour: forecast people ÷ the people it holds at Cifuentes social spacing.
@@ -19,13 +20,18 @@ class BottleneckDay {
     this.expectedVisitors,
     this.recommendedQuota,
     this.classicQuota,
+    this.cautiousQuota,
     this.rainShare,
     this.disclaimer = '',
     this.lastEntryHour,
     this.reversibleTrails = const [],
     this.mainTrail,
     this.calibration,
+    this.weather,
   });
+
+  /// W-d: the day's weather from the pack (works offline); null in older packs.
+  final DayWeather? weather;
 
   /// A5: chance of really being over capacity for a forecast fullness, from the model's validation year:
   /// (bin lower edges of forecast ÷ capacity, chance). Null in older packs.
@@ -56,6 +62,7 @@ class BottleneckDay {
   final int? millis; // time the ST-GNN took on this phone
   final bool offline; // computed from the stored pack, no connection
   final int? expectedVisitors, recommendedQuota, classicQuota;
+  final int? cautiousQuota; // NFR4: the quota if the crowd is at the top of the 90 % range (src.eval.conformal)
   final double? rainShare;
   final String disclaimer;
 
@@ -119,9 +126,11 @@ class BottleneckDay {
       expectedVisitors: (summary['expected_visitors'] as num?)?.toInt(),
       recommendedQuota: (summary['recommended_daily_quota'] as num?)?.toInt(),
       classicQuota: (summary['classic_cifuentes_quota'] as num?)?.toInt(),
+      cautiousQuota: (summary['cautious_daily_quota'] as num?)?.toInt(),
       rainShare: (summary['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: m['disclaimer'] as String? ?? '',
       calibration: _calibration(m['calibration']),
+      weather: block?['weather'] is Map ? DayWeather.fromJson(Map<String, dynamic>.from(block!['weather'] as Map)) : null,
     );
   }
 
@@ -159,6 +168,7 @@ class BottleneckDay {
       expectedVisitors: (j['expected_visitors'] as num?)?.toInt(),
       recommendedQuota: (j['recommended_daily_quota'] as num?)?.toInt(),
       classicQuota: (j['classic_cifuentes_quota'] as num?)?.toInt(),
+      cautiousQuota: ((j['range'] as Map?)?['cautious_daily_quota'] as num?)?.toInt(),
       rainShare: (j['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: j['disclaimer'] as String? ?? '',
     );
@@ -204,7 +214,7 @@ class BottleneckDay {
   List<Section> sectionsOf(String trail) => sections.where((s) => s.trail == trail).toList()
     ..sort((a, b) => b.utilisation(b.peakHourIn(openHours)).compareTo(a.utilisation(a.peakHourIn(openHours))));
 
-  static String poiLabel(String poi) => switch (poi) {
+  static String poiLabel(String poi) => PlaceNames.isKnown(poi) ? PlaceNames.of(poi) : switch (poi) {
         'worlds_end' => "World's End",
         'mini_worlds_end' => "Mini World's End",
         'bakers_falls' => "Baker's Falls",
@@ -214,7 +224,7 @@ class BottleneckDay {
             ? 'Halfway rest · ${poi.substring(5)}'
             : poi.startsWith('head_')
                 ? 'Start · ${poi.substring(5)}'
-                : poi.replaceAll('_', ' ').replaceFirstMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
+                : PlaceNames.of(poi),
       };
 
   static List<int> _span(Set<int> hours) {

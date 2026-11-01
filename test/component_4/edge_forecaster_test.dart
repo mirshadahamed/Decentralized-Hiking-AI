@@ -51,6 +51,24 @@ void main() {
     expect(s.peopleAt(9), closeTo(expected[9][s.id], 0.01)); // the phone's own forecast, per section
     expect(d.openHours, contains(d.worstHour));
     expect(d.recommendedQuota, map['recommended_daily_quota']);
+    // NFR4: the cautious quota (top of the 90 % range), when the server had calibrated ranges
+    final withRange = BottleneckDay.fromPack({
+      ...pack,
+      'map': {
+        ...map,
+        'cautious_daily_quota': 12,
+        'days': [for (final b in map['days'] as List? ?? []) {...(b as Map<String, dynamic>), 'cautious_daily_quota': 12}],
+      },
+    }, f, offline: true);
+    expect(withRange.cautiousQuota, 12);
+    // W-d: every day of the pack carries its weather (shown offline)
+    for (final (date, source) in BottleneckDay.packDays(pack)) {
+      final fd = source == 'stgnn' ? EdgeForecaster.fromPack(pack).forecast(forDay: date) : null;
+      final w = BottleneckDay.fromPack(pack, fd, date: date).weather;
+      expect(w, isNotNull);
+      expect(w!.hours.length, (map['open_hours'] as List).length);
+      expect(w.tempMin, lessThanOrEqualTo(w.tempMax));
+    }
     // A5: chance of really being over capacity grows with how full the forecast is
     expect(d.calibration, isNotNull);
     final ranked = d.rankedAt(d.worstHour);

@@ -35,8 +35,13 @@ def test_counts_raise_the_forecast_where_they_are_high(setup):
 
 
 def test_counts_elsewhere_are_not_model_input(setup):
-    from src.live.intraday import update_today
+    from src.live.intraday import _load, update_today
     ctx, counted = setup
+    if _load(ctx)[4]:                                                # placement model: every section is input
+        assert counted == sorted(int(i) for i in ctx.seg.seg_id)
+        r = update_today(ctx, ctx.today, 10 * 60, [{"seg_id": counted[-1], "time_min": 8 * 60, "count": 50}])
+        assert r["counts_used"] == 1 and r["counts_not_used"] == 0
+        return
     other = next(int(i) for i in ctx.seg.seg_id if int(i) not in counted)
     r = update_today(ctx, ctx.today, 10 * 60, [{"seg_id": other, "time_min": 8 * 60, "count": 50}])
     assert r["counts_used"] == 0 and r["counts_not_used"] == 1
@@ -49,3 +54,5 @@ def test_segments_flag_the_model_sections(setup):
     s = TestClient(api.app).get("/segments").json()
     assert {x["seg_id"] for x in s if x["model_input"]} == set(counted)
     assert s[0]["model_input"]                                       # listed first
+    ranks = [x["count_rank"] for x in s if x["count_rank"] is not None]
+    assert ranks == list(range(1, len(ranks) + 1))                   # best places to count come first, in order

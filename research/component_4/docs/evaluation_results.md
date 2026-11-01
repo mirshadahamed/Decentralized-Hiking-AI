@@ -445,6 +445,65 @@ Paired tests (Holm), ST-GNN vs the other models in the spot setting, interior se
 - **Claims C1 and C4 are supported here** (simulation; field check in December). It also makes the A4 spot counts
   a model input, not only a check.
 
+### RQ11c – A direction-aware graph (`stgnn_dir`, 1 Nov 2026)
+
+**Model:** the ST-GNN's graph step is replaced by a diffusion step in each direction of walking (DCRNN-style, 2 hops
+up and 2 down; edges point along `segment_walk_position` within a trail, links between trails both ways). About 2× the
+weights (25,953 vs 13,665). Aim: the Adam's Peak summit, where people go up and down the same steps.
+
+**Runs:**
+- Few counted places (as RQ11b, 3 seeds, the other models reloaded with `--reuse`): `results/20261101_125359_sparse_s1`,
+  `results/adams_peak/20261101_134232_sparse_s1`.
+- Held-out sections (spatial CV, 3 seeds): `results/20261101_234356_benchmark_dir`,
+  `results/adams_peak/20261101_172317_benchmark_dir`.
+
+MAE, mean of 3 seeds:
+
+| Test | ST-GNN | Direction-aware | Best other |
+|---|---|---|---|
+| Horton, uncounted sections, day-ahead / from 08:00 | 1.75 / 1.49 | **1.73 / 1.47** | LSTM 1.77 / 1.51 |
+| Adam's Peak, uncounted sections, day-ahead / from 08:00 | **5.28** / 3.13 | 5.44 / **3.12** | LSTM 5.51 / 3.31 |
+| Horton, held-out sections | **2.54** | 3.24 | LSTM 2.59 |
+| Adam's Peak, held-out sections | 9.63 | 9.42 | **LSTM 8.23** |
+| Adam's Peak, held-out summit block (fold 0) | 33.3 | 29.1 | **LSTM 28.2** |
+
+- **Horton, few counts:** a small, significant gain over the ST-GNN (−0.024, p_holm < 10⁻⁴).
+- **Adam's Peak, few counts:** worse day-ahead (+0.19), level from 08:00.
+- **Held-out sections:** worse at Horton (one block is unstable across seeds: MAE 1.5-5.5). At Adam's Peak it closes
+  most of the summit gap to the LSTM (33.3 → 29.1) but loses on another block.
+- **Decision:** kept as an option (`--models stgnn_dir`); not deployed and not ported to the phone. The summit block
+  remains the place where the graph does not help (Limitation 5).
+
+### RQ11d – Where should rangers count? One model for counts from any places (S4c; `src.eval.placement`, 1 Nov 2026)
+
+**Model:** the ST-GNN and the GRU without graph are trained with random sets of counted sections per batch (the gates
+plus up to 16-19 others), so one model takes counts from **any** set of places. The live ranger forecast now uses it
+(`LATEST_PLACEMENT_S1`): a count at any section updates today's forecast.
+
+**Method:** greedy choice on the validation year: add the section that lowers MAE the most, up to 8. Scored on the
+test year from 10:00 (rest of the day) and day-ahead, against 10 random sets of the same size, the gates only, and the
+rangers' 5 usual places (A4). 2 seeds.
+
+**Runs:** `results/20261101_143850_placement_s1` (Horton), `results/adams_peak/20261101_155026_placement_s1`.
+
+ST-GNN MAE from 10:00 (all sections):
+
+| Places counted besides the gates | Horton | Adam's Peak |
+|---|---|---|
+| None | 1.096 | 3.887 |
+| 5 random | 1.095 | 3.866 |
+| The rangers' 5 places | 1.094 | 3.820 |
+| **5 chosen by the greedy order** | **1.092** | **3.777** (−2.8 %) |
+| 8 chosen by the greedy order | 1.091 | 3.768 (−3.1 %) |
+
+- **Greedy beats random at every k in both parks** (p_holm < 0.001), and beats the rangers' places from 10:00
+  (Adam's Peak −0.043, p_holm = 0.002; Horton −0.0025, p_holm = 0.045).
+- **Adam's Peak order:** the summit, then the Nallathanniya steps from the lower third upwards (39 %, 33 %, 28 %, the
+  halfway point). **Horton:** two main-loop sections near the start, then Mini World's End.
+- At Horton the gains are tiny: the gates already explain most of the day.
+- Graph vs no graph with the same chosen places: not significant in either park (Adam's Peak −0.05 from 10:00, p = 0.27).
+- **Use:** the ranger count screen ranks sections by this order (`count_rank`, "#1" badge). Field check in December.
+
 ## RQ12 – A calibrated chance of over-capacity (S3; `src.eval.uncertainty`)
 
 Same S1 runs, seed 42, in folder `uncertainty/`.
@@ -501,6 +560,398 @@ Paired Wilcoxon over days, ST-GNN rule vs:
 the forecast-driven quota by default (`control.default_quota_rule: forecast`); officers can switch the rule per day
 (`booking.resolve_quota`, `POST /admin/quota`).
 
+## RQ13 – Closed-loop control at the gate (MPC) vs day-ahead plans (`src.control.evaluate_mpc`, 27 Oct 2026)
+
+**Runs:** `results/20261027_215804_mpc` (default world) and `results/20261027_220425_mpc_s1` (realistic world S1).
+Horton Plains, 2025, the same groups for every policy.
+
+**The controller** (`src/control/mpc.py`) re-plans entry caps every 30 min:
+- **Input:** only the gate counts so far.
+- **Forecast:** the day's expected visitors, corrected by arrivals so far vs expected.
+- **Constraint:** every section under 90 % of capacity over the next 3 h.
+- **Groups over the cap:** wait up to 2 h, then are offered another trail; the share that accepts is the compliance.
+
+Realistic world (S1):
+
+| Policy | Over-capacity cut | Admitted | Turned away | Sent to another trail | Waited at the gate (mean wait) |
+|---|---|---|---|---|---|
+| B: same daily quota all year | 62.7 % | 57.1 % | 42.9 % | – | – |
+| D: day-ahead slot tickets + moving (needs advance booking) | **99.6 %** | **63.0 %** | 37.0 % | 13.3 % | 35.8 % moved to a later slot in advance |
+| MPC, 50 % accept another trail | 99.3 % | 59.0 % | 41.0 % | 3.1 % | 40.9 % (92 min) |
+| MPC, 75 % accept | 99.3 % | 59.2 % | 40.8 % | 3.4 % | 41.1 % (92 min) |
+| MPC without feedback | 99.3 % | 58.9 % | 41.1 % | 3.1 % | 40.6 % (92 min) |
+
+The default world shows the same pattern: B cut 61 % / admitted 58 %; D 99.6 % / 64.8 %; MPC 99.3 % / 61.5 %.
+
+Paired Wilcoxon tests over days, MPC (50 %) vs:
+- **B:** −191 over-capacity person-hours per day and +12 people admitted per day (p < 10⁻⁴ for both).
+- **D:** +1.4 person-hours per day and −26 admitted per day (p < 10⁻¹⁷); D is better on both.
+- **Without feedback:** no difference (p ≥ 0.3).
+
+**Reading:**
+1. **With only gate counts and no booking, the controller removes 99 % of over-capacity time.** A fixed daily
+   quota removes 61–63 %, while admitting fewer people. This answers "can a forecast-driven, segment-level capacity
+   replace a static quota" for open-access sites, which have no booking system (Adam's Peak, Pekoe Trail, walk-ins).
+2. **Advance booking is still better** (+4 points admitted, half the remaining overcrowding). It knows every
+   group's wish in advance and moves them before they travel. The gate controller learns only when people arrive.
+3. **The cost is waiting:** 4 in 10 visitors wait at the gate, about 1.5 h on average. The next step is to move
+   that wait *before* the trip: tell visitors by phone the start time the controller would give them (N3).
+4. **Feedback and redirect acceptance hardly matter in this setup.** Waiting people get priority over forecast
+   arrivals, so the corrected forecast changes little. On busy days the other trails are full too, so only about
+   3 % can be redirected.
+
+### RQ13b – Start times sent before the trip (N3), on top of gate control
+
+**Run:** `results/20261027_233052_mpc_s1`.
+
+**Setup:**
+- The evening before, groups with the app get the earliest start, at or after the time they wanted, that still has
+  room in the controller's day plan (up to 3 h later). 80 % of them follow it.
+- Everyone then goes through the same gate controller.
+- Realistic world (S1), 2025.
+
+| Policy | Over-capacity cut | Admitted | Moved by advice | Waited at the gate (mean) |
+|---|---|---|---|---|
+| D: advance booking | 99.6 % | 63.0 % | – | – |
+| MPC only | 99.3 % | 59.0 % | – | 40.9 % (92 min) |
+| MPC + start times, 30 % with the app | 99.3 % | 59.9 % | 10.3 % | 42.0 % (95 min) |
+| MPC + start times, 60 % with the app | 99.2 % | 61.6 % | 19.1 % | 43.6 % (92 min) |
+| MPC + start times, 90 % with the app | 99.3 % | 61.9 % | 22.0 % | 42.2 % (88 min) |
+
+Paired tests (60 % with the app):
+- vs MPC only: +17 admitted per day (p < 10⁻²⁹), with slightly more gate waiting (+27 person-hours per day).
+- vs advance booking: −9 admitted per day, **not significant** (p = 0.49).
+
+**Reading:**
+- **With start times on the phone, an open-access site gets as many visitors in as with advance booking**, with no
+  booking system, and still with 99 % less over-capacity time.
+- **But the gate wait does not shrink.** The advice plan is made from the forecast; on the day, the realistic world
+  differs (bursts, busy spells), so the gate still holds people.
+**Priority at the gate for groups on their advised time** (N3p, run `results/20261028_000127_mpc_s1`):
+
+| Policy | Over-capacity cut | Admitted | Gate wait (person-hours/year) | Wait if on advised time | Wait otherwise |
+|---|---|---|---|---|---|
+| MPC + start times, 60 % with the app | 99.2 % | 61.6 % | 158,343 | – | – |
+| MPC + start times + priority, 60 % with the app | 99.3 % | 59.5 % | **85,061** | **0.5 min** | 72 min |
+| MPC + start times + priority, 90 % with the app | 99.4 % | 59.7 % | **78,380** | 0.5 min | 70 min |
+
+Priority vs no priority (60 % with the app), per day:
+- **Gate waiting:** −201 person-hours (p < 10⁻⁵⁸), i.e. it **halves**.
+- **Admitted:** −13.5 people (p < 10⁻²³).
+
+**Reading:** there is a clear trade-off, and the park chooses.
+- **Start times without priority** admit the most (as many as advance booking).
+- **With priority**, waiting halves and people who follow the advice walk straight in. That is a strong reason to
+  use the app. But a few more people are turned away, because the later slots fill up.
+
+**Next:** re-send start times during the morning from the live gate counts, so the advice follows the day.
+
+### RQ13c – Stress tests: what the controllers did not plan for (`evaluate_mpc --world s1 --stress`, 29 Oct 2026)
+Realistic world, 2025, run `20261029_232929_mpc_stress_s1`. Over-capacity cut vs no control / people admitted / gate
+wait (person-hours):
+
+| scenario | B static quota | D booking | MPC (gate control) | N3p (start times + priority) |
+|---|---|---|---|---|
+| none | 62.7 % / 57.1 % / 0 | 99.6 % / 63.0 % / 0 | 99.3 % / 59.0 % / 148k | 99.3 % / 59.5 % / 85k |
+| surge: 50 % more people every day | 76.6 % / 44.3 % / 0 | 99.8 % / 52.0 % / 0 | 99.6 % / 47.8 % / 197k | 99.6 % / 48.3 % / 125k |
+| visitor forecast 30 % too low | = none | = none | 99.3 % / 58.9 % / 148k | 99.3 % / 59.6 % / 97k |
+| visitor forecast 30 % too high | = none | = none | 99.3 % / 59.0 % / 148k | 99.3 % / 59.5 % / 77k |
+| rain not planned for (day planned dry) | = none | 90.3 % / 70.5 % / 0 | 89.0 % / 67.0 % / 158k | 89.0 % / 67.4 % / 92k |
+
+- **Surges and wrong visitor forecasts:** gate control still cuts over-capacity by 99 % or more; the gate counts
+  correct the forecast (feedback). A wrong forecast only changes how long people wait for start times (a too-low
+  forecast gives out too many early start times: 97k vs 85k person-hours).
+- **Rain the plan did not expect is the weak spot:** every controller lets ~10 % of the overcrowding through
+  (18–21k person-hours), because capacity drops and nobody told the plan. Remedy in the live system: the rain
+  forecast is refreshed every evening, and a ranger can lower the limits during the day (`POST /incident`, E1).
+- B and D do not use the visitor forecast, so the forecast scenarios leave them unchanged.
+
+## RQ14 – Knuckles: one area, several mechanisms (`C4_PARK=knuckles`, `src.control.evaluate_knuckles`, 30 Oct 2026)
+Simulated 2025, run `results/knuckles/20261030_010706_knuckles`. Assumptions: `assumptions_knuckles.md` (most
+trails are drawn approximately; OSM is thin in the range).
+
+**Guided-trek permits** (5 treks, 21 guides at 4 entries; a mean of 28 group requests a day):
+
+| Policy | Groups served / day | People over a trek's daily cap / day | Days with a trek over its cap | Guides idle / day |
+|---|---|---|---|---|
+| none (a guide is free → go) | 16.6 | 6.5 | 91 | 4.4 |
+| first come first served within the cap | 15.5 | 0.0 | 0 | 5.5 |
+| LP plan made the evening before | 14.1 | 0.3 | 26 | 6.9 |
+
+- The cap removes all over-capacity days at the cost of about one group a day.
+- The evening-before LP allocation is **worse** than first come first served: it plans on expected requests, and the
+  real day differs. **Design change:** the live system gives permits first come first served within the cap while a
+  guide is free (`permits.request`). The LP stays only as the suggested guide roster per trek.
+
+**Overdue alarm** (20,000 simulated groups, 1 % in trouble):
+
+| Rule | False alarms / 1,000 groups that are fine | Troubled groups caught | Alarm, minutes after due back |
+|---|---|---|---|
+| fixed: walking time + 2 h | 136 | 72 % | 76 |
+| model: expected time for group size and rain + 2.3 × spread (≥ 45 min, sooner in rain) | 34 | 58 % | 124 |
+
+- The model rule cuts false alarms by 4×. Rangers stop trusting an alarm that is wrong 1 time in 7.
+- The cost is a later alarm for groups in real trouble. The margin (`overdue_z`) is the knob for the Forest Department to choose.
+
+**Open-viewpoint advice** (weekends; visitors who would arrive in the busy hours come in a quiet hour instead):
+- Pitawala Pathana's peak drops from 28 to 20 / 19 / 22 people at once when 30 / 60 / 90 % follow the advice.
+- Sera Ella's peak drops from 19 to 15 / 13 / 14.
+- The car parks never overflow with the assumed weekend demand.
+- **Check against weekend counts in December:** the real Pitawala crowds may be much larger than assumed.
+
+### RQ14b – Pekoe stage advice: which advice spreads the peaks? (`src.control.evaluate_stages`, 30 Oct 2026)
+Pekoe Trail, 2025 weekends, viewpoint sections hold 30 people at once (`control.hotspot_at_once`, A). Run
+`results/pekoe_trail/20261030_011618_stage_advice`. Person-hours over capacity at the viewpoints per weekend day
+(none: 1.80):
+
+| Advice to walkers on a busy stage | 30 % follow | 60 % follow | 90 % follow |
+|---|---|---|---|
+| start early (everyone the same advice) | 2.79 | 3.59 | 6.35 |
+| a quieter neighbouring stage | 1.09 | 1.46 | 3.39 |
+| **spread: each walker a different start, 06:00–11:00** | 1.25 | **0.86** | **0.46** |
+
+- The same advice to everyone **moves the crowd** instead of spreading it. "Start early" makes it worse the more
+  people follow it, and so does sending everyone to the neighbouring stage once most follow.
+- Personal, spread start times cut the overcrowding by 53–74 %. This is the same lesson as RQ8 (spread, not herd).
+- **Design change:** `/stages/{day}` now gives busy stages a `spread_window`, and the app shows each visitor their own
+  suggested start.
+
+## RQ15 – A chance constraint at the gate instead of a fixed margin; who pays for control (`src.control.evaluate_chance`, 30 Oct 2026)
+Plan §6.1.1–6.1.2. Horton Plains, realistic world S1, 2025, run `results/20261030_085127_chance_s1`.
+
+**Calibration** (60 training days, the gate controller with the 90 % margin): how far the real occupancy of a
+section strays from the controller's own prediction (inside + K·admitted):
+- dry: bias 1.00, spread ≈ 1.24 × the prediction (Poisson-like);
+- wet: bias 0.96, spread ≈ 1.14 × the prediction;
+- no extra spread proportional to the load (σ = 0) on either kind of day.
+
+So the chance constraint is mainly a buffer of about z·√(1.2·m). Small sections get a larger share of buffer; wet
+days get none extra.
+
+| Gate policy | Over-capacity person-hours | Days over capacity | Busy half-hours over capacity | Admitted | Mean wait (min) |
+|---|---|---|---|---|---|
+| none | 169,950 | 365 | 33.2 % | 100 % | 0 |
+| fixed margin 90 % (current) | 1,303 | 326 | 3.35 % | 59.6 % | 63 |
+| fixed margin 80 % | 365 | 198 | 1.28 % | 55.9 % | 66 |
+| chance, P(over) ≤ 20 % | 693 | 285 | 2.01 % | 57.9 % | 65 |
+| chance, P(over) ≤ 10 % | 241 | 161 | 0.82 % | 54.8 % | 66 |
+| chance, P(over) ≤ 5 % | 90 | 94 | 0.43 % | 52.6 % | 68 |
+
+- **On the trade-off curve, the chance constraint does better.** At 57.9 % admitted, a fixed margin between 80 and
+  90 % would give about 870 person-hours over capacity (linear between the two); the chance constraint gives 693
+  (≈ −20 %). At 10 % it has 34 % fewer person-hours over than the 80 % margin, for 1.1 points fewer admitted.
+- All differences vs the 90 % margin: Wilcoxon p < 10⁻¹⁸ per day.
+- **ε is not the realised rate:** busy half-hours go over capacity far less often than ε. The constraint is
+  conservative because the plan rarely fills a section up to its cap. Read ε as a setting that orders the
+  policies, not as a promised probability.
+- **No weather benefit found:** the calibration shows no extra spread on wet days, so "hold back more on uncertain
+  days" did not happen in this world. The arrival uncertainty is absorbed by the hard caps, and the gate counts
+  correct the forecast (RQ13).
+- **Live:** off by default. Set `control.chance_eps` (e.g. 0.1) after running the evaluation; the gate card then
+  states the rule. Choosing ε is a park decision: fewer people over capacity against fewer people admitted.
+
+**Fairness** (§6.2; people-weighted, the current 90 % margin; with start times for 60 % of groups, N3p):
+
+| Group | Turned away, gate control only | Mean wait, gate control only | Turned away, with start times | Mean wait, with start times |
+|---|---|---|---|---|
+| Arrive before 08:00 | 42.7 % | 33 min | 40.3 % | 18 min |
+| Arrive 08:00–10:00 | 37.7 % | 57 min | 39.1 % | 36 min |
+| Arrive after 10:00 | 29.4 % | 31 min | 36.1 % | 26 min |
+| Groups of 1–3 | 37.1 % | 39 min | 34.9 % | 23 min |
+| Groups of 6+ | 46.5 % | 35 min | 48.0 % | 21 min |
+| Holding a start time | — | — | 0.0 % | 0.5 min |
+| Without one | — | — | 56.4 % | 31 min |
+
+- **Large groups are turned away more often** (+9 points): a big group does not fit into the places left in a
+  slot. Remedies tested in RQ15b.
+- **Start-time holders are almost never turned away; everyone else is turned away more** (56 % vs 40 % without the
+  app). This is the cost of the priority that makes start times work (RQ13b). The app must not become the only way
+  in: keep a walk-up share (RQ15b, `control.walkup_share`), and offer start times at the gate kiosk / by SMS for
+  visitors without a smartphone.
+- Mid-morning arrivals wait longest (the peak). Early arrivals are turned away most: they meet the day-ahead caps
+  before the feedback raises them.
+
+### RQ15b – Fairness remedies (§6.1.2; run `results/20261030_142223_chance_s1`)
+The same year and groups (the policies of RQ15 give the same numbers again). Two remedies on the 90 % margin:
+- **strict order**: a group that does not fit keeps its turn on its trail; smaller groups behind it wait instead of
+  taking the places left (`MPCController(strict_order=True)`);
+- **walk-up share 30 %**: start times are given for only 70 % of the day plan, and groups with a start time cannot
+  take the walk-ups' 30 % of a slot while walk-ups wait (`control.walkup_share: 0.3`).
+
+| Policy | Over-capacity person-hours | Admitted | Mean wait (min) | Turned away: 6+ minus 1–3 (points) | Turned away: without minus with a start time (points) |
+|---|---|---|---|---|---|
+| gate control only (90 %) | 1,303 | 59.6 % | 63 | 9.3 | — |
+| + strict order | 1,219 | 59.7 % | 65 | **7.4** | — |
+| with start times (60 % of groups) | 1,199 | 60.3 % | 36 | 12.6 | 56.5 |
+| + walk-up share 30 % | 1,227 | 60.4 % | 44 | 12.4 | **50.2** |
+| + walk-up share + strict order | **1,062** | 59.8 % | 45 | 10.5 | 50.9 |
+
+- **Strict order narrows the size gap by a fifth** (9.3 → 7.4 points) at no cost in admissions and with 6 % fewer
+  over-capacity person-hours, for 1–2 min more waiting. The rest of the gap is structural: a group of 8 needs
+  8 free places in one slot, and is offered another trail less often (2.9 % vs 4.1 % redirected).
+- **The walk-up share cuts the walk-ups' disadvantage** from 56.5 to 50.2 % turned away (−6 points) with the same
+  admissions. Start-time holders still get in (0.0 % turned away) and wait 0.8 min. The cost: 30 % fewer start
+  times are given out, so the average wait rises from 36 to 44 min (still far below 63 without the app).
+- **Both together** give the fewest over-capacity person-hours of any 90 %-margin policy (1,062, −11 % vs start
+  times alone): fewer groups slip in late into nearly full slots.
+- What the remedies cannot fix: when demand is about twice what the trails hold (≈ 60 % admitted), whoever plans
+  ahead wins. A kiosk / SMS start time at the gate (not built) is the remaining remedy for visitors without the app.
+- **Live:** `control.walkup_share` (default 0, i.e. as before). The strict order is a rule for the rangers at the
+  gate ("a group that does not fit keeps its turn"), not a setting.
+
+### §6.1.4 – Re-planning during the day when rain arrives (`evaluate_mpc --world s1 --stress --scenarios none sudden_rain`)
+Run `results/20261030_091335_mpc_stress_s1`. MPCr = gate control that re-plans every slot with the rain of the hours
+already past + the next 2 hours (`mpc.blend_rain_share`; live: `src/live/nowcast.py`, Open-Meteo every 15 min).
+
+| Scenario | MPC: over-capacity person-hours / admitted | MPCr: over-capacity person-hours / admitted |
+|---|---|---|
+| rain planned correctly | 1,259 / 59.0 % | 1,196 / 58.6 % |
+| rain not planned for (planned dry) | 20,955 / 67.0 % | **14,511** / 65.1 % |
+
+- Rain the plan did not expect: **31 % less overcrowding** (cut vs no control 89.0 → 92.4 %), for 1.9 points fewer
+  admitted. The gap to D (booking, 18,332) is closed and passed.
+- **Only towards caution:** a first version also *raised* the caps on a drier-than-planned morning. That doubled
+  the overcrowding on ordinary days (2,198 vs 1,259 person-hours), because the planned rain still came while those
+  let in were on the trail. Now the share is never below the plan (`max(planned, measured)`).
+- What remains of the sudden-rain overcrowding comes from people already inside when the rain starts: the gate can
+  only stop new entries.
+
+## RQ1 on the Pekoe Trail – a long, sparse trail (`C4_PARK=pekoe_trail`, `src.run_benchmark`, 28 Oct 2026)
+323 km, 22 stages, ~163 walkers a day (simulated, `docs/assumptions_pekoe_trail.md`); seed 42, no ARIMA.
+
+| sections | model | temporal MAE | temporal RMSE | spatial MAE (4 folds) |
+|---|---|---|---|---|
+| 161 × 2 km (`20261027_231345_benchmark`) | HA | 0.415 | 1.01 | 0.53 |
+| | LSTM / GRU / ST-GNN | 0.348 | 1.25 | 0.35 |
+| 54 × 6 km (`20261028_214959_benchmark_6km`) | HA | 0.993 | 2.12 | 1.32 |
+| | LSTM | 0.846 | 2.21 | **0.98** |
+| | GRU (no graph) | 0.843 | 2.17 | 1.39 |
+| | ST-GNN | 0.844 | 2.18 | 1.28 |
+
+- **2 km sections are too fine:** most sections are empty most hours, every network learned "empty" (flat validation
+  loss) and lost to HA on RMSE and at the busy places.
+- **6 km sections:** the networks learn and beat HA by ~15 % on MAE over time (p_holm < 0.001); ST-GNN = LSTM = GRU
+  (n.s.). On held-out sections the ST-GNN beats the no-graph GRU (−0.11, p < 0.001) but not the LSTM; fold 2
+  (the busy Haputale–Ella stages) is where every network struggles (MAE 1.8–3.4 vs ~0.7 on other folds).
+- **Meaning:** on a trail with few walkers the graph adds little; the bottleneck problem is at the few busy stages.
+  Pekoe forecasts should be read per stage, and its control is advisory stage advice (P4), not section quotas.
+
+**3 seeds, 6 km sections** (run `results/pekoe_trail/20261030_082117_benchmark_benchmark_6km_3seeds`; temporal mean ±
+SD over seeds 42–44, spatial mean ± SD over 4 folds):
+
+| model | temporal MAE | temporal RMSE | MAE at busy places | spatial MAE | spatial RMSE |
+|---|---|---|---|---|---|
+| HA | 0.993 | 2.12 | 1.71 | 1.32 ± 0.26 | 2.48 |
+| LSTM | 0.846 ± 0.000 | 2.19 | 1.53 | **0.96 ± 0.48** | 2.40 |
+| GRU (no graph) | 0.842 ± 0.001 | 2.17 | 1.52 | 1.31 ± 1.19 | 2.74 |
+| ST-GNN | 0.843 ± 0.001 | 2.17 | 1.52 | 1.04 ± 0.65 | **2.36** |
+
+- The seed-42 picture holds: over time all three networks beat HA by ~15 % (p_holm < 0.001) and tie with each other
+  (ST-GNN vs LSTM p_holm = 0.11, vs GRU 0.30).
+- On held-out sections the graph helps against the no-graph GRU (−0.27 MAE, p_holm < 0.001, d = 0.56) but the LSTM is
+  still better on MAE (+0.09, d = 0.34); the ST-GNN has the lowest RMSE. Seeds barely move the result (SD ≤ 0.001).
+
+## §6.3.12 – Load test: many phones at once (`src.api.load_test --start`, 30 Oct 2026)
+Gateway + 5 park workers on one 4-core laptop (`C4_OFFLINE=1`), run `results/20261030_155736_load`. Each simulated
+phone repeats what the app does when opened (status, outlook, capacity, slots, trails, network advice) at a random
+park; 70 % ask about the same busy day, the rest about another day in the next two weeks. Read-only, 30 s per level.
+
+| phones at once | requests / s | p50 | p95 | errors | served from cache |
+|---|---|---|---|---|---|
+| 1 | 5.9 | 0.02 s | 1.1 s | 0 % | 43 % |
+| 10 | 16.2 | 0.48 s | 1.7 s | 0 % | 49 % |
+| 50 | 13.6 | 1.5 s | 11 s | 0 % | 51 % |
+| 100 | 12.8 | 3.6 s | 24 s | 0 % | 55 % |
+| 200 | 24.0 | 5.4 s | 19 s | 0.3 % | 51 % |
+
+- **The first run found two gateway bugs, now fixed:**
+  - `/network` and `/parks/{park}/capacity/{day}` shared one cache key but stored different things, so whichever came
+    second failed with a 500. They now share one entry.
+  - Every forwarded request built a new HTTP client and loaded the CA certificates (~0.45 s), although the workers are
+    plain HTTP on 127.0.0.1.
+- **Throughput levels off at ~15–25 requests / s:** cached answers take milliseconds, but a forecast that is not
+  cached (capacity, slots, network for a new day) takes 1–2 s of CPU in its park's worker.
+- **Ten phones at once are served in under 2 s (p95).** From 50 phones the uncached forecasts queue and p95 reaches
+  11–24 s, but nothing is lost (≤ 0.3 % errors at 200).
+- **For a Poya morning:** warm the cache for the coming days each night and give the server more cores than this
+  laptop; then most requests are cache hits. A 400 from Adam's Peak `/slots` (no bookings there) is counted as a
+  correct answer.
+
+**After the speed-ups** (config parsed once per change, planner day kept per input, `serve_all` warms the next 14 days;
+run `results/20261031_045906_load`, same laptop and settings):
+
+| phones at once | requests / s | p50 | p95 | errors | served from cache |
+|---|---|---|---|---|---|
+| 1 | 18.8 | 0.01 s | 0.10 s | 0 % | 47 % |
+| 10 | 102.8 | 0.07 s | 0.25 s | 0 % | 50 % |
+| 50 | 59.9 | 0.57 s | 2.3 s | 0 % | 51 % |
+| 100 | 55.7 | 1.2 s | 5.3 s | 0 % | 54 % |
+| 200 | 48.3 | 2.9 s | 11 s | 0 % | 58 % |
+
+- 2-6× the throughput; p95 for 10 phones 1.7 s → 0.25 s, for 100 phones 24 s → 5.3 s; no errors at 200 phones.
+- What still queues at 50+ phones is `/network` (p95 2.3-9 s): the network advice is worked out per request.
+- **Since 1 Nov:** the gateway caches the whole `/network/{day}` answer per park and place (60 s, as for forecasts);
+  an answer with a capacity missing is not cached (`tests/test_backup.py::test_network_answer_is_cached`). Not yet
+  re-load-tested.
+
+## §6.1.3 – Transfer to Knuckles with few counts: dry run on simulated counts (`src.eval.transfer --targets knuckles --sources horton_plains pekoe_trail`, 31 Oct 2026)
+
+Run `results/20261031_013713_transfer_knuckles` (seeds 42-44; test = the last year of simulated Knuckles counts; Holm-corrected paired tests over 365 days). `HA_k` is the historical average built from the same k days of counts the network is fine-tuned on.
+
+| Model (ST-GNN) | 14 days | 30 days | 90 days |
+|---|---|---|---|
+| HA_k (same days) | 1.54 | 1.42 | 1.33 |
+| From scratch | 1.82 | 1.80 | 1.77 |
+| Fine-tuned from Horton Plains | **1.45** | **1.41** | 1.37 |
+| Fine-tuned from Pekoe | 1.49 | 1.45 | 1.43 |
+
+MAE (people per segment); zero-shot (no Knuckles counts): 2.00 from Horton Plains, 1.66 from Pekoe; ST-GNN with all Knuckles history 1.21, HA 1.35.
+
+- **Fine-tuning always beats training from scratch** (0.33-0.40 lower MAE, every k, both sources, p_holm < 1e-30).
+- **With 14 days of counts, fine-tuning from Horton Plains beats the average of those 14 days** (-0.09, p_holm = 1e-5; Pekoe -0.06, p_holm = 0.04). At 30 days they are level (n.s.); at 90 days HA_90 is better (+0.05).
+- Horton Plains is the better source after fine-tuning; Pekoe is the better zero-shot source. Zero-shot is worse than HA everywhere: do not deploy a network on Knuckles without some counts.
+- GRU without the graph gives the same picture (14 days: -0.12 vs HA_14).
+- **Use for December:** with the first two weeks of spot counts, serve the network fine-tuned from Horton Plains; switch to HA once there are about a month of counts, and back to an in-domain ST-GNN when a season of counts exists. Simulated counts only: rerun with the real December counts.
+
+### §6.1.3b – A source trained on several parks at once (`transfer.py --joint horton_plains adams_peak pekoe_trail`, 1 Nov 2026)
+
+One ST-GNN trained on the three parks together (graph swapped per batch; early stopping on the mean validation loss),
+then fine-tuned on Knuckles like the single-park source. Run `results/20261101_210004_transfer_knuckles_joint`
+(seeds 42-44, same test year).
+
+| Model (ST-GNN) | No counts | 14 days | 30 days | 90 days |
+|---|---|---|---|---|
+| HA_k (same days) | – | 1.54 | 1.42 | 1.33 |
+| From Horton Plains | 2.00 | 1.45 | 1.41 | 1.38 |
+| **From the joint model** | **1.73** | **1.42** | **1.38** | **1.36** |
+
+- **The joint source is better at every k** (14 days −0.033, p_holm < 10⁻⁹; 30 days −0.024; 90 days −0.015, p_holm = 0.03)
+  and zero-shot (2.00 → 1.73; still worse than HA 1.35).
+- vs HA of the same days: −0.13 at 14 days (p_holm < 10⁻⁶); level at 30 and 90.
+- **Use for December:** start Knuckles from the joint model instead of Horton Plains alone; the switch to HA after
+  about a month stays.
+
+## Forecast ranges (FR10 / NFR4; `src.eval.conformal`, 1 Nov 2026)
+
+**Method:** split conformal prediction on the deployed model. The validation year gives the residuals, grouped by forecast
+size (0, 0.5, 1, 2, 5, 10, 20, 50, 100, 200 people) with the finite-sample correction. A group with < 200 residuals is
+scaled from the nearest smaller group that has enough. Scored on the test year against one range for every size.
+
+**Runs:** `results/20261101_125624_conformal` (Horton), `results/adams_peak/20261101_125652_conformal`.
+
+| 90 % range | Covered, all hours | Covered, busy hours | Mean width (people) |
+|---|---|---|---|
+| Horton, by forecast size | 0.898 | **0.777** | 5.7 |
+| Horton, one range | 0.900 | 0.172 | – |
+| Adam's Peak, by forecast size | 0.900 | **0.857** | 17.4 |
+| Adam's Peak, one range | 0.900 | 0.078 | – |
+
+- Both hold 90 % overall; only the ranges by forecast size still hold at busy hours (conformal does not promise that).
+- **In service:** every published forecast now has `peak_range` per section, `peak_occupancy_range` and a
+  **`cautious_daily_quota`** per trail (the limit if the crowd comes in at the top of the 90 % range), and a top-level
+  `range` block. The phone pack carries the cautious quota; the app shows it under the safe number. Example, Horton
+  Plains, Vesak 2025, main trail: safe number 153, cautious 110; peak 205 people (range 112-474).
+
 ## RQ6 – On-device inference (objective O6, NFR1; `src.edge.export`, 20 Oct 2026)
 
 Trained day-ahead ST-GNN exported to ONNX (opset 17); one forecast = 24 hours × every segment; latency on ONE
@@ -553,3 +1004,5 @@ Daily rain 2022–2025 at each park's weather point: Open-Meteo / ERA5 (what the
 2. One seed at Adam's Peak and in RQ2; three for Horton RQ1 temporal.
 3. RQ3/RQ4 control results use the same simulator that generated the data.
 4. Usability (SUS) and expert review with DWC / Sri Pada officers are not done yet.
+5. At the Adam's Peak summit block the graph models do not beat the LSTM on held-out sections; the
+   direction-aware model (RQ11c) narrows but does not close the gap.

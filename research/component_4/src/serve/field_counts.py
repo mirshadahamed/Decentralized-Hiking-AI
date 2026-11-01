@@ -27,8 +27,10 @@ def _con(db=None):
     return con
 
 
-def segments(cfg, model_input: set | None = None) -> list:
-    """model_input: seg_ids whose counts update today's forecast (A1); listed first."""
+def segments(cfg, model_input: set | None = None, order: list | None = None) -> list:
+    """model_input: seg_ids whose counts update today's forecast (A1); order: where a count helps the forecast
+    most, best first (src.eval.placement) -> count_rank 1, 2, ...; ranked sections first, then model input."""
+    rank = {sid: i + 1 for i, sid in enumerate(order or [])}
     ec = build_control()
     labels = cfg["area"].get("poi_labels", {})
     names = cfg["area"]["trail_names"]
@@ -37,8 +39,9 @@ def segments(cfg, model_input: set | None = None) -> list:
         trail = names.get(s.trail, s.trail)
         out.append({"seg_id": int(s.seg_id), "trail": s.trail, "trail_name": trail,
                     "name": labels.get(s.poi, f"{trail}, section {int(s.seg_id)}") if s.poi else f"{trail}, section {int(s.seg_id)}",
-                    "length_m": round(float(s.length_m)), "model_input": int(s.seg_id) in (model_input or set())})
-    return sorted(out, key=lambda x: not x["model_input"])
+                    "length_m": round(float(s.length_m)), "model_input": int(s.seg_id) in (model_input or set()),
+                    "count_rank": rank.get(int(s.seg_id))})
+    return sorted(out, key=lambda x: (x["count_rank"] is None, x["count_rank"] or 0, not x["model_input"]))
 
 
 def add_count(day: str, seg_id: int, time_min: int, count: int, by: str, client_id: str | None = None, db=None) -> dict:
@@ -74,12 +77,14 @@ def forecast_check(cfg, start: str, end: str, db=None) -> dict:
     rows, cache = [], {}
     for r in counts(start, end, db):
         if r["day"] not in cache:
-            cache[r["day"]] = booking.day_forecast(r["day"], db)
-        fc, basis = cache[r["day"]]
+            cache[r["day"]] = booking.day_forecast(r["day"], db, raw=True), booking.day_forecast(r["day"], db)[0]
+        (fc, basis), fcc = cache[r["day"]]
         j = col[r["seg_id"]]
         f = None if fc is None else round(float(fc[r["time_min"] // 60, j]), 1)
+        fcor = None if fcc is None else round(float(fcc[r["time_min"] // 60, j]), 1)
         cap = float(at_once[j])
-        rows.append(r | {"name": names.get(r["seg_id"]), "forecast": f, "forecast_basis": basis,
+        rows.append(r | {"name": names.get(r["seg_id"]), "forecast": f, "forecast_corrected": fcor,
+                         "forecast_basis": basis,
                          "capacity_at_once": round(cap, 1),
                          "counted_over": r["count"] > cap, "forecast_over": None if f is None else f > cap})
     known = [x for x in rows if x["forecast"] is not None]
@@ -93,6 +98,10 @@ def forecast_check(cfg, start: str, end: str, db=None) -> dict:
                     "within_30pct": round(float((np.abs(e) <= np.maximum(0.3 * cnt, 2)).mean()), 3),
                     "counted_over_capacity": int(co.sum()), "over_capacity_called": int((co & fo).sum()),
                     "false_alarms": int((~co & fo).sum())}
+        ec_ = np.array([x["forecast_corrected"] - x["count"] for x in known], float)
+        if not np.allclose(ec_, e):                             # N2: some days had a count-based correction
+            summary |= {"mae_corrected": round(float(np.abs(ec_).mean()), 2),
+                        "bias_corrected": round(float(ec_.mean()), 2)}
     return {"start": start, "end": end, "summary": summary, "rows": rows,
             "note": "Forecast = the day-ahead forecast saved before the day. Spot counts are the park's own sensor "
                     "record; they are also used to check and recalibrate the simulator the model learned from."}

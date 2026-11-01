@@ -70,6 +70,7 @@ def build_pack(data, model, scale: float, origin: int, cfg: dict, seg=None, run:
         },
         "segments": [{"id": int(i), "trail": str(t), "poi": p} for i, (t, p) in
                      enumerate(zip(data.segment_trail, poi))],
+        "poi_labels": dict(cfg["area"].get("poi_labels", {})),       # "worlds_end" -> "World's End", per park
         "note": "Occupancy is forecast from a model trained on a SYNTHETIC occupancy target (see the server's "
                 "forecast note).",
     }
@@ -88,6 +89,7 @@ def _day_block(date: str, source: str, fc: dict, people: bool) -> dict:
         "expected_visitors": fc.get("expected_visitors"),
         "recommended_daily_quota": fc.get("recommended_daily_quota"),
         "classic_cifuentes_quota": fc.get("classic_cifuentes_quota"),
+        "cautious_daily_quota": fc.get("range", {}).get("cautious_daily_quota"),     # NFR4 (src.eval.conformal)
         "rain_share_open_hours": fc.get("rain_share_open_hours"),
     }
     if people:                                                   # [hour][segment], same layout as the phone's output
@@ -180,6 +182,7 @@ def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None, calibration
         "expected_visitors": forecast.get("expected_visitors"),
         "recommended_daily_quota": forecast.get("recommended_daily_quota"),
         "classic_cifuentes_quota": forecast.get("classic_cifuentes_quota"),
+        "cautious_daily_quota": forecast.get("range", {}).get("cautious_daily_quota"),
         "rain_share_open_hours": forecast.get("rain_share_open_hours"),
         "disclaimer": forecast.get("disclaimer", ""),
         # the week: today .. +6 days; "stgnn" days are forecast on the phone (inputs / extra_inputs), "planning"
@@ -220,6 +223,9 @@ if __name__ == "__main__":
     week = week_forecasts(data, cfg, seg, model, scale, run, today, build_planner(cfg))
     pack["map"] = map_extras(build_forecast(data, cfg, seg, pack["day"], model, scale, run), seg, cfg, data, week,
                              crowd_calibration(model, data, scale, cfg, run))
+    from src.live.refresh import add_week_weather
+    from src.serve.weather_day import ResearchWeather
+    add_week_weather(ResearchWeather(cfg), pack["map"])               # W-d: the week's weather, offline
     pack["expected_people"] = [[round(float(x), 5) for x in row] for row in torch_forecast(model, data, origin, scale)]
     pack["expected_people_today"] = [[round(float(x), 5) for x in row]
                                      for row in torch_forecast(model, data, origin - 24, scale)]

@@ -10,17 +10,20 @@ import 'screens/visitor/map_screen.dart';
 import 'screens/visitor/my_tickets_screen.dart';
 import 'screens/visitor/outlook_screen.dart';
 import 'screens/visitor/overview_screen.dart';
+import 'screens/visitor/sos_screen.dart';
 import 'l10n/c4_i18n.dart';
 import 'widgets/c4_ui.dart';
+import 'widgets/notices_banner.dart';
 
 /// Entry point of Component 4 (crowd forecasting, trip planning, crowd control) inside the team app.
 /// Trip planner: with the gateway the visitor first chooses a destination, then sees everything about it;
 /// a single-park server opens that park directly.
 class Component4Home extends StatefulWidget {
-  const Component4Home({super.key, this.api, this.lang});
+  const Component4Home({super.key, this.api, this.lang, this.locate});
 
   final C4Api? api; // injected in tests
   final C4Lang? lang;
+  final C4Locate? locate; // §6.2.7: GPS for SOS calls, from the team app's location service (optional)
 
   @override
   State<Component4Home> createState() => _Component4HomeState();
@@ -66,7 +69,7 @@ class _Component4HomeState extends State<Component4Home> {
               onPopInvokedWithResult: (didPop, _) {
                 if (!didPop) _pick(null);
               },
-              child: ParkHome(key: ValueKey(_api.park), onChangePark: back ? () => _pick(null) : null),
+              child: ParkHome(key: ValueKey(_api.park), onChangePark: back ? () => _pick(null) : null, locate: widget.locate),
             );
           },
         ),
@@ -94,9 +97,10 @@ class LanguageButton extends StatelessWidget {
 /// One destination: overview first, then booking parks get the calendar, map and tickets; pilgrim sites the
 /// start-time planner and map.
 class ParkHome extends StatefulWidget {
-  const ParkHome({super.key, this.onChangePark});
+  const ParkHome({super.key, this.onChangePark, this.locate});
 
   final VoidCallback? onChangePark;
+  final C4Locate? locate;
 
   @override
   State<ParkHome> createState() => _ParkHomeState();
@@ -138,7 +142,7 @@ class _ParkHomeState extends State<ParkHome> {
                   (OutlookScreen(site: s.site, advisory: advisory), Icons.calendar_month, advisory ? 'nav_start_times' : 'nav_plan_book'),
                   (const BottleneckView(), Icons.groups_outlined, 'nav_crowding'), // tomorrow per section, offline
                   (const MapScreen(), Icons.map_outlined, 'nav_map'),
-                  if (!advisory) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
+                  if (s.hasTickets) (const MyTicketsScreen(), Icons.confirmation_number_outlined, 'nav_tickets'),
                 ];
           return Scaffold(
             appBar: AppBar(
@@ -147,6 +151,12 @@ class _ParkHomeState extends State<ParkHome> {
                   : IconButton(tooltip: tr(context, 'change_park'), icon: const Icon(Icons.arrow_back), onPressed: widget.onChangePark),
               title: Text(s?.site ?? ''),
               actions: [
+                IconButton(
+                  key: const Key('open_sos'),
+                  tooltip: tr(context, 'sos_open'),
+                  icon: const Icon(Icons.sos, color: C4Colors.red),
+                  onPressed: () => Navigator.of(context).push(c4Route(context, SosScreen(locate: widget.locate))),
+                ),
                 const LanguageButton(),
                 TextButton.icon(
                   onPressed: () => Navigator.of(context).push(c4Route(context, StaffLoginScreen(advisory: advisory))),
@@ -159,10 +169,15 @@ class _ParkHomeState extends State<ParkHome> {
                 ? ErrorRetry(error: snap.error!, onRetry: () => setState(() { _status = C4Scope.of(context).status(); }))
                 : s == null
                     ? const Center(child: CircularProgressIndicator())
-                    : IndexedStack(
-                        index: _tab,
-                        children: [for (var i = 0; i < pages.length; i++) _visited.contains(i) ? pages[i].$1 : const SizedBox.shrink()],
-                      ),
+                    : Column(children: [
+                        NoticesBanner(day: s.today), // closures, trail conditions, heavy rain (§6.2.9)
+                        Expanded(
+                          child: IndexedStack(
+                            index: _tab,
+                            children: [for (var i = 0; i < pages.length; i++) _visited.contains(i) ? pages[i].$1 : const SizedBox.shrink()],
+                          ),
+                        ),
+                      ]),
             bottomNavigationBar: pages.isEmpty
                 ? null
                 : NavigationBar(

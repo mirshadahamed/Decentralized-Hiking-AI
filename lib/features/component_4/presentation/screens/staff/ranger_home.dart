@@ -1,13 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../data/api_client.dart';
+import '../../../domain/bottleneck.dart';
 import '../../../models/models.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/scan_page.dart';
+import 'treks_tab.dart';
 import '../bottleneck_screen.dart';
 import 'count_screen.dart';
+import 'kiosk_screen.dart';
 import 'sightings_screen.dart';
+import 'sos_calls_screen.dart';
 
 
 /// Gate tools: check in tickets, sell walk-in places, live traffic lights.
@@ -22,12 +25,21 @@ class RangerHome extends StatefulWidget {
 class _RangerHomeState extends State<RangerHome> {
   DateTime? _demo; // null = real time
   bool _sightings = false; // safari parks (Yala): the Sightings tab
+  bool _treks = false; // guided treks (Knuckles): the Treks tab (out / back / overdue)
+  bool _kiosk = false; // ticketed trails: the start-time kiosk for walk-ups
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     C4Scope.of(context).status().then((s) {
-      if (mounted && s.sightings != _sightings) setState(() => _sightings = s.sightings);
+      final treks = s.hasMode('guided_permit') || s.walkRegister;
+      if (mounted && (s.sightings != _sightings || treks != _treks || s.hasTickets != _kiosk)) {
+        setState(() {
+          _sightings = s.sightings;
+          _treks = treks;
+          _kiosk = s.hasTickets;
+        });
+      }
     }, onError: (_) {});
   }
 
@@ -46,12 +58,25 @@ class _RangerHomeState extends State<RangerHome> {
   Widget build(BuildContext context) {
     final api = C4Scope.of(context);
     return DefaultTabController(
-      key: ValueKey(_sightings),
-      length: _sightings ? 6 : 5,
+      key: ValueKey('$_sightings/$_treks'),
+      length: 5 + (_sightings ? 1 : 0) + (_treks ? 1 : 0),
       child: Scaffold(
         appBar: AppBar(
           title: Text('Gate · ${api.session?.username ?? ''}'),
           actions: [
+            IconButton(
+              key: const Key('open_sos_calls'),
+              tooltip: 'SOS calls',
+              icon: const Icon(Icons.sos, color: C4Colors.red),
+              onPressed: () => Navigator.of(context).push(c4Route(context, SosCallsScreen(day: _day))),
+            ),
+            if (_kiosk)
+              IconButton(
+                key: const Key('open_kiosk'),
+                tooltip: 'Start-time kiosk for walk-ups',
+                icon: const Icon(Icons.tablet_android),
+                onPressed: () => Navigator.of(context).push(c4Route(context, KioskScreen(now: () => _now))),
+              ),
             TextButton.icon(
               onPressed: _pickDemoTime,
               onLongPress: () => setState(() => _demo = null),
@@ -74,6 +99,7 @@ class _RangerHomeState extends State<RangerHome> {
             Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
             Tab(icon: Icon(Icons.exposure_plus_1), text: 'Count'),
             if (_sightings) Tab(icon: Icon(Icons.pets), text: 'Sightings'),
+            if (_treks) Tab(key: Key('tab_treks'), icon: Icon(Icons.hiking), text: 'Out & back'),
           ]),
         ),
         body: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -83,6 +109,7 @@ class _RangerHomeState extends State<RangerHome> {
           const BottleneckView(), // where and when sections get crowded this week, also offline
           CountTab(now: () => _now), // A4: spot counts, the park's own sensor record
           if (_sightings) SightingsTab(now: () => _now, demo: _demo != null), // jeeps at wildlife sightings
+          if (_treks) TreksTab(day: _day, at: () => _demo), // K5 / §6.2.7: groups out and back, overdue alarm
         ]),
       ),
     );
@@ -104,8 +131,9 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   CheckInResult? _result;
   String? _error;
   bool _busy = false;
+  bool _queue = false; // R7: scanning at the back of the queue (times the wait) instead of letting in
 
-  bool get _canScan => kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _canScan => canScanQr;
 
   Future<void> _check(String code) async {
     if (code.trim().isEmpty) return;
@@ -115,7 +143,9 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
       _result = null;
     });
     try {
-      final r = await C4Scope.of(context).checkIn(code.trim().toUpperCase(), at: widget.at());
+      final api = C4Scope.of(context);
+      final c = code.trim().toUpperCase();
+      final r = _queue ? await api.queueJoin(c, at: widget.at()) : await api.checkIn(c, at: widget.at());
       setState(() => _result = r);
       _code.clear();
     } on ApiException catch (e) {
@@ -126,7 +156,7 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
   }
 
   Future<void> _scan() async {
-    final code = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const _ScanPage()));
+    final code = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
     if (code != null) await _check(code);
   }
 
@@ -142,17 +172,28 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
           FilledButton.icon(
             onPressed: _busy ? null : _scan,
             icon: const Icon(Icons.qr_code_scanner, size: 32),
-            label: const Text('Scan ticket'),
+            label: Text(_queue ? 'Scan: joined the queue' : 'Scan ticket'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(72), textStyle: const TextStyle(fontSize: 20)),
           ),
-        const SizedBox(height: 16),
+        SwitchListTile(
+          key: const Key('queue_mode'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Joined the queue'),
+          subtitle: const Text('Scan groups at the back of the queue to measure the wait at the gate'),
+          value: _queue,
+          onChanged: (v) => setState(() {
+            _queue = v;
+            _result = null;
+          }),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _code,
           textCapitalization: TextCapitalization.characters,
           onSubmitted: _check,
           style: const TextStyle(fontSize: 22, letterSpacing: 3),
           decoration: InputDecoration(
-            labelText: 'Or type the 8-letter code',
+            labelText: 'Or type the ticket or start-time code',
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(icon: const Icon(Icons.send), onPressed: () => _check(_code.text)),
           ),
@@ -169,6 +210,11 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
                 Icon(_result!.ok ? Icons.check_circle : Icons.cancel, size: 72, color: _result!.ok ? C4Colors.green : C4Colors.red),
                 const SizedBox(height: 8),
                 Text(_result!.reason, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+                if (_result!.priority)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Chip(key: Key('checkin_priority'), avatar: Icon(Icons.fast_forward), label: Text('Start time · let in first')),
+                  ),
                 if (_result!.trail != null)
                   Text('${trailName(_result!.trail!)} · ${_result!.slot} · ${_result!.groupSize} people',
                       style: Theme.of(context).textTheme.titleMedium),
@@ -176,29 +222,6 @@ class _CheckInTabState extends State<_CheckInTab> with ParkTrails {
             ),
           ),
       ]);
-}
-
-class _ScanPage extends StatefulWidget {
-  const _ScanPage();
-
-  @override
-  State<_ScanPage> createState() => _ScanPageState();
-}
-
-class _ScanPageState extends State<_ScanPage> {
-  bool _done = false;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Point at the ticket QR code')),
-        body: MobileScanner(onDetect: (capture) {
-          final v = capture.barcodes.isEmpty ? null : capture.barcodes.first.rawValue;
-          if (v != null && !_done) {
-            _done = true;
-            Navigator.of(context).pop(v);
-          }
-        }),
-      );
 }
 
 // ---------- walk-ins ----------
@@ -308,6 +331,7 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
   late Future<List<LiveSegment>> _future;
   Future<GateAdvice?>? _advice;
   Future<TodayUpdate?>? _today;
+  Future<GateControl?>? _control;
 
   String get _at => '${widget.now.hour.toString().padLeft(2, '0')}:${widget.now.minute.toString().padLeft(2, '0')}';
 
@@ -317,6 +341,8 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
     _advice = api.gateAdvice(widget.day, at: widget.demo ? _at : null).then<GateAdvice?>((a) => a, onError: (_) => null);
     // A1: the rest of today, updated with the rangers' counts (no card if the server has no spot model)
     _today = api.liveForecast(widget.day, at: widget.demo ? _at : null).then<TodayUpdate?>((a) => a, onError: (_) => null);
+    // RQ13: places each trail can take now, re-planned from the gate counts (closed-loop control)
+    _control = api.gateControl(widget.day, at: widget.demo ? _at : null).then<GateControl?>((a) => a, onError: (_) => null);
     return api.live(widget.day, at: widget.demo ? _at : null);
   }
 
@@ -362,6 +388,14 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
                   ),
               ]),
               const SizedBox(height: 12),
+              FutureBuilder<GateControl?>(
+                  future: _control,
+                  builder: (context, c) => GateControlCard(c.data, onReport: () async {
+                        final api = C4Scope.of(context);
+                        if (await showDialog<bool>(context: context, builder: (_) => IncidentDialog(api: api)) == true) {
+                          setState(() => _future = _load());
+                        }
+                      })),
               FutureBuilder<GateAdvice?>(future: _advice, builder: (context, a) => GateAdviceCard(a.data)),
               FutureBuilder<TodayUpdate?>(future: _today, builder: (context, u) => TodayUpdateCard(u.data)),
               if (issues.isEmpty)
@@ -370,7 +404,7 @@ class _LiveTabState extends State<_LiveTab> with ParkTrails {
                 Card(
                   child: ListTile(
                     leading: CircleAvatar(backgroundColor: C4Colors.light(s.light)),
-                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${s.poi!.replaceAll('_', ' ')})' : ''}'),
+                    title: Text('${trailName(s.trail)} · segment ${s.segId}${s.poi != null ? ' (${BottleneckDay.poiLabel(s.poi!)})' : ''}'),
                     subtitle: Text('About ${s.people.round()} people (safe: ${s.capacity?.round() ?? '-'})\n${s.action ?? ''}'),
                     isThreeLine: true,
                   ),
@@ -493,4 +527,147 @@ class TodayUpdateCard extends StatelessWidget {
       ),
     );
   }
+}
+/// RQ13: closed-loop control at the gate - how many more people each trail can take in this slot, re-planned from
+/// the gate counts every time it is opened.
+class GateControlCard extends StatelessWidget {
+  const GateControlCard(this.c, {super.key, this.onReport});
+
+  final GateControl? c;
+  final VoidCallback? onReport;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = this.c;
+    if (c == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    final more = c.ratio > 1.05, fewer = c.ratio < 0.95;
+    return Card(
+      key: const Key('gate_control'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.door_sliding_outlined, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Let in now · slot ${c.slot}', style: text.titleSmall)),
+          ]),
+          if (c.why.isNotEmpty) Text(c.why, key: const Key('gate_why'), style: text.bodyMedium),
+          if (more || fewer)
+            Text(
+                '${more ? 'Busier' : 'Quieter'} than expected so far (${(c.ratio * 100).round()} % of the forecast): '
+                'the plan has been adjusted.',
+                style: text.bodySmall),
+          for (final a in c.alerts)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(children: [
+                const Icon(Icons.warning_amber, size: 18, color: C4Colors.red),
+                const SizedBox(width: 6),
+                Expanded(child: Text(a, key: const Key('gate_alert'), style: text.bodyMedium)),
+              ]),
+            ),
+          const SizedBox(height: 6),
+          for (final t in c.trails)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(children: [
+                Expanded(child: Text(t['trail_name'] as String, style: text.bodyMedium)),
+                Text(
+                  t['closed_for_entry'] == true ? 'closed for entry' : '${t['can_enter_now']} more',
+                  key: Key('can_enter_${t['trail']}'),
+                  style: text.titleSmall?.copyWith(
+                      color: t['closed_for_entry'] == true || (t['can_enter_now'] as num) == 0 ? C4Colors.red : C4Colors.green),
+                ),
+              ]),
+            ),
+          const SizedBox(height: 4),
+          Text(c.basis, style: text.bodySmall),
+          if (onReport != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('report_incident'),
+                onPressed: onReport,
+                icon: const Icon(Icons.report_outlined),
+                label: const Text('Report a problem on a trail'),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// A ranger reports what they see on a trail now (today only): the gate limits and start times drop at once.
+class IncidentDialog extends StatefulWidget {
+  const IncidentDialog({super.key, required this.api});
+
+  /// Passed in: a dialog's route sits above the screen's C4Scope.
+  final C4Api api;
+
+  @override
+  State<IncidentDialog> createState() => _IncidentDialogState();
+}
+
+class _IncidentDialogState extends State<IncidentDialog> {
+  static const _levels = {'muddy': 'Muddy / slow', 'partly_closed': 'Partly closed', 'closed': 'Closed', 'good': 'All clear again'};
+  String? _trail;
+  String _level = 'partly_closed';
+  final _note = TextEditingController();
+  String? _error;
+  Map<String, String> _names = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.api.trailNames().then((n) {
+      if (mounted) setState(() => _names = n);
+    }, onError: (_) {});
+  }
+
+  String? get _pick => _trail ?? (_names.isEmpty ? null : _names.keys.first);
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    try {
+      await widget.api.reportIncident(_pick!, _level, _note.text.trim());
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Problem on a trail'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          DropdownButton<String>(
+            key: const Key('incident_trail'),
+            isExpanded: true,
+            value: _pick,
+            items: [for (final e in _names.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+            onChanged: (v) => setState(() => _trail = v),
+          ),
+          DropdownButton<String>(
+            key: const Key('incident_level'),
+            isExpanded: true,
+            value: _level,
+            items: [for (final e in _levels.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+            onChanged: (v) => setState(() => _level = v!),
+          ),
+          TextField(controller: _note, maxLength: 200, decoration: const InputDecoration(labelText: 'What happened (optional)')),
+          const Text("For today only. Entry limits and visitors' start times change at once."),
+          if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          FilledButton(key: const Key('incident_send'), onPressed: _pick == null ? null : _send, child: const Text('Report')),
+        ],
+      );
 }

@@ -1,0 +1,192 @@
+gates: [1, 9, 25, 53]; scored interior segments: 53
+  lstm seed=42: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_lstm_s42.pt
+[spot] lstm seed=42 MAE=6.986 RMSE=57.122
+  lstm seed=43: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_lstm_s43.pt
+[spot] lstm seed=43 MAE=7.276 RMSE=58.707
+  lstm seed=44: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_lstm_s44.pt
+[spot] lstm seed=44 MAE=6.906 RMSE=55.976
+  gru_nograph seed=42: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_gru_nograph_s42.pt
+[spot] gru_nograph seed=42 MAE=7.188 RMSE=59.041
+  gru_nograph seed=43: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_gru_nograph_s43.pt
+[spot] gru_nograph seed=43 MAE=6.892 RMSE=56.542
+  gru_nograph seed=44: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_gru_nograph_s44.pt
+[spot] gru_nograph seed=44 MAE=6.935 RMSE=55.829
+  stgnn seed=42: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_stgnn_s42.pt
+[spot] stgnn seed=42 MAE=6.840 RMSE=54.149
+  stgnn seed=43: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_stgnn_s43.pt
+[spot] stgnn seed=43 MAE=6.785 RMSE=54.570
+  stgnn seed=44: loaded D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261022_054232_sparse_s1\models\spot_stgnn_s44.pt
+[spot] stgnn seed=44 MAE=6.785 RMSE=54.034
+  stgnn_dir seed=42 ep=00 train=0.1156 val=0.1177 (54.3s)
+  stgnn_dir seed=42 ep=01 train=0.0997 val=0.1093 (55.0s)
+  stgnn_dir seed=42 ep=02 train=0.0930 val=0.1039 (54.2s)
+  stgnn_dir seed=42 ep=03 train=0.0886 val=0.0995 (53.6s)
+  stgnn_dir seed=42 ep=04 train=0.0841 val=0.0949 (54.2s)
+  stgnn_dir seed=42 ep=05 train=0.0811 val=0.0930 (55.1s)
+  stgnn_dir seed=42 ep=06 train=0.0780 val=0.0886 (53.9s)
+  stgnn_dir seed=42 ep=07 train=0.0750 val=0.0860 (53.3s)
+  stgnn_dir seed=42 ep=08 train=0.0724 val=0.0831 (54.3s)
+  stgnn_dir seed=42 ep=09 train=0.0704 val=0.0811 (53.7s)
+  stgnn_dir seed=42 ep=10 train=0.0676 val=0.0792 (53.9s)
+  stgnn_dir seed=42 ep=11 train=0.0662 val=0.0770 (57.1s)
+  stgnn_dir seed=42 ep=12 train=0.0639 val=0.0745 (54.4s)
+  stgnn_dir seed=42 ep=13 train=0.0620 val=0.0749 (53.8s)
+  stgnn_dir seed=42 ep=14 train=0.0612 val=0.0727 (54.9s)
+  stgnn_dir seed=42 ep=15 train=0.0601 val=0.0716 (54.3s)
+  stgnn_dir seed=42 ep=16 train=0.0591 val=0.0724 (54.2s)
+  stgnn_dir seed=42 ep=17 train=0.0578 val=0.0710 (54.0s)
+  stgnn_dir seed=42 ep=18 train=0.0575 val=0.0710 (53.8s)
+  stgnn_dir seed=42 ep=19 train=0.0569 val=0.0693 (55.6s)
+[spot] stgnn_dir seed=42 MAE=6.998 RMSE=57.660
+  stgnn_dir seed=43 ep=00 train=0.1134 val=0.1193 (54.0s)
+  stgnn_dir seed=43 ep=01 train=0.1011 val=0.1119 (54.8s)
+  stgnn_dir seed=43 ep=02 train=0.0945 val=0.1043 (53.6s)
+  stgnn_dir seed=43 ep=03 train=0.0894 val=0.1000 (54.4s)
+  stgnn_dir seed=43 ep=04 train=0.0852 val=0.0960 (54.0s)
+  stgnn_dir seed=43 ep=05 train=0.0818 val=0.0940 (54.6s)
+  stgnn_dir seed=43 ep=06 train=0.0791 val=0.0907 (54.1s)
+  stgnn_dir seed=43 ep=07 train=0.0766 val=0.0885 (54.2s)
+  stgnn_dir seed=43 ep=08 train=0.0749 val=0.0873 (54.5s)
+  stgnn_dir seed=43 ep=09 train=0.0725 val=0.0843 (54.0s)
+  stgnn_dir seed=43 ep=10 train=0.0698 val=0.0805 (54.2s)
+  stgnn_dir seed=43 ep=11 train=0.0677 val=0.0801 (54.7s)
+  stgnn_dir seed=43 ep=12 train=0.0656 val=0.0779 (54.9s)
+  stgnn_dir seed=43 ep=13 train=0.0650 val=0.0772 (53.7s)
+  stgnn_dir seed=43 ep=14 train=0.0629 val=0.0749 (54.8s)
+  stgnn_dir seed=43 ep=15 train=0.0627 val=0.0733 (54.0s)
+  stgnn_dir seed=43 ep=16 train=0.0613 val=0.0722 (53.1s)
+  stgnn_dir seed=43 ep=17 train=0.0595 val=0.0720 (56.6s)
+  stgnn_dir seed=43 ep=18 train=0.0589 val=0.0719 (54.3s)
+  stgnn_dir seed=43 ep=19 train=0.0579 val=0.0708 (54.3s)
+[spot] stgnn_dir seed=43 MAE=7.099 RMSE=58.482
+  stgnn_dir seed=44 ep=00 train=0.1109 val=0.1163 (54.3s)
+  stgnn_dir seed=44 ep=01 train=0.0975 val=0.1067 (54.7s)
+  stgnn_dir seed=44 ep=02 train=0.0910 val=0.0999 (54.0s)
+  stgnn_dir seed=44 ep=03 train=0.0848 val=0.0957 (53.9s)
+  stgnn_dir seed=44 ep=04 train=0.0815 val=0.0916 (53.6s)
+  stgnn_dir seed=44 ep=05 train=0.0783 val=0.0901 (54.4s)
+  stgnn_dir seed=44 ep=06 train=0.0746 val=0.0855 (53.6s)
+  stgnn_dir seed=44 ep=07 train=0.0718 val=0.0843 (53.8s)
+  stgnn_dir seed=44 ep=08 train=0.0690 val=0.0804 (53.7s)
+  stgnn_dir seed=44 ep=09 train=0.0676 val=0.0785 (54.3s)
+  stgnn_dir seed=44 ep=10 train=0.0644 val=0.0769 (53.2s)
+  stgnn_dir seed=44 ep=11 train=0.0635 val=0.0748 (53.9s)
+  stgnn_dir seed=44 ep=12 train=0.0614 val=0.0734 (54.4s)
+  stgnn_dir seed=44 ep=13 train=0.0601 val=0.0726 (54.0s)
+  stgnn_dir seed=44 ep=14 train=0.0598 val=0.0734 (53.5s)
+  stgnn_dir seed=44 ep=15 train=0.0583 val=0.0710 (53.2s)
+  stgnn_dir seed=44 ep=16 train=0.0578 val=0.0702 (54.7s)
+  stgnn_dir seed=44 ep=17 train=0.0573 val=0.0721 (53.3s)
+  stgnn_dir seed=44 ep=18 train=0.0567 val=0.0713 (54.2s)
+  stgnn_dir seed=44 ep=19 train=0.0557 val=0.0694 (54.0s)
+[spot] stgnn_dir seed=44 MAE=6.891 RMSE=56.969
+                        MAE    RMSE  MAE_from_08h  MAE_from_10h  MAE_from_12h
+setting model                                                                
+spot    HA           12.764  86.952           NaN           NaN           NaN
+        gru_nograph   7.005  57.138         4.668         3.749         2.616
+        lstm          7.056  57.268         4.716         3.782         2.668
+        stgnn         6.803  54.251         4.534         3.624         2.568
+        stgnn_dir     6.996  57.704         4.477         3.601         2.572
+setting       model  precision  recall     F1
+   spot          HA     0.4638  0.5199 0.4902
+   spot        lstm     0.7792  0.7150 0.7451
+   spot gru_nograph     0.7893  0.7123 0.7488
+   spot       stgnn     0.7863  0.7332 0.7586
+   spot   stgnn_dir     0.7950  0.7203 0.7556
+{
+ "spot": {
+  "vs_stgnn": [
+   {
+    "baseline": "HA",
+    "n_days": 365,
+    "mean_diff_MAE": -5.960299491882324,
+    "t": -16.368635177612305,
+    "p": 0.0,
+    "wilcoxon_p": 0.0,
+    "cohens_dz": -0.8567734956741333,
+    "p_holm": 0.0,
+    "significant_0.05": true
+   },
+   {
+    "baseline": "lstm",
+    "n_days": 365,
+    "mean_diff_MAE": -0.25277793407440186,
+    "t": -4.876811981201172,
+    "p": 1.6140252228069585e-06,
+    "wilcoxon_p": 4.4114853436916235e-10,
+    "cohens_dz": -0.255264014005661,
+    "p_holm": 4.8420756684208754e-06,
+    "significant_0.05": true
+   },
+   {
+    "baseline": "gru_nograph",
+    "n_days": 365,
+    "mean_diff_MAE": -0.20147913694381714,
+    "t": -4.45193338394165,
+    "p": 1.1332279427733738e-05,
+    "wilcoxon_p": 3.682518126879586e-06,
+    "cohens_dz": -0.23302485048770905,
+    "p_holm": 2.2664558855467476e-05,
+    "significant_0.05": true
+   },
+   {
+    "baseline": "stgnn_dir",
+    "n_days": 365,
+    "mean_diff_MAE": -0.19265270233154297,
+    "t": -3.535188674926758,
+    "p": 0.0004600566753651947,
+    "wilcoxon_p": 2.484730086613207e-12,
+    "cohens_dz": -0.18504023551940918,
+    "p_holm": 0.0004600566753651947,
+    "significant_0.05": true
+   }
+  ],
+  "vs_stgnn_dir": [
+   {
+    "baseline": "HA",
+    "n_days": 365,
+    "mean_diff_MAE": -5.767646312713623,
+    "t": -16.486568450927734,
+    "p": 0.0,
+    "wilcoxon_p": 0.0,
+    "cohens_dz": -0.8629465699195862,
+    "p_holm": 0.0,
+    "significant_0.05": true
+   },
+   {
+    "baseline": "lstm",
+    "n_days": 365,
+    "mean_diff_MAE": -0.060125209391117096,
+    "t": -0.9755576252937317,
+    "p": 0.32993143796920776,
+    "wilcoxon_p": 0.00035681662848219275,
+    "cohens_dz": -0.05106302723288536,
+    "p_holm": 0.6598628759384155,
+    "significant_0.05": false
+   },
+   {
+    "baseline": "gru_nograph",
+    "n_days": 365,
+    "mean_diff_MAE": -0.008826407603919506,
+    "t": -0.15799079835414886,
+    "p": 0.8745515942573547,
+    "wilcoxon_p": 0.0002633198455441743,
+    "cohens_dz": -0.008269616402685642,
+    "p_holm": 0.8745515942573547,
+    "significant_0.05": false
+   },
+   {
+    "baseline": "stgnn",
+    "n_days": 365,
+    "mean_diff_MAE": 0.19265270233154297,
+    "t": 3.535188674926758,
+    "p": 0.0004600566753651947,
+    "wilcoxon_p": 2.484730086613207e-12,
+    "cohens_dz": 0.18504023551940918,
+    "p_holm": 0.001380170026095584,
+    "significant_0.05": false
+   }
+  ]
+ }
+}
+done -> D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261101_134232_sparse_s1

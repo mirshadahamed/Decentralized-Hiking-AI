@@ -1,0 +1,74 @@
+{
+  "url": "http://127.0.0.1:8090",
+  "parks": [
+    "horton_plains",
+    "adams_peak",
+    "knuckles",
+    "pekoe_trail",
+    "yala"
+  ],
+  "seed": 7,
+  "cpu_count": 4,
+  "levels": [
+    {
+      "users": 1,
+      "seconds": 30.1,
+      "requests": 178,
+      "requests_per_s": 5.9,
+      "p50_ms": 17.7,
+      "p95_ms": 1067.3,
+      "p99_ms": 1533.5,
+      "error_pct": 0.0,
+      "cache_hit_pct": 43.3,
+      "network_p95_ms": 1869.4
+    },
+    {
+      "users": 10,
+      "seconds": 30.7,
+      "requests": 496,
+      "requests_per_s": 16.2,
+      "p50_ms": 477.4,
+      "p95_ms": 1695.5,
+      "p99_ms": 2175.0,
+      "error_pct": 0.0,
+      "cache_hit_pct": 49.4,
+      "network_p95_ms": 1928.1
+    },
+    {
+      "users": 50,
+      "seconds": 36.6,
+      "requests": 498,
+      "requests_per_s": 13.6,
+      "p50_ms": 1513.4,
+      "p95_ms": 11123.0,
+      "p99_ms": 15896.8,
+      "error_pct": 0.0,
+      "cache_hit_pct": 50.6,
+      "network_p95_ms": 16388.8
+    },
+    {
+      "users": 100,
+      "seconds": 49.3,
+      "requests": 630,
+      "requests_per_s": 12.8,
+      "p50_ms": 3560.5,
+      "p95_ms": 23949.0,
+      "p99_ms": 26115.5,
+      "error_pct": 0.0,
+      "cache_hit_pct": 55.2,
+      "network_p95_ms": 26227.3
+    },
+    {
+      "users": 200,
+      "seconds": 38.7,
+      "requests": 926,
+      "requests_per_s": 24.0,
+      "p50_ms": 5408.1,
+      "p95_ms": 18668.1,
+      "p99_ms": 22775.4,
+      "error_pct": 0.32,
+      "cache_hit_pct": 50.9,
+      "network_p95_ms": 20794.4
+    }
+  ]
+}

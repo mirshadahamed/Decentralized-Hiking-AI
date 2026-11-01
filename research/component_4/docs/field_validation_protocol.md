@@ -52,6 +52,16 @@ date,time,place,count,counter,notes
 `place` = a POI key above, or `seg:<segment number>`. One file per day and counter, saved in
 `data/field/<park>/` (not committed: the raw sheets stay with the researcher).
 
+**Counting in the app instead of on paper.** Rangers or the researcher enter counts in Gate tools → Count; then
+```powershell
+.venv\Scripts\python.exe -m src.live.recalibrate --export 2026-12-01 2026-12-31   # -> data/field/<park>/app_counts_*.csv
+.venv\Scripts\python.exe -m src.eval.field_validation data\field\horton_plains\app_counts_2026-12-01_2026-12-31.csv
+.venv\Scripts\python.exe -m src.live.recalibrate                                  # N2: raw vs count-corrected error
+```
+The same counts also correct the forecast every evening (N2, `src/live/recalibrate.py`): per section, counted ÷
+forecast over the last 14 days, pulled towards 1 when there are few counts, clipped to 0.5–2. The criteria in
+section 2 are judged on the **raw** forecast; the corrected error is reported next to it, never instead of it.
+
 ## 6. Ethics and safety
 
 - Counts only: no names, photos of faces or personal data (NFR5). Climb-time questions are anonymous and voluntary.

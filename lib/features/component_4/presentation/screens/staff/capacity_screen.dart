@@ -4,6 +4,7 @@ import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/weather_card.dart';
 
 /// Officer capacity panel (A2): the day's quota per trail under each rule - Cifuentes with the crowd forecast,
 /// with the weather only, one number all year, or the officer's own - and the one the tickets use. The forecast
@@ -25,17 +26,23 @@ const _ruleLabel = {
 class _CapacityTabState extends State<CapacityTab> {
   DateTime _day = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 1));
   Future<CapacityPanel>? _future;
+  Future<DayWeather?>? _weather;
   String? _busyTrail;
+
+  Future<DayWeather?> _weatherOf(DateTime d) =>
+      C4Scope.of(context).weather(d).then<DayWeather?>((w) => w, onError: (_) => null);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _future ??= C4Scope.of(context).capacityPanel(_day);
+    _weather ??= _weatherOf(_day);
   }
 
   void _load(DateTime d) => setState(() {
         _day = d;
         _future = C4Scope.of(context).capacityPanel(d);
+        _weather = _weatherOf(d);
       });
 
   Future<void> _choose(TrailQuota t, String rule) async {
@@ -103,6 +110,10 @@ class _CapacityTabState extends State<CapacityTab> {
               Text('Daily quota for ${niceDate(p.day)}', style: text.titleMedium),
               const SizedBox(height: C4Space.xs),
               _Basis(p.basis),
+              FutureBuilder<DayWeather?>(
+                future: _weather,
+                builder: (context, w) => w.data == null ? const SizedBox.shrink() : WeatherCard(weather: w.data!),
+              ),
               for (final t in p.trails)
                 _TrailCard(t: t, busy: _busyTrail == t.trail, onChoose: (r) => _choose(t, r)),
               const SizedBox(height: C4Space.m),

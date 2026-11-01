@@ -1,0 +1,338 @@
+{
+  "targets": [
+    "knuckles"
+  ],
+  "sources": [
+    "horton_plains"
+  ],
+  "shared_covariates": [
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "month_sin",
+    "month_cos",
+    "is_open",
+    "is_weekend",
+    "is_holiday",
+    "is_poya",
+    "is_long_weekend",
+    "is_school_holiday",
+    "precip_log1p",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "cloud_cover",
+    "wind_speed_10m"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "days": [
+    14,
+    30,
+    90
+  ],
+  "tests": {
+    "knuckles": {
+      "stgnn_zero_shot_from_horton_plains": [
+        {
+          "baseline": "stgnn_in_domain",
+          "n_days": 365,
+          "mean_diff_MAE": 0.7801951766014099,
+          "t": 50.26719665527344,
+          "p": 0.0,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": 2.631105422973633,
+          "p_holm": 0.0,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.6489211320877075,
+          "t": 28.16790008544922,
+          "p": 0.0,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": 1.4743753671646118,
+          "p_holm": 0.0,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_14_from_horton_plains": [
+        {
+          "baseline": "stgnn_scratch_14",
+          "n_days": 365,
+          "mean_diff_MAE": -0.3688336908817291,
+          "t": -13.84107780456543,
+          "p": 2.674801809041354e-35,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.7244751453399658,
+          "p_holm": 8.024405427124062e-35,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_14",
+          "n_days": 365,
+          "mean_diff_MAE": -0.09218810498714447,
+          "t": -4.477929592132568,
+          "p": 1.0100294275616761e-05,
+          "wilcoxon_p": 4.8986535716721846e-08,
+          "cohens_dz": -0.23438553512096405,
+          "p_holm": 1.0100294275616761e-05,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.1039198487997055,
+          "t": 4.743265628814697,
+          "p": 3.024692887265701e-06,
+          "wilcoxon_p": 1.824970841113327e-09,
+          "cohens_dz": 0.24827389419078827,
+          "p_holm": 6.049385774531402e-06,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_30_from_horton_plains": [
+        {
+          "baseline": "stgnn_scratch_30",
+          "n_days": 365,
+          "mean_diff_MAE": -0.39082464575767517,
+          "t": -14.235491752624512,
+          "p": 7.236437103932879e-37,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.7451197504997253,
+          "p_holm": 2.1709311311798637e-36,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_30",
+          "n_days": 365,
+          "mean_diff_MAE": -0.009806666523218155,
+          "t": -0.4943758547306061,
+          "p": 0.6213388442993164,
+          "wilcoxon_p": 0.832160234451294,
+          "cohens_dz": -0.025876816362142563,
+          "p_holm": 0.6213388442993164,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.060971010476350784,
+          "t": 2.8230738639831543,
+          "p": 0.005017977207899094,
+          "wilcoxon_p": 0.0002151730441255495,
+          "cohens_dz": 0.14776644110679626,
+          "p_holm": 0.010035954415798187,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_90_from_horton_plains": [
+        {
+          "baseline": "stgnn_scratch_90",
+          "n_days": 365,
+          "mean_diff_MAE": -0.3998340368270874,
+          "t": -14.791275978088379,
+          "p": 4.268136519772958e-39,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.7742107510566711,
+          "p_holm": 1.2804409559318874e-38,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_90",
+          "n_days": 365,
+          "mean_diff_MAE": 0.044920265674591064,
+          "t": 3.4916670322418213,
+          "p": 0.0005390177248045802,
+          "wilcoxon_p": 3.9061185816535726e-05,
+          "cohens_dz": 0.18276222050189972,
+          "p_holm": 0.0010780354496091604,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.02868424728512764,
+          "t": 1.285697340965271,
+          "p": 0.19936606287956238,
+          "wilcoxon_p": 0.05315486714243889,
+          "cohens_dz": 0.06729647517204285,
+          "p_holm": 0.19936606287956238,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_zero_shot_from_joint": [
+        {
+          "baseline": "stgnn_in_domain",
+          "n_days": 365,
+          "mean_diff_MAE": 0.5129451155662537,
+          "t": 20.080440521240234,
+          "p": 0.0,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": 1.0510584115982056,
+          "p_holm": 0.0,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.3816710114479065,
+          "t": 10.722447395324707,
+          "p": 1.704001875288898e-23,
+          "wilcoxon_p": 9.314825195423789e-25,
+          "cohens_dz": 0.5612385272979736,
+          "p_holm": 1.704001875288898e-23,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_14_from_joint": [
+        {
+          "baseline": "stgnn_scratch_14",
+          "n_days": 365,
+          "mean_diff_MAE": -0.4017276167869568,
+          "t": -16.153417587280273,
+          "p": 0.0,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.8455085158348083,
+          "p_holm": 0.0,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_14",
+          "n_days": 365,
+          "mean_diff_MAE": -0.12508201599121094,
+          "t": -5.541895389556885,
+          "p": 5.751817511168156e-08,
+          "wilcoxon_p": 3.704589690567417e-10,
+          "cohens_dz": -0.29007604718208313,
+          "p_holm": 1.1503635022336312e-07,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.07102594524621964,
+          "t": 2.9686708450317383,
+          "p": 0.003188953036442399,
+          "wilcoxon_p": 0.0004171743930783123,
+          "cohens_dz": 0.15538734197616577,
+          "p_holm": 0.003188953036442399,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_14_from_joint_vs_single": [
+        {
+          "baseline": "stgnn_finetune_14_from_horton_plains",
+          "n_days": 365,
+          "mean_diff_MAE": -0.03289390355348587,
+          "t": -6.2795538902282715,
+          "p": 9.67836144560863e-10,
+          "wilcoxon_p": 1.277554624590227e-11,
+          "cohens_dz": -0.3286868631839752,
+          "p_holm": 9.67836144560863e-10,
+          "significant_0.05": true
+        }
+      ],
+      "stgnn_finetune_30_from_joint": [
+        {
+          "baseline": "stgnn_scratch_30",
+          "n_days": 365,
+          "mean_diff_MAE": -0.41485491394996643,
+          "t": -15.238394737243652,
+          "p": 0.0,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.7976140975952148,
+          "p_holm": 0.0,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_30",
+          "n_days": 365,
+          "mean_diff_MAE": -0.03383689746260643,
+          "t": -1.6135526895523071,
+          "p": 0.10749103873968124,
+          "wilcoxon_p": 0.12008563429117203,
+          "cohens_dz": -0.08445721119642258,
+          "p_holm": 0.211306631565094,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.036940764635801315,
+          "t": 1.622074007987976,
+          "p": 0.105653315782547,
+          "wilcoxon_p": 0.05339931324124336,
+          "cohens_dz": 0.08490323275327682,
+          "p_holm": 0.211306631565094,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_30_from_joint_vs_single": [
+        {
+          "baseline": "stgnn_finetune_30_from_horton_plains",
+          "n_days": 365,
+          "mean_diff_MAE": -0.024030236527323723,
+          "t": -4.259744644165039,
+          "p": 2.6088953745784238e-05,
+          "wilcoxon_p": 1.5753045534694365e-09,
+          "cohens_dz": -0.22296524047851562,
+          "p_holm": 2.6088953745784238e-05,
+          "significant_0.05": true
+        }
+      ],
+      "stgnn_finetune_90_from_joint": [
+        {
+          "baseline": "stgnn_scratch_90",
+          "n_days": 365,
+          "mean_diff_MAE": -0.41507282853126526,
+          "t": -14.799325942993164,
+          "p": 3.9609606860052436e-39,
+          "wilcoxon_p": 0.0,
+          "cohens_dz": -0.7746321558952332,
+          "p_holm": 1.188288205801573e-38,
+          "significant_0.05": true
+        },
+        {
+          "baseline": "HA_90",
+          "n_days": 365,
+          "mean_diff_MAE": 0.029681451618671417,
+          "t": 2.2380151748657227,
+          "p": 0.025824323296546936,
+          "wilcoxon_p": 0.03228349611163139,
+          "cohens_dz": 0.11714306473731995,
+          "p_holm": 0.05164864659309387,
+          "significant_0.05": false
+        },
+        {
+          "baseline": "HA",
+          "n_days": 365,
+          "mean_diff_MAE": 0.01344542857259512,
+          "t": 0.608801543712616,
+          "p": 0.5430355668067932,
+          "wilcoxon_p": 0.4257895350456238,
+          "cohens_dz": 0.03186613321304321,
+          "p_holm": 0.5430355668067932,
+          "significant_0.05": false
+        }
+      ],
+      "stgnn_finetune_90_from_joint_vs_single": [
+        {
+          "baseline": "stgnn_finetune_90_from_horton_plains",
+          "n_days": 365,
+          "mean_diff_MAE": -0.015238811261951923,
+          "t": -2.2142317295074463,
+          "p": 0.02743191085755825,
+          "wilcoxon_p": 0.0013634596252813935,
+          "cohens_dz": -0.11589819192886353,
+          "p_holm": 0.02743191085755825,
+          "significant_0.05": true
+        }
+      ]
+    }
+  }
+}

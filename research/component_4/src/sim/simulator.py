@@ -104,6 +104,35 @@ def sample_groups(n_visitors: int, p: dict, rng) -> np.ndarray:
     return sizes[:keep]
 
 
+def guided_regroup(size, arrive, option, trail_of_option, p: dict, rng):
+    """K3: walkers on guided treks go as guided groups (simulator.guided_groups: trails, size [lo, hi], start_h, start_sd_h).
+    The people on each guided trail are kept; they are regrouped into groups of lo..hi that leave the entry together
+    around start_h. Parks without guided_groups are unchanged (no draws)."""
+    g = p.get("guided_groups")
+    if not g or len(size) == 0:
+        return size, arrive, option
+    lo, hi = g["size"]
+    keep = ~np.isin(trail_of_option[option], g["trails"])
+    out = [(size[keep], arrive[keep], option[keep])]
+    for k in np.unique(option[~keep]):
+        people = int(size[option == k].sum())
+        sizes = []
+        while people > 0:
+            n = min(int(rng.integers(lo, hi + 1)), people)
+            sizes.append(n)
+            people -= n
+        t = np.clip(rng.normal(g["start_h"], g["start_sd_h"], len(sizes)), p["gate_open_h"], p["gate_last_entry_h"])
+        out.append((np.array(sizes, float), t * 60, np.full(len(sizes), k)))
+    return tuple(np.concatenate(x) for x in zip(*out))
+
+
+def rain_closed(trails: list, precip_h: np.ndarray, p: dict) -> list:
+    """K3: trails with river crossings close for the day when the rain from 06:00 to 12:00 reaches the threshold
+    (simulator.rain_closures: {trail: mm}). Their walkers stay away (no trek that day)."""
+    morning = float(np.asarray(precip_h)[6:12].sum())
+    return [t for t, mm in (p.get("rain_closures") or {}).items() if t in trails and morning >= mm]
+
+
 def arrival_minutes(n: int, p: dict, rng) -> np.ndarray:
     early = rng.random(n) < p["arrival_early_share"]
     t = np.where(early,
@@ -282,7 +311,7 @@ class TrailSimulator:
             size = np.concatenate([size, g])
             arrive = np.concatenate([arrive, b["time_min"] + rng.uniform(0, 15, len(g))])
             option = np.concatenate([option, np.full(len(g), self.option_of_trail(b["trail"]))])
-        return size, arrive, option
+        return guided_regroup(size, arrive, option, np.array([t for t, _ in self.options]), p, rng)
 
     def _manage_sightings(self, stops, size, arrive, option, speed, dwell, precip_h):
         """Ranger at the sighting: first come, first served, at most `cap_jeeps` stopped at once, each for at most
@@ -384,6 +413,10 @@ class TrailSimulator:
         ev = day_events(self.p, rng, self.S, self.trails[0]) if realism(self.p) else {}
         self.sightings = day_sightings(self.p, rng, self.hotspot_weight)
         size, gate, option = self.sample_day(n_visitors, rng, route_share, ev)
+        closed = rain_closed(self.trails, precip_h, self.p)
+        if closed:
+            open_ = ~np.isin(np.array([t for t, _ in self.options])[option], closed)
+            size, gate, option = size[open_], gate[open_], option[open_]
         hourly, _, duration = self.simulate_groups(size, gate, option, precip_h, rng, slow=ev.get("slow"))
         trail_of = np.array([self.options[k][0] for k in option])
         per_trail = {t: int(size[trail_of == t].sum()) for t in self.trails}

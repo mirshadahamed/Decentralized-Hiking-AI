@@ -75,7 +75,7 @@ class _HalfwayScreenState extends State<HalfwayScreen> {
     final api = C4Scope.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Halfway check · ${api.session?.username ?? ''}'),
+        title: const Text('Halfway check'),
         actions: [
           TextButton.icon(
             onPressed: _pickDemoTime,

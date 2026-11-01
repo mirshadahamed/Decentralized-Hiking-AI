@@ -85,6 +85,54 @@ def test_model_output_shape_and_seed(data):
     assert torch.allclose(outs[0], outs[1])                   # same seed -> same weights -> same output
 
 
+def test_directed_graph_splits_links_by_walking_direction():
+    """stgnn_dir: on one trail, a section receives 'up' messages only from behind it and 'down' only from ahead;
+    links between different trails go both ways."""
+    from src.models.stgnn import directed
+    adj = torch.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0]], dtype=torch.float32)
+    up, down = directed(adj, ["a", "a", "a", "b"], [0.0, 0.5, 1.0, 0.0])
+    assert up[1, 0] == 1 and up[0, 1] == 0 and down[0, 1] == 1 and down[1, 0] == 0
+    assert up[0, 3] == down[0, 3] == 1                         # trail a <-> trail b: both directions
+    assert torch.equal(up + down - up * down, adj.T)            # nothing lost
+
+
+def test_directed_model_runs(data):
+    from src.train.trainer import build_model
+    from src.utils import set_seed
+    set_seed(0)
+    m = build_model(data, "stgnn_dir", 8)
+    sensed = np.ones(data.N, bool)
+    sensed[0] = False
+    o = data.origins("test")[:2]
+    xp, xf, _, _ = data.batch(o, sensed, 10.0)
+    assert m(xp, xf).shape == (2, data.H, data.N)
+    assert {"adj_up", "adj_down"} <= {n for n, _ in m.named_buffers()}
+
+
+def test_random_counts_keep_the_gates():
+    from src.train.trainer import random_counts
+    base = np.zeros(10, bool)
+    base[[0, 9]] = True
+    rng = np.random.default_rng(0)
+    for _ in range(20):
+        s = random_counts(rng, base, 3)
+        assert s[0] and s[9] and 2 <= s.sum() <= 5
+
+
+def test_reuse_loads_the_same_model(data, tmp_path):
+    """train_or_load: a checkpoint of the same kind and counted sections is loaded, not trained again."""
+    from src.train.trainer import build_model, train_or_load
+    every = np.ones(data.N, bool)
+    m = build_model(data, "stgnn", 8)
+    (tmp_path / "models").mkdir()
+    torch.save({"state_dict": m.state_dict(), "scale": 3.0, "kind": "stgnn", "sensed": every, "seed": 42},
+               tmp_path / "models" / "x_stgnn_s42.pt")
+    cfg = load_config()
+    cfg["train"]["hidden"] = 8
+    loaded, scale = train_or_load(tmp_path, "x_stgnn_s42", data, "stgnn", every, cfg, 42, log=lambda _: None)
+    assert scale == 3.0 and all(torch.equal(a, b) for a, b in zip(loaded.state_dict().values(), m.state_dict().values()))
+
+
 def test_simulator_is_reproducible():
     import geopandas as gpd
     from src.data.graph import load_walks

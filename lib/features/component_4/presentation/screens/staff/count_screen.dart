@@ -1,20 +1,25 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../data/api_client.dart';
 import '../../../models/models.dart';
 import '../../../services/count_store.dart';
 import '../../theme/c4_theme.dart';
 import '../../widgets/c4_ui.dart';
+import '../../widgets/scan_page.dart';
 
 /// Ranger: count the walkers on a section (A4). Works without a signal: counts wait on the phone and are sent
 /// when it is back. These counts are the park's first sensor record and check the forecast.
 class CountTab extends StatefulWidget {
-  const CountTab({super.key, this.store, this.now});
+  const CountTab({super.key, this.store, this.now, this.scan});
 
   final CountStore? store;
   final DateTime Function()? now;
+
+  /// Reads a QR code (default: the camera); tests pass a fake.
+  final Future<String?> Function(BuildContext context)? scan;
 
   @override
   State<CountTab> createState() => _CountTabState();
@@ -23,6 +28,7 @@ class CountTab extends StatefulWidget {
 class _CountTabState extends State<CountTab> {
   late final CountStore _store = widget.store ?? CountStore();
   List<SegmentInfo> _segments = [];
+  bool get _ranked => _segments.any((s) => s.countRank != null);
   int? _seg;
   int _n = 0, _waiting = 0;
   bool _busy = false;
@@ -86,6 +92,49 @@ class _CountTabState extends State<CountTab> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sent $sent · waiting $left')));
   }
 
+  /// N5: show the waiting counts as a QR code for another ranger's phone.
+  Future<void> _share() async {
+    final counts = await _store.pending();
+    if (!mounted || counts.isEmpty) return;
+    final n = counts.length.clamp(0, CountStore.shareMax);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Share $n count${n == 1 ? '' : 's'}'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          SizedBox(
+            width: 260,
+            height: 260,
+            child: QrImageView(key: const Key('count_share_qr'), data: CountStore.shareCode(counts), size: 260),
+          ),
+          const SizedBox(height: C4Space.s),
+          const Text('The other ranger taps "Receive by QR" and scans this. Whichever phone gets a signal first sends '
+              'the counts; each is stored once.'),
+          if (counts.length > CountStore.shareMax)
+            Text('Only the first ${CountStore.shareMax}: share again after sending them.'),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done'))],
+      ),
+    );
+  }
+
+  /// N5: take counts from another ranger's phone (their QR code) into this phone's queue.
+  Future<void> _receive() async {
+    final code = await (widget.scan?.call(context) ??
+        Navigator.of(context).push<String>(
+            MaterialPageRoute(builder: (_) => const ScanPage(title: "Scan the other ranger's counts"))));
+    if (code == null || !mounted) return;
+    try {
+      final added = await _store.receive(code);
+      final w = (await _store.pending()).length;
+      if (!mounted) return;
+      setState(() => _waiting = w);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$added new count${added == 1 ? '' : 's'} received')));
+    } on FormatException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -111,7 +160,17 @@ class _CountTabState extends State<CountTab> {
           for (final s in _segments)
             DropdownMenuItem(
                 value: s.segId,
-                child: Text('${s.modelInput ? '★ ' : ''}${s.name} · ${s.trailName}', overflow: TextOverflow.ellipsis)),
+                child: Row(children: [
+                  if (s.countRank != null) ...[
+                    Tooltip(
+                      message: "Count here first: helps today's forecast most",
+                      child: Text('#${s.countRank}', key: Key('count_rank_${s.segId}'),
+                          style: text.labelMedium?.copyWith(color: C4Colors.amber, fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(width: 4),
+                  ] else if (s.modelInput && !_ranked) ...[const Icon(Icons.star, size: 16, color: C4Colors.amber), const SizedBox(width: 4)],
+                  Expanded(child: Text('${s.name} · ${s.trailName}', overflow: TextOverflow.ellipsis)),
+                ])),
         ],
         onChanged: (v) => setState(() => _seg = v),
       ),
@@ -148,8 +207,18 @@ class _CountTabState extends State<CountTab> {
         Expanded(child: Text(_waiting == 0 ? 'All counts sent' : '$_waiting waiting to be sent', key: const Key('count_waiting'))),
         if (_waiting > 0) TextButton(onPressed: _sync, child: const Text('Send now')),
       ]),
-      const BasisNote('★ = a count here updates today\'s forecast for every section (Live tab). All counts are the '
-          'park\'s own record; the office compares them with the forecast (Forecast check).'),
+      Wrap(spacing: C4Space.s, children: [
+        if (_waiting > 0)
+          TextButton.icon(key: const Key('count_share'), onPressed: _share, icon: const Icon(Icons.qr_code), label: const Text('Share by QR')),
+        if (canScanQr || widget.scan != null)
+          TextButton.icon(
+              key: const Key('count_receive'), onPressed: _receive, icon: const Icon(Icons.qr_code_scanner), label: const Text('Receive by QR')),
+      ]),
+      const IconNote(
+          icon: Icons.star,
+          color: C4Colors.amber,
+          text: 'A count here also updates today\'s forecast for every section (Live tab). All counts are the park\'s '
+              'own record; the office compares them with the forecast (Forecast check).'),
     ]);
   }
 }
@@ -186,16 +255,8 @@ class _ForecastCheckTabState extends State<ForecastCheckTab> {
           final c = snap.data!;
           final s = c.summary;
           final text = Theme.of(context).textTheme;
-          Widget stat(String label, String v) => Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(C4Space.m),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(label, style: text.labelMedium),
-                      Text(v, style: text.titleLarge),
-                    ]),
-                  ),
-                ),
+          Widget stat(String label, String v, [String? unit]) => Expanded(
+                child: StatTile(label: label, value: v, unit: unit),
               );
           return ListView(padding: const EdgeInsets.all(C4Space.l), children: [
             Wrap(spacing: 6, children: [
@@ -214,21 +275,45 @@ class _ForecastCheckTabState extends State<ForecastCheckTab> {
               const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('No counts yet'),
                   subtitle: Text('Rangers count walkers in Gate tools → Count. Each count is compared with the forecast.')))
             else ...[
-              Row(key: const Key('check_summary'), children: [
-                stat('Counts', '${s['counts']}'),
-                stat('Mean error', s['mae'] == null ? '–' : '${s['mae']} people'),
-                stat('Within 30 %', s['within_30pct'] == null ? '–' : '${((s['within_30pct']!) * 100).round()} %'),
-              ]),
+              IntrinsicHeight(
+                child: Row(key: const Key('check_summary'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  stat('Counts', '${s['counts']}'),
+                  stat('Mean error', s['mae'] == null ? '–' : '${s['mae']}', 'people'),
+                  stat('Within 30 %', s['within_30pct'] == null ? '–' : '${((s['within_30pct']!) * 100).round()} %'),
+                ]),
+              ),
               Text(
                   'Bias ${s['bias'] ?? '–'} (more than 0 = forecast too high) · over capacity counted ${s['counted_over_capacity'] ?? 0}, '
                   'called by the forecast ${s['over_capacity_called'] ?? 0}, false alarms ${s['false_alarms'] ?? 0}',
                   style: text.bodySmall),
+              if (s['mae_corrected'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: C4Space.s),
+                  child: Text(
+                      key: const Key('check_corrected'),
+                      'Corrected by the counts: mean error ${s['mae_corrected']} people, bias ${s['bias_corrected']}. '
+                      'The forecast learns from every count you enter.',
+                      style: text.bodyMedium),
+                ),
               const Divider(height: C4Space.xl),
               for (final r in c.rows.reversed)
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(r.countedOver ? Icons.groups : Icons.person_outline, color: r.countedOver ? C4Colors.red : null),
+                  leading: Icon(
+                      r.forecast == null
+                          ? Icons.help_outline
+                          : (r.forecast! - r.count).abs() <= (0.3 * r.count).clamp(2, double.infinity)
+                              ? Icons.check_circle_outline
+                              : Icons.error_outline,
+                      color: r.forecast == null
+                          ? null
+                          : (r.forecast! - r.count).abs() <= (0.3 * r.count).clamp(2, double.infinity)
+                              ? C4Colors.green
+                              : C4Colors.amber),
+                  trailing: r.countedOver
+                      ? const Tooltip(message: 'Over capacity when counted', child: Icon(Icons.groups, color: C4Colors.red))
+                      : null,
                   title: Text('${r.name} · ${shortDate(r.day)} ${(r.timeMin ~/ 60).toString().padLeft(2, '0')}:'
                       '${(r.timeMin % 60).toString().padLeft(2, '0')}'),
                   subtitle: Text('counted ${r.count} · forecast ${r.forecast?.round() ?? '–'} · holds ${r.capacity.round()} at once'),

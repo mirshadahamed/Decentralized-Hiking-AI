@@ -83,7 +83,7 @@ class _AdvisoryOfficerHomeState extends State<AdvisoryOfficerHome> {
           bottom: const TabBar(tabs: [
             Tab(icon: Icon(Icons.nightlight_outlined), text: 'Tonight'),
             Tab(icon: Icon(Icons.date_range), text: 'Season'),
-            Tab(icon: Icon(Icons.groups_outlined), text: 'Bottlenecks'),
+            Tab(icon: Icon(Icons.groups_outlined), text: 'Crowding'),
             Tab(icon: Icon(Icons.table_chart_outlined), text: 'Records'),
           ]),
         ),
