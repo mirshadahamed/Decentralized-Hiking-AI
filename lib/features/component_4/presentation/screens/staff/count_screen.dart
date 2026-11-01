@@ -28,6 +28,7 @@ class CountTab extends StatefulWidget {
 class _CountTabState extends State<CountTab> {
   late final CountStore _store = widget.store ?? CountStore();
   List<SegmentInfo> _segments = [];
+  bool get _ranked => _segments.any((s) => s.countRank != null);
   int? _seg;
   int _n = 0, _waiting = 0;
   bool _busy = false;
@@ -160,7 +161,14 @@ class _CountTabState extends State<CountTab> {
             DropdownMenuItem(
                 value: s.segId,
                 child: Row(children: [
-                  if (s.modelInput) ...[const Icon(Icons.star, size: 16, color: C4Colors.amber), const SizedBox(width: 4)],
+                  if (s.countRank != null) ...[
+                    Tooltip(
+                      message: "Count here first: helps today's forecast most",
+                      child: Text('#${s.countRank}', key: Key('count_rank_${s.segId}'),
+                          style: text.labelMedium?.copyWith(color: C4Colors.amber, fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(width: 4),
+                  ] else if (s.modelInput && !_ranked) ...[const Icon(Icons.star, size: 16, color: C4Colors.amber), const SizedBox(width: 4)],
                   Expanded(child: Text('${s.name} · ${s.trailName}', overflow: TextOverflow.ellipsis)),
                 ])),
         ],

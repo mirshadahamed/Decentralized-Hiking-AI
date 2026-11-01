@@ -27,8 +27,10 @@ def _con(db=None):
     return con
 
 
-def segments(cfg, model_input: set | None = None) -> list:
-    """model_input: seg_ids whose counts update today's forecast (A1); listed first."""
+def segments(cfg, model_input: set | None = None, order: list | None = None) -> list:
+    """model_input: seg_ids whose counts update today's forecast (A1); order: where a count helps the forecast
+    most, best first (src.eval.placement) -> count_rank 1, 2, ...; ranked sections first, then model input."""
+    rank = {sid: i + 1 for i, sid in enumerate(order or [])}
     ec = build_control()
     labels = cfg["area"].get("poi_labels", {})
     names = cfg["area"]["trail_names"]
@@ -37,8 +39,9 @@ def segments(cfg, model_input: set | None = None) -> list:
         trail = names.get(s.trail, s.trail)
         out.append({"seg_id": int(s.seg_id), "trail": s.trail, "trail_name": trail,
                     "name": labels.get(s.poi, f"{trail}, section {int(s.seg_id)}") if s.poi else f"{trail}, section {int(s.seg_id)}",
-                    "length_m": round(float(s.length_m)), "model_input": int(s.seg_id) in (model_input or set())})
-    return sorted(out, key=lambda x: not x["model_input"])
+                    "length_m": round(float(s.length_m)), "model_input": int(s.seg_id) in (model_input or set()),
+                    "count_rank": rank.get(int(s.seg_id))})
+    return sorted(out, key=lambda x: (x["count_rank"] is None, x["count_rank"] or 0, not x["model_input"]))
 
 
 def add_count(day: str, seg_id: int, time_min: int, count: int, by: str, client_id: str | None = None, db=None) -> dict:

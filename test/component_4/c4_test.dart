@@ -456,7 +456,7 @@ class _CountApi extends FakeApi {
 
   @override
   Future<List<SegmentInfo>> segments() async => [
-        SegmentInfo(segId: 3, name: 'Mini World\'s End', trail: 'main', trailName: "World's End loop"),
+        SegmentInfo(segId: 3, name: 'Mini World\'s End', trail: 'main', trailName: "World's End loop", countRank: 1),
         SegmentInfo(segId: 25, name: "World's End", trail: 'main', trailName: "World's End loop"),
       ];
 
@@ -1117,6 +1117,8 @@ void main() {
     final api = _CountApi()..online = false;
     await t.pumpWidget(wrap(Scaffold(body: CountTab(now: () => DateTime(2026, 10, 22, 10, 15))), api));
     await t.pumpAndSettle();
+    expect(find.byKey(const Key('count_rank_3')), findsOneWidget);             // S4c: count here first
+    expect(SegmentInfo.fromJson({'seg_id': 4, 'count_rank': 2}).countRank, 2);
     await t.tap(find.byKey(const Key('count_plus')));
     await t.tap(find.byKey(const Key('count_plus')));
     await t.tap(find.byKey(const Key('count_plus5')));

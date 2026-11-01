@@ -631,14 +631,16 @@ def sos_status(call_id: int, body: SosStatusIn, user: dict = Depends(role("range
 
 @app.get("/segments", tags=["public"])
 def segment_list():
-    """Sections of the trails (id, name, trail): what a ranger can count on."""
-    from src.live.intraday import model_sections
+    """Sections of the trails (id, name, trail): what a ranger can count on; count_rank = where a count helps
+    today's forecast most (S4c)."""
+    from src.live.intraday import count_order, model_sections
     from src.serve.field_counts import segments
     try:
-        used = model_sections(ctx())
+        c = ctx()
+        used, order = model_sections(c), count_order(c)
     except HTTPException:
-        used = set()
-    return segments(CFG, used)
+        used, order = set(), []
+    return segments(CFG, used, order)
 
 
 class SpotCountIn(BaseModel):

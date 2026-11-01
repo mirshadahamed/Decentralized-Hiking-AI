@@ -1059,11 +1059,13 @@ class CapacityPanel {
 }
 // ---------- A4: rangers' spot counts and the forecast check ----------
 class SegmentInfo {
-  SegmentInfo({required this.segId, required this.name, required this.trail, required this.trailName, this.modelInput = false});
+  SegmentInfo(
+      {required this.segId, required this.name, required this.trail, required this.trailName, this.modelInput = false, this.countRank});
 
   final int segId;
   final String name, trail, trailName;
   final bool modelInput; // A1: a count here updates today's forecast
+  final int? countRank; // S4c: 1 = where a count helps today's forecast most
 
   factory SegmentInfo.fromJson(Map<String, dynamic> j) => SegmentInfo(
         segId: _int(j['seg_id']),
@@ -1071,6 +1073,7 @@ class SegmentInfo {
         trail: j['trail'] as String? ?? '',
         trailName: j['trail_name'] as String? ?? '',
         modelInput: j['model_input'] == true,
+        countRank: (j['count_rank'] as num?)?.toInt(),
       );
 }
 
