@@ -1,0 +1,65 @@
+{
+  "gates": [
+    1,
+    9,
+    25,
+    53
+  ],
+  "rangers": [
+    0,
+    5,
+    17,
+    35,
+    42
+  ],
+  "max_extra": 19,
+  "order": {
+    "stgnn": [
+      0,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      23
+    ],
+    "gru_nograph": [
+      8,
+      0,
+      7,
+      6,
+      5,
+      3,
+      23,
+      4
+    ]
+  },
+  "names": {
+    "stgnn": [
+      "0 (summit)",
+      "8 (nallathanniya, 39%)",
+      "7 (nallathanniya, 33%)",
+      "6 (nallathanniya, 28%)",
+      "5 (half_nallathanniya)",
+      "4 (nallathanniya, 17%)",
+      "3 (nallathanniya, 11%)",
+      "23 (palabaddala, 38%)"
+    ],
+    "gru_nograph": [
+      "8 (nallathanniya, 39%)",
+      "0 (summit)",
+      "7 (nallathanniya, 33%)",
+      "6 (nallathanniya, 28%)",
+      "5 (half_nallathanniya)",
+      "3 (nallathanniya, 11%)",
+      "23 (palabaddala, 38%)",
+      "4 (nallathanniya, 17%)"
+    ]
+  },
+  "seeds": [
+    42,
+    43
+  ],
+  "world": "s1"
+}
