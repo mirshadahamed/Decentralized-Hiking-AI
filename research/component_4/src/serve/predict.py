@@ -8,6 +8,7 @@ Output: results/forecasts/forecast_<date>.json  (read-only input for Module 3 an
 import argparse
 import json
 from datetime import datetime
+from functools import lru_cache
 
 import geopandas as gpd
 import numpy as np
@@ -53,6 +54,39 @@ def inputs_note(model, data) -> str:
     return "every section's counts" if s.all() else f"gate counts only ({int(s.sum())} of {data.N} sections)"
 
 
+@lru_cache(maxsize=4)
+def conformal_table(run: str | None, ptr_text: str | None = None) -> dict | None:
+    """The calibrated ranges of src.eval.conformal, if they were made for this model run."""
+    ptr = RESULTS / "LATEST_CONFORMAL"
+    if run is None or not ptr.exists():
+        return None
+    path = RESULTS / (ptr_text or ptr.read_text(encoding="utf-8").strip()) / "table.json"
+    t = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    return t if t and t.get("model_run") == run else None
+
+
+def with_range(out: dict, seg, fc, rain, expected, cfg, table, level: float = 0.9) -> dict:
+    """NFR4: the peak of each section as a range, and the CAUTIOUS quota: the Cifuentes cascade run on the top of
+    the range (the crowd that comes 1 day in 20). The quota a park can defend against a bad day."""
+    from src.eval.conformal import bounds
+    lo, hi = bounds(fc, table, level)
+    c = cfg["capacity"]
+    open_h = (c.get("open_from_h", 6) + np.arange(c["open_hours"])) % 24
+    hi_cap = capacity(seg, hi, rain, expected, c, cfg["simulator"], cfg["area"]["trail_names"])
+    for s_out, l_, h_ in zip(out["segments"], lo[open_h].max(0), hi[open_h].max(0)):
+        s_out["peak_range"] = [round(float(l_), 1), round(float(h_), 1)]
+    for t, info in out["trails"].items():
+        idx = [i for i, s_out in enumerate(out["segments"]) if s_out["trail"] == t]
+        info["peak_occupancy_range"] = [max(out["segments"][i]["peak_range"][0] for i in idx),
+                                        max(out["segments"][i]["peak_range"][1] for i in idx)]
+        info["cautious_daily_quota"] = hi_cap["trails"][t]["recommended_daily_quota"]
+    out["range"] = {"level": level, "method": "split conformal prediction on the validation year (src.eval.conformal)",
+                    "cautious_daily_quota": hi_cap["recommended_daily_quota"],
+                    "note": f"{round(level * 100)} times in 100 the real number of people is inside peak_range; the "
+                            "cautious quota is what the cascade gives if the crowd is at the top of that range."}
+    return out
+
+
 def expected_visitors(data, day_idx) -> dict:
     """Demand per trail from the calendar alone: train-period mean for the same day type and month."""
     daily_cov = data.cov[::24]
@@ -77,8 +111,11 @@ def build_forecast(data, cfg, seg, date: str, model=None, scale=None, run=None) 
         fc = HistoricalAverage().fit(data, np.ones(data.N, bool)).predict(data, np.array([origin]))[0]
         source = {"model": "historical_average", "reason": "no fresh weather forecast"}
         rain = np.zeros(24)
-    cap = capacity(seg, fc, rain, expected_visitors(data, origin // 24), cfg["capacity"], cfg["simulator"],
-                   cfg["area"]["trail_names"])
+    expected = expected_visitors(data, origin // 24)
+    cap = capacity(seg, fc, rain, expected, cfg["capacity"], cfg["simulator"], cfg["area"]["trail_names"])
+    table = conformal_table(run) if model is not None else None
+    if table is not None:
+        cap = with_range(cap, seg, fc, rain, expected, cfg, table)
 
     return {"schema_version": SCHEMA_VERSION, "component": 4, "site": cfg["area"]["name"],
             "generated_at": datetime.now().isoformat(timespec="seconds"), "forecast_date": date,

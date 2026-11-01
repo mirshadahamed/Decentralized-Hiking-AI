@@ -547,6 +547,9 @@ class _CapacityTab extends StatelessWidget {
             const SizedBox(height: C4Space.s),
             if (day.recommendedQuota != null)
               Text('${day.recommendedQuota}', key: const Key('park_safe_number'), style: text.displaySmall),
+            if (day.cautiousQuota != null && day.cautiousQuota != day.recommendedQuota)
+              Text('${day.cautiousQuota} on a bad day (crowd at the top of the 90 % range)',
+                  key: const Key('park_cautious_number'), style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
             Text(
               [
                 if (day.expectedVisitors != null) 'Expected: about ${day.expectedVisitors}',

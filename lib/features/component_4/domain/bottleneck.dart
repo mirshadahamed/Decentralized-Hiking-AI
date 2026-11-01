@@ -20,6 +20,7 @@ class BottleneckDay {
     this.expectedVisitors,
     this.recommendedQuota,
     this.classicQuota,
+    this.cautiousQuota,
     this.rainShare,
     this.disclaimer = '',
     this.lastEntryHour,
@@ -61,6 +62,7 @@ class BottleneckDay {
   final int? millis; // time the ST-GNN took on this phone
   final bool offline; // computed from the stored pack, no connection
   final int? expectedVisitors, recommendedQuota, classicQuota;
+  final int? cautiousQuota; // NFR4: the quota if the crowd is at the top of the 90 % range (src.eval.conformal)
   final double? rainShare;
   final String disclaimer;
 
@@ -124,6 +126,7 @@ class BottleneckDay {
       expectedVisitors: (summary['expected_visitors'] as num?)?.toInt(),
       recommendedQuota: (summary['recommended_daily_quota'] as num?)?.toInt(),
       classicQuota: (summary['classic_cifuentes_quota'] as num?)?.toInt(),
+      cautiousQuota: (summary['cautious_daily_quota'] as num?)?.toInt(),
       rainShare: (summary['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: m['disclaimer'] as String? ?? '',
       calibration: _calibration(m['calibration']),
@@ -165,6 +168,7 @@ class BottleneckDay {
       expectedVisitors: (j['expected_visitors'] as num?)?.toInt(),
       recommendedQuota: (j['recommended_daily_quota'] as num?)?.toInt(),
       classicQuota: (j['classic_cifuentes_quota'] as num?)?.toInt(),
+      cautiousQuota: ((j['range'] as Map?)?['cautious_daily_quota'] as num?)?.toInt(),
       rainShare: (j['rain_share_open_hours'] as num?)?.toDouble(),
       disclaimer: j['disclaimer'] as String? ?? '',
     );

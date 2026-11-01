@@ -89,6 +89,7 @@ def _day_block(date: str, source: str, fc: dict, people: bool) -> dict:
         "expected_visitors": fc.get("expected_visitors"),
         "recommended_daily_quota": fc.get("recommended_daily_quota"),
         "classic_cifuentes_quota": fc.get("classic_cifuentes_quota"),
+        "cautious_daily_quota": fc.get("range", {}).get("cautious_daily_quota"),     # NFR4 (src.eval.conformal)
         "rain_share_open_hours": fc.get("rain_share_open_hours"),
     }
     if people:                                                   # [hour][segment], same layout as the phone's output
@@ -181,6 +182,7 @@ def map_extras(forecast: dict, seg, cfg: dict, data=None, week=None, calibration
         "expected_visitors": forecast.get("expected_visitors"),
         "recommended_daily_quota": forecast.get("recommended_daily_quota"),
         "classic_cifuentes_quota": forecast.get("classic_cifuentes_quota"),
+        "cautious_daily_quota": forecast.get("range", {}).get("cautious_daily_quota"),
         "rain_share_open_hours": forecast.get("rain_share_open_hours"),
         "disclaimer": forecast.get("disclaimer", ""),
         # the week: today .. +6 days; "stgnn" days are forecast on the phone (inputs / extra_inputs), "planning"
