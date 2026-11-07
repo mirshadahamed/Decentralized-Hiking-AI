@@ -1,5 +1,6 @@
 """RQ9 (G2, claim C5): does the forecast make the daily quota better than a static one?
     python -m src.control.evaluate_quota            ($env:C4_PARK = "adams_peak" for the other park)
+    python -m src.control.evaluate_quota --world s1 (the realistic world, C5b)
 
 2025 test year (simulation), the same groups every day for every rule, first come first served at the gate
 (policy B of src.control.evaluate). Five ways to set each trail's daily quota:
@@ -11,7 +12,11 @@
 A quota rule trades visitors for crowding, so each rule is run at quota multipliers MULT and compared at EQUAL
 visitors: over-capacity person-hours interpolated at the share admitted by the static quota (x1). Then each rule
 is re-run at the multiplier that admits that many visitors, for paired Wilcoxon tests over days.
-Outputs results/<park>/<timestamp>_quota/: sweep.csv, matched_daily.csv, summary.csv, tests.json, quota.png
+--world s1 (C5b): the realistic world. The visitors who come each day are the S1 dataset's own (busy spells persist
+from day to day, so yesterday's counts carry information), with that world's events (arrival shift, route shares,
+tour buses, incidents). HA and ST-GNN forecasts are the deployed kind: gates + ranger spot counts
+(LATEST_SPARSE_S1, "spot" setting, seed 42), issued at midnight from what was counted the day before.
+Outputs results/<park>/<timestamp>_quota[_s1]/: sweep.csv, matched_daily.csv, summary.csv, tests.json, quota.png
 """
 import json
 
@@ -23,12 +28,12 @@ from scipy import stats
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from src.config import RESULTS  # noqa: E402
+from src.config import PROCESSED, RESULTS  # noqa: E402
 from src.control.evaluate import admit  # noqa: E402
 from src.control.slots import build_control  # noqa: E402
 from src.data.calendar_features import build_calendar  # noqa: E402
 from src.data.weather import load_weather  # noqa: E402
-from src.sim.simulator import daily_demand  # noqa: E402
+from src.sim.simulator import daily_demand, day_events  # noqa: E402
 from src.utils import new_run_dir  # noqa: E402
 
 RULES = ["static", "weather", "ha", "stgnn", "oracle"]
@@ -46,22 +51,38 @@ def benchmark_forecasts(cfg):
             for i, o in enumerate(pred["origins"])}
 
 
+def s1_forecasts(cfg):
+    """Gate + spot-count forecasts of the realistic world (HA and ST-GNN, seed 42), by date."""
+    from src.eval.data import TrailData
+    run = RESULTS / (RESULTS / "LATEST_SPARSE_S1").read_text(encoding="utf-8").strip()
+    pred = np.load(run / "predictions.npz")
+    times = TrailData(cfg, path=PROCESSED / "dataset_s1.npz").times
+    return {pd.Timestamp(times[o]).date(): {"ha": pred["HA"][i], "stgnn": pred["spot_stgnn"][i]}
+            for i, o in enumerate(pred["origins"])}
+
+
 def scale_quota(q: dict, m: float) -> dict:
     return {t: v * m for t, v in q.items()}
 
 
-def setup(year="2025", seed=7, max_days=None):
+def setup(year="2025", seed=7, max_days=None, world="default"):
     ec = build_control()
     cfg, sim = ec.cfg, ec.sim
     weather, cal = load_weather(cfg), build_calendar(cfg)
     precip = weather.precipitation.values.reshape(len(cal), 24)
     rng = np.random.default_rng(seed)
-    demand = daily_demand(cal, precip, cfg["simulator"], rng)
+    s1 = world == "s1"
+    if s1:
+        p_world = sim.p | {"realism": {**sim.p["realism"], "enabled": True}}
+        demand = np.load(PROCESSED / "dataset_s1.npz")["daily_visitors"].astype(float)
+        assert len(demand) == len(cal), "dataset_s1 and the calendar cover different days"
+    else:
+        demand = daily_demand(cal, precip, cfg["simulator"], rng)
     open_h = (cfg["capacity"].get("open_from_h", 6) + np.arange(cfg["capacity"]["open_hours"])) % 24
     rain_share = (precip[:, open_h] >= cfg["capacity"]["rain_mm"]).mean(1)
     train = cal.index <= pd.Timestamp(cfg["dates"]["train_end"])
     static = ec.daily_quota(float(rain_share[train].mean()))
-    fc = benchmark_forecasts(cfg)
+    fc = s1_forecasts(cfg) if s1 else benchmark_forecasts(cfg)
     C = ec.capacity(0.0)
     fin = np.isfinite(C)
     days = []
@@ -69,11 +90,14 @@ def setup(year="2025", seed=7, max_days=None):
         day = cal.index[di].date()
         if day not in fc:
             continue
-        size, gate, option = sim.sample_day(int(round(demand[di])), rng)
-        hourly, per_min, _ = sim.simulate_groups(size, gate, option, precip[di], np.random.default_rng([seed, int(di)]))
+        ev = day_events(p_world, rng, sim.S, sim.trails[0]) if s1 else {}
+        n = int(round(demand[di])) - sum(b["people"] for b in ev.get("bursts", []))   # buses are in the day's total
+        size, gate, option = sim.sample_day(max(n, 0), rng, events=ev)
+        hourly, per_min, _ = sim.simulate_groups(size, gate, option, precip[di], np.random.default_rng([seed, int(di)]),
+                                                 slow=ev.get("slow"))
         r = float(rain_share[di])
         days.append({
-            "date": day, "di": int(di), "rain_share": r, "groups": (size, gate, option),
+            "date": day, "di": int(di), "rain_share": r, "groups": (size, gate, option), "slow": ev.get("slow"),
             "quota": {"static": static, "weather": ec.daily_quota(r),
                       "ha": ec.daily_quota(r, forecast=fc[day]["ha"]),
                       "stgnn": ec.daily_quota(r, forecast=fc[day]["stgnn"]),
@@ -86,7 +110,7 @@ def replay(ec, precip, d, quota, seed, k):
     size, gate, option = d["groups"]
     prng = np.random.default_rng([seed, d["di"], k])
     s, g, o, moved = admit("B", ec, size, gate, option, quota, None, prng)
-    _, per_min, _ = ec.sim.simulate_groups(s, g, o, precip[d["di"]], prng)
+    _, per_min, _ = ec.sim.simulate_groups(s, g, o, precip[d["di"]], prng, slow=d.get("slow"))
     C = d["C"]
     fin = np.isfinite(C)
     occ = per_min.reshape(ec.sim.S, ec.n_bins, -1).mean(-1)
@@ -108,8 +132,8 @@ def interp(curve: pd.DataFrame, x: float, col: str, by="admitted_pct"):
     return float(np.interp(x, c[by].values, c[col].values))
 
 
-def run(year="2025", seed=7, write=True, max_days=None, log=print):
-    ec, precip, days, fin, seed = setup(year, seed, max_days)
+def run(year="2025", seed=7, write=True, max_days=None, log=print, world="default"):
+    ec, precip, days, fin, seed = setup(year, seed, max_days, world)
     log(f"{len(days)} days")
     rows = []
     base = {"rule": "none", "mult": 1.0}
@@ -158,12 +182,14 @@ def run(year="2025", seed=7, write=True, max_days=None, log=print):
     tests["no_control_person_hours_over"] = float(none_over)
     if not write:
         return summary, tests, None
-    run_dir = new_run_dir("quota", ec.cfg)
+    tag = "_s1" if world == "s1" else ""
+    run_dir = new_run_dir("quota" + tag, ec.cfg)
     sweep.to_csv(run_dir / "sweep.csv", index=False)
     md.to_csv(run_dir / "matched_daily.csv", index=False)
     summary.to_csv(run_dir / "summary.csv", index=False)
     (run_dir / "tests.json").write_text(json.dumps(tests, indent=2), encoding="utf-8")
-    (RESULTS / "LATEST_QUOTA").write_text(run_dir.name, encoding="utf-8")
+    if not max_days:
+        (RESULTS / f"LATEST_QUOTA{tag.upper()}").write_text(run_dir.name, encoding="utf-8")
     fig, ax = plt.subplots(figsize=(7, 3.8))
     for rule in RULES:
         c = tot[tot.rule == rule].sort_values("admitted_pct")
@@ -182,8 +208,9 @@ if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-days", type=int)
+    ap.add_argument("--world", choices=["default", "s1"], default="default")
     a = ap.parse_args()
-    s, t, d = run(max_days=a.max_days)
+    s, t, d = run(max_days=a.max_days, world=a.world)
     print(s.round(3).to_string(index=False))
     print(json.dumps(t, indent=1))
     print(d)
