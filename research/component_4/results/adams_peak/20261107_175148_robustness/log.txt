@@ -1,0 +1,23 @@
+models from 20261022_054232_sparse_s1; seeds [42, 43, 44]; worlds ['assumed', 'demand_-30', 'demand_+30', 'arrive_-1h', 'arrive_+1h', 'routes_flat', 'dwell_x2', 'crowd_slow', 'summit_-30', 'summit_+30']
+[assumed] HA 9.068  gru_nograph 5.462  lstm 5.512  stgnn 5.277
+[demand_-30] HA 5.948  gru_nograph 4.145  lstm 4.247  stgnn 3.936
+[demand_+30] HA 12.481  gru_nograph 7.692  lstm 7.684  stgnn 7.315
+[arrive_-1h] HA 9.536  gru_nograph 6.828  lstm 6.909  stgnn 6.782
+[arrive_+1h] HA 8.938  gru_nograph 6.070  lstm 6.099  stgnn 5.893
+[routes_flat] HA 10.082  gru_nograph 7.684  lstm 7.686  stgnn 7.610
+[dwell_x2] HA 9.053  gru_nograph 5.650  lstm 5.701  stgnn 5.512
+[crowd_slow] HA 10.063  gru_nograph 6.247  lstm 6.306  stgnn 6.034
+[summit_-30] HA 9.477  gru_nograph 5.755  lstm 5.794  stgnn 5.537
+[summit_+30] HA 8.917  gru_nograph 5.387  lstm 5.438  stgnn 5.217
+      world  MAE_HA  MAE_lstm  MAE_gru_nograph  MAE_stgnn  stgnn_better_than_HA  stgnn_better_than_lstm  stgnn_better_than_gru_nograph
+    assumed   9.068     5.512            5.462      5.277                  True                    True                           True
+ demand_-30   5.948     4.247            4.145      3.936                  True                    True                           True
+ demand_+30  12.481     7.684            7.692      7.315                  True                    True                           True
+ arrive_-1h   9.536     6.909            6.828      6.782                  True                    True                          False
+ arrive_+1h   8.938     6.099            6.070      5.893                  True                    True                           True
+routes_flat  10.082     7.686            7.684      7.610                  True                   False                          False
+   dwell_x2   9.053     5.701            5.650      5.512                  True                    True                           True
+ crowd_slow  10.063     6.306            6.247      6.034                  True                    True                           True
+ summit_-30   9.477     5.794            5.755      5.537                  True                    True                           True
+ summit_+30   8.917     5.438            5.387      5.217                  True                    True                           True
+park adams_peak; done -> D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\adams_peak\20261107_175148_robustness

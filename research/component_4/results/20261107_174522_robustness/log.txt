@@ -1,0 +1,19 @@
+models from 20261022_042402_sparse_s1; seeds [42, 43, 44]; worlds ['assumed', 'demand_-30', 'demand_+30', 'arrive_-1h', 'arrive_+1h', 'routes_flat', 'dwell_x2', 'crowd_slow']
+[assumed] HA 1.825  gru_nograph 1.785  lstm 1.774  stgnn 1.753
+[demand_-30] HA 1.412  gru_nograph 1.511  lstm 1.496  stgnn 1.471
+[demand_+30] HA 2.432  gru_nograph 2.436  lstm 2.439  stgnn 2.386
+[arrive_-1h] HA 1.913  gru_nograph 2.160  lstm 2.144  stgnn 2.142
+[arrive_+1h] HA 1.822  gru_nograph 2.219  lstm 2.217  stgnn 2.202
+[routes_flat] HA 1.805  gru_nograph 2.117  lstm 2.102  stgnn 2.078
+[dwell_x2] HA 1.827  gru_nograph 1.970  lstm 1.969  stgnn 1.974
+[crowd_slow] HA 2.055  gru_nograph 2.042  lstm 2.037  stgnn 2.019
+      world  MAE_HA  MAE_lstm  MAE_gru_nograph  MAE_stgnn  stgnn_better_than_HA  stgnn_better_than_lstm  stgnn_better_than_gru_nograph
+    assumed   1.825     1.774            1.785      1.753                  True                    True                           True
+ demand_-30   1.412     1.496            1.511      1.471                 False                    True                           True
+ demand_+30   2.432     2.439            2.436      2.386                 False                    True                           True
+ arrive_-1h   1.913     2.144            2.160      2.142                 False                   False                           True
+ arrive_+1h   1.822     2.217            2.219      2.202                 False                    True                           True
+routes_flat   1.805     2.102            2.117      2.078                 False                    True                           True
+   dwell_x2   1.827     1.969            1.970      1.974                 False                   False                          False
+ crowd_slow   2.055     2.037            2.042      2.019                 False                    True                           True
+park horton_plains; done -> D:\Documents\SLIIT\Research\Decentralized-Hiking-AI\research\component_4\results\20261107_174522_robustness
