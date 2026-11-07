@@ -560,6 +560,34 @@ Paired Wilcoxon over days, ST-GNN rule vs:
 the forecast-driven quota by default (`control.default_quota_rule: forecast`); officers can switch the rule per day
 (`booking.resolve_quota`, `POST /admin/quota`).
 
+### RQ9b – The quota in the realistic world (C5b; `evaluate_quota --world s1`, 7 Nov 2026)
+
+**Runs:** `results/20261107_174618_quota_s1`, `results/adams_peak/20261107_175502_quota_s1`.
+
+**Setup:** as RQ9, but in the realistic world S1:
+- the visitors who come each day are S1's own, so busy spells carry over from day to day;
+- the day's events apply: the arrival peak shifts, trail shares change, tour buses come, and incidents happen;
+- the forecasts are the **deployed kind**: gate + ranger spot counts (RQ11b models, seed 42), issued at midnight.
+
+Over-capacity person-hours in the test year, at equal visitors admitted (the static quota's 55 % / 28 %):
+
+| Rule | Horton | vs static | Adam's Peak | vs static |
+|---|---|---|---|---|
+| Static (one number per trail) | 71,586 | – | 128,089 | – |
+| Weather only (classic Cifuentes) | 56,702 | −21 % | 114,441 | −11 % |
+| + historical-average forecast | 53,435 | −25 % | 116,822 | −9 % |
+| **+ ST-GNN forecast** | **53,775** | **−25 %** | **103,806** | **−19 %** |
+| + perfect forecast | 52,798 | −26 % | 102,837 | −20 % |
+
+- **Adam's Peak:** the ST-GNN quota is 96 % of the way to a perfect forecast; the HA quota only 45 %. ST-GNN vs HA:
+  −35.7 person-h a day, Wilcoxon p = 3·10⁻⁵. In the default world it was 70,840 vs 74,204 (RQ9). The gap grows when
+  days really differ from the calendar.
+- **Horton Plains:** ST-GNN = HA (95 % vs 97 % of perfect, n.s.). A perfect forecast is only 1 % better than either,
+  so there is little left for a forecast to add. Over the year the forecast quotas cut over-capacity by 25 % vs the
+  static quota, but the day-by-day test is not significant (p = 0.77). The gain comes from a minority of busy days.
+- **C5 answered:** the forecast-driven quota beats a static one in both parks. The ST-GNN is better than an average
+  where demand is irregular (Adam's Peak); it is level where the calendar already explains the day (Horton Plains).
+
 ## RQ13 – Closed-loop control at the gate (MPC) vs day-ahead plans (`src.control.evaluate_mpc`, 27 Oct 2026)
 
 **Runs:** `results/20261027_215804_mpc` (default world) and `results/20261027_220425_mpc_s1` (realistic world S1).
@@ -931,6 +959,54 @@ then fine-tuned on Knuckles like the single-park source. Run `results/20261101_2
 - **Use for December:** start Knuckles from the joint model instead of Horton Plains alone; the switch to HA after
   about a month stays.
 
+## G5 – Robustness: what if the simulator's assumptions are wrong? (`src.eval.robustness`, 7 Nov 2026)
+
+**Runs:** `results/20261107_174522_robustness` (Horton), `results/adams_peak/20261107_175148_robustness`.
+
+**Setup:**
+- The RQ11b models (gates + ranger spot counts; LSTM, GRU without graph, ST-GNN; 3 seeds) are trained once, on the
+  world we assumed (S1).
+- Each test world changes **one** assumption and is simulated with the same random seed. The rebuilt "assumed"
+  world reproduces the S1 dataset exactly.
+- The model's inputs still describe the assumed park (segment descriptions, forecast weather); only the counts come
+  from the changed world.
+- HA is fitted on each world's own training years: the record a park would have.
+- Scored on uncounted sections, test year, day-ahead. Paired tests per day, Holm.
+
+ST-GNN MAE (mean of 3 seeds) and how the conclusions hold:
+
+| World (one thing wrong) | Horton: ST-GNN (change) | Horton: beats LSTM / GRU? | Horton: ST-GNN vs HA | Adam's Peak: ST-GNN (change) | Adam's Peak: beats LSTM / GRU? | Adam's Peak: ST-GNN vs HA |
+|---|---|---|---|---|---|---|
+| As assumed | 1.75 | yes / yes | **−4 %** | 5.28 | yes / yes | **−42 %** |
+| 30 % fewer visitors | 1.47 (−16 %) | yes / yes | +4 % | 3.94 (−25 %) | yes / yes | −34 % |
+| 30 % more visitors | 2.39 (+36 %) | yes / yes | −2 % (n.s.) | 7.32 (+39 %) | yes / yes | −41 % |
+| Arrivals 1 h earlier | 2.14 (+22 %) | level / yes | +12 % | 6.78 (+29 %) | yes / level | −29 % |
+| Arrivals 1 h later | 2.20 (+26 %) | yes / yes | +21 % | 5.89 (+12 %) | yes / yes | −34 % |
+| Trail shares half-way to equal | 2.08 (+19 %) | yes / yes | +15 % | 7.61 (+44 %) | level / level | −25 % |
+| Viewpoint / summit stops ×2 | 1.97 (+13 %) | level / level | +8 % | 5.51 (+4 %) | yes / yes | −39 % |
+| Crowds slow walkers ×2 | 2.02 (+15 %) | yes / yes | −2 % (n.s.) | 6.03 (+14 %) | yes / yes | −40 % |
+| Summit steps −30 % / +30 % flow | – | – | – | 5.54 / 5.22 | yes / yes | −42 % |
+
+("yes" = ST-GNN significantly better, p_Holm < 0.05; "level" = not significant; change = vs the assumed world.)
+
+**Reading:**
+- **The graph conclusion (C1, C4) survives most wrong assumptions:**
+  - it holds in 13 of 16 comparisons at Horton and 17 of 20 at Adam's Peak;
+  - it is lost when stops are longer (Horton) and when trail shares are very different (Adam's Peak).
+- **Adam's Peak: a network trained on the wrong assumptions still beats the park's own average by 25–42 % in every
+  world.** The night-climb pattern is too irregular for an average.
+- **Horton Plains: the network beats the average only when the assumptions are right.** When arrival times or trail
+  shares are wrong, the park's own HA is 12–21 % better. This is because HA learns from the real record, while the
+  network keeps the assumed timing.
+  - Consequence: at Horton, refit the network on the first weeks of real counts (fine-tuning, §6.1.3, or the
+    recalibration factors, N2) before it replaces the average.
+- **What the December counts must check first:**
+  - arrival times (+22–29 %);
+  - trail shares (+19 % / +44 %);
+  - the day's total (±30 % changes the error by 16–39 %, as expected).
+
+  The summit flow and the crowd slowdown matter least (≤ 15 %).
+
 ## Forecast ranges (FR10 / NFR4; `src.eval.conformal`, 1 Nov 2026)
 
 **Method:** split conformal prediction on the deployed model. The validation year gives the residuals, grouped by forecast
@@ -1001,6 +1077,8 @@ Daily rain 2022–2025 at each park's weather point: Open-Meteo / ERA5 (what the
 ## Limitations (say these before an examiner does)
 1. The target is synthetic: all RQs test the method, not the real parks. Field counts (Horton: World's End on
    2–3 days; Adam's Peak: flow on the final steps on one Poya night) would calibrate and validate the simulator.
+   G5 shows which conclusions survive wrong assumptions: the graph result mostly does; the Horton network-vs-HA
+   result does not.
 2. One seed at Adam's Peak and in RQ2; three for Horton RQ1 temporal.
 3. RQ3/RQ4 control results use the same simulator that generated the data.
 4. Usability (SUS) and expert review with DWC / Sri Pada officers are not done yet.

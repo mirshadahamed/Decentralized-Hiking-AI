@@ -1,6 +1,6 @@
 # Plan: Knuckles, crowd control per area, and the next steps for Component 4
 
-*Written 30 Oct 2026. Builds on `improvement_plan.md` (sections 7–8) and `evaluation_results.md` (RQ1–RQ13c).*
+*Written 30 Oct 2026. Builds on `archive/improvement_plan_2026-10-21.md` (sections 7–8) and `evaluation_results.md` (RQ1–RQ13c).*
 
 ## Progress (30 Oct 2026, branch `feature/component-4-knuckles`)
 
