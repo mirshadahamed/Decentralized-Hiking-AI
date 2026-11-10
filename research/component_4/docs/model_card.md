@@ -1,15 +1,15 @@
-# Model card and data card – Component 4 ST-GNN (21 Oct 2026)
+# Model card and data card – Component 4 ST-GNN (21 Oct 2026, updated 10 Nov 2026)
 
 ## Model card
 
 | | |
 |---|---|
 | **Model** | ST-GNN: GCN (space) + GRU (time) + decoder on future covariates; `src/models/stgnn.py` |
-| **Version in the app** | Gate-only ST-GNN from the latest sparse-sensor run (`LATEST_SPARSE`, seed 42) at each park; `live.model_input: all` switches back to the benchmark model |
+| **Versions in the app** | <ul><li>**Day-ahead and the phone pack:** the gate-only ST-GNN from the latest sparse-sensor run (`LATEST_SPARSE`, seed 42) at each park. `live.model_input: all` switches back to the benchmark model.</li><li>**Rest of today from rangers' counts:** the "count anywhere" ST-GNN (`LATEST_PLACEMENT_S1`, trained with random counted places, RQ11d). It also gives the count ranking (#1, #2, …).</li><li>**Ranges:** split-conformal 90 % ranges and the cautious quota (`LATEST_CONFORMAL`).</li><li>**Corrections:** saved forecasts are corrected by the last 14 days of spot counts (`live.recalibrate`).</li></ul> |
 | **Size** | 13,665 parameters (Horton Plains), ~100 KB ONNX / ~175 KB daily phone pack with inputs |
 | **Task** | Day-ahead (00:00) forecast of people on each trail segment for each hour of the next 24 h |
 | **Inputs** | Deployed (G6): last 24 h of **gate counts only**, sensed flag, 17 hourly covariates (calendar, Poya, weather), 13 segment descriptions. Research benchmark: counts of every segment |
-| **Output** | People per segment per hour; with Cifuentes: safe number per trail, sections over capacity, % chance of crowding |
+| **Output** | People per segment per hour, with a 90 % range. With Cifuentes: the safe number per trail and the cautious quota (top of the range), the sections over capacity, and the % chance of crowding |
 | **Training data** | Synthetic occupancy 2022–23 from the calibrated simulator (validation 2024, test 2025) |
 | **Training** | Masked L1 over open hours, Adam lr 0.002, batch 64, ≤ 20 epochs, early stopping on 2024; seeds 42–44 |
 | **Intended use** | Planning aid for park officers (quota, slots, gate holds) and advice to hikers; always with a human decision |
@@ -24,6 +24,9 @@
 | MAE, interior segments with gate counts only | 1.45 (LSTM 1.44, HA 1.63) | 4.00 (LSTM 3.87, HA 11.28) |
 | Over-capacity F1, all counted / held out | 0.80 / 0.29 | 0.85 / 0.54 |
 | Quota from its forecast vs static (equal visitors) | −27 % over-capacity person-h | −24 % (p < 10⁻⁷) |
+| Same, realistic world, gate + spot counts (RQ9b) | −25 % (= HA quota) | −19 % (HA −9 %; p = 3·10⁻⁵) |
+| 90 % range coverage, all / busy hours | 0.90 / 0.78 | 0.90 / 0.86 |
+| Uncounted sections, gates + spot counts (RQ11b) | 1.75 (LSTM 1.77, HA 1.82) | 5.28 (LSTM 5.51, HA 9.07) |
 | Latency | 2 ms ONNX (1 laptop core); ~150 ms Dart | same |
 
 ### Known limitations
@@ -35,6 +38,12 @@
 4. **Summit queue (Adam's Peak):** the graph hurts there; the queue depends on the final steps' capacity.
 5. **Weather:** day-ahead tests use observed weather (an upper bound) except in the S1 world.
 6. **Transfer:** a model from one park fails on another unchanged; pretraining helps only with 30–90 days at Horton.
+   A source trained on three parks at once is better than one park (Knuckles dry run, §6.1.3b).
+7. **Wrong assumptions (G5):** at Horton Plains, if arrival times or trail shares differ from the simulator, the
+   park's own historical average is 12–21 % better than the network. Refit on the first weeks of real counts
+   before the network replaces the average there. At Adam's Peak the network stays 25–42 % better.
+8. **Rain sources disagree:** Open-Meteo, NASA POWER and CHIRPS agree on 61–80 % of wet days; which one
+   predicts visitors best is tested only when real counts exist.
 
 ### Ethical considerations
 No personal data; bookings are codes; counts are numbers. Advice is spread across phones so it does not create a
@@ -50,8 +59,9 @@ new crowd (RQ8). Officers can override every quota (audited). Every output state
 | Copernicus GLO-30 DEM | Elevation → slope, TWI, Tobler time | Copernicus DEM licence (free, attribution: "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA") | `src/data/terrain.py` | None |
 | Open-Meteo (ERA5 archive, forecast) | Hourly weather | CC BY 4.0 – "Weather data by Open-Meteo.com" | `src/data/weather.py`, `src/live/inputs.py` | None |
 | NASA POWER | Daily rain (cross-check) | Public, NASA attribution | `src/data/rain_check.py` | None |
+| CHIRPS v2.0 (via SERVIR ClimateSERV) | Daily rain (cross-check) | Public domain (Climate Hazards Center, UCSB); cite Funk et al. 2015 | `src/data/rain_check.py` | None |
 | `holidays` package + estimated Poya days | Calendar | MIT (package); Poya estimated after 2026 | `src/data/calendar_features.py` | None |
-| METR-LA, PEMS-BAY | Traffic speeds for pretraining | Public research datasets (DCRNN release) | `src/pretrain/traffic.py` | None |
+| METR-LA, PEMS-BAY, PeMS04, PeMS08 | Traffic speeds for pretraining | Public research datasets (DCRNN and ASTGCN releases; Hugging Face mirror TorchSpatiotemporal) | `src/pretrain/traffic.py` | None |
 | Simulator output | Training / test target | Generated; parameters in `configs/` | `src/sim/simulator.py` | None |
 | Ranger spot counts, gate check-ins | Live counts | Collected by the park | `src/serve/field_counts.py`, `src/control/booking.py` | None (numbers and staff usernames only) |
 | DWC daily totals (optional) | Real daily visitors | On request from DWC | `data/live/dwc_daily_totals.csv` | None |

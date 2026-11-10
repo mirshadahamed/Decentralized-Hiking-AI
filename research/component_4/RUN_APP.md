@@ -195,6 +195,10 @@ each visitor gets a different one, which spreads the walkers (RQ14b).
   ```
   Add `$env:C4_PARK = "adams_peak";` in front for Adam's Peak (and `--reuse 20261022_054232_sparse_s1`). A new `conformal` or `placement` run is used by the
   servers after a restart.
+- **All core results in one command (since 10 Nov):** `.venv\Scripts\python.exe -m src.run_core --list` shows the steps,
+  what each answers and roughly how long it takes. `python -m src.run_core` runs them all for both parks (about two days
+  on this laptop); `--only quota_s1 robustness` or `--from sparse` run a part; `--data` rebuilds the datasets first
+  (after the December counts recalibrate the simulator). Log: `results/<time>_run_core.log`.
 
 **Park officer** (log out, log in as `officer1`)
 1. **Daily quota**: pick a day → per trail the quota *with the crowd forecast* (what the tickets use), *weather
@@ -213,7 +217,7 @@ each visitor gets a different one, which spreads the walkers (RQ14b).
 ## Use it on your phone
 
 The app is built for phones: phone-sized screens, offline tickets and an offline forecast. The phone and the
-laptop must be on the **same Wi-Fi**. The laptop's Wi-Fi address here is `192.168.1.6`; check yours with
+laptop must be on the **same Wi-Fi**. The laptop's Wi-Fi address here is `192.168.1.5`; check yours with
 `ipconfig`, line "IPv4 Address" under the Wi-Fi adapter.
 
 **Terminal 1 (both options):** start the servers so the phone can reach them:
@@ -223,15 +227,15 @@ laptop must be on the **same Wi-Fi**. The laptop's Wi-Fi address here is `192.16
 The laptop's Wi-Fi must be a **Private** network (Settings → Network & internet → Wi-Fi → the network →
 Network profile type: **Private**). It was *Public* on 20 Oct, and then Windows blocks the phone. If Windows asks
 to allow Python through the firewall, tick **Private networks** → Allow. On the phone's browser,
-http://192.168.1.6:8000/parks should list both parks. If it doesn't load, the firewall is blocking port 8000.
+http://192.168.1.5:8000/parks should list both parks. If it doesn't load, the firewall is blocking port 8000.
 
 ### Option A – in the phone's browser (works now, nothing to install)
 Terminal 2:
 ```powershell
 cd D:\Documents\SLIIT\Research\Decentralized-Hiking-AI
-flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080 --dart-define=C4_API=http://192.168.1.6:8000
+flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080 --dart-define=C4_API=http://192.168.1.5:8000
 ```
-- On the phone, open **http://192.168.1.6:8080** in Chrome. Then use ⋮ → **Add to Home screen** for an app icon.
+- On the phone, open **http://192.168.1.5:8080** in Chrome. Then use ⋮ → **Add to Home screen** for an app icon.
 - Everything works, including the forecast made on the phone. Exception: **QR scanning** at the ranger gate
   needs HTTPS in a browser, so type the ticket code instead.
 
@@ -244,12 +248,12 @@ Then run `flutter doctor` until "Android toolchain" has a ✓, and accept licenc
 debugging** on):
 ```powershell
 flutter devices                                            # the phone must be listed
-flutter run -d <phone id> --dart-define=C4_API=http://192.168.1.6:8000
+flutter run -d <phone id> --dart-define=C4_API=http://192.168.1.5:8000
 ```
 
 **Or build an APK file** and copy it to the phone (allow "install unknown apps" for Files / Drive):
 ```powershell
-flutter build apk --debug --dart-define=C4_API=http://192.168.1.6:8000
+flutter build apk --debug --dart-define=C4_API=http://192.168.1.5:8000
 # -> build\app\outputs\flutter-apk\app-debug.apk
 ```
 - Use the **debug** build: it allows plain `http://` to the laptop. A release build needs the server on HTTPS.

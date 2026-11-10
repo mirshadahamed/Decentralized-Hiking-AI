@@ -1074,6 +1074,30 @@ Daily rain 2022–2025 at each park's weather point: Open-Meteo / ERA5 (what the
 - **Decision:** keep Open-Meteo (finer grid, hourly) as the feature and NASA POWER as a published cross-check.
   Add **CHIRPS** (~5 km, daily) as the second source the proposal names (W5).
 
+### O1b – CHIRPS (W5, 7 Nov 2026)
+
+CHIRPS v2.0 daily rain (satellite + rain gauges, ~5 km). It is the mean of the cells in a 0.06° box around each
+weather point, from the SERVIR ClimateSERV API, with the same scores. Runs `results/20261107_184141_rain_check`,
+`results/adams_peak/20261107_184235_rain_check`.
+
+| CHIRPS against | Horton: Open-Meteo | Horton: NASA POWER | Adam's Peak: Open-Meteo | Adam's Peak: NASA POWER |
+|---|---|---|---|---|
+| Daily correlation (Pearson) | 0.40 | 0.53 | 0.31 | 0.44 |
+| Mean rain (mm/day), CHIRPS vs the other | 7.9 vs 6.1 | 7.9 vs 6.4 | 9.3 vs 10.9 | 9.3 vs 6.4 |
+| Wet-day agreement (≥ 1 mm) | 64 % | 69 % | 61 % | 70 % |
+| Monthly correlation | 0.65 | 0.80 | 0.58 | 0.61 |
+
+- **CHIRPS tells the two parks apart** (7.9 vs 9.3 mm/day), unlike NASA POWER.
+- **It agrees least with Open-Meteo**, on wet days and on months. All three sources fail the fixed rule
+  (wet-day agreement ≥ 75 % and monthly r ≥ 0.8), so the rain at a trail is genuinely uncertain.
+- **Decision:**
+  - Do **not** add CHIRPS as a model feature now. The simulated crowds are driven by Open-Meteo rain, so a
+    simulation cannot show whether another source predicts visitors better.
+  - Test it on real data instead: when the December counts or the DWC daily totals arrive, fit the demand model
+    with each source and keep the one that predicts visitors best.
+  - Until then, rain-driven numbers (the rain share in FCpre, the "rain usually keeps visitors away" note) carry
+    this uncertainty. CHIRPS is cached in `data/external/` for that test.
+
 ## Limitations (say these before an examiner does)
 1. The target is synthetic: all RQs test the method, not the real parks. Field counts (Horton: World's End on
    2–3 days; Adam's Peak: flow on the final steps on one Poya night) would calibrate and validate the simulator.

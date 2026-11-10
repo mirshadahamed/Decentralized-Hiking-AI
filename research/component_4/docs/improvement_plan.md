@@ -89,18 +89,18 @@ The graph's advantage is real but small. It does not hold at the Adam's Peak sum
 | B3 | **Pretraining in the sparse setting (G4) + PeMS04/08 + one adaptation method (W3b):** gradual unfreezing (cheap), or a DANN-style adversarial alignment. Keep the row even if it does not help | O3, C2 | 4–5 days + runs |
 | B4 | **Peak-aware loss, full 3-seed run (G8):** the code exists (`src/eval/peak_loss.py`) | C3 | 1 day + runs |
 | B5 | **Three seeds everywhere:** RQ2 park-to-park transfer; any Adam's Peak table still on one seed | Limitation 2 | runs only |
-| B6 | **CHIRPS (W5):** daily rain for each park next to Open-Meteo and NASA POWER; a feature only if it differs | O1 | 1 day |
+| B6 | **Done 7 Nov** (O1b: sources disagree; kept as a check until real counts). **CHIRPS (W5):** daily rain for each park next to Open-Meteo and NASA POWER; a feature only if it differs | O1 | 1 day |
 | B7 | Summit block (optional, only if time): a queue / capacity-aware input, or let the model choose per section between graph and no graph. Otherwise keep it as a clear finding (Limitation 5) | C1 | 3 days |
 
 ### C. Consolidate (Me, alongside B)
 
 | # | Work | Done when |
 |---|---|---|
-| C1 | **One command re-runs the core results** (`src/run_core.py`): benchmark, sparse / spot, placement, quota, conformal, edge, with seeds and run folders. This is needed again after A1 | One command; times listed in the README |
+| C1 | **Done 10 Nov.** **One command re-runs the core results** (`src/run_core.py`): benchmark, sparse / spot, placement, quota, conformal, edge, with seeds and run folders. This is needed again after A1 | One command; times listed in the README |
 | C2 | **Rewrite the top of `evaluation_results.md`:** C1–C5 each with a one-line answer, the number, the test and the run. Then RQ details renumbered (no gap at RQ7). Move extensions (Knuckles, Pekoe, Yala, MPC, fairness) to a second part | The first page answers the research gap |
 | C3 | **Thesis scope:** core = Horton Plains + Adam's Peak, C1–C5, field validation. System chapter = app, API, control. Extensions = Knuckles, Pekoe, Yala, transfer, placement. **No new parks or features until PP2** | Chapter outline to the supervisor |
-| C4 | **Bring docs up to date:** `model_card.md` (deployed models, ranges, placement model), `technical_design.md` (directed diffusion, conformal, placement), `requirements.md` (FR14 ranges / cautious quota, FR15 count where it helps) | Dates and numbers match `results/` |
-| C5 | **Decision log:** one row each for what was dropped or changed from the proposal (int8, PeMS04/08 if dropped, SARIMA for ARIMA, gate-only deployment, directed model not deployed) | `decisions.md` |
+| C4 | **Done 10 Nov.** **Bring docs up to date:** `model_card.md` (deployed models, ranges, placement model), `technical_design.md` (directed diffusion, conformal, placement), `requirements.md` (FR14 ranges / cautious quota, FR15 count where it helps) | Dates and numbers match `results/` |
+| C5 | **Done 10 Nov.** **Decision log:** one row each for what was dropped or changed from the proposal (int8, PeMS04/08 if dropped, SARIMA for ARIMA, gate-only deployment, directed model not deployed) | `decisions.md` |
 
 ### D. Mandatory submissions (FoC guidelines, IT specialization)
 

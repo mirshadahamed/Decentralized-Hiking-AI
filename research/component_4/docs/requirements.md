@@ -25,6 +25,8 @@ that show it.
 | FR11 | Give a 2–90-day outlook with a range and suggestions (quieter day / time / trail) | `src/planning/` | `test_planning` (4 tests incl. no information after the issue date) | Lead-time backtest | Done |
 | FR12 | Adam's Peak: recommended start times and halfway holds without tickets | `src/control/advisory.py` | `test_adams_peak`, `test_api_adams_peak` | −42 % waiting (start times); final steps cleared (both) | Done |
 | FR13 | Officer records: visitors per trail and day, past / today / future, CSV | `src/serve/records.py`, `records_screen.dart` | `test_records` (5 tests) | – | Done |
+| FR14 | Give each forecast a 90 % range, and a cautious quota for a bad day | `src/eval/conformal.py`, `src/serve/predict.py` (`with_range`), `src/edge/pack.py`, `bottleneck_screen.dart` | `test_conformal` (3 tests); Flutter `edge_forecaster_test` (cautious quota from the pack) | Coverage 0.90 overall, 0.78 / 0.86 at busy hours | Done |
+| FR15 | Tell rangers where a count helps today's forecast most, and use counts from any section | `src/eval/placement.py`, `src/live/intraday.py` (`count_order`), `count_screen.dart` (`#n` badge) | `test_intraday`; Flutter `c4_test` (`count_rank`) | Greedy places beat random and the rangers' places (RQ11d) | Done; check in the field |
 
 ## Non-functional requirements
 

@@ -1,4 +1,4 @@
-# Component 4 – Technical design (as built, 21 Oct 2026)
+# Component 4 – Technical design (as built, 21 Oct 2026; updated 10 Nov 2026)
 
 How the component is put together, how each part works inside, and why each technology was chosen.
 Replaces Figure 2 of the proposal, which showed the plan before the build.
@@ -120,6 +120,14 @@ Input window L = 24 h, horizon H = 24 h, hidden size 32, **13,665 parameters** (
   support attention (ASTGCN) or diffusion over many hops (DCRNN) without overfitting; GCN + GRU is the smallest model
   of the family that still has the two parts (space, time) needed for the ablation, and it exports to ONNX and to a
   short Dart loop. ASTGCN's periodic inputs are a planned improvement (G8).
+- **`encode` / `decode`:** the forward pass is split into the per-segment state after Space 3 (`encode`, [B, N, 32])
+  and the head on the future covariates (`decode`). The forecast is unchanged; domain adaptation aligns `encode`.
+- **Direction-aware variant (`stgnn_dir`, RQ11c):** each GCN is replaced by DCRNN-style diffusion, K = 2 hops each way.
+  Edges point along `segment_walk_position` within a trail (walking up vs down); links between trails go both ways.
+  P = A / row sum; the output is X W₀ + Σ_k P_upᵏ X W_k + Σ_k P_downᵏ X W'_k. It has 25,953 parameters. It is an option,
+  not deployed.
+- **Counts from any places (RQ11d):** during training each batch counts the gates plus 0..max_extra random other
+  segments (`trainer.random_counts`, `mask_aug`). One model then accepts whatever sections rangers counted that day.
 
 ### Baselines
 - **Historical average:** mean by day type (3) × hour × segment from the training years (what a static rule knows).
@@ -132,6 +140,15 @@ Input window L = 24 h, horizon H = 24 h, hidden size 32, **13,665 parameters** (
 - **Fine-tuning:** start from the pretrained weights, train everything.
 - **Frozen core:** keep `g1, g2, rnn, g_out` fixed, train only input, future and head layers (`trainer.FREEZE_CORE`).
 - **Zero-shot:** pretrained weights, only the output scale fitted on 30 days.
+- **Four traffic networks (O3):** METR-LA → PEMS-BAY → PeMS04 (307 sensors) → PeMS08 (170), each continued from the
+  one before (`src.pretrain.traffic --sources pems04 pems08 --init <run>`).
+- **Adversarial domain adaptation (DANN-style, W3b):** while fine-tuning on the park, a 2-layer classifier tries to
+  tell the park's counted segments' `encode` states from PeMS08 sensors' states.
+  - A gradient-reversal layer (weight λ = 0.1 × (2 / (1 + e^(−10p)) − 1), p = training progress) pushes the encoder
+    towards states the two domains share (`trainer._Adversary`, `train(adversary=...)`).
+  - The source graph is swapped into the model for the source batch.
+- **Several parks at once (§6.1.3b):** one model trained on batches from several parks, each with its own graph
+  (`trainer.joint_train`).
 
 ## 5. Evaluation
 | Protocol | What it tests |
@@ -141,6 +158,10 @@ Input window L = 24 h, horizon H = 24 h, hidden size 32, **13,665 parameters** (
 | Sparse sensors (RQ10) | Only gate counts (or none) as input; the target trains every segment |
 | Bottleneck events (RQ1b) | Over-capacity segment-hours: precision, recall, F1, with bootstrap intervals over days |
 | Decision replays (RQ3, RQ8, RQ9) | The 2025 visitors replayed under each policy; over-capacity person-hours |
+| Few counts (RQ11b, G4) | Gates + ranger spots as input in the realistic world S1; scored on sections nobody counts |
+| Placement (RQ11d) | Greedy choice of counted places on the validation year; tested against random sets and the rangers' places |
+| Robustness (G5) | Models trained on the assumed world; tested on worlds where one simulator assumption is wrong |
+| Ranges (FR10) | Split conformal: residual quantiles per forecast-size group on the validation year, finite-sample corrected; coverage on the test year, also at busy hours |
 | Statistics | Paired t-test and Wilcoxon over **days** (hours are correlated), Holm correction, effect size d_z |
 | Seeds | 42, 43, 44; every run stores config + git hash |
 
