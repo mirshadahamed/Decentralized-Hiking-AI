@@ -1,7 +1,11 @@
-"""Objective O3 / RQ5: pretrain the ST-GNN on dense urban traffic (METR-LA, PEMS-BAY), as in the proposal.
+"""Objective O3 / RQ5: pretrain the ST-GNN on dense urban traffic (METR-LA, PEMS-BAY, PeMS04, PeMS08), as in the proposal.
 
     python -m src.pretrain.traffic                       # pretrain on METR-LA, then continue on PEMS-BAY
-Data (public, Hugging Face mirror TorchSpatiotemporal/ProcessedDatasets, traffic/metr_la.zip, pems_bay.zip)
+    python -m src.pretrain.traffic --seeds 42 43 44 --sources pems04 pems08 --init 20261020_050444_pretrain
+                                                         # continue those checkpoints on PeMS04, then PeMS08 (B3)
+Data (public, Hugging Face mirror TorchSpatiotemporal/ProcessedDatasets, traffic/metr_la.zip, pems_bay.zip,
+pems04.zip, pems08.zip; PeMS04 = 307 sensors Jan-Feb 2018, PeMS08 = 170 sensors Jul-Aug 2016, 5-min flow /
+occupancy / speed, as in ASTGCN)
 unpacked in data/external/traffic/<name>/unzipped/ (not committed).
 
 To make the pretrained weights fit the trail model unchanged, every traffic sensor is turned into the SAME
@@ -34,12 +38,19 @@ from src.train.trainer import predict, train
 from src.utils import new_run_dir, set_seed
 
 TRAFFIC = DATA / "external" / "traffic"
-SETS = {"metr_la": ("metr_la.h5", "distances_la.csv"), "pems_bay": ("pems_bay.h5", "distances_bay.csv")}
+SETS = {"metr_la": ("metr_la.h5", "distances_la.csv"), "pems_bay": ("pems_bay.h5", "distances_bay.csv"),
+        "pems04": ("pems04.npz", "distance.csv"), "pems08": ("pems08.npz", "distance.csv")}
+PEMS_START = {"pems04": "2018-01-01", "pems08": "2016-07-01"}      # ASTGCN releases: 5-min steps from midnight
+NAMES = {"metr_la": "METR-LA", "pems_bay": "PEMS-BAY", "pems04": "PeMS04", "pems08": "PeMS08"}
 
 
 def _read(name):
     h5, dist = SETS[name]
     d = TRAFFIC / name / "unzipped"
+    if name in PEMS_START:                                                   # [T5, N, (flow, occupancy, speed)]
+        speed = np.load(d / h5)["data"][:, :, 2].astype(np.float32)
+        t = pd.date_range(PEMS_START[name], periods=len(speed), freq="5min")
+        return speed, [str(i) for i in range(speed.shape[1])], t, pd.read_csv(d / dist)
     with h5py.File(d / h5, "r") as f:
         speed = f["data/block0_values"][:].astype(np.float32)               # [T5, N]
         sensors = [s.decode() for s in f["data/block0_items"][:]]
@@ -114,16 +125,18 @@ class TrafficData(TrailData):
         return np.column_stack([cols.get(n, np.zeros(len(times))) for n in names]).astype(np.float32)
 
 
-def pretrain(kind: str = "stgnn", seed: int = 42, epochs: int | None = None, log=print):
-    """METR-LA, then PEMS-BAY (continued from the METR-LA weights). Returns the final state dict and metrics."""
+def pretrain(kind: str = "stgnn", seed: int = 42, epochs: int | None = None, log=print,
+             sources=("metr_la", "pems_bay"), state=None):
+    """Each source in turn, each continued from the weights of the one before (or from `state`).
+    Returns the final state dict and metrics."""
     cfg = load_config(park="horton_plains")
     trail = TrailData(cfg, path=processed_dir("horton_plains") / "dataset.npz")
     tc = dict(cfg["train"])
     if epochs:
         tc["epochs"] = epochs
     cfg = cfg | {"train": tc}
-    state, metrics = None, {}
-    for name in ("metr_la", "pems_bay"):
+    metrics = {}
+    for name in sources:
         d = TrafficData(name, trail, cfg)
         every = np.ones(d.N, bool)
         m, scale = train(d, kind, every, cfg, seed, log=lambda x: log(f"[{name}] {x}"), init_state=state)
@@ -149,6 +162,8 @@ if __name__ == "__main__":
     ap.add_argument("--kind", default="stgnn", choices=["stgnn", "stgnn_lstm", "gru_nograph", "lstm"])
     ap.add_argument("--seeds", type=int, nargs="+", default=[42])
     ap.add_argument("--epochs", type=int, default=None)
+    ap.add_argument("--sources", nargs="+", default=["metr_la", "pems_bay"], choices=list(SETS))
+    ap.add_argument("--init", default=None, help="earlier pretrain run: continue its traffic_<kind>_s<seed>.pt")
     a = ap.parse_args()
     cfg = load_config()
     run = new_run_dir("pretrain", cfg)
@@ -162,10 +177,16 @@ if __name__ == "__main__":
     out = {}
     for s in a.seeds:
         set_seed(s)
-        state, met = pretrain(a.kind, s, a.epochs, log)
-        torch.save({"state_dict": state, "kind": a.kind, "seed": s, "source": "METR-LA -> PEMS-BAY",
+        init = None
+        source = " -> ".join(NAMES[n] for n in a.sources)
+        if a.init:
+            ck = torch.load(RESULTS / a.init / f"traffic_{a.kind}_s{s}.pt", weights_only=False)
+            init, source = ck["state_dict"], f"{ck['source']} -> {source}"
+        state, met = pretrain(a.kind, s, a.epochs, log, a.sources, init)
+        torch.save({"state_dict": state, "kind": a.kind, "seed": s, "source": source,
                     "created": datetime.now().isoformat()}, run / f"traffic_{a.kind}_s{s}.pt")
         out[s] = met
     (run / "metrics.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
-    (RESULTS / "LATEST_PRETRAIN").write_text(run.name, encoding="utf-8")
+    default = a.sources == ["metr_la", "pems_bay"] and not a.init
+    (RESULTS / ("LATEST_PRETRAIN" if default else "LATEST_PRETRAIN_PEMS")).write_text(run.name, encoding="utf-8")
     log(f"done -> {run}")

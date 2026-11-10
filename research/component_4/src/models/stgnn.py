@@ -88,6 +88,10 @@ class STGNN(nn.Module):
 
     def forward(self, x_past, x_fut):
         """x_past [B, L, N, Fp], x_fut [B, H, N, Ff] -> prediction [B, H, N]."""
+        return self.decode(self.encode(x_past), x_fut)
+
+    def encode(self, x_past):
+        """The spatio-temporal state of each segment: [B, N, hidden] (what domain adaptation aligns)."""
         B, L, N, _ = x_past.shape
         sensed = x_past[0, 0, :, SENSED_CHANNEL]                 # same for the whole batch
         h = torch.relu(self.inp(x_past))
@@ -97,7 +101,9 @@ class STGNN(nn.Module):
         _, last = self.rnn(h)
         last = last[0] if isinstance(last, tuple) else last     # LSTM returns (h, c)
         h = last[-1].reshape(B, N, -1)
-        h = h + torch.relu(self.spatial(self.g_out, h))         # spread the temporal state to neighbours
+        return h + torch.relu(self.spatial(self.g_out, h))      # spread the temporal state to neighbours
+
+    def decode(self, h, x_fut):
         f = torch.relu(self.fut(x_fut))                          # [B, H, N, hidden]
         z = torch.cat([h[:, None].expand(-1, f.shape[1], -1, -1), f], dim=-1)
         return self.head(z).squeeze(-1)

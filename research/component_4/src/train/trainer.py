@@ -62,8 +62,54 @@ def random_counts(rng, base, max_extra):
     return s
 
 
+class _GradReverse(torch.autograd.Function):
+    """Identity forward, gradient x -lam backward (Ganin & Lempitsky 2015)."""
+
+    @staticmethod
+    def forward(ctx, x, lam):
+        ctx.lam = lam
+        return x.view_as(x)
+
+    @staticmethod
+    def backward(ctx, g):
+        return -ctx.lam * g, None
+
+
+class _Adversary:
+    """DANN-style domain adaptation (Ganin et al. 2016; DASTNet, Tang et al. 2022, for traffic graphs): while the
+    model learns the park, a small classifier tries to tell the park's segment states (model.encode) from a source
+    network's; its gradient is reversed into the encoder, so the encoder keeps what the two domains share.
+    Only the park's segments WITH counts are compared (their inputs are alike: a count history)."""
+
+    def __init__(self, model, source, kind, hidden, weight, rng):
+        self.model, self.source, self.weight, self.rng = model, source, float(weight), rng
+        src_model = build_model(source, kind, hidden)
+        self.graphs = [{n: b for n, b in m.named_buffers() if n in GRAPH_BUFFERS} for m in (model, src_model)]
+        self.every = np.ones(source.N, bool)
+        self.scale = source.y_scale(self.every)
+        self.origins = source.origins("train", 6)
+        self.clf = torch.nn.Sequential(torch.nn.Linear(hidden, hidden), torch.nn.ReLU(), torch.nn.Linear(hidden, 1))
+
+    def _use(self, k):
+        for n, b in self.graphs[k].items():
+            setattr(self.model, n, b)
+
+    def loss(self, h_park, sensed, progress):
+        """h_park [B, N, hidden] of this batch; progress 0..1 through training (DANN's lambda schedule)."""
+        lam = self.weight * (2 / (1 + np.exp(-10 * progress)) - 1)
+        self._use(1)
+        xp, _, _, _ = self.source.batch(self.rng.choice(self.origins, h_park.shape[0]), self.every, self.scale)
+        h_src = self.model.encode(xp).reshape(-1, h_park.shape[-1])
+        self._use(0)
+        h_p = h_park[:, torch.from_numpy(sensed)].reshape(-1, h_park.shape[-1])
+        h_src = h_src[torch.from_numpy(self.rng.choice(len(h_src), len(h_p), replace=False))]
+        z = self.clf(_GradReverse.apply(torch.cat([h_p, h_src]), lam)).squeeze(-1)
+        label = torch.cat([torch.ones(len(h_p)), torch.zeros(len(h_src))])
+        return torch.nn.functional.binary_cross_entropy_with_logits(z, label)
+
+
 def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_val=True, epochs=None, freeze=(),
-          loss_nodes=None, peak=None, mask_aug=None):
+          loss_nodes=None, peak=None, mask_aug=None, adversary=None):
     """sensed: bool [N]; unsensed nodes give no input history and (by default) no training loss.
     loss_nodes: bool [N] segments scored in the loss, if not the sensed ones (sensor-sparse protocol G1: the
     synthetic target covers every segment, while as input the model sees only what the park measures).
@@ -75,7 +121,9 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
     peak: (threshold [N] in persons, weight) - peak-aware loss for training and model selection (G8).
     mask_aug: (base [N] bool, max_extra) - each training batch sees counts at `base` plus 0..max_extra random
     other segments, so one model takes counts from ANY set of places (rangers count where they are that day;
-    src.eval.placement). Validation uses `sensed`."""
+    src.eval.placement). Validation uses `sensed`.
+    adversary: (source network in the TrailData layout, weight) - DANN-style domain adaptation towards the park
+    (_Adversary; W3b). Not with mask_aug."""
     tc = cfg["train"]
     set_seed(seed)
     rng = np.random.default_rng(seed)
@@ -87,13 +135,16 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
     for n, p in model.named_parameters():
         if n.startswith(tuple(freeze)):
             p.requires_grad_(False)
-    opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=tc["lr"])
+    adv = None if adversary is None else _Adversary(model, adversary[0], kind, tc["hidden"], adversary[1], rng)
+    params = [p for p in model.parameters() if p.requires_grad] + ([] if adv is None else list(adv.clf.parameters()))
+    opt = torch.optim.Adam(params, lr=tc["lr"])
     tr_o, va_o = data.origins("train", tc["train_origin_stride"]), data.origins("val")
     node_mask = torch.from_numpy(loss_nodes)
     pk = None if peak is None else (torch.as_tensor(np.asarray(peak[0]) / scale, dtype=torch.float32), float(peak[1]))
 
     best, best_state, bad = np.inf, None, 0
-    for ep in range(epochs or tc["epochs"]):
+    n_ep = epochs or tc["epochs"]
+    for ep in range(n_ep):
         t0 = time.time()
         model.train()
         perm = rng.permutation(tr_o)
@@ -103,7 +154,12 @@ def train(data, kind, sensed, cfg, seed, log=print, init_state=None, select_on_v
             xp, xf, y, om = data.batch(perm[i:i + tc["batch_size"]], s_b, scale)
             # Train on every hour (so the model learns the trail is empty at night);
             # validation and test are scored on open hours only.
-            loss = masked_l1(model(xp, xf), y, torch.ones_like(om), node_mask, pk)
+            if adv is None:
+                loss = masked_l1(model(xp, xf), y, torch.ones_like(om), node_mask, pk)
+            else:
+                h = model.encode(xp)
+                loss = masked_l1(model.decode(h, xf), y, torch.ones_like(om), node_mask, pk)
+                loss = loss + adv.loss(h, s_b, (ep + i / len(perm)) / n_ep)
             opt.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)

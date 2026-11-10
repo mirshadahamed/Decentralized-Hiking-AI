@@ -109,6 +109,24 @@ def test_directed_model_runs(data):
     assert {"adj_up", "adj_down"} <= {n for n, _ in m.named_buffers()}
 
 
+def test_encode_then_decode_is_the_forecast(data):
+    """Domain adaptation aligns model.encode; splitting forward must not change the forecast."""
+    from src.train.trainer import build_model
+    from src.utils import set_seed
+    set_seed(0)
+    m = build_model(data, "stgnn", 8).eval()
+    xp, xf, _, _ = data.batch(data.origins("test")[:2], np.ones(data.N, bool), 10.0)
+    with torch.no_grad():
+        assert torch.equal(m(xp, xf), m.decode(m.encode(xp), xf))
+
+
+def test_gradient_reversal_flips_the_gradient():
+    from src.train.trainer import _GradReverse
+    x = torch.ones(3, requires_grad=True)
+    (_GradReverse.apply(x, 0.5) * 2).sum().backward()
+    assert torch.allclose(x.grad, torch.full((3,), -1.0))     # 2 x -0.5
+
+
 def test_random_counts_keep_the_gates():
     from src.train.trainer import random_counts
     base = np.zeros(10, bool)
