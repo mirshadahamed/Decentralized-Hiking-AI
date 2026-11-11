@@ -71,6 +71,20 @@ weights*. A new park should start with the historical average and switch to the 
 season of counts; pre-training shortens that wait. **Next:** a learning curve (k = 30 … 365 days) to find where the
 network overtakes the historical average.
 
+### RQ2 with three seeds (B5; run `20261110_231747_transfer`, seeds 42 43 44, 11 Nov 2026)
+
+| Target | HA (2 y) | In-domain ST-GNN | Zero-shot ST-GNN | HA, 30 d | Scratch 30 d | **Pre-trained + 30 d** | HA, 90 d | Scratch 90 d | **Pre-trained + 90 d** |
+|---|---|---|---|---|---|---|---|---|---|
+| Horton Plains | 1.60 | 1.42 | 3.39 | **2.06** | 3.11 | 2.58 | **1.61** | 2.72 | 2.12 |
+| Adam's Peak | 10.89 | 4.23 | 17.79 | 9.99 | 9.89 | **9.66** | **9.21** | 9.59 | 9.22 |
+
+(MAE, mean of 3 seeds. GRU without graph: Horton pre-trained + 30 / 90 d = 2.43 / 2.04; Adam's Peak 9.64 / 8.93.)
+
+- The one-seed picture holds. **Zero-shot fails** at both parks (p_Holm < 0.001 vs HA).
+- **Pre-training beats scratch in all 8 settings** (p_Holm < 10⁻¹⁶; e.g. Horton 90 d −0.61, Adam's Peak 90 d −0.37).
+- **The same-days HA still wins at Horton** (+0.52 at 30 d, +0.51 at 90 d, p < 10⁻¹²). At Adam's Peak the
+  pre-trained models tie with it (30 d: −0.34, p = 0.35; 90 d: +0.01, p = 0.96).
+
 ---
 
 ## RQ3 – Value of the forecast for crowd control (`src.control.evaluate_forecast_value`, run `results/adams_peak/20261021_214725_forecast_value`)
@@ -197,6 +211,30 @@ ST-GNN − other F1, 95 % interval:
 - Day level is not informative here: in the simulator, some segment is over capacity on 363 of 365 Horton days.
 - "Warning hours" (~8 h) is simply the hour of the event, because the forecast is issued at midnight.
 
+### G8 – A peak-aware loss (`src.eval.peak_loss`, run `20261111_014801_peak_loss`, 11 Nov 2026)
+
+The ST-GNN is retrained with errors on busy hours (≥ 0.8 × capacity at once) weighted 4×. Same spatial blocks and
+3 seeds as the benchmark. It is scored on held-out segments: over-capacity segment-hours, bootstrap over days.
+
+| Park | Model | MAE held-out | Precision | Recall | F1 |
+|---|---|---|---|---|---|
+| Horton Plains | **ST-GNN, peak loss** | 2.67 | 0.34 | **0.44** | **0.38** |
+| | ST-GNN | **2.54** | 0.33 | 0.26 | 0.29 |
+| | LSTM | 2.59 | 0.37 | 0.29 | 0.32 |
+| Adam's Peak | ST-GNN, peak loss | 8.78 | 0.43 | 0.68 | 0.53 |
+| | ST-GNN | 8.92 | 0.46 | **0.77** | **0.58** |
+| | LSTM | **8.02** | **0.57** | 0.58 | 0.57 |
+
+Peak loss − other, F1 with 95 % interval:
+- **Horton:** +0.10 vs ST-GNN [0.09, 0.10]; +0.06 vs LSTM [0.05, 0.07]. Positive on every bootstrap sample.
+- **Adam's Peak:** −0.05 vs ST-GNN [−0.06, −0.04]; −0.05 vs LSTM [−0.06, −0.03].
+
+**Reading:**
+- At Horton the peak loss fixes the problem above. Recall rises from 0.26 to 0.44 and the ST-GNN becomes the
+  best bottleneck detector, at +5 % MAE. Use it for alerts at Horton (claim C3, with this trade-off stated).
+- At Adam's Peak the plain ST-GNN already flags most events (recall 0.77). Weighting peaks costs precision there,
+  so keep the plain model.
+
 ## RQ5 – Pretraining on urban traffic (objective O3, P0-1; `src.pretrain.traffic`, `src.eval.pretrain_transfer`, 20 Oct 2026)
 
 The ST-GNN is pretrained on METR-LA and then PEMS-BAY. The target is congestion = 1 − speed / free-flow speed,
@@ -259,6 +297,42 @@ MAE by amount of target-park data:
 Freezing helps only Horton Plains at 365 days, by 2 %. At Adam's Peak it is the worst variant at every amount of
 data. This confirms the reading above: the traffic core fits trails whose crowds look like traffic peaks, and not
 the summit queue.
+
+### G4 / W3b – Traffic pretraining with few counted places; four networks; adversarial adaptation (`src.eval.sparse_transfer`, run `20261110_221511_sparse_transfer`, 11 Nov 2026)
+
+Realistic world S1. Inputs: gate + ranger spot counts (as deployed). Only the last 30 or 90 days of the park; 3 seeds.
+Scored on the sections nobody counts. Arms:
+- **scratch:** random weights;
+- **traffic2:** pretrained on METR-LA → PEMS-BAY (RQ5);
+- **traffic4:** continued on PeMS04 → PeMS08 (run `20261107_184645_pretrain`; PeMS04 test MAE 3.64–3.90 vs HA 4.05,
+  PeMS08 2.92–3.06 vs 3.24);
+- **frozen4:** traffic4 with the graph and recurrent core frozen;
+- **dann4:** traffic4 fine-tuned with a DANN-style adversary that aligns the park's counted segments with PeMS08
+  sensors (gradient reversal, weight 0.1).
+
+MAE on uncounted sections (people per segment per hour):
+
+| Park | Days | HA | Scratch | traffic2 | traffic4 | frozen4 | dann4 |
+|---|---|---|---|---|---|---|---|
+| Horton Plains | 30 | **2.01** | 2.58 | 2.56 | 2.55 | 2.65 | 2.54 |
+| | 90 | **1.83** | 2.40 | 2.19 | 2.26 | 2.33 | 2.38 |
+| Adam's Peak | 30 | **8.38** | 8.54 | 9.33 | 9.14 | 10.84 | 9.12 |
+| | 90 | **8.05** | 8.37 | 8.52 | 8.50 | 8.91 | 8.66 |
+
+Paired tests over the 365 test days, Holm-corrected:
+- **Horton Plains:**
+  - traffic4 beats scratch (30 d −0.03, p = 0.001; 90 d −0.14, p < 10⁻¹⁴).
+  - Two more networks add nothing over traffic2 at 30 d (p = 0.53) and are worse at 90 d (+0.07).
+  - dann4 is the best network at 30 d (−0.02 vs traffic4, p < 10⁻²⁰) but worse at 90 d (+0.12).
+- **Adam's Peak:** every pretrained arm is worse than scratch (+0.12 to +2.3). The adversary does not help
+  (30 d: −0.02 vs traffic4, p = 0.12; 90 d: +0.16).
+- **HA wins everywhere** by 0.4–0.8 (p < 10⁻⁵).
+
+**Reading:** the RQ5 answer holds in the deployed few-counts setting:
+- road traffic is a small help for a traffic-like park with very little data, and no help for the summit queue;
+- more traffic networks and adversarial alignment do not change that.
+
+The proposal's PeMS04/08 and domain-adaptation items are now done. The answer is negative and is recorded as such.
 
 ## RQ8 – Offline walk advice vs entry limits (`src.control.evaluate_advice`, run `20261020_234527_advice`)
 
@@ -1103,7 +1177,7 @@ weather point, from the SERVIR ClimateSERV API, with the same scores. Runs `resu
    2–3 days; Adam's Peak: flow on the final steps on one Poya night) would calibrate and validate the simulator.
    G5 shows which conclusions survive wrong assumptions: the graph result mostly does; the Horton network-vs-HA
    result does not.
-2. One seed at Adam's Peak and in RQ2; three for Horton RQ1 temporal.
+2. RQ2 now has three seeds (B5); a few older Adam's Peak tables (RQ3, RQ4) still use one seed.
 3. RQ3/RQ4 control results use the same simulator that generated the data.
 4. Usability (SUS) and expert review with DWC / Sri Pada officers are not done yet.
 5. At the Adam's Peak summit block the graph models do not beat the LSTM on held-out sections; the

@@ -86,9 +86,9 @@ The graph's advantage is real but small. It does not hold at the Adam's Peak sum
 |---|---|---|---|
 | B1 | **Done 7 Nov** (`evaluation_results.md` G5). **Robustness (G5):** train on the default world, test on worlds that break one assumption each: demand ±30 %, arrivals ±1 h, route shares, dwell, summit flow. Report which conclusions survive (C1, C4, C5). Gives the field visit its target list | Weak point 1 | 3–4 days + runs |
 | B2 | **Done 7 Nov** (RQ9b). **Quota replay on the realistic world (C5b):** RQ9 on S1 for both parks. Does the ST-GNN quota beat the HA quota where the graph has something to add? | C5 | 1 day + runs |
-| B3 | **Pretraining in the sparse setting (G4) + PeMS04/08 + one adaptation method (W3b):** gradual unfreezing (cheap), or a DANN-style adversarial alignment. Keep the row even if it does not help | O3, C2 | 4–5 days + runs |
-| B4 | **Peak-aware loss, full 3-seed run (G8):** the code exists (`src/eval/peak_loss.py`) | C3 | 1 day + runs |
-| B5 | **Three seeds everywhere:** RQ2 park-to-park transfer; any Adam's Peak table still on one seed | Limitation 2 | runs only |
+| B3 | **Done 11 Nov** (G4 / W3b: no gain from PeMS04/08 or DANN; HA still wins). **Pretraining in the sparse setting (G4) + PeMS04/08 + one adaptation method (W3b):** gradual unfreezing (cheap), or a DANN-style adversarial alignment. Keep the row even if it does not help | O3, C2 | 4–5 days + runs |
+| B4 | **Done 11 Nov** (G8: Horton F1 0.29 → 0.38; no gain at Adam's Peak). **Peak-aware loss, full 3-seed run (G8):** the code exists (`src/eval/peak_loss.py`) | C3 | 1 day + runs |
+| B5 | **Done 11 Nov** (RQ2, 3 seeds: same picture). **Three seeds everywhere:** RQ2 park-to-park transfer; any Adam's Peak table still on one seed | Limitation 2 | runs only |
 | B6 | **Done 7 Nov** (O1b: sources disagree; kept as a check until real counts). **CHIRPS (W5):** daily rain for each park next to Open-Meteo and NASA POWER; a feature only if it differs | O1 | 1 day |
 | B7 | Summit block (optional, only if time): a queue / capacity-aware input, or let the model choose per section between graph and no graph. Otherwise keep it as a clear finding (Limitation 5) | C1 | 3 days |
 
